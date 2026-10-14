@@ -6,14 +6,23 @@ from bs4 import BeautifulSoup
 BJ=timezone(timedelta(hours=8)); D=os.path.dirname(os.path.abspath(__file__))
 CH={"xhqcankao":"风向旗参考快讯","tnews365":"竹新社","FinanceNewsDaily":"华尔街见闻·财经时讯","CE_Observe":"每日消费电子观察"}
 db=sqlite3.connect(os.path.join(D,"tg.db"))
-db.execute("create table if not exists msg(ch text,id int,ts text,text text,links text,primary key(ch,id))")
+cols=[r[1] for r in db.execute("pragma table_info(msg)")]
+if cols and "html" not in cols: db.execute("drop table msg")  # 旧库正文断行已损坏，重建
+db.execute("create table if not exists msg(ch text,id int,ts text,text text,links text,html text,primary key(ch,id))")
 db.execute("create table if not exists status(ch text primary key,ok int,err text,at text)")
 now=datetime.now(BJ)
+def extract(tx):
+  """根因修复：旧版 get_text("\\n") 会在每个内联元素(#话题链接/加粗/emoji)两侧插换行。
+  这里只把 <br> 变成换行，其余内联元素无缝拼接。"""
+  for br in tx.find_all("br"): br.replace_with("\n")
+  t=tx.get_text("").replace("\xa0"," ")
+  t=re.sub(r"[ \t]+\n","\n",t); t=re.sub(r"\n{3,}","\n\n",t)
+  return t.strip()
 def get(u):
   return subprocess.run(["curl","-sL","-m","25","-A","Mozilla/5.0",u],capture_output=True,text=True).stdout
 for c in CH:
   last=db.execute("select max(id) from msg where ch=?",(c,)).fetchone()[0]
-  floor=now-timedelta(hours=48) if last is None else None
+  floor=now-timedelta(hours=72) if last is None else None
   before=None;n=0;err=None
   try:
     for _ in range(20):
@@ -31,7 +40,7 @@ for c in CH:
         tx=m.select_one(".tgme_widget_message_text")
         if not tx: continue
         links=[a["href"] for a in tx.select("a[href]")]
-        db.execute("insert or ignore into msg values(?,?,?,?,?)",(c,i,dt.isoformat(),tx.get_text("\n").strip(),json.dumps(links)));n+=1
+        db.execute("insert or ignore into msg values(?,?,?,?,?,?)",(c,i,dt.isoformat(),extract(tx),json.dumps(links),str(tx)));n+=1
       if stop: break
       before=min(ids)
   except Exception as ex: err=str(ex)[:200]
@@ -39,52 +48,74 @@ for c in CH:
   print(c,"new",n,err or "",file=sys.stderr)
 db.commit()
 # ---------- build ----------
-def clean(t): t=re.sub(r'\s*#\s*','',t); return re.sub(r'---\s*本条新闻由.*','',t,flags=re.S).strip()
-def title(t):
-  m=re.match(r'【([^】]+)】',t); return m.group(1) if m else t.split('\n')[0][:80]
-rows=[dict(ch=r[0],id=r[1],ts=r[2],text=clean(r[3]),links=[l for l in json.loads(r[4]) if l.startswith('http') and '//t.me' not in l][:3]) for r in db.execute("select * from msg order by ts desc")]
-for r in rows: r["title"]=title(r["text"]); r["day"]=r["ts"][:10]; r["hm"]=r["ts"][11:16]; r["url"]=f"https://t.me/{r['ch']}/{r['id']}"
+AD=re.compile(r'-{3,}\s*本条新闻由.*',re.S)
+def clean(t):
+  t=AD.sub('',t)
+  # 华尔街见闻把话题写成 " #美国 "，去掉 # 和它两侧人为插入的空格，让中文连续成句
+  t=re.sub(r'[ \t]*#(?:\s*#)*\s*([\w\u4e00-\u9fff]+)[ \t]*',r'\1',t)
+  t=re.sub(r'[ \t]{2,}',' ',t); t=re.sub(r'\n{3,}','\n\n',t)
+  return '\n'.join(l.strip() for l in t.split('\n')).strip()
+def title_body(t):
+  m=re.match(r'【([^】]+)】\s*',t)
+  if m: return m.group(1).replace('#',''),t[m.end():]
+  first,_,rest=t.partition('\n')
+  if len(first)<=60 and rest.strip(): return first.replace('#',''),rest
+  return '',t
+rows=[]
+for r in db.execute("select ch,id,ts,text,links from msg order by ts desc"):
+  t=clean(r[3]); ti,bo=title_body(t)
+  rows.append(dict(ch=r[0],id=r[1],ts=r[2],title=ti,body=bo.strip(),day=r[2][:10],hm=r[2][11:16],hh=r[2][11:13],url=f"https://t.me/{r[0]}/{r[1]}"))
 st={r[0]:dict(ok=r[1],err=r[2]) for r in db.execute("select * from status")}
-# 今日重点启发式: 标题 bigram 在多频道出现 + 关键词加分
-KW=["CPI","美联储","加息","降息","关税","停火","战争","GDP","出口","财报","发布","裁员","IPO","AI","苹果","英伟达","OpenAI","谷歌","特朗普","央行","芯片"]
+KW=["CPI","美联储","加息","降息","关税","停火","战争","GDP","出口","财报","发布","裁员","IPO","AI","苹果","英伟达","OpenAI","谷歌","特朗普","央行","芯片","SpaceX"]
+SKIP=re.compile(r'早餐|要闻|汇总|提醒|日报|收评|收盘')
 def grams(s): s=re.sub(r'[\W_]','',s); return {s[i:i+3] for i in range(len(s)-2)}
 def pick(day):
-  rs=[r for r in rows if r["day"]==day]; G=[grams(r["title"]) for r in rs]
-  sc=[]
+  rs=[r for r in rows if r["day"]==day and r["title"] and not SKIP.search(r["title"])]
+  G=[grams(r["title"]+r["body"][:80]) for r in rs]; sc=[]
   for i,r in enumerate(rs):
-    chs={rs[j]["ch"] for j in range(len(rs)) if j!=i and len(G[i]&G[j])>=2}-{r["ch"]}
-    s=3*len(chs)+sum(1 for k in KW if k in r["title"])+(1 if r["text"].startswith('【') else 0)
-    sc.append((s,i))
+    chs={rs[j]["ch"] for j in range(len(rs)) if len(G[i]&G[j])>=4}-{r["ch"]}
+    sc.append((3*len(chs)+sum(1 for k in KW if k in r["title"]),-i,i))
   out=[];used=[]
-  for s,i in sorted(sc,reverse=True):
-    if s<2 or len(out)>=8: break
-    if any(len(G[i]&G[u])>=3 for u in used): continue
+  for s,_,i in sorted(sc,reverse=True):
+    if s<2 or len(out)>=6: break
+    if any(len(G[i]&G[u])>=5 for u in used): continue
     used.append(i); out.append(rs[i])
   return out
-upd=now.strftime("%Y-%m-%d %H:%M")
-days=sorted({r["day"] for r in rows},reverse=True)
-CSS="""body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f3f4f6;color:#222}
-.top{background:#1f3b8a;color:#fff;padding:14px 32px;display:flex;align-items:center;gap:24px}.top h1{font-size:20px;margin:0}.top a{color:#cfe0ff;text-decoration:none}.upd{margin-left:auto;font-size:13px;opacity:.9}
-.wrap{max-width:1200px;margin:20px auto;display:grid;grid-template-columns:260px 1fr;gap:20px;padding:0 20px}
-aside,.card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 3px #0001}aside{position:sticky;top:16px;align-self:start}
-aside label{display:block;margin:6px 0;cursor:pointer}input[type=search]{width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box}
-.it{border-top:1px solid #eee;padding:12px 0}.t{font-weight:600;font-size:16px}.m{font-size:12px;color:#888;margin:3px 0}.b{font-size:14px;color:#444;white-space:pre-wrap;max-height:6.5em;overflow:hidden}
-.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:9px;background:#eef2ff;color:#3346c4;margin-right:6px}a{color:#2a5bd7}.err{color:#c0392b}ol li{margin:6px 0}h2{margin:0 0 10px;font-size:18px}"""
-JS="""const q=document.getElementById('q');function f(){const on=[...document.querySelectorAll('.chk:checked')].map(e=>e.value),s=q.value.toLowerCase();let n=0;document.querySelectorAll('.it').forEach(e=>{const v=on.includes(e.dataset.ch)&&e.textContent.toLowerCase().includes(s);e.style.display=v?'':'none';n+=v});document.getElementById('n').textContent=n}document.querySelectorAll('.chk').forEach(e=>e.onchange=f);q.oninput=f;"""
 e=html.escape
+URL=re.compile(r'https?://[^\s<>"）】，。]+')
+def rich(t):
+  out=[];p=0
+  for m in URL.finditer(t):
+    out.append(e(t[p:m.start()])); u=m.group(0); out.append(f'<a href="{e(u)}" target="_blank" rel="noopener">{e(u)}</a>'); p=m.end()
+  out.append(e(t[p:])); s=''.join(out)
+  s=re.sub(r'#([\w\u4e00-\u9fff]+)',r'<span class="ht">#\1</span>',s)
+  return ''.join(f'<p>{x.replace(chr(10),"<br>")}</p>' for x in s.split('\n\n') if x.strip())
+COL={"xhqcankao":"#e8590c","tnews365":"#2f9e44","FinanceNewsDaily":"#1c7ed6","CE_Observe":"#ae3ec9"}
+upd=now.strftime("%Y-%m-%d %H:%M"); days=sorted({r["day"] for r in rows},reverse=True)
+CSS=open(os.path.join(D,"style.css")).read(); JS=open(os.path.join(D,"app.js")).read()
+def shell(title,rel,side,main):
+  return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>{e(title)}</title><style>{CSS}</style></head><body>
+<header class="bar"><a class="brand" href="{rel}index.html"><span class="logo">T</span>TG 快讯</a><nav><a href="{rel}index.html">今天</a><a href="{rel}archive/index.html">归档</a></nav><div class="search"><input id="q" type="search" placeholder="搜索标题与正文…" autocomplete="off"></div><div class="upd">最后更新 <b>{upd}</b> 北京时间</div></header>
+<div class="layout"><aside class="side">{side}</aside><main class="main">{main}</main></div><script>{JS}</script></body></html>'''
 def page(day,rel,is_index):
   rs=[r for r in rows if r["day"]==day]; cnt=collections.Counter(r["ch"] for r in rs)
-  side="<input id=q type=search placeholder='搜索…'><p><b>频道筛选</b></p>"+"".join(f"<label><input class=chk type=checkbox value={c} checked> {CH[c]} ({cnt.get(c,0)})"+(f" <span class=err title='{e(st[c]['err'] or '')}'>⚠打不开</span>" if c in st and not st[c]['ok'] else "")+"</label>" for c in CH)
-  side+=f"<p style='font-size:13px'>显示 <span id=n>{len(rs)}</span> 条</p><p><b>归档</b></p>"+"".join(f"<div><a href='{rel}archive/{d}.html'>{d}</a></div>" for d in days[:60])+f"<div><a href='{rel}archive/index.html'>全部日期…</a></div>"
+  side='<div class="sh">频道</div>'+''.join(f'<label class="ch"><input class="chk" type="checkbox" value="{c}" checked><i style="background:{COL[c]}"></i><span>{CH[c]}</span><em>{cnt.get(c,0)}</em>'+(f'<b class="bad" title="{e(st[c]["err"] or "")}">打不开</b>' if c in st and not st[c]["ok"] else '')+'</label>' for c in CH)
+  side+=f'<div class="cnt">显示 <b id="n">{len(rs)}</b> / {len(rs)} 条</div><div class="sh">归档</div>'+''.join(f'<a class="day{" on" if d==day else ""}" href="{rel}archive/{d}.html">{d}</a>' for d in days[:14])+f'<a class="day" href="{rel}archive/index.html">全部日期 →</a>'
   hl=pick(day)
-  hlh=("<div class=card style='margin-bottom:16px'><h2>⭐ 重点（自动挑选）</h2><ol>"+"".join(f"<li>{e(r['title'])} <span class=tag>{CH[r['ch']]}</span><a href='{r['url']}' target=_blank>原帖</a></li>" for r in hl)+"</ol></div>") if hl else ""
-  items="".join(f"<div class=it data-ch={r['ch']}><div class=t>{e(r['title'])}</div><div class=m><span class=tag>{CH[r['ch']]}</span>{r['day']} {r['hm']} · <a href='{r['url']}' target=_blank>原帖</a>"+"".join(f" · <a href='{e(l)}' target=_blank>外链</a>" for l in r['links'][:1])+f"</div><div class=b>{e(r['text'])}</div></div>" for r in rs)
-  head="今天的消息流" if is_index else f"{day} 归档"
-  return f"<!doctype html><html lang=zh-CN><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>TG 快讯 · {day}</title><style>{CSS}</style></head><body><div class=top><h1>📰 TG 快讯汇总</h1><a href='{rel}index.html'>今天</a><a href='{rel}archive/index.html'>归档</a><span class=upd>最后更新：{upd}（北京时间）</span></div><div class=wrap><aside>{side}</aside><main>{hlh}<div class=card><h2>{head} · {day}</h2>{items or '<p>今天暂无消息</p>'}</div></main></div><script>{JS}</script></body></html>"
+  m=f'<div class="ph"><h1>{"今日快讯" if is_index else "归档"}</h1><span>{day} · {len(rs)} 条</span></div>'
+  if hl: m+='<section class="hl"><div class="hlh">今日重点<small>按跨频道热度与关键词自动挑选</small></div><div class="hlg">'+''.join(f'<a class="hc" href="{r["url"]}" target="_blank" rel="noopener" style="--c:{COL[r["ch"]]}"><span class="src">{CH[r["ch"]]} · {r["hm"]}</span><b>{e(r["title"])}</b></a>' for r in hl)+'</div></section>'
+  cur=None
+  for r in rs:
+    if r["hh"]!=cur: cur=r["hh"]; m+=f'<div class="hr"><span>{cur}:00</span></div>'
+    m+=f'''<article class="it" data-ch="{r['ch']}" style="--c:{COL[r['ch']]}"><div class="meta"><span class="tag">{CH[r['ch']]}</span><time>{r['hm']}</time><a href="{r['url']}" target="_blank" rel="noopener">原帖 ↗</a></div>{f'<h3>{e(r["title"])}</h3>' if r["title"] else ''}<div class="body">{rich(r['body'])}</div><button class="more" hidden>展开全文</button></article>'''
+  if not rs: m+='<p class="empty">今天暂时还没有消息。</p>'
+  m+='<div class="empty" id="none" hidden>没有匹配的消息</div>'
+  return shell(f"TG 快讯 · {day}",rel,side,m)
 out=os.path.join(D,"site");os.makedirs(out+"/archive",exist_ok=True)
 today=now.strftime("%Y-%m-%d")
 open(out+"/index.html","w").write(page(today,"",True))
 for d in days: open(f"{out}/archive/{d}.html","w").write(page(d,"../",False))
-open(out+"/archive/index.html","w").write(f"<!doctype html><meta charset=utf-8><title>归档</title><style>{CSS}</style><div class=top><h1>📰 归档</h1><a href='../index.html'>今天</a><span class=upd>最后更新：{upd}</span></div><div class=wrap style='display:block'><div class=card>"+"".join(f"<div><a href='{d}.html'>{d}</a>（{sum(1 for r in rows if r['day']==d)} 条）</div>" for d in days)+"</div></div>")
+lst=''.join(f'<a class="arow" href="{d}.html"><b>{d}</b><span>{sum(1 for r in rows if r["day"]==d)} 条</span></a>' for d in days)
+open(out+"/archive/index.html","w").write(shell("TG 快讯 · 归档","../",'<div class="sh">说明</div><p class="note">每小时自动抓取 4 个公开频道。</p>',f'<div class="ph"><h1>归档</h1><span>{len(days)} 天</span></div><div class="alist">{lst}</div>'))
 open(out+"/.nojekyll","w").close()
 print("built",len(rows),"msgs,",len(days),"days ->",out,file=sys.stderr)
