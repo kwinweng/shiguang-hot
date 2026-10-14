@@ -1,0 +1,5 @@
+site/
+*.log
+.env
+*.pem
+hosts.yml

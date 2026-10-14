@@ -1,0 +1,15 @@
+name: hourly
+on: {schedule: [{cron: "7 * * * *"}], workflow_dispatch: {}}
+permissions: {contents: write, pages: write, id-token: write}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install beautifulsoup4 && TZ=Asia/Shanghai python3 pipeline.py
+      - run: |
+          git config user.name bot; git config user.email bot@users.noreply.github.com
+          git add tg.db && git commit -m "data $(date -u +%FT%H)" && git push || true
+      - uses: actions/upload-pages-artifact@v3
+        with: {path: site}
+      - uses: actions/deploy-pages@v4
