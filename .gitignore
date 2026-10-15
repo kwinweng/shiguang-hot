@@ -3,3 +3,4 @@ site/
 .env
 *.pem
 hosts.yml
+shots/
