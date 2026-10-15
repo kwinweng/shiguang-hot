@@ -55,67 +55,74 @@ def clean(t):
   t=re.sub(r'[ \t]*#(?:\s*#)*\s*([\w\u4e00-\u9fff]+)[ \t]*',r'\1',t)
   t=re.sub(r'[ \t]{2,}',' ',t); t=re.sub(r'\n{3,}','\n\n',t)
   return '\n'.join(l.strip() for l in t.split('\n')).strip()
-def title_body(t):
-  m=re.match(r'【([^】]+)】\s*',t)
-  if m: return m.group(1).replace('#',''),t[m.end():]
-  first,_,rest=t.partition('\n')
-  if len(first)<=60 and rest.strip(): return first.replace('#',''),rest
-  return '',t
-rows=[]
-for r in db.execute("select ch,id,ts,text,links from msg order by ts desc"):
-  t=clean(r[3]); ti,bo=title_body(t)
-  rows.append(dict(ch=r[0],id=r[1],ts=r[2],title=ti,body=bo.strip(),day=r[2][:10],hm=r[2][11:16],hh=r[2][11:13],url=f"https://t.me/{r[0]}/{r[1]}"))
-st={r[0]:dict(ok=r[1],err=r[2]) for r in db.execute("select * from status")}
-KW=["CPI","美联储","加息","降息","关税","停火","战争","GDP","出口","财报","发布","裁员","IPO","AI","苹果","英伟达","OpenAI","谷歌","特朗普","央行","芯片","SpaceX"]
-SKIP=re.compile(r'早餐|要闻|汇总|提醒|日报|收评|收盘')
-def grams(s): s=re.sub(r'[\W_]','',s); return {s[i:i+3] for i in range(len(s)-2)}
-def pick(day):
-  rs=[r for r in rows if r["day"]==day and r["title"] and not SKIP.search(r["title"])]
-  G=[grams(r["title"]+r["body"][:80]) for r in rs]; sc=[]
-  for i,r in enumerate(rs):
-    chs={rs[j]["ch"] for j in range(len(rs)) if len(G[i]&G[j])>=4}-{r["ch"]}
-    sc.append((3*len(chs)+sum(1 for k in KW if k in r["title"]),-i,i))
-  out=[];used=[]
-  for s,_,i in sorted(sc,reverse=True):
-    if s<2 or len(out)>=6: break
-    if any(len(G[i]&G[u])>=5 for u in used): continue
-    used.append(i); out.append(rs[i])
-  return out
 e=html.escape
-URL=re.compile(r'https?://[^\s<>"）】，。]+')
-def rich(t):
-  out=[];p=0
-  for m in URL.finditer(t):
-    out.append(e(t[p:m.start()])); u=m.group(0); out.append(f'<a href="{e(u)}" target="_blank" rel="noopener">{e(u)}</a>'); p=m.end()
-  out.append(e(t[p:])); s=''.join(out)
-  s=re.sub(r'#([\w\u4e00-\u9fff]+)',r'<span class="ht">#\1</span>',s)
-  return ''.join(f'<p>{x.replace(chr(10),"<br>")}</p>' for x in s.split('\n\n') if x.strip())
-COL={"xhqcankao":"#e8590c","tnews365":"#2f9e44","FinanceNewsDaily":"#1c7ed6","CE_Observe":"#ae3ec9"}
-upd=now.strftime("%Y-%m-%d %H:%M"); days=sorted({r["day"] for r in rows},reverse=True)
-CSS=open(os.path.join(D,"style.css")).read(); JS=open(os.path.join(D,"app.js")).read()
-def shell(title,rel,side,main):
-  return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>{e(title)}</title><style>{CSS}</style></head><body>
-<header class="bar"><a class="brand" href="{rel}index.html"><span class="logo">T</span>TG 快讯</a><nav><a href="{rel}index.html">今天</a><a href="{rel}archive/index.html">归档</a></nav><div class="search"><input id="q" type="search" placeholder="搜索标题与正文…" autocomplete="off"></div><div class="upd">最后更新 <b>{upd}</b> 北京时间</div></header>
-<div class="layout"><aside class="side">{side}</aside><main class="main">{main}</main></div><script>{JS}</script></body></html>'''
-def page(day,rel,is_index):
-  rs=[r for r in rows if r["day"]==day]; cnt=collections.Counter(r["ch"] for r in rs)
-  side='<div class="sh">频道</div>'+''.join(f'<label class="ch"><input class="chk" type="checkbox" value="{c}" checked><i style="background:{COL[c]}"></i><span>{CH[c]}</span><em>{cnt.get(c,0)}</em>'+(f'<b class="bad" title="{e(st[c]["err"] or "")}">打不开</b>' if c in st and not st[c]["ok"] else '')+'</label>' for c in CH)
-  side+=f'<div class="cnt">显示 <b id="n">{len(rs)}</b> / {len(rs)} 条</div><div class="sh">归档</div>'+''.join(f'<a class="day{" on" if d==day else ""}" href="{rel}archive/{d}.html">{d}</a>' for d in days[:14])+f'<a class="day" href="{rel}archive/index.html">全部日期 →</a>'
-  hl=pick(day)
-  m=f'<div class="ph"><h1>{"今日快讯" if is_index else "归档"}</h1><span>{day} · {len(rs)} 条</span></div>'
-  if hl: m+='<section class="hl"><div class="hlh">今日重点<small>按跨频道热度与关键词自动挑选</small></div><div class="hlg">'+''.join(f'<a class="hc" href="{r["url"]}" target="_blank" rel="noopener" style="--c:{COL[r["ch"]]}"><span class="src">{CH[r["ch"]]} · {r["hm"]}</span><b>{e(r["title"])}</b></a>' for r in hl)+'</div></section>'
-  cur=None
-  for r in rs:
-    if r["hh"]!=cur: cur=r["hh"]; m+=f'<div class="hr"><span>{cur}:00</span></div>'
-    m+=f'''<article class="it" data-ch="{r['ch']}" style="--c:{COL[r['ch']]}"><div class="meta"><span class="tag">{CH[r['ch']]}</span><time>{r['hm']}</time><a href="{r['url']}" target="_blank" rel="noopener">原帖 ↗</a></div>{f'<h3>{e(r["title"])}</h3>' if r["title"] else ''}<div class="body">{rich(r['body'])}</div><button class="more" hidden>展开全文</button></article>'''
-  if not rs: m+='<p class="empty">今天暂时还没有消息。</p>'
-  m+='<div class="empty" id="none" hidden>没有匹配的消息</div>'
-  return shell(f"TG 快讯 · {day}",rel,side,m)
-out=os.path.join(D,"site");os.makedirs(out+"/archive",exist_ok=True)
-today=now.strftime("%Y-%m-%d")
-open(out+"/index.html","w").write(page(today,"",True))
-for d in days: open(f"{out}/archive/{d}.html","w").write(page(d,"../",False))
-lst=''.join(f'<a class="arow" href="{d}.html"><b>{d}</b><span>{sum(1 for r in rows if r["day"]==d)} 条</span></a>' for d in days)
-open(out+"/archive/index.html","w").write(shell("TG 快讯 · 归档","../",'<div class="sh">说明</div><p class="note">每小时自动抓取 4 个公开频道。</p>',f'<div class="ph"><h1>归档</h1><span>{len(days)} 天</span></div><div class="alist">{lst}</div>'))
-open(out+"/.nojekyll","w").close()
-print("built",len(rows),"msgs,",len(days),"days ->",out,file=sys.stderr)
+CATS={'全球':'国际|美国|俄罗斯|乌克兰|特朗普|以色列|战争|停火|总统|巴基斯坦|印度|联合国','财经':'市场|经济|股|央行|美联储|利率|美元|财报|GDP|CPI|关税|投资','科技':'AI|人工智能|芯片|苹果|手机|英伟达|OpenAI|谷歌|科技|电子|SpaceX'}
+KW=['美联储','降息','关税','停火','战争','GDP','财报','AI','苹果','英伟达','OpenAI','特朗普','央行','芯片']
+rows=[]
+for ch,i,ts,t,raw in db.execute('select ch,id,ts,text,html from msg order by ts desc'):
+  t=clean(t)
+  if not t: continue
+  bold=BeautifulSoup(raw or '', 'html.parser').select_one('b, strong')
+  m=re.match(r'【([^】]+)】',t)
+  bold_title=clean(bold.get_text('')) if bold else ''
+  title=m.group(1) if m else (bold_title if len(bold_title)>=12 and t.startswith(bold_title) else re.split(r'[。！？\n]',t)[0])
+  title=title.strip('【】 ')
+  if len(title)<6: title=re.split(r'[。！？\n]',t)[0]
+  title=title[:86]+('…' if len(title)>86 else '')
+  body=t
+  if t.startswith('【'+title+'】'): body=t[len(title)+2:].strip()
+  elif t.startswith(title): body=t[len(title):].lstrip('。！？\n ')
+  cat=next((k for k,v in CATS.items() if re.search(v,t,re.I)), '综合')
+  rows.append(dict(ch=ch,id=i,ts=ts,text=t,title=title,body=body or t,cat=cat,day=ts[:10],url=f'https://t.me/{ch}/{i}'))
+def grams(t):
+  t=re.sub(r'\W','',t.lower())[:180]
+  return {t[i:i+3] for i in range(len(t)-2)}
+recent=[r for r in rows if datetime.fromisoformat(r['ts'])>=now-timedelta(hours=48) and not re.search(r'早餐|新闻汇总|要闻汇总|日报|收评',r['title'])]
+G=[grams(r['text']) for r in recent]
+for i,r in enumerate(recent):
+  sources={r['ch']}|{recent[j]['ch'] for j in range(len(recent)) if len(G[i]&G[j])>=8}
+  r['sources']=len(sources)
+  r['score']=len(sources)*4+sum(k.lower() in r['text'].lower() for k in KW)+min(len(r['text'])/240,2)
+hot=[]
+for r in sorted(recent,key=lambda r:r['score'],reverse=True):
+  if any(len(grams(r['title'])&grams(x['title']))>=6 for x in hot): continue
+  hot.append(r)
+  if len(hot)==10: break
+upd=now.strftime('%Y-%m-%d %H:%M');days=sorted({r['day'] for r in rows},reverse=True)
+CSS=open(os.path.join(D,'style.css')).read();JS=open(os.path.join(D,'app.js')).read()
+def nav(rel,active):
+  return ''.join(f'<a class="{"active" if key==active else ""}" href="{rel}{path}"><span>{icon}</span>{label}</a>' for key,path,label,icon in [('home','index.html','精选','◈'),('hot','hot.html','热点','↗'),('all','all.html','全部动态','▤'),('archive','archive/index.html','日报','▦')])
+def sidebar(rel):
+  counts=collections.Counter(r['ch'] for r in rows)
+  return '<section class="sidebox"><div class="eyebrow">TRENDING NOW</div><h3>大家都在关注 <span>↗</span></h3>'+''.join(f'<a class="sidehot" href="{r["url"]}" target="_blank" rel="noopener"><b>{i:02}</b><span>{e(r["title"])}</span></a>' for i,r in enumerate(hot[:5],1))+'</section><section class="sidebox"><div class="eyebrow">OUR SOURCES</div><h3>四个视角，一个信息流</h3>'+''.join(f'<div class="channel"><i>{["风","竹","华","电"][i]}</i><span>{name}<small>公开频道 · Telegram</small></span><b>{counts[c]}</b></div>' for i,(c,name) in enumerate(CH.items()))+f'</section><section class="sidebox about"><b>TG HOT / 保持好奇，掌握此刻。</b><p>聚合公开频道资讯，每小时自动更新。<br>让重要的信息，先被看见。</p><p>最后更新：{upd}（北京时间）</p><a href="{rel}archive/index.html">浏览往期日报 ↗</a></section>'
+def shell(title,rel,active,main):
+  return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>{e(title)} · TG HOT</title><style>{CSS}</style></head><body><header><div class="top"><a class="brand" href="{rel}index.html"><i>t<span>g</span></i>TG HOT<span class="brand-note">捕捉世界的脉搏</span></a><nav>{nav(rel,active)}</nav><span class="live"><i></i> 每小时更新</span></div></header><div class="layout"><main>{main}</main><aside>{sidebar(rel)}</aside></div><footer>TG HOT · 信息汇聚，视野更开阔 <span>最后更新：{upd}（北京时间）</span></footer><nav class="bottom">{nav(rel,active)}</nav><script>{JS}</script></body></html>'''
+def heading(kicker,title,desc):
+  return f'<div class="pagehead"><div class="eyebrow">{kicker}</div><h1>{title}<span class="head-dot">.</span></h1><p>{desc}</p></div>'
+def filters():
+  return '<section class="filters"><div class="filterline" data-filter="cat">'+''.join(f'<button class="pill {"selected" if i==0 else ""}" data-value="{v}">{label}</button>' for i,(v,label) in enumerate([('','全部'),('全球','全球视野'),('财经','财经市场'),('科技','科技数码'),('综合','综合资讯')]))+'</div><div class="tools"><label class="search"><span>⌕</span><input id="q" type="search" placeholder="搜索资讯、关键词…" aria-label="搜索全文"></label><select id="channel" aria-label="筛选频道"><option value="">所有频道</option>'+''.join(f'<option value="{c}">{n}</option>' for c,n in CH.items())+'</select></div></section>'
+def card(r,rank=None):
+  body=''.join('<p>'+e(p).replace('\n','<br>')+'</p>' for p in r['body'].split('\n\n') if p.strip())
+  return f'''<article class="news" data-ch="{r['ch']}" data-cat="{r['cat']}">{f'<div class="rank">{rank:02}</div>' if rank else ''}<div class="news-content"><div class="meta"><span class="category">{r['cat']}</span><span>{e(CH[r['ch']])}</span><time datetime="{r['ts']}">{r['ts'][11:16]}</time>{f'<span>{r.get("sources",1)} 个来源</span>' if rank else ''}</div><h2><a href="{r['url']}" target="_blank" rel="noopener">{e(r['title'])}</a></h2><div class="body">{body}</div><div class="cardfoot"><button class="expand" aria-expanded="false">展开全文 ＋</button><a href="{r['url']}" target="_blank" rel="noopener">阅读原文 ↗</a></div></div></article>'''
+def feed(rs,ranked=False):
+  s='';day=None
+  for i,r in enumerate(rs,1):
+    if not ranked and day!=r['day']:
+      day=r['day'];s+=f'<div class="dategroup"><b>{day.replace("-"," / ")}</b><span>实时资讯</span><i></i></div>'
+    s+=card(r,i if ranked else None)
+  return s+'<div id="none" class="empty" hidden>没有匹配的资讯，请尝试其他关键词。</div>'
+def hotspots():
+  return '<section class="hotpanel"><div class="sectionhead"><h2><span class="spark">✳</span> 当前热点</h2><a href="hot.html">查看排行 ↗</a></div>'+''.join(f'<a class="hotitem" href="{r["url"]}" target="_blank" rel="noopener"><span class="number">NO.{i:02}</span><b>{e(r["title"])}</b><em>{"热" if i==1 else "新"}</em></a>' for i,r in enumerate(hot[:3],1))+'<div class="hotnote">过去 48 小时 · 根据关键词与跨频道报道自动聚合</div></section>'
+out=os.path.join(D,'site');os.makedirs(out+'/archive',exist_ok=True)
+def write(path,content):
+  with open(out+'/'+path,'w') as f:f.write(content)
+write('index.html',shell('精选','', 'home',heading('THE WORLD, AT A GLANCE','信息很多，重要的在这里','从 4 个频道发现值得关注的事。保持好奇，不错过每一个变化。')+hotspots()+filters()+'<div class="feedhead"><h2>最新精选</h2><span>按时间排序 · <b id="n"></b> 条资讯</span></div>'+feed(rows[:100])))
+write('all.html',shell('全部动态','','all',heading('LIVE NEWS FEED','世界正在发生','全部频道，完整收录。用分类、频道和关键词找到你关心的信息。')+filters()+'<div class="feedhead"><h2>全部动态</h2><span><b id="n"></b> 条资讯</span></div>'+feed(rows)))
+write('hot.html',shell('热点排行','','hot',heading('THE TRENDING TEN','热点，值得多看一眼','过去 48 小时 Top 10 · 综合关键词、内容长度与跨频道报道排序。')+feed(hot,True)))
+for day in days:
+  rs=[r for r in rows if r['day']==day]
+  write(f'archive/{day}.html',shell(day+' 日报','../','archive',heading('DAILY DIGEST',day+' 日报',f'当天共 {len(rs)} 条资讯 · 按北京时间归档')+filters()+feed(rs)))
+lst=''.join(f'<a class="archive-row" href="{d}.html"><span class="archive-icon">▦</span><div><b>{d}</b><small>每日资讯汇总</small></div><span>{sum(r["day"]==d for r in rows)} 条资讯 ↗</span></a>' for d in days)
+write('archive/index.html',shell('日报存档','../','archive',heading('THE DAILY ARCHIVE','每一天，都有迹可循',f'{len(days)} 份日报 · 回看世界变化的每一个切片')+lst))
+write('.nojekyll','')
+print('built',len(rows),'msgs,',len(days),'days ->',out,file=sys.stderr)

@@ -1,3 +1,52 @@
-document.querySelectorAll('.it').forEach(a=>{const b=a.querySelector('.body'),m=a.querySelector('.more');if(b.scrollHeight>b.clientHeight+170){b.classList.add('clamp');m.hidden=false;m.onclick=()=>{const c=b.classList.toggle('clamp');m.textContent=c?'展开全文':'收起'}}});
-const q=document.getElementById('q');function f(){const on=[...document.querySelectorAll('.chk:checked')].map(e=>e.value),s=(q.value||'').toLowerCase();let n=0;document.querySelectorAll('.it').forEach(e=>{const v=on.includes(e.dataset.ch)&&e.textContent.toLowerCase().includes(s);e.hidden=!v;n+=v});document.querySelectorAll('.hr').forEach(h=>{let x=h.nextElementSibling,any=false;while(x&&x.classList.contains('it')){if(!x.hidden)any=true;x=x.nextElementSibling}h.hidden=!any});const N=document.getElementById('n');if(N)N.textContent=n;const z=document.getElementById('none');if(z)z.hidden=n>0||!document.querySelector('.it')}
-document.querySelectorAll('.chk').forEach(e=>e.onchange=f);if(q)q.oninput=f;
+const articles = [...document.querySelectorAll('.news')];
+const search = document.querySelector('#q');
+const channel = document.querySelector('#channel');
+let category = '';
+function filterNews() {
+  const query = (search?.value || '').trim().toLocaleLowerCase();
+  let count = 0;
+  articles.forEach(article => {
+    article.hidden = !!((category && article.dataset.cat !== category) ||
+      (channel?.value && article.dataset.ch !== channel.value) ||
+      (query && !article.textContent.toLocaleLowerCase().includes(query)));
+    if (!article.hidden) count++;
+  });
+  document.querySelectorAll('.dategroup').forEach(group => {
+    let next = group.nextElementSibling;
+    let visible = false;
+    while (next && !next.classList.contains('dategroup')) {
+      if (next.classList.contains('news') && !next.hidden) visible = true;
+      next = next.nextElementSibling;
+    }
+    group.hidden = !visible;
+  });
+  const counter = document.querySelector('#n');
+  if (counter) counter.textContent = count;
+  const empty = document.querySelector('#none');
+  if (empty) empty.hidden = count > 0;
+}
+document.querySelectorAll('.pill').forEach(button => button.addEventListener('click', () => {
+  category = button.dataset.value;
+  document.querySelectorAll('.pill').forEach(pill => pill.classList.toggle('selected', pill === button));
+  filterNews();
+}));
+search?.addEventListener('input', filterNews);
+channel?.addEventListener('change', filterNews);
+articles.forEach(article => {
+  const button = article.querySelector('.expand');
+  button.addEventListener('click', () => {
+    const expanded = article.classList.toggle('expanded');
+    button.setAttribute('aria-expanded', expanded);
+    button.textContent = expanded ? '收起全文 −' : '展开全文 ＋';
+  });
+});
+function updateTimes() {
+  document.querySelectorAll('time[datetime]').forEach(time => {
+    const minutes = Math.max(0, Math.floor((Date.now() - new Date(time.dateTime)) / 60000));
+    time.title = new Date(time.dateTime).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}) + '（北京时间）';
+    time.textContent = minutes < 1 ? '刚刚' : minutes < 60 ? `${minutes} 分钟前` : minutes < 1440 ? `${Math.floor(minutes / 60)} 小时前` : `${Math.floor(minutes / 1440)} 天前`;
+  });
+}
+filterNews();
+updateTimes();
+setInterval(updateTimes, 60000);
