@@ -31,3 +31,16 @@ button,.bottom a,.top nav a{transition:transform .18s ease,background .18s ease,
  header{top:8px;margin:8px 12px 0;border-radius:23px}.top{height:66px;padding:0 15px}.brand{gap:10px}.brand-mark{width:37px;height:37px}.brand-name{font-size:22px;letter-spacing:2px}.live{font-size:9px}.layout{padding:28px 18px 30px}.pagehead h1{font-size:25px}.pagehead p{font-size:12px}.hotpanel{border-radius:23px;padding:16px 17px 14px}.hotitem{padding:10px 0}.hotitem b{font-size:12px}.hotnote{font-size:10px}.pill{padding:8px 11px;font-size:10px}.filterline{gap:6px}.search,select{border-radius:15px}.search input{height:40px}.news{border-radius:22px;padding:17px 17px 14px}.news h2{font-size:15px}.body{font-size:12px}.bottom{display:flex;bottom:calc(14px + env(safe-area-inset-bottom));left:20px;right:20px;border-radius:30px;padding:8px;gap:4px;box-shadow:0 12px 35px rgba(15,49,53,.22),inset 0 1px 0 var(--shine),inset 0 -1px 1px rgba(62,114,107,.15)}.bottom a{flex:1;min-width:0;border-radius:23px;padding:6px 0;gap:3px;font-size:10px}.bottom a span{font-size:20px}.bottom a.active{background:var(--soft);box-shadow:inset 0 1px 0 var(--shine)}footer{padding-bottom:125px}.archive-row{border-radius:20px}
 }
 @media(prefers-reduced-motion:reduce){button,.bottom a,.top nav a{transition:none}}
+
+/* Consistent navigation symbols and liquid glass selection. */
+.nav-icon svg{display:block;width:24px;height:24px}
+@media(max-width:760px){
+ .bottom a{min-height:52px;justify-content:center;gap:4px;position:relative}
+ .bottom a .nav-icon{display:block;line-height:24px}
+ .bottom a.active{background:linear-gradient(145deg,rgba(255,255,255,.58),rgba(133,191,179,.3));box-shadow:inset 0 1px 1px rgba(255,255,255,.85),inset 0 -1px 1px rgba(45,103,99,.18),0 3px 10px rgba(27,84,79,.12)}
+ .bottom a.active svg{filter:drop-shadow(0 1px 3px rgba(43,127,112,.3));stroke-width:2}
+ .bottom a.active .nav-icon svg>path:first-child{fill:color-mix(in srgb,var(--accent) 18%,transparent)}
+}
+@media(max-width:760px) and (prefers-color-scheme:dark){
+ .bottom a.active{background:linear-gradient(145deg,rgba(160,221,205,.24),rgba(89,156,147,.13));box-shadow:inset 0 1px 1px rgba(206,248,233,.4),inset 0 -1px 1px rgba(99,171,159,.18),0 3px 12px rgba(0,12,15,.2)}
+}
