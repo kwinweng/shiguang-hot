@@ -50,3 +50,16 @@ function updateTimes() {
 filterNews();
 updateTimes();
 setInterval(updateTimes, 60000);
+const lightbox = document.querySelector('.lightbox');
+let photoTrigger;
+document.querySelectorAll('.photo').forEach(button => button.addEventListener('click', () => {
+  photoTrigger = button;
+  lightbox.querySelector('img').src = button.dataset.image;
+  lightbox.querySelector('img').alt = button.querySelector('img').alt;
+  lightbox.showModal();
+}));
+lightbox?.querySelector('.lightbox-close').addEventListener('click', () => lightbox.close());
+lightbox?.addEventListener('click', event => {
+  if (event.target === lightbox) lightbox.close();
+});
+lightbox?.addEventListener('close', () => photoTrigger?.focus({preventScroll: true}));

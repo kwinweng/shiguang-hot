@@ -44,3 +44,24 @@ button,.bottom a,.top nav a{transition:transform .18s ease,background .18s ease,
 @media(max-width:760px) and (prefers-color-scheme:dark){
  .bottom a.active{background:linear-gradient(145deg,rgba(160,221,205,.24),rgba(89,156,147,.13));box-shadow:inset 0 1px 1px rgba(206,248,233,.4),inset 0 -1px 1px rgba(99,171,159,.18),0 3px 12px rgba(0,12,15,.2)}
 }
+/* Channel identities share the ink-teal palette with distinct accent hues. */
+[data-ch="xhqcankao"]{--channel-color:#397d75}
+[data-ch="tnews365"]{--channel-color:#5479a0}
+[data-ch="FinanceNewsDaily"]{--channel-color:#a47b3e}
+[data-ch="CE_Observe"]{--channel-color:#8d6da5}
+[data-ch="freechinese"]{--channel-color:#bb646e}
+.news[data-ch]{border-left:3px solid var(--channel-color)}
+.channel[data-ch] i{color:var(--channel-color);background:color-mix(in srgb,var(--channel-color) 13%,var(--card))}
+.gallery{display:grid;gap:8px;margin-top:16px;min-width:0}
+.gallery.multiple{grid-template-columns:repeat(2,minmax(0,1fr))}
+.gallery.multiple:has(.photo:last-child:nth-child(3)){grid-template-columns:repeat(3,minmax(0,1fr))}
+.photo{padding:0;display:block;overflow:hidden;border-radius:18px;border:1px solid rgba(255,255,255,.7);background:var(--soft);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 5px 18px rgba(18,62,69,.1);min-width:0;cursor:zoom-in}
+.photo img{display:block;width:100%;height:100%;object-fit:cover;aspect-ratio:1}
+.single img{aspect-ratio:auto;max-height:520px;object-fit:contain}
+.hot-thumb{width:48px;height:42px;object-fit:cover;border-radius:9px;flex:none;align-self:center}
+.lightbox{max-width:96vw;max-height:94dvh;padding:12px;border-radius:26px;border:1px solid rgba(255,255,255,.65);background:rgba(26,56,61,.6);backdrop-filter:blur(24px) saturate(140%);box-shadow:0 24px 90px #0006;overflow:visible}
+.lightbox::backdrop{background:rgba(9,25,29,.75);backdrop-filter:blur(12px)}
+.lightbox>img{display:block;max-width:calc(96vw - 26px);max-height:calc(94dvh - 26px);object-fit:contain;border-radius:16px}
+.lightbox-close{position:absolute;right:20px;top:20px;width:38px;height:38px;border-radius:50%;border:1px solid #fff8;background:#143e45b3;color:white;font-size:26px;backdrop-filter:blur(15px)}
+body:has(.lightbox[open]){overflow:hidden}
+@media(max-width:600px){.gallery{gap:5px}.photo{border-radius:12px}.single img{max-height:380px}.hot-thumb{width:38px;height:36px}}

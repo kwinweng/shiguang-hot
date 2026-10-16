@@ -4,3 +4,5 @@ site/
 *.pem
 hosts.yml
 shots/
+media/
+__pycache__/
