@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="jade" x1="7" y1="3" x2="58" y2="64" gradientUnits="userSpaceOnUse"><stop stop-color="#367b7b"/><stop offset="1" stop-color="#102f3b"/></linearGradient>
+    <linearGradient id="light" x1="16" y1="45" x2="48" y2="14" gradientUnits="userSpaceOnUse"><stop stop-color="#91c9bc"/><stop offset="1" stop-color="#eff5d9"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#f5dca2" stop-opacity=".55"/><stop offset="1" stop-color="#f5dca2" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect x="1" y="1" width="62" height="62" rx="19" fill="url(#jade)"/>
+  <rect x="2" y="2" width="60" height="60" rx="18" stroke="#c3e7dc" stroke-opacity=".3"/>
+  <circle cx="32" cy="32" r="24" stroke="#b5dcd1" stroke-opacity=".12"/>
+  <circle cx="46" cy="19" r="16" fill="url(#glow)"/>
+  <path d="M40 15.5a18.5 18.5 0 1 0 10.5 18" stroke="url(#light)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M32 20v13l-8 7" stroke="url(#light)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="33" r="2.7" fill="#f6dda5"/>
+  <circle cx="47" cy="20" r="4.5" fill="#f6dda5"/>
+  <path d="M48 9v4m-2-2h4" stroke="#e3eed5" stroke-width="1.2" stroke-linecap="round"/>
+  <circle cx="13" cy="38" r="1" fill="#d8ecda"/>
+</svg>

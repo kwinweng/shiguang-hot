@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """增量抓取 4 个 TG 公开频道 -> SQLite -> 静态站点 site/"""
-import subprocess,sqlite3,json,re,html,os,sys,collections
+import subprocess,sqlite3,json,re,html,os,sys,collections,shutil
 from datetime import datetime,timezone,timedelta
 from bs4 import BeautifulSoup
 BJ=timezone(timedelta(hours=8)); D=os.path.dirname(os.path.abspath(__file__))
@@ -90,13 +90,14 @@ for r in sorted(recent,key=lambda r:r['score'],reverse=True):
   if len(hot)==10: break
 upd=now.strftime('%Y-%m-%d %H:%M');days=sorted({r['day'] for r in rows},reverse=True)
 CSS=open(os.path.join(D,'style.css')).read();JS=open(os.path.join(D,'app.js')).read()
+LOGO=open(os.path.join(D,'assets','favicon.svg')).read().replace('<svg ', '<svg class="brand-mark" aria-hidden="true" ' )
 def nav(rel,active):
   return ''.join(f'<a class="{"active" if key==active else ""}" href="{rel}{path}"><span>{icon}</span>{label}</a>' for key,path,label,icon in [('home','index.html','精选','◈'),('hot','hot.html','热点','↗'),('all','all.html','全部动态','▤'),('archive','archive/index.html','日报','▦')])
 def sidebar(rel):
   counts=collections.Counter(r['ch'] for r in rows)
-  return '<section class="sidebox"><div class="eyebrow">TRENDING NOW</div><h3>大家都在关注 <span>↗</span></h3>'+''.join(f'<a class="sidehot" href="{r["url"]}" target="_blank" rel="noopener"><b>{i:02}</b><span>{e(r["title"])}</span></a>' for i,r in enumerate(hot[:5],1))+'</section><section class="sidebox"><div class="eyebrow">OUR SOURCES</div><h3>四个视角，一个信息流</h3>'+''.join(f'<div class="channel"><i>{["风","竹","华","电"][i]}</i><span>{name}<small>公开频道 · Telegram</small></span><b>{counts[c]}</b></div>' for i,(c,name) in enumerate(CH.items()))+f'</section><section class="sidebox about"><b>TG HOT / 保持好奇，掌握此刻。</b><p>聚合公开频道资讯，每小时自动更新。<br>让重要的信息，先被看见。</p><p>最后更新：{upd}（北京时间）</p><a href="{rel}archive/index.html">浏览往期日报 ↗</a></section>'
+  return '<section class="sidebox"><div class="eyebrow">TRENDING NOW</div><h3>大家都在关注 <span>↗</span></h3>'+''.join(f'<a class="sidehot" href="{r["url"]}" target="_blank" rel="noopener"><b>{i:02}</b><span>{e(r["title"])}</span></a>' for i,r in enumerate(hot[:5],1))+'</section><section class="sidebox"><div class="eyebrow">OUR SOURCES</div><h3>四个视角，一个信息流</h3>'+''.join(f'<div class="channel"><i>{["风","竹","华","电"][i]}</i><span>{name}<small>公开频道 · Telegram</small></span><b>{counts[c]}</b></div>' for i,(c,name) in enumerate(CH.items()))+f'</section><section class="sidebox about"><b>拾光热点 / 保持好奇，掌握此刻。</b><p>聚合公开频道资讯，每小时自动更新。<br>让重要的信息，先被看见。</p><p>最后更新：{upd}（北京时间）</p><a href="{rel}archive/index.html">浏览往期日报 ↗</a></section>'
 def shell(title,rel,active,main):
-  return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>{e(title)} · TG HOT</title><style>{CSS}</style></head><body><header><div class="top"><a class="brand" href="{rel}index.html"><i>t<span>g</span></i>TG HOT<span class="brand-note">捕捉世界的脉搏</span></a><nav>{nav(rel,active)}</nav><span class="live"><i></i> 每小时更新</span></div></header><div class="layout"><main>{main}</main><aside>{sidebar(rel)}</aside></div><footer>TG HOT · 信息汇聚，视野更开阔 <span>最后更新：{upd}（北京时间）</span></footer><nav class="bottom">{nav(rel,active)}</nav><script>{JS}</script></body></html>'''
+  return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>{e(title)} · 拾光热点</title><meta name="theme-color" content="#123e45"><link rel="icon" href="{rel}favicon.ico" sizes="32x32"><link rel="icon" href="{rel}favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png" sizes="180x180"><link rel="manifest" href="{rel}manifest.webmanifest"><style>{CSS}</style></head><body><header><div class="top"><a class="brand" href="{rel}index.html">{LOGO}<span class="brand-name">拾光热点</span><span class="brand-note">拾起时光里的重要瞬间</span></a><nav>{nav(rel,active)}</nav><span class="live"><i></i> 每小时更新</span></div></header><div class="layout"><main>{main}</main><aside>{sidebar(rel)}</aside></div><footer>拾光热点 · 信息汇聚，视野更开阔 <span>最后更新：{upd}（北京时间）</span></footer><nav class="bottom">{nav(rel,active)}</nav><script>{JS}</script></body></html>'''
 def heading(kicker,title,desc):
   return f'<div class="pagehead"><div class="eyebrow">{kicker}</div><h1>{title}<span class="head-dot">.</span></h1><p>{desc}</p></div>'
 def filters():
@@ -114,6 +115,8 @@ def feed(rs,ranked=False):
 def hotspots():
   return '<section class="hotpanel"><div class="sectionhead"><h2><span class="spark">✳</span> 当前热点</h2><a href="hot.html">查看排行 ↗</a></div>'+''.join(f'<a class="hotitem" href="{r["url"]}" target="_blank" rel="noopener"><span class="number">NO.{i:02}</span><b>{e(r["title"])}</b><em>{"热" if i==1 else "新"}</em></a>' for i,r in enumerate(hot[:3],1))+'<div class="hotnote">过去 48 小时 · 根据关键词与跨频道报道自动聚合</div></section>'
 out=os.path.join(D,'site');os.makedirs(out+'/archive',exist_ok=True)
+for asset in ('favicon.svg','favicon.ico','favicon-32x32.png','apple-touch-icon.png','icon-192.png','icon-512.png','manifest.webmanifest'):
+  shutil.copyfile(os.path.join(D,'assets',asset),os.path.join(out,asset))
 def write(path,content):
   with open(out+'/'+path,'w') as f:f.write(content)
 write('index.html',shell('精选','', 'home',heading('THE WORLD, AT A GLANCE','信息很多，重要的在这里','从 4 个频道发现值得关注的事。保持好奇，不错过每一个变化。')+hotspots()+filters()+'<div class="feedhead"><h2>最新精选</h2><span>按时间排序 · <b id="n"></b> 条资讯</span></div>'+feed(rows[:100])))
