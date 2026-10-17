@@ -2,7 +2,7 @@
   "nav": {"tabs": {"private": ["mail", "daily", "home", "news", "x"], "public": ["favorites", "daily", "home", "news", "x"]}, "favorites": {"enabled": true, "label": "收藏", "path": "favorites.html", "column": true}},
   "apps": [
     {"id": "movies", "name": "影库", "url": "https://movies.kwinweng.com", "icon": "film", "note": "拾光影库", "visibility": "public", "order": 10},
-    {"id": "lingji", "name": "灵记", "url": "#lingji-todo", "icon": "note", "note": "灵记（地址待定）", "visibility": "private", "order": 20}
+    {"id": "lingji", "name": "灵记", "url": "https://lingji.kwinweng.com", "icon": "note", "note": "个人知识与学习工作台", "visibility": "private", "order": 20}
   ],
   "categories": {
     "全球": "国际|美国|俄罗斯|乌克兰|特朗普|以色列|战争|停火|总统|巴基斯坦|印度|联合国",
