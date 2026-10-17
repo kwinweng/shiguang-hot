@@ -3,7 +3,7 @@ import json, os, tempfile, unittest
 from pathlib import Path
 from unittest.mock import patch
 from PIL import Image
-from shiguang.config import ROOT
+from shiguang.config import ROOT, prepare
 from shiguang.ingest import feeds
 from shiguang.site import build as sitebuild, pages
 
@@ -13,7 +13,8 @@ class FeedTests(unittest.TestCase):
         source=next(s for s in cfg['sources'] if s['id']=='hot-daily')
         self.assertEqual(source['type'],'inbox')
         self.assertEqual(source['visibility'],'public')
-        self.assertEqual(source['nav'],dict(enabled=True,order=26))
+        self.assertEqual(source['order'],0)
+        self.assertEqual(cfg['hot']['source'],'hot-daily')
         self.assertEqual(source['adapter'],'native')
 
     def setUp(self):
@@ -96,6 +97,40 @@ class FeedTests(unittest.TestCase):
             self.assertEqual(feeds.load_issues(source,True)[0][0]['title'],'local')
             self.assertEqual(feeds.load_issues(source,False)[0][0]['title'],'public')
 
+class ConfigTests(unittest.TestCase):
+    def test_old_field_names_still_work(self):
+        cfg=prepare(dict(categories={'科技':'AI'},sources=[dict(id='a',type='inbox',name='A',visibility='public',daily_order=7,home_weight=2,home_cap=3,color='#123456',nav=dict(enabled=True,order=1))]))
+        source=cfg['sources'][0]
+        self.assertEqual(cfg['topics'],{'科技':'AI'})
+        self.assertEqual((source['order'],source['home']),(7,dict(weight=2,cap=3)))
+        self.assertNotIn('color',source)
+
+    def test_defaults_and_bad_values(self):
+        cfg=prepare(dict(topics={},sources=[dict(id='t',type='telegram',channel='t',name='T',visibility='public'),dict(id='i',type='inbox',name='I',visibility='public')]))
+        self.assertEqual([(s['order'],s['home']['cap']) for s in cfg['sources']],[(50,4),(45,8)])
+        for bad in (dict(home=dict(cap=-1)),dict(order='1'),dict(id='columns')):
+            with self.assertRaises(ValueError):
+                prepare(dict(topics={},sources=[dict(dict(id='i',type='inbox',name='I',visibility='public'),**bad)]))
+        with self.assertRaises(ValueError):
+            prepare(dict(topics={},hot=dict(source='missing'),sources=[]))
+
+    def test_topics_for_every_source(self):
+        from shiguang.enrich.topics import assign
+        from shiguang.model import Item
+        topics=json.loads((ROOT/'sources.json').read_text())['topics']
+        make=lambda title,category='': Item(source_id='s',filter_key='s',category=category,title=title,body='',day='2026-10-17',ts='2026-10-17')
+        items=assign([make('OpenAI 发布新模型'),make('Thailand said yes'),make('一个工具'),make('自定','财经')],topics,'开发者')
+        self.assertEqual([i.category for i in items],['AI','开发者','开发者','财经'])
+        self.assertEqual(assign([make('Thailand said yes')],topics)[0].topic,'')  # 其他 is never shown on a card
+
+    def test_legacy_feeds_module(self):
+        import importlib, sys
+        sys.path.insert(0,str(ROOT))
+        legacy=importlib.import_module('feeds')
+        source=next(s for s in legacy.config()['sources'] if s['id']=='x')
+        self.assertTrue(source['nav']['enabled']); self.assertEqual(source['daily_order'],source['order'])
+        self.assertIs(legacy.validate,feeds.validate)
+
 class PrivacyBuildTests(unittest.TestCase):
     def test_cross_source_home_daily_and_fixed_tabs(self):
         from bs4 import BeautifulSoup
@@ -112,8 +147,8 @@ class PrivacyBuildTests(unittest.TestCase):
             # Future sources and dates enter without renderer changes; blocks alone count as data.
             issues['future'].append((dict(date='2026-10-16',sections=[],blocks=[dict(type='oneliner',items=['older future'])]),root))
             sources.append(dict(id='tg',channel='tg',type='telegram',name='TG',visibility='public',icon='all',color='#123456',nav=dict(enabled=False),home_cap=2))
-            rows=[dict(ch='tg',title='TG '+str(n),body='body',images=[],ts='2026-10-17 10:00',day='2026-10-17',cat='综合',url='') for n in range(20)]
-            cfg=dict(categories={},sources=sources,nav=dict(tabs=dict(public=['favorites','daily','home','news','x'],private=['mail','daily','home','news','x'])))
+            rows=[dict(ch='tg',title='TG '+str(n),body='body',images=[],ts='2026-10-17 10:00',day='2026-10-17',cat='其他',url='') for n in range(20)]
+            cfg=prepare(dict(categories={},sources=sources,hot=dict(source='hot-daily')))
             with patch.object(pages,'ROOT',root),patch.object(pages,'WEB',root),patch.object(sitebuild,'WEB',root),patch.object(pages,'config',return_value=cfg),patch.object(pages,'load_issues',side_effect=lambda source,local: issues.get(source['id'],[])),patch.object(sitebuild,'load_issues',side_effect=lambda source,local: issues.get(source['id'],[])):
                 for mode in ('private','public'):
                     target=root/mode
@@ -122,12 +157,15 @@ class PrivacyBuildTests(unittest.TestCase):
                     home=BeautifulSoup((target/'index.html').read_text(),'html.parser')
                     expected=set(issues)|{'tg'}
                     if mode=='public': expected.remove('mail')
-                    badges=home.select('article [data-source]')
+                    badges=home.select('article:not([data-more]) [data-source]')
+                    # Cards beyond each source's cap stay on the page for filtering, hidden.
+                    self.assertTrue(all(a.has_attr('hidden') for a in home.select('article[data-more]')))
+                    self.assertEqual(len(home.select('article[data-more][data-ch="tg"]')),18)
                     self.assertEqual({b['data-source'] for b in badges},expected)
                     for source in expected: self.assertEqual(sum(b['data-source']==source for b in badges),2)
                     self.assertEqual(home.select_one('article [data-source]')['data-source'],'future')
                     # 「光」: the tab bar holds words only, home in the middle.
-                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['邮件' if mode=='private' else '收藏','日报','首页','资讯','推特爆款'])
+                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['收藏','日报','首页','热点','栏目'])
                     self.assertIsNone(home.select_one('nav.bottom svg'))
                     self.assertTrue(home.select('article button.bookmark[aria-pressed="false"][aria-label="收藏"]'))
                     favorites=BeautifulSoup((target/'favorites.html').read_text(),'html.parser')
@@ -135,13 +173,27 @@ class PrivacyBuildTests(unittest.TestCase):
                     self.assertFalse(favorites.select('[data-source]'))
                     self.assertEqual(favorites.body['data-bookmark-scope'],mode)
                     self.assertIn('还没有收藏',favorites.get_text())
-                    self.assertIsNotNone(home.select_one('#more-nav a[href="all.html"]'))
-                    self.assertIsNotNone(home.select_one('.column-row a[href="favorites.html"]'))
+                    self.assertIsNotNone(home.select_one('#more-nav a[href="columns.html"]'))
+                    self.assertFalse(home.select('#more-nav a[href="tg/index.html"]'))
+                    # 栏目 lists every issue source except the one shown on 热点, then the channels.
+                    columns=BeautifulSoup((target/'columns.html').read_text(),'html.parser')
+                    self.assertEqual([a['href'] for a in columns.select('a.column-entry')],
+                                     [id+'/index.html' for id in issues if id in expected and id!='hot-daily']+['index.html?source=tg'])
+                    hot=BeautifulSoup((target/'hot.html').read_text(),'html.parser')
+                    self.assertIn('hot-daily summary',hot.get_text())
+                    self.assertIn('url=../hot.html',(target/'hot-daily/index.html').read_text())
+                    self.assertIn('url=index.html"',(target/'all.html').read_text())
+                    self.assertIn('url=../index.html?source=tg"',(target/'tg/index.html').read_text())
+                    self.assertEqual(BeautifulSoup((target/'x/index.html').read_text(),'html.parser').select_one('nav.bottom a.active').get_text(),'栏目')
                     self.assertEqual(home.select_one('nav.bottom a.home-slot')['aria-current'],'page')
                     day=BeautifulSoup((target/'archive/2026-10-17.html').read_text(),'html.parser')
                     ordered=[s['data-source'] for s in day.select('section.digest-source[data-source]')]
                     self.assertEqual(ordered,[id for id in issues if id in expected])
-                    self.assertIn('TG 资讯',day.get_text())
+                    self.assertIn('TG 频道',day.get_text())
+                    # The digest keeps each issue short and links to the whole issue.
+                    world=day.select_one('section[data-source="world"]')
+                    self.assertEqual(len(world.select('article')),3)
+                    self.assertEqual(world.select_one('.more-link a')['href'],'../world/2026-10-17.html')
                     self.assertIn('older future',(target/'archive/2026-10-16.html').read_text())
                     self.assertIn('hot-daily summary',(target/'archive/index.html').read_text())
                     if mode=='public': self.assertFalse((target/'mail').exists())
@@ -154,7 +206,7 @@ class PrivacyBuildTests(unittest.TestCase):
             (root/'style.css').write_text('');(root/'app.js').write_text('')
             target=root/'site';(target/'mail').mkdir(parents=True);(target/'mail'/'private.html').write_text('private')
             sources=[dict(id=id,type='inbox',name=name,visibility=visibility,icon='all',color='#1f6fd1',nav={'enabled':True}) for id,name,visibility in [('mail','邮件精华','private'),('world','环球要闻','public')]]
-            cfg=dict(categories={},sources=sources)
+            cfg=prepare(dict(categories={},sources=sources))
             secret=dict(schema='shiguang.feed/1',source='mail',date='2026-10-17',blocks=[],sections=[dict(title='section',items=[dict(title='unique private story title for leak check',body='private body')])])
             with patch.object(pages,'ROOT',root),patch.object(pages,'WEB',root),patch.object(sitebuild,'WEB',root),patch.object(pages,'config',return_value=cfg),patch.dict(os.environ,{'SITE_MODE':'public','MAIL_DIGEST':'0','SITE_OUT':str(target)}):
                 only_mail=lambda source,local: [(secret,root)] if source['id']=='mail' else []

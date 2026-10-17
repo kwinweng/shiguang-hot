@@ -192,9 +192,12 @@
 
   function filterNews() {
     const query = (search?.value || '').trim().toLocaleLowerCase();
+    // Cards marked data-more only serve filters: the unfiltered stream stays the ranked one.
+    const filtering = !!(category || channel?.value || query);
     let shown = 0;
     for (const article of articles) {
-      article.hidden = !!((category && article.dataset.cat !== category) ||
+      article.hidden = !!(('more' in article.dataset && !filtering) ||
+        (category && article.dataset.cat !== category) ||
         (channel?.value && article.dataset.ch !== channel.value) ||
         (query && !article.textContent.toLocaleLowerCase().includes(query)));
       if (!article.hidden) shown++;
@@ -221,6 +224,21 @@
   let typing = 0;
   search?.addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(filterNews, 120); });
   channel?.addEventListener('change', () => { filterNews(); revealResults(); });
+  // Other pages link to a filtered home: index.html?source=<channel or column id>&topic=<topic>.
+  const wanted = new URLSearchParams(location.search);
+  if (channel && wanted.get('source') && [...channel.options].some(option => option.value === wanted.get('source'))) {
+    channel.value = wanted.get('source');
+    filterNews();
+  }
+  const wantedTopic = wanted.get('topic') && $$('.filters .pill').find(chip => chip.dataset.value === wanted.get('topic'));
+  if (wantedTopic) {
+    category = wantedTopic.dataset.value;
+    $$('.filters .pill').forEach(other => {
+      other.classList.toggle('selected', other === wantedTopic);
+      other.setAttribute('aria-pressed', String(other === wantedTopic));
+    });
+    filterNews();
+  }
 
   // ---------- Expanding cards ----------
   // "展开全文" only appears when the clamped text really hides something.
@@ -394,7 +412,7 @@
     if (search) {
       $('.searchline').scrollIntoView({block: 'start', behavior: reduced.matches ? 'auto' : 'smooth'});
       search.focus({preventScroll: true});
-    } else location.href = $('.brand').getAttribute('href').replace('index.html', 'all.html') + '#q';
+    } else location.href = $('.g-topbar__brand').getAttribute('href') + '#q';
   });
   if (location.hash === '#q' && search) search.focus();
 

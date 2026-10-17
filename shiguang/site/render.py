@@ -28,7 +28,7 @@ class Site:
     favorites: dict
     private: bool
     now: datetime
-    categories: list         # configured topic names, plus 综合
+    topics: list             # configured topic names, then 其他
     assets: dict             # css / js / version file names
     is_photo: Callable = lambda path: False   # site-relative image path -> bool
 
@@ -42,6 +42,7 @@ class Page:
     site: Site
     rel: str                 # prefix back to the site root: '' or '../'
     active: str              # nav key of this page
+    tab: str = ''            # bottom-bar slot to mark, when it differs from `active` (a source page sits under 栏目)
 
     @property
     def section(self):
@@ -49,14 +50,14 @@ class Page:
         source = self.site.sources.get(self.active)
         if source:
             return source.get('icon', 'all')
-        return {'daily': 'archive', 'news': 'hot', 'favorites': 'bookmark'}.get(self.active, self.active)
+        return {'daily': 'archive', 'hot': 'hot', 'favorites': 'bookmark', 'columns': 'all'}.get(self.active, self.active)
 
     def url(self, path):
         """Site-root-relative path -> link from this page. External URLs pass through."""
         return path if re.match(r'https?://', path) else self.rel + path
 
 
-SLOT_LABELS = {'mail': '邮件', 'all': '全部', 'daily': '日报', 'home': '首页', 'news': '资讯', 'x': '推特爆款'}
+SLOT_LABELS = {'favorites': '收藏', 'daily': '日报', 'home': '首页', 'hot': '热点', 'columns': '栏目'}
 BLOCK_TITLES = {'oneliner': '一句话速览', 'markets': '市场看板', 'chart': '一张图', 'tomorrow': '明日看点'}
 EXTERNAL = 'target="_blank" rel="noopener noreferrer"'
 
@@ -121,10 +122,11 @@ def card_media(page, item):
     return 'side' if page.site.is_photo(images[0]) else 'wide'
 
 
-def card(page, item, kind=None, reading=False, rank=None):
+def card(page, item, kind=None, reading=False, rank=None, more=False):
     """One news item as a glass card (`g-card`); long mail reading goes on paper (`g-sheet`).
 
     kind: hero | side | wide | multi | text (derived from the images when omitted).
+    more: a card kept for filtering only; hidden until a topic, source or search is chosen.
     """
     source = page.site.sources[item.source_id]
     kind = kind or card_media(page, item)
@@ -163,60 +165,66 @@ def card(page, item, kind=None, reading=False, rank=None):
     original = (f'<a class="g-btn g-btn--text" href="{E(item.url)}" {EXTERNAL}><span>阅读原文</span>{icon("external")}</a>'
                 if item.url else '')
 
-    return (f'<article class="{surface} card news card--{kind}" data-cat="{E(item.category)}" data-ch="{E(item.filter_key)}">'
-            f'<div class="g-card__label"><span class="g-card__who">{label}</span>{time_tag(page, item)}</div>'
+    return (f'<article class="{surface} card news card--{kind}" data-cat="{E(item.category)}" data-ch="{E(item.filter_key)}"'
+            + (' data-more hidden>' if more else '>')
+            + f'<div class="g-card__label"><span class="g-card__who">{label}</span>{time_tag(page, item)}</div>'
             f'<h2 class="card__title">{title}</h2>'
             f'{body}{media}'
             f'<div class="card__actions">{expand}{original}{bookmark_button(item, source)}</div>'
             f'</article>')
 
 
-def cards(page, items):
-    return ''.join(card(page, item) for item in items)
+def cards(page, items, more=False):
+    return ''.join(card(page, item, more=more) for item in items)
 
 
 def ranked(page, items):
-    """The 资讯 ranking. The order is the information, so each card carries its ordinal in `ink-3`."""
+    """The live ranking on 热点. The order is the information, so each card carries its ordinal in `ink-3`."""
     return '<ol class="ranked">' + ''.join(f'<li>{card(page, item, rank=n)}</li>' for n, item in enumerate(items, 1)) + '</ol>'
 
 
 # ---------- Page sections ----------
 
 def filters(page, items):
-    """Category pills plus search and source select, limited to sources present on the page."""
+    """Two separate questions: which topic (pills) and which source (select), plus search.
+
+    Only topics and sources present on the page are offered. app.js also reads ?topic= and
+    ?source= so other pages can link to a filtered home.
+    """
     site = page.site
-    present = {item.source_id for item in items}
-    inbox_names = [s['name'] for s in site.sources.values() if s['type'] == 'inbox' and s['id'] in present]
-    names = ['推荐'] + site.categories + inbox_names
+    present_topics = {item.category for item in items}
+    present_keys = {item.filter_key for item in items}
+    names = ['全部'] + [name for name in site.topics if name in present_topics]
     pills = ''.join(
         f'<button class="g-pill pill{" selected" if i == 0 else ""}" type="button" data-value="{E(name if i else "")}" '
         f'aria-pressed="{"true" if i == 0 else "false"}">{E(name)}</button>'
         for i, name in enumerate(names))
     options = ''.join(
-        f'<option value="{E(s["channel"] if s["type"] == "telegram" else s["id"])}">{E(s["name"])}</option>'
-        for s in site.sources.values() if s['id'] in present)
-    return (f'<div class="filterbar"><div class="filters" role="toolbar" aria-label="分类">{pills}</div></div>'
+        f'<option value="{E(key)}">{E(s["name"])}</option>'
+        for s in sorted(site.sources.values(), key=lambda s: s['order'])
+        for key in [s['channel'] if s['type'] == 'telegram' else s['id']] if key in present_keys)
+    return (f'<div class="filterbar"><div class="filters" role="toolbar" aria-label="话题">{pills}</div></div>'
             '<div class="searchline">'
             f'<label class="g-field g-field--search">{icon("search")}'
-            '<input id="q" type="search" placeholder="搜索资讯" aria-label="搜索资讯" autocomplete="off"></label>'
+            '<input id="q" type="search" placeholder="搜索" aria-label="搜索" autocomplete="off"></label>'
             f'<label class="g-field g-field--select"><select id="channel" aria-label="筛选来源"><option value="">全部来源</option>{options}</select>'
             f'{icon("chevron")}</label></div>')
 
 
-def column_row(page, columns):
-    """Entry cards to favorites and every inbox column. `columns` is [(source, lead text)]."""
-    favorites = page.site.favorites
-    entries = []
-    if favorites.get('enabled') and favorites.get('column'):
-        entries.append((page.url(favorites['path']), 'bookmark', favorites['label'], '留住想再读的内容'))
-    entries += [(page.url(s['id'] + '/index.html'), s['icon'], s['name'], lead) for s, lead in columns]
+def column_list(page, title, entries):
+    """栏目: one entry card per source. `entries` is [(path or URL, icon key, name, one line)]."""
     if not entries:
         return ''
     links = ''.join(
-        f'<a class="g-card entry column-entry" href="{E(href)}">{status_icon(key, "list")}'
+        f'<a class="g-card entry column-entry" href="{E(page.url(href))}">{status_icon(key, "list")}'
         f'<span class="entry__text"><b>{E(name)}</b><span>{E(lead)}</span></span></a>'
         for href, key, name, lead in entries)
-    return f'<section class="columns" aria-label="栏目">{section_label("栏目")}<div class="column-row">{links}</div></section>'
+    return f'<section class="columns">{section_label(title)}<div class="column-list">{links}</div></section>'
+
+
+def more_link(page, path, text):
+    """A quiet link under a shortened list, to the page that has all of it."""
+    return f'<p class="more-link"><a class="g-btn g-btn--text" href="{E(page.url(path))}"><span>{E(text)}</span></a></p>'
 
 
 def date_chips(dates, current, suffix='', today=None):
@@ -297,13 +305,14 @@ def nav_slots(page):
     lookup = {entry[0]: entry for entry in site.entries}
     labels = dict(SLOT_LABELS, favorites=site.favorites.get('label', '收藏'))
     result = ''
+    current = page.tab or page.active
     for n, key in enumerate(site.tabs, 1):
         name = labels.get(key, site.sources.get(key, {}).get('name', key))
         if key not in lookup:
             result += f'<span class="tab slot-{n} nav-unavailable" aria-disabled="true">{E(name)}</span>'
             continue
         _, path, _, _ = lookup[key]
-        active = page.active == key
+        active = current == key
         classes = ' '.join(c for c in ('tab', f'slot-{n}', 'active' if active else '', 'home-slot' if key == 'home' else '') if c)
         result += (f'<a href="{page.url(path)}" class="{classes}"'
                    + (' aria-current="page"' if active else '') + f'>{E(name)}</a>')
@@ -313,21 +322,14 @@ def nav_slots(page):
 
 
 def more_menu(page):
-    """Full navigation on an opaque panel, grouped as pages / inbox columns / Telegram channels."""
+    """Full navigation on an opaque panel: the five pages, then every column with an issue."""
     site = page.site
-    core = {'home', 'news', 'all', 'daily', 'favorites'}
-    telegram = {key for key, s in site.sources.items() if s['type'] == 'telegram'}
-    groups = [('页面', [e for e in site.entries if e[0] in core]),
-              ('栏目', [e for e in site.entries if e[0] not in core | telegram]),
-              ('TG 频道', [e for e in site.entries if e[0] in telegram])]
-
-    def mark(key, glyph_key):
-        return icon('telegram') if key in telegram else icon(glyph_key)
-
+    groups = [('页面', [e for e in site.entries if e[0] in site.tabs]),
+              ('栏目', [e for e in site.entries if e[0] not in site.tabs])]
     body = ''.join(
         f'<h3 class="sheet__group">{E(label)}</h3><div class="sheet__grid">'
         + ''.join(f'<a class="g-wash sheet__link" href="{page.url(path)}"' + (' aria-current="page"' if key == page.active else '')
-                  + f'>{mark(key, glyph_key)}<span>{E(name)}</span></a>' for key, path, name, glyph_key in group)
+                  + f'>{icon(glyph_key)}<span>{E(name)}</span></a>' for key, path, name, glyph_key in group)
         + '</div>'
         for label, group in groups if group)
     return ('<dialog class="g-panel sheet more-nav" id="more-nav" aria-labelledby="more-title">'
@@ -386,3 +388,12 @@ def document(page, title, body, illumination, light_source):
         f'<dialog class="lightbox" aria-label="图片查看器"><button class="g-round lightbox__close" type="button" data-close aria-label="关闭">{icon("close")}</button><img alt=""></dialog>'
         '<div class="toast" id="toast" role="status" aria-live="polite"><span class="toast__text"></span><a class="g-btn g-btn--primary toast__action" hidden></a><button class="g-btn g-btn--primary toast__action" type="button" hidden></button></div>'
         '</body></html>')
+
+
+def redirect(target, title):
+    """A page that moved: send the reader on, keeping any #fragment. Works without JavaScript too."""
+    return ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
+            f'<meta http-equiv="refresh" content="0;url={E(target)}"><link rel="canonical" href="{E(target)}">'
+            f'<title>{E(title)} · 拾光热点</title>'
+            f'<script>location.replace({json.dumps(target)}+location.hash)</script></head>'
+            f'<body><p>这个页面已合并，<a href="{E(target)}">前往{E(title)}</a>。</p></body></html>')

@@ -31,7 +31,7 @@ def telegram_rows(cfg, now):
             if not t: continue
             title, body = headline(t, raw)
             rows.append(dict(images=images, ch=ch, id=i, ts=ts, text=t, title=title, body=body,
-                             cat=classify(t, cfg['categories']), day=ts[:10], url=f'https://t.me/{ch}/{i}'))
+                             cat=classify(t, cfg['topics']), day=ts[:10], url=f'https://t.me/{ch}/{i}'))
         return rows
     finally:
         db.close()
@@ -41,7 +41,7 @@ def main(now=None):
     now = now or datetime.now(BEIJING)
     cfg = config()
     rows = telegram_rows(cfg, now)
-    build(rows, hot_list(rows, now), now)
+    build(rows, hot_list(rows, now, cfg['hot']['keywords']), now)
 
 
 if __name__ == '__main__':
