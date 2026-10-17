@@ -48,7 +48,7 @@ def light_css(path=''):
 .g-light{background:radial-gradient(ellipse at 100% 0,var(--beam),transparent 65%),linear-gradient(var(--veil),var(--veil)),var(--ground)}
 .g-light:before,.g-light:after{inset:0;transform:scale(1.14);filter:blur(44px);transition:opacity 900ms;background:radial-gradient(ellipse at 100% 0,var(--beam),transparent 65%),linear-gradient(var(--veil),var(--veil)),var(--light-image);background-size:100% 100%}
 .g-light:before{opacity:1}.g-light:after{background-image:radial-gradient(ellipse at 100% 0,var(--beam),transparent 65%),linear-gradient(var(--veil),var(--veil)),var(--dark-image);opacity:0}
-.brand,.card h2 a{min-height:44px;align-content:center}.card h2 a{display:block;width:100%}
+
 @media(prefers-color-scheme:dark){html:not([data-theme=light]) .g-light:before{opacity:0}html:not([data-theme=light]) .g-light:after{opacity:1}}
 html[data-theme=dark] .g-light:before{opacity:0}html[data-theme=dark] .g-light:after{opacity:1}
 @media(prefers-reduced-motion:reduce){.g-light:before,.g-light:after{transition:none}}

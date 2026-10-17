@@ -10,8 +10,13 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 E = lambda v: html.escape(str(v or ''), quote=True)
 ICONS = {'home':'<path d="m3 10 9-7 9 7v11H6V10M9 21v-8h6v8"/>','hot':'<path d="M13 3c2 6-3 6-1 10 2-1 3-3 3-4 7 7 4 12-3 12S3 14 8 8c0 4 2 4 2 4-1-5 3-6 3-9Z"/>','all':'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 8h8m-8 4h8m-8 4h5"/>','archive':'<rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 10h16"/>','mail':'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/>','world':'<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/>'}
+ICONS['bookmark'] = '<path d="M6 4h12v17l-6-4-6 4Z"/>'
+ICONS['code'] = '<path d="m8 8-4 4 4 4m8-8 4 4-4 4m-6 3 4-14"/>'
 ICONS['x'] = '<path d="M5 4h14a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-8l-6 3 1-4a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z"/><path d="M7 9h10M7 13h6"/>'
 def icon(key): return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS.get(key, ICONS['all'])+'</svg>'
+def color_style(source):
+    color=str(source.get('color') or '')
+    return f' style="--source:{color}"' if re.fullmatch(r'#[0-9a-fA-F]{3,8}',color) else ''
 def link(url): return str(url or '') if urlsplit(str(url or '')).scheme in ('http','https') else ''
 
 def section_icon(key):
@@ -23,6 +28,7 @@ def section_icon(key):
         'mail':'<rect x="11" y="19" width="43" height="34" rx="7" fill="url(#status-paper)"/><path d="m12 23 20 16 21-16M12 50l14-15m27 15L39 36"/><rect x="37" y="10" width="17" height="16" rx="5" fill="var(--sun)" stroke="none"/>',
         'world':'<circle cx="32" cy="31" r="23" fill="url(#status-paper)"/><ellipse cx="32" cy="31" rx="11" ry="23"/><path d="M10 31h44M14 18c11 6 25 6 36 0M14 44c11-6 25-6 36 0"/><path d="m24 16 8-5 7 7-4 10-10-3-5 9-7-6 3-11Zm16 18 10 4-8 11-5-6Z" fill="var(--sun)" stroke="none"/>',
         'archive':'<rect x="12" y="14" width="40" height="40" rx="8" fill="url(#status-paper)"/><path d="M12 24h40"/><path d="M13 23v-3a6 6 0 0 1 6-6h26a6 6 0 0 1 6 6v3Z" fill="var(--sun)" stroke="none"/><path d="M23 9v10m18-10v10M22 34h5m10 0h5m-20 9h5"/><rect x="35" y="39" width="9" height="9" rx="3" fill="var(--sun)" stroke="none"/>',
+        'bookmark':'<rect x="12" y="12" width="40" height="42" rx="8" fill="url(#status-paper)"/><path d="M24 8h16v26l-8-6-8 6Z" fill="var(--sun)" stroke="none"/><path d="M21 42h22m-22 6h14"/>',
         'all':'<rect x="17" y="12" width="34" height="38" rx="7" transform="rotate(10 34 31)" fill="var(--wash)"/><rect x="11" y="18" width="35" height="36" rx="7" transform="rotate(-7 29 36)" fill="url(#status-paper)"/><path d="M19 37h19m-18 8h13"/><rect x="19" y="24" width="19" height="6" rx="3" fill="var(--sun)" stroke="none"/>'
     }
     return '<svg class="status-icon" data-section="'+key+'" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="status-sun" x2=".6" y2="1"><stop stop-color="#ffe6a2"/><stop offset="1" stop-color="var(--sun)"/></linearGradient><linearGradient id="status-paper" x2=".7" y2="1"><stop stop-color="var(--icon-light)"/><stop offset="1" stop-color="var(--icon-shade)"/></linearGradient></defs><ellipse cx="32" cy="56" rx="22" ry="4" fill="var(--wash)"/><g fill="none" stroke="var(--ink-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">'+shapes.get(key,shapes['all'])+'</g></svg>'
@@ -116,7 +122,7 @@ def _build(rows, hot, now, out, inbox_only=False):
     entries=[('home','index.html','首页','home'),('news','hot.html','资讯','hot'),('all','all.html','全部','all'),('daily','archive/index.html','日报','archive')]
     favorites=cfg.get('nav',{}).get('favorites',{'enabled':True,'label':'收藏','path':'favorites.html','column':True})
     if favorites.get('enabled'):
-        entries.append(('favorites',favorites['path'],favorites['label'],'all'))
+        entries.append(('favorites',favorites['path'],favorites['label'],'bookmark'))
     entries += [(s['id'],s['id']+'/index.html',s['name'],s['icon']) for s in sources if s['type']=='telegram' and any(r['source_id']==s['id'] for r in rows)]
     entries += [(s['id'],s['id']+'/index.html',s['name'],s['icon']) for s in columns]
     def nav(rel,active,bottom=False):
@@ -137,10 +143,18 @@ def _build(rows, hot, now, out, inbox_only=False):
             content=icon(ic) if key=='home' else f'{icon(ic)}<span>{E(name)}</span>'
             result+=f'<a href="{rel}{path}" class="{classes.strip()}"'+(' aria-label="首页"' if key=='home' else '')+(' aria-current="page"' if active==key else '')+f'>{content}</a>'
         return result
+    core_keys={'home','news','all','daily','favorites'}
+    telegram_ids={s['id'] for s in sources if s['type']=='telegram'}
+    menu_groups=[('页面',[e for e in entries if e[0] in core_keys]),('栏目',[e for e in entries if e[0] not in core_keys|telegram_ids]),('TG 频道',[e for e in entries if e[0] in telegram_ids])]
+    def more_group(label,group,rel,active):
+        def mark(key,ic):
+            if key in telegram_ids: return f'<i class="dot"{color_style(by_id[key])}></i>'
+            return icon(ic)
+        return f'<div class="more-group">{E(label)}</div><div class="more-grid">'+''.join(f'<a href="{rel}{p}"'+(' aria-current="page"' if k==active else '')+f'>{mark(k,ic)}<span>{E(n)}</span></a>' for k,p,n,ic in group)+'</div>'
     def column_row():
         cards=[]
         if favorites.get('enabled') and favorites.get('column'):
-            cards.append(f'<a class="column-entry g-card" href="{E(favorites["path"])}"><span class="column-copy"><b>{E(favorites["label"])}</b><span>留住想再读的内容</span></span></a>')
+            cards.append(f'<a class="column-entry g-card" href="{E(favorites["path"])}">{section_icon("bookmark")}<span class="column-copy"><b>{E(favorites["label"])}</b><span>留住想再读的内容</span></span></a>')
         for s in columns:
             data=issues[s['id']][0][0]
             count=sum(len(section['items']) for section in data.get('sections',[]))
@@ -148,47 +162,61 @@ def _build(rows, hot, now, out, inbox_only=False):
             lead=lead or f'{data["date"]} · {count} 条'
             cards.append(f'<a class="column-entry g-card" href="{s["id"]}/index.html">{section_icon(s["icon"])}<span class="column-copy"><b>{E(s["name"])}</b><span>{E(lead)}</span></span></a>')
         return '<section class="columns" aria-label="栏目"><div class="section-label"><b>栏目</b></div><div class="column-row">'+''.join(cards)+'</div></section>' if cards else ''
-    def sidebar(rel):
-        return '<aside><section class="sidebox"><div class="eyebrow">ON THE RADAR</div><h2>此刻，大家在看</h2>'+''.join(f'<a class="rank" href="{E(r["url"])}"><b>{n:02}</b><span>{E(r["title"])}</span></a>' for n,r in enumerate(hot[:5],1))+'</section><section class="sidebox"><div class="eyebrow">YOUR SOURCES</div><h2>消息从这里来</h2>'+''.join(f'<div class="source"><i style="color:{E(s["color"])}">{icon(s["icon"])}</i><span>{E(s["name"])}</span><small>{"TG" if s["type"]=="telegram" else "INBOX"}</small></div>' for s in sources if s['type']=='telegram' or s['id'] in issues)+'</section></aside>'
     css=(ROOT/'style.css').read_text(); js=(ROOT/'app.js').read_text()
-    logo=''
     def shell(title,rel,active,body,hero_image=None):
-        section=by_id.get(active,{}).get('icon',{'daily':'archive','news':'hot'}.get(active,active))
+        section=by_id.get(active,{}).get('icon',{'daily':'archive','news':'hot','favorites':'bookmark'}.get(active,active))
         body=re.sub(r'<svg class="status-icon".*?</svg>',lambda _:section_icon(section),body,count=1)
-        body='<svg class="glass-filters" aria-hidden="true" width="0" height="0"><defs><filter id="lg" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".012 .018" numOctaves="1" seed="7" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="16" xChannelSelector="R" yChannelSelector="G" result="lens"/><feImage href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27100%27 height=%27100%27%3E%3Crect width=%27100%27 height=%27100%27 fill=%27white%27/%3E%3Crect x=%278%27 y=%278%27 width=%2784%27 height=%2784%27 rx=%2716%27 fill=%27black%27/%3E%3C/svg%3E" preserveAspectRatio="none" result="rim"/><feColorMatrix in="rim" type="luminanceToAlpha" result="rim-alpha"/><feComposite in="lens" in2="rim-alpha" operator="in" result="edge"/><feComposite in="SourceGraphic" in2="rim-alpha" operator="out" result="center"/><feMerge><feMergeNode in="center"/><feMergeNode in="edge"/></feMerge></filter></defs></svg>'+body
         # All card media paths are root-relative to the generated tree, never host-root URLs.
         body=re.sub(r'(src|data-image)="(?!https?://)([^"]+)"',lambda m:f'{m[1]}="{rel}{m[2]}"',body)
-        more='<dialog class="more-nav" id="more-nav" aria-label="全部导航">'+''.join(f'<a href="{rel}{p}">{E(n)}</a>' for k,p,n,ic in entries)+'</dialog>'
+        more='<dialog class="more-nav" id="more-nav" aria-label="全部导航"><div class="more-head"><b>全部导航</b><button class="more-close" data-close aria-label="关闭">×</button></div>'+''.join(more_group(label,group,rel,active) for label,group in menu_groups if group)+'</dialog>'
         candidates=[p[len(rel):] if rel and p.startswith(rel) else p for p in re.findall(r'<img src="([^"]+)"',body)]
         image=hero_image if hero_image is not None else next((p for p in candidates if photo_like(str(image_path(p)))), '')
         if rel and image.startswith(rel): image=image[len(rel):]
         photo=(out/image) if image and (out/image).is_file() else ROOT/image
         illumination=light_css(str(photo) if image else '')
+        version='20261017-9'
         theme="const t=new URLSearchParams(location.search).get('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;"
         search_icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg>'
         menu_icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M5 7h14M5 12h14M5 17h14"/></svg>'
-        return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#eee8df"><title>{E(title)} · 拾光热点</title><link rel="icon" href="{rel}favicon.ico?v=20261017-8"><link rel="icon" type="image/svg+xml" href="{rel}favicon.svg?v=20261017-8"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png?v=20261017-8"><link rel="manifest" href="{rel}manifest.webmanifest?v=20261017-8"><script>{theme}</script><style>{css}{illumination}</style></head><body data-bookmark-scope="{'private' if private else 'public'}" data-light-source="{E(image or 'fallback-sky')}"><div class="g-light" aria-hidden="true"></div><header><div class="top g-column"><a class="brand" href="{rel}index.html">{logo}拾光热点</a><nav class="desktop-nav g-seg" aria-label="主导航">{nav(rel,active,True)}</nav><div class="tools"><button id="search-toggle" aria-label="搜索">{search_icon}</button><button id="more-toggle" aria-label="菜单" aria-expanded="false">{menu_icon}</button></div></div></header><div class="layout g-column"><main>{body}<p id="none" hidden>换个词，再找找。</p><footer>今日信息，留一份清晰。<span>{now.strftime('%m-%d %H:%M')} 北京时间</span></footer></main></div><nav class="bottom" aria-label="主导航">{nav(rel,active,True)}</nav>{more}<dialog class="lightbox" aria-label="图片查看器"><button class="lightbox-close" aria-label="关闭">×</button><img alt="放大图片"></dialog><script>{js}</script></body></html>'''
+        return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#f8f4ee" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#18171c" media="(prefers-color-scheme: dark)"><title>{E(title)} · 拾光热点</title><link rel="icon" href="{rel}favicon.ico?v={version}"><link rel="icon" type="image/svg+xml" href="{rel}favicon.svg?v={version}"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png?v={version}"><link rel="manifest" href="{rel}manifest.webmanifest?v={version}"><script>{theme}</script><style>{css}{illumination}</style></head><body data-bookmark-scope="{'private' if private else 'public'}" data-light-source="{E(image or 'fallback-sky')}"><div class="g-light" aria-hidden="true"></div><header><div class="top g-column"><a class="brand" href="{rel}index.html"><img class="brand-mark" src="{rel}favicon.svg?v={version}" alt="" width="28" height="28">拾光热点</a><nav class="desktop-nav g-seg" aria-label="主导航">{nav(rel,active,True)}</nav><div class="tools"><button id="search-toggle" aria-label="搜索">{search_icon}</button><button id="more-toggle" aria-label="菜单" aria-expanded="false">{menu_icon}</button></div></div></header><div class="layout g-column"><main>{body}<p id="none" hidden>换个词，再找找。</p><footer><span>今日信息，留一份清晰。</span><span>更新于 {now.strftime('%m-%d %H:%M')} 北京时间</span></footer></main></div><nav class="bottom" aria-label="主导航">{nav(rel,active,True)}</nav>{more}<dialog class="lightbox" aria-label="图片查看器"><button class="lightbox-close" aria-label="关闭">×</button><img alt="放大图片"></dialog><script>{js}</script></body></html>'''
     def heading(title,desc):
         status='<svg class="status-icon"></svg>'
         return f'<div class="page-intro">{status}<h1>{E(title)}</h1><p>{E(desc)}</p></div>'
+    today=now.astimezone(ZoneInfo('Asia/Shanghai')).date().isoformat()
+    def stamp(r):
+        """Visible time plus an ISO datetime the client turns into "N 小时前"."""
+        try: moment=datetime.fromisoformat(str(r['ts']).replace('Z','+00:00'))
+        except ValueError: return f'<time>{E(r["day"][5:] if r["day"]!=today else "今天")}</time>'
+        if len(str(r['ts']))<=10: return f'<time>{E(r["day"][5:] if r["day"]!=today else "今天")}</time>'
+        moment=moment if moment.tzinfo else moment.replace(tzinfo=ZoneInfo('Asia/Shanghai'))
+        local=moment.astimezone(ZoneInfo('Asia/Shanghai'))
+        text=local.strftime('%H:%M') if local.date().isoformat()==today else local.strftime('%m-%d %H:%M')
+        return f'<time datetime="{E(moment.isoformat())}">{E(text)}</time>'
     def card(r,kind=None,reading=False):
-        imgs=r.get('images',[]); kind=kind or ('multi' if len(imgs)>1 else 'side' if imgs else 'text')
+        imgs=r.get('images',[])[:3]
+        if not kind:
+            # Photos sit beside the text; screenshots (e.g. GitHub previews) need a full-width banner.
+            kind='multi' if len(imgs)>1 else ('side' if photo_like(str(image_path(imgs[0]))) else 'wide') if imgs else 'text'
         url=link(r.get('url')); title=f'<a href="{E(url)}" target="_blank" rel="noopener noreferrer">{E(r["title"])}</a>' if url else E(r['title'])
-        pictures=''.join(f'<button class="photo {"screenshot" if not photo_like(str(image_path(p))) else ""}" data-image="{E(p)}" aria-label="放大图片"><img src="{E(p)}" alt="{E(r["title"])}" loading="lazy"></button>' for p in imgs[:4])
+        pictures=''.join(f'<button class="photo" data-image="{E(p)}" aria-label="放大图片"><img src="{E(p)}" alt="{E(r["title"])}" loading="lazy"></button>' for p in imgs)
         source=by_id[r['source_id']]
         surface='g-sheet mail-reading' if reading and source.get('adapter')=='mail' else 'g-card'
-        labels=f'<span class="source-label g-wash" data-source="{E(source["id"])}">{E(source["name"])}</span>'
+        meta=f'<span class="source" data-source="{E(source["id"])}"{color_style(source)}>{E(source["name"])}</span>'
         if r['name']!=source['name']:
-            labels+=''.join(f'<span class="source-label g-wash">{E(part.strip())}</span>' for part in re.split(r'[|｜]',r['name']) if part.strip())
+            meta+=''.join(f'<span class="sub">{E(part.strip())}</span>' for part in re.split(r'[|｜]',r['name']) if part.strip())
+        if r['cat'] not in (source['name'],'综合'): meta+=f'<span class="cat">{E(r["cat"])}</span>'
         identity=json.dumps([r['source_id'],r.get('id') or url or r['title'],r['ts']],ensure_ascii=False)
         saved=dict(id=hashlib.sha256(identity.encode()).hexdigest(),title=r['title'],url=url,source=source['name'],time=r['ts'],snippet=r['body'][:500])
-        bookmark=f'<button class="bookmark" data-bookmark="{E(json.dumps(saved,ensure_ascii=False))}" aria-pressed="false" aria-label="收藏"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4Z"/></svg></button>'
-        labels+=bookmark
-        return f'<article class="card news {surface} {kind}" data-cat="{E(r["cat"])}" data-ch="{E(r["ch"])}"><div class="copy"><div class="meta"><span class="g-wash">{E(r["cat"])}</span>{labels}<time>{E(r["ts"][11:16] or r["day"])}</time></div><h2>{title}</h2><p>{E(r["body"])}</p></div>{f"<div class='pictures'>{pictures}</div>" if pictures else ""}<div class="foot"><span>{E(r["day"])}</span><button class="expand" aria-expanded="false">展开全文 ＋</button>{f"<a href='{E(url)}' target='_blank' rel='noopener noreferrer'>阅读原文 ↗</a>" if url else ""}</div></article>'
+        bookmark=f'<button class="bookmark" data-bookmark="{E(json.dumps(saved,ensure_ascii=False))}" aria-pressed="false" aria-label="收藏">{icon("bookmark")}</button>'
+        gallery=f'<div class="pictures">{pictures}</div>' if pictures else ''
+        original=f'<a href="{E(url)}" target="_blank" rel="noopener noreferrer">阅读原文 ↗</a>' if url else ''
+        return f'<article class="card news {surface} {kind}" data-cat="{E(r["cat"])}" data-ch="{E(r["ch"])}"><div class="copy"><div class="meta">{meta}{stamp(r)}</div><h2>{title}</h2><p>{E(r["body"])}</p></div>{gallery}<div class="foot"><button class="expand" aria-expanded="false">展开全文</button>{original}{bookmark}</div></article>'
     def filters(items):
         present={r['source_id'] for r in items}
         cats=['推荐']+list(cfg['categories'])+['综合']+[s['name'] for s in sources if s['id'] in issues and s['id'] in present]
         return '<div class="filters">'+''.join(f'<button class="pill {"selected" if i==0 else ""}" data-value="{E(c if i else "")}" aria-pressed="{"true" if i==0 else "false"}">{E(c)}</button>' for i,c in enumerate(cats))+'</div><div class="searchline"><input id="q" type="search" placeholder="搜索资讯" aria-label="搜索资讯"><select id="channel" aria-label="筛选来源"><option value="">全部来源</option>'+''.join(f'<option value="{E(s["channel"] if s["type"]=="telegram" else s["id"])}">{E(s["name"])}</option>' for s in sources if s['id'] in present)+'</select></div>'
+    def date_chips(dates,current,suffix):
+        return '<nav class="archives" aria-label="往期列表">'+''.join(f'<a href="{d}.html"'+(' aria-current="page"' if d==current else '')+f'>{d}{suffix}</a>' for d in dates)+'</nav>'
     def write(path,text):
         p=out/path;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(text)
     def blocks(data):
@@ -207,7 +235,7 @@ def _build(rows, hot, now, out, inbox_only=False):
             result+=f'<section class="block"><h2>{E(title)}</h2>{content}</section>'
         return result
     for id,loaded in issues.items():
-        s=by_id[id]; archives=('<div class="archives g-seg" aria-label="往期列表">'+''.join(f'<a href="{d["date"]}.html">{d["date"]}</a>' for d,base in loaded)+'</div>') if len(loaded)>1 else ''
+        s=by_id[id]
         for n,(d,base) in enumerate(loaded):
             count=sum(len(section['items']) for section in d.get('sections',[]))
             lead=f'今天邮箱里 {count} 封值得看' if s.get('adapter')=='mail' else '看看今天世界发生了什么' if s.get('adapter')=='world' else s['name']
@@ -215,6 +243,7 @@ def _build(rows, hot, now, out, inbox_only=False):
             if s.get('adapter')=='x':
                 count=sum(len(section['items']) for section in d.get('sections',[]) if section['title']=='推特爆款')
                 lead=f'今天推特上 {count} 条爆款'; note=d['date']+' · 来自 X 公开帖'
+            archives=date_chips([x['date'] for x,_ in loaded],d['date'],'') if len(loaded)>1 else ''
             content=heading(lead,note)+archives+blocks(d)
             for section in d.get('sections',[]):
                 section_title=''.join('<span class="g-wash">'+E(part.strip())+'</span>' for part in re.split(r'[|｜]',section.get('title') or '') if part.strip())
@@ -278,8 +307,8 @@ def _build(rows, hot, now, out, inbox_only=False):
                 content+='</section>'
             return content
         for day in days:
-            write(f'archive/{day}.html',shell(day+' 日报','../','daily',heading(day+' 日报','按北京时间汇集各来源精选')+digest(day)))
-        write('archive/index.html',shell('日报','../','daily',heading('每一天，都有迹可循','回看世界变化的每个切片。')+('<div class="archives">'+''.join(f'<a href="{d}.html">{d} 日报</a>' for d in days)+'</div>'+digest(days[0]) if days else '')))
+            write(f'archive/{day}.html',shell(day+' 日报','../','daily',heading(day+' 日报','按北京时间汇集各来源精选')+date_chips(days,day,'')+digest(day)))
+        write('archive/index.html',shell('日报','../','daily',heading('每一天，都有迹可循','回看世界变化的每个切片。')+(date_chips(days,days[0],' 日报')+digest(days[0]) if days else '')))
         write('.nojekyll','')
     if not private:
         forbidden=[s for s in cfg['sources'] if s['visibility']=='private']

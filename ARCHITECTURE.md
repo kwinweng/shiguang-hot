@@ -16,6 +16,13 @@ Telegram 使用 channel；inbox 使用 directory、filename、adapter（native/m
 每张信息卡提供书签按钮，aria-pressed 表示状态，aria-label 使用收藏或取消收藏。仅存储 id、title、url、source、time、snippet；id 由来源、原始 id 或链接或标题及时间的 SHA-256 生成。收藏不会上传；public/private 使用独立存储键，即使同源也不混用。内网邮件收藏仅留在设备浏览器，favorites.html 不嵌入任何服务端邮件卡片或正文。不同页面和标签页同步收藏状态；存储不可用时显示提示。
 来源的 `nav.enabled` 和 `nav.order` 只控制「栏目」行及菜单，不再争夺第五个槽位。所有有数据且启用导航的 inbox 均出现在栏目行和菜单，包括 world、github、hot-daily；菜单另含核心页面及有数据的 TG 频道页。链接使用相对路径，支持 Pages `/tg-digest/`。
 
+## 视觉规范
+
+`style.css` 按 tokens → 基础 → 顶栏/导航 → 内容 → 浮层 → 响应式 排列；颜色只在 `:root` 定义一次，深色值写在系统偏好与 `?theme=dark` 两处，需同步修改。
+信息卡只有一行元信息：来源色点（取 sources.json 的 color）· 子来源 · 分类（与来源同名或「综合」时省略）· 时间；收藏书签在底部操作行右侧。时间带 ISO datetime，客户端在 24 小时内显示「N 小时前」，更早保留构建时的日期时间。
+单张实拍图放在标题右侧缩略，截图类（如 GitHub 预览）以通栏横幅显示，多图最多三张一行。正文未被截断时客户端隐藏「展开全文」。
+手机底栏为图标加文字的五等分浮条，使用接近不透明的磨砂底色以保证可读；顶栏高度固定，`--header-height` 由脚本测量后供分类吸顶使用。菜单按「页面 / 栏目 / TG 频道」分组。
+
 ## 首页与跨来源日报
 
 渲染层将 TG 消息和 inbox sections 归一化为带 source_id、日期、正文、图片的卡片；每张卡片标明注册来源。仅有 blocks 的期刊也生成首页候选。首页候选取每个 inbox 最新一期以及 TG 消息，与 nav.enabled 无关；visibility 在加载前过滤，邮件只进入内网构建。

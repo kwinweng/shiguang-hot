@@ -12,7 +12,10 @@ function bookmarkButton(item, remove = false) {
   const button = document.createElement('button');
   button.className = 'bookmark';
   button.dataset.bookmark = JSON.stringify(item);
-  if (remove) button.textContent = '移除';
+  if (remove) {
+    button.textContent = '移除';
+    button.classList.add('bookmark-remove');
+  }
   return button;
 }
 function syncBookmarks() {
@@ -36,7 +39,12 @@ function syncBookmarks() {
       } else title.textContent = item.title;
       const meta = document.createElement('div');
       meta.className = 'meta';
-      meta.textContent = `${item.source} · ${item.time}`;
+      const source = document.createElement('span');
+      source.className = 'source';
+      source.textContent = item.source;
+      const time = document.createElement('time');
+      time.textContent = item.time.replace('T', ' ').slice(5, 16);
+      meta.append(source, time);
       const snippet = document.createElement('p');
       snippet.textContent = item.snippet;
       const foot = document.createElement('div');
@@ -92,19 +100,9 @@ function filterNews() {
       (query && !article.textContent.toLocaleLowerCase().includes(query)));
     if (!article.hidden) count++;
   });
-  document.querySelectorAll('.dategroup').forEach(group => {
-    let next = group.nextElementSibling;
-    let visible = false;
-    while (next && !next.classList.contains('dategroup')) {
-      if (next.classList.contains('news') && !next.hidden) visible = true;
-      next = next.nextElementSibling;
-    }
-    group.hidden = !visible;
-  });
-  const counter = document.querySelector('#n');
-  if (counter) counter.textContent = count;
   const empty = document.querySelector('#none');
-  if (empty) empty.hidden = count > 0;
+  if (empty) empty.hidden = count > 0 || articles.length === 0;
+  updateExpanders();
 }
 document.querySelectorAll('.pill').forEach(button => button.addEventListener('click', () => {
   category = button.dataset.value;
@@ -116,20 +114,35 @@ document.querySelectorAll('.pill').forEach(button => button.addEventListener('cl
 }));
 search?.addEventListener('input', filterNews);
 channel?.addEventListener('change', filterNews);
+// Only offer "展开全文" when the clamped text actually hides something.
+function updateExpanders() {
+  articles.forEach(article => {
+    const button = article.querySelector('.expand');
+    const text = article.querySelector('.copy p');
+    if (!button || !text || article.classList.contains('expanded') || article.hidden) return;
+    button.hidden = text.scrollHeight <= text.clientHeight + 2;
+  });
+}
+addEventListener('load', updateExpanders);
+addEventListener('resize', () => requestAnimationFrame(updateExpanders));
 articles.forEach(article => {
   const button = article.querySelector('.expand');
   if (!button) return;
   button.addEventListener('click', () => {
     const expanded = article.classList.toggle('expanded');
     button.setAttribute('aria-expanded', expanded);
-    button.textContent = expanded ? '收起全文 −' : '展开全文 ＋';
+    button.textContent = expanded ? '收起' : '展开全文';
   });
 });
+// Recent items read as "N 分钟前"; older ones keep the build-time date and time.
 function updateTimes() {
   document.querySelectorAll('time[datetime]').forEach(time => {
-    const minutes = Math.max(0, Math.floor((Date.now() - new Date(time.dateTime)) / 60000));
-    time.title = new Date(time.dateTime).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}) + '（北京时间）';
-    time.textContent = minutes < 1 ? '刚刚' : minutes < 60 ? `${minutes} 分钟前` : minutes < 1440 ? `${Math.floor(minutes / 60)} 小时前` : `${Math.floor(minutes / 1440)} 天前`;
+    const moment = new Date(time.dateTime);
+    if (Number.isNaN(moment.getTime())) return;
+    time.dataset.absolute ??= time.textContent;
+    const minutes = Math.max(0, Math.floor((Date.now() - moment) / 60000));
+    time.title = moment.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}) + '（北京时间）';
+    time.textContent = minutes < 1 ? '刚刚' : minutes < 60 ? `${minutes} 分钟前` : minutes < 1440 ? `${Math.floor(minutes / 60)} 小时前` : time.dataset.absolute;
   });
 }
 filterNews();
@@ -148,10 +161,6 @@ lightbox?.addEventListener('click', event => {
   if (event.target === lightbox) lightbox.close();
 });
 lightbox?.addEventListener('close', () => photoTrigger?.focus({preventScroll: true}));
-document.querySelector('#theme')?.addEventListener('click', () => {
-  const dark = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
-  document.documentElement.dataset.theme = dark ? 'light' : 'dark';
-});
 const morePanel = document.querySelector('#more-nav');
 const moreToggle = document.querySelector('#more-toggle');
 moreToggle?.setAttribute('aria-controls', 'more-nav');
@@ -161,7 +170,7 @@ moreToggle?.addEventListener('click', () => {
   moreToggle.setAttribute('aria-expanded', String(morePanel.open));
 });
 morePanel?.addEventListener('click', event => {
-  if (event.target === morePanel || event.target.closest('a')) morePanel.close();
+  if (event.target === morePanel || event.target.closest('a,[data-close]')) morePanel.close();
 });
 morePanel?.addEventListener('close', () => moreToggle?.setAttribute('aria-expanded', 'false'));
 document.querySelector('#search-toggle')?.addEventListener('click', () => {
@@ -171,7 +180,6 @@ document.querySelector('#search-toggle')?.addEventListener('click', () => {
 
 // One physical selection surface per control; native anchors keep navigation.
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-if (/Chrome|Chromium/.test(navigator.userAgent) && CSS.supports('backdrop-filter', 'url(#lg) blur(16px)')) document.documentElement.dataset.glassLens = '';
 const selections = [...document.querySelectorAll('.bottom')].map(control => {
   const indicator = document.createElement('span');
   indicator.className = 'selection-pill';
