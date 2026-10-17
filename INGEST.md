@@ -2,7 +2,10 @@
 
 本文供投递内容的 bot 使用。先在 `sources.json` 注册来源，再写入数据。原生数据不直接进入 git。
 
-`nav.enabled=true` 的 inbox 有合法数据后，按 `nav.order` 出现在首页「栏目」行和菜单。手机底栏与桌面分段导航最多五项：固定首页、热点、全部（内网有可导航邮件数据时为邮件）、日报；第五位给其余可导航 inbox 中 order 最小者。菜单另含核心页面和所有有数据的 Telegram 频道页；visibility 始终决定公开或内网可见范围。
+`nav.enabled=true` 的 inbox 有合法数据后，按来源的 `nav.order` 出现在首页「栏目」行和菜单。顶层 `nav.tabs` 独立指定五个固定槽位：首页必须在第三位。private 默认为 mail/daily/home/news/x，public 为 all/daily/home/news/x；显示邮件/全部、日报、首页、资讯、推特爆款。资讯保留 hot.html URL。缺数据的槽位禁用；新来源不会自动占用底栏。菜单另含核心页面和所有有数据的 TG 频道页；visibility 始终决定可见范围。
+
+注册来源并投递合法数据后，完整构建自动纳入首页和日报，无需修改代码，也不要求 nav.enabled。首页使用 inbox 最新一期和 TG 消息，每卡显示来源徽标。来源可配置 `home_weight`（默认 1，按 weight / (1 + 年龄小时 / 24) 排名）、`home_cap`（TG 默认 4，inbox 默认 8，0 表示不入首页）。每轮每来源最多取一条；此刻要闻与信息流共用限额。只有 blocks 的期刊也可进入首页。
+日报入口及 archive/<date>.html 汇集该日所有可见数据，不受 home_cap 限制。来源 `daily_order` 控制顺序：今日重点 0、邮件精华 10（仅内网）、环球要闻 20、推特爆款 30、GitHub 热门 40；新 inbox 默认 45，同值按 nav.order、id 排序，最后 TG 按话题汇总，频道 daily_order 默认 50。日报保留期刊 blocks 与条目；仅 inbox 有数据的日期也生成归档。邮件内容绝不进入 public 构建。
 
 ## 路径与原子写入
 

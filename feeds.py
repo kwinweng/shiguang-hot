@@ -1,5 +1,5 @@
 """Source configuration, feed adapters, validation and bounded image handling."""
-import copy, hashlib, json, os, re
+import copy, hashlib, json, math, os, re
 from pathlib import Path
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
@@ -21,6 +21,13 @@ def config():
             raise ValueError('来源类型或 visibility 非法')
         if s['type'] == 'inbox' and s.get('adapter', 'native') not in ('native', 'mail', 'world', 'x'):
             raise ValueError('未知 adapter')
+        for field in ('home_weight','daily_order'):
+            value=s.get(field,1 if field=='home_weight' else 50 if s['type']=='telegram' else 45)
+            if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value) or (field=='home_weight' and value<0):
+                raise ValueError(field+' 必须为有效数值，home_weight 不得为负')
+        cap=s.get('home_cap',4 if s['type']=='telegram' else 8)
+        if isinstance(cap,bool) or not isinstance(cap,int) or cap<0:
+            raise ValueError('home_cap 必须为非负整数')
     return data
 
 def directory(source):

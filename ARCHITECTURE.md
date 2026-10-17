@@ -11,7 +11,14 @@
 Telegram 使用 channel；inbox 使用 directory、filename、adapter（native/mail/world/x）和可选 env。
 `x` 使用平铺 `/workspace/x-digest/YYYY-MM-DD.json`，filename 为 `{date}.json`；`latest.json` 仅补缺失日期，忽略 Markdown。`X_FEED_DIR` 可覆盖目录，公开输出仍为原生 feed.json，保留最近 14 天。
 分类正则位于 categories。导航按顺序自动生成；inbox 有合法数据才显示。
-手机底栏与桌面分段导航最多五项：固定首页、热点、全部（内网有可导航邮件数据时替换为邮件）、日报；第五位给其余有合法数据且 nav.enabled 的 inbox 中 nav.order 最小者。全部此类栏目按 order 出现在首页「栏目」行；菜单包含核心页面、这些栏目及所有有数据的 Telegram 频道页。可见范围仍由 visibility 决定；链接使用相对路径，支持 Pages `/tg-digest/`。
+手机底栏与桌面导航使用顶层 `nav.tabs` 的五个固定槽位：private 为邮件、日报、首页、资讯、推特爆款；public 为全部、日报、首页、资讯、推特爆款。首页必须居中；缺数据的栏目保留禁用槽位，不生成空页。资讯继续使用 hot.html。底栏只有当前项使用 sun 填充，首页仅以字重和字号强调。
+来源的 `nav.enabled` 和 `nav.order` 只控制「栏目」行及菜单，不再争夺第五个槽位。所有有数据且启用导航的 inbox 均出现在栏目行和菜单，包括 world、github、hot-daily；菜单另含核心页面及有数据的 TG 频道页。链接使用相对路径，支持 Pages `/tg-digest/`。
+
+## 首页与跨来源日报
+
+渲染层将 TG 消息和 inbox sections 归一化为带 source_id、日期、正文、图片的卡片；每张卡片标明注册来源。仅有 blocks 的期刊也生成首页候选。首页候选取每个 inbox 最新一期以及 TG 消息，与 nav.enabled 无关；visibility 在加载前过滤，邮件只进入内网构建。
+`home_weight` 默认 1，排名为 weight / (1 + 消息年龄小时数 / 24)，未来时间按年龄 0 处理。每个来源按排名取 `home_cap` 条（TG 默认 4，inbox 默认 8）；按轮次混排，每轮每来源最多一条。此刻要闻为首条，剩余为首页信息流，头条也计入限额。五个 TG 频道合计默认最多 20 条，避免单一频道占满首页。
+日报入口 archive/index.html 展示最新有数据日期的跨来源摘要，并链接各日 archive/<date>.html。日期取 TG 和所有可见 inbox 的并集，不受首页限额影响。inbox 按 `daily_order` 升序（默认 45），再按 nav.order、id 排序；当前配置为今日重点 0、邮件精华 10、环球要闻 20、推特爆款 30、GitHub 热门 40。每个来源保留 blocks 和全部条目，最后 TG 资讯按话题分组，频道按 daily_order（默认 50）排序。无数据的来源不显示。
 
 ## 两种模式与数据流
 
@@ -43,7 +50,7 @@ Telegram 使用 channel；inbox 使用 directory、filename、adapter（native/m
 新增 Telegram：只增加一个 type=telegram 配置，填写 channel、唯一 id、名称、配色及可见范围。
 新增原生栏目：只增加 type=inbox、adapter=native 配置；将合法 feed.json 和图片原子写入约定目录。
 原生 public 栏目包括 `github`（GitHub 热门）和 `hot-daily`（今日重点，导航 order 26）。`hot-daily` 仅取自 5 个公开 TG 频道，由「热点日报」bot 每晚北京时间 22:00 生成，写入 `/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json`，沿用通用 public inbox 发布流程。
-无需修改渲染代码。图标 key 支持 home/hot/all/archive/mail/world/x/code，未知 key 回退 all。
+无需修改渲染代码。有数据即自动加入首页和对应日期日报；用 home_weight、home_cap 控制首页，用 daily_order 控制日报顺序。来源 nav.enabled/order 控制栏目与菜单；底栏需显式修改顶层 nav.tabs，新增来源不会挤走固定槽位。图标 key 支持 home/hot/all/archive/mail/world/x/code，未知 key 回退 all。
 需要导航的 inbox 设置 nav.enabled=true 和 order。无有效数据时隐藏入口，不生成空栏目。
 本机执行 validate_feed.py <id>，再运行 sync.sh。public 内容经 publish_public.py 进入仓库后，Actions 才能获得。
 可用 publish_public.py --no-push 仅准备文件，不执行 git 操作。

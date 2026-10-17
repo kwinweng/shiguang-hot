@@ -95,6 +95,46 @@ class FeedTests(unittest.TestCase):
             self.assertEqual(feeds.load_issues(source,False)[0][0]['title'],'public')
 
 class PrivacyBuildTests(unittest.TestCase):
+    def test_cross_source_home_daily_and_fixed_tabs(self):
+        import sitebuild
+        from bs4 import BeautifulSoup
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            for directory in ('assets','media'): (root/directory).mkdir()
+            for file in ('style.css','app.js'): (root/file).write_text('')
+            sources=[]; issues={}
+            for order,id in enumerate(('hot-daily','mail','world','x','github','future')):
+                sources.append(dict(id=id,type='inbox',name='邮件精华' if id=='mail' else id,visibility='private' if id=='mail' else 'public',icon='all',color='#123456',nav=dict(enabled=True,order=order),daily_order=order,home_cap=2,home_weight=100 if id=='future' else 1))
+                issues[id]=[(dict(date='2026-10-17',blocks=[dict(type='oneliner',items=[id+' summary'])],sections=[dict(title='section',items=[dict(title=id+str(n),body='body') for n in range(5)])]),root)]
+            # Future sources and dates enter without renderer changes; blocks alone count as data.
+            issues['future'].append((dict(date='2026-10-16',sections=[],blocks=[dict(type='oneliner',items=['older future'])]),root))
+            sources.append(dict(id='tg',channel='tg',type='telegram',name='TG',visibility='public',icon='all',color='#123456',nav=dict(enabled=False),home_cap=2))
+            rows=[dict(ch='tg',title='TG '+str(n),body='body',images=[],ts='2026-10-17 10:00',day='2026-10-17',cat='综合',url='') for n in range(20)]
+            cfg=dict(categories={},sources=sources,nav=dict(tabs=dict(public=['all','daily','home','news','x'],private=['mail','daily','home','news','x'])))
+            with patch.object(sitebuild,'ROOT',root),patch.object(sitebuild,'config',return_value=cfg),patch.object(sitebuild,'load_issues',side_effect=lambda source,local: issues.get(source['id'],[])):
+                for mode in ('private','public'):
+                    target=root/mode
+                    with patch.dict(os.environ,dict(SITE_MODE=mode,MAIL_DIGEST='0',SITE_OUT=str(target))):
+                        sitebuild.build(rows,[],datetime(2026,10,17,12,tzinfo=ZoneInfo('Asia/Shanghai')))
+                    home=BeautifulSoup((target/'index.html').read_text(),'html.parser')
+                    expected=set(issues)|{'tg'}
+                    if mode=='public': expected.remove('mail')
+                    badges=home.select('article [data-source]')
+                    self.assertEqual({b['data-source'] for b in badges},expected)
+                    for source in expected: self.assertEqual(sum(b['data-source']==source for b in badges),2)
+                    self.assertEqual(home.select_one('article [data-source]')['data-source'],'future')
+                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['邮件' if mode=='private' else '全部','日报','首页','资讯','推特爆款'])
+                    self.assertEqual(home.select_one('nav.bottom a.home-slot')['aria-current'],'page')
+                    day=BeautifulSoup((target/'archive/2026-10-17.html').read_text(),'html.parser')
+                    ordered=[s['data-source'] for s in day.select('section.digest-source[data-source]')]
+                    self.assertEqual(ordered,[id for id in issues if id in expected])
+                    self.assertIn('TG 资讯',day.get_text())
+                    self.assertIn('older future',(target/'archive/2026-10-16.html').read_text())
+                    self.assertIn('hot-daily summary',(target/'archive/index.html').read_text())
+                    if mode=='public': self.assertFalse((target/'mail').exists())
+
     def test_public_rebuild_scrubs_private_tree_and_detects_private_copy(self):
         import sitebuild
         from datetime import datetime, timezone

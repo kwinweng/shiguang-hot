@@ -1,4 +1,5 @@
 {
+  "nav": {"tabs": {"private": ["mail", "daily", "home", "news", "x"], "public": ["all", "daily", "home", "news", "x"]}},
   "categories": {
     "全球": "国际|美国|俄罗斯|乌克兰|特朗普|以色列|战争|停火|总统|巴基斯坦|印度|联合国",
     "财经": "市场|经济|股|央行|美联储|利率|美元|财报|GDP|CPI|关税|投资",
@@ -72,6 +73,7 @@
     },
     {
       "id": "mail",
+      "home_weight": 1, "home_cap": 8, "daily_order": 10,
       "type": "inbox",
       "name": "邮件精华",
       "icon": "mail",
@@ -88,6 +90,7 @@
     },
     {
       "id": "world",
+      "home_weight": 1, "home_cap": 8, "daily_order": 20,
       "type": "inbox",
       "name": "环球要闻",
       "icon": "world",
@@ -104,6 +107,7 @@
     },
     {
       "id": "x",
+      "home_weight": 1, "home_cap": 8, "daily_order": 30,
       "type": "inbox",
       "name": "推特爆款",
       "icon": "x",
@@ -117,6 +121,7 @@
     },
     {
       "id": "github",
+      "home_weight": 1, "home_cap": 8, "daily_order": 40,
       "type": "inbox",
       "name": "GitHub 热门",
       "icon": "code",
@@ -132,6 +137,7 @@
     },
     {
       "id": "hot-daily",
+      "home_weight": 1.2, "home_cap": 8, "daily_order": 0,
       "type": "inbox",
       "name": "今日重点",
       "icon": "all",

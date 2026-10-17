@@ -51,7 +51,16 @@ def build(rows, hot, now, inbox_only=False):
         return sorted(items,key=lambda r:r['ts'],reverse=True)
     issues = {}; latest_cards=[]
     def inbox_rows(data,s):
-        return [dict(title=i.get('title') or '未命名条目', body=i.get('body') or '', images=[im['file'] for im in i.get('images',[]) or [] if isinstance(im,dict) and im.get('file')], name=i.get('source') or ' / '.join(str(x) for x in i.get('sources',[]) or []) or s['name'], cat=s['name'], source_id=s['id'], ch=s['id'], day=data['date'], ts=i.get('date') or data['date'], url=link(i.get('link'))) for section in data.get('sections',[]) for i in section['items']]
+        result=[dict(title=i.get('title') or '未命名条目', body=i.get('body') or '', images=[im['file'] for im in i.get('images',[]) or [] if isinstance(im,dict) and im.get('file')], name=i.get('source') or ' / '.join(str(x) for x in i.get('sources',[]) or []) or s['name'], cat=s['name'], source_id=s['id'], ch=s['id'], day=data['date'], ts=i.get('date') or data['date'], url=link(i.get('link'))) for section in data.get('sections',[]) for i in section['items']]
+        # Block-only issues still join the common home candidate pool.
+        if not result:
+            for b in data.get('blocks',[]):
+                for item in b.get('items',[]) if b.get('type') in ('oneliner','tomorrow') else []:
+                    title=item if isinstance(item,str) else item.get('title') or item.get('body')
+                    if title: result.append(dict(title=title,body='' if isinstance(item,str) else item.get('body',''),images=[],name=s['name'],cat=s['name'],source_id=s['id'],ch=s['id'],day=data['date'],ts=data['date'],url=''))
+            if not result and data.get('blocks'):
+                result.append(dict(title=data.get('title') or s['name'],body=' · '.join(b.get('title') or {'markets':'市场看板','chart':'一张图'}.get(b.get('type'),'') for b in data['blocks']),images=[],name=s['name'],cat=s['name'],source_id=s['id'],ch=s['id'],day=data['date'],ts=data['date'],url=f'{s["id"]}/{data["date"]}.html'))
+        return result
     for s in sources:
         if s['type']!='inbox': continue
         loaded=load_issues(s,private)
@@ -60,15 +69,26 @@ def build(rows, hot, now, inbox_only=False):
         issues[s['id']]=[(compress_images(d,base,out/s['id']/'img',s['id']+'/img/'),base) for d,base in loaded]
         latest_cards.extend(inbox_rows(issues[s['id']][0][0],s))
     columns=[s for s in sorted(sources,key=lambda s:s['nav'].get('order',100)) if s['id'] in issues and s['nav'].get('enabled')]
-    entries=[('home','index.html','首页','home'),('hot','hot.html','热点','hot'),('all','all.html','全部','all'),('archive','archive/index.html','日报','archive')]
+    entries=[('home','index.html','首页','home'),('news','hot.html','资讯','hot'),('all','all.html','全部','all'),('daily','archive/index.html','日报','archive')]
     entries += [(s['id'],s['id']+'/index.html',s['name'],s['icon']) for s in sources if s['type']=='telegram' and any(r['source_id']==s['id'] for r in rows)]
     entries += [(s['id'],s['id']+'/index.html',s['name'],s['icon']) for s in columns]
     def nav(rel,active,bottom=False):
-        core=[entries[0],entries[1],next((x for x in entries if x[0]=='mail'),entries[2]) if private else entries[2],entries[3]]
-        extra=next((s for s in columns if s['id'] not in {x[0] for x in core}),None)
-        chosen=entries if not bottom else core+([(extra['id'],extra['id']+'/index.html',extra['name'],extra['icon'])] if extra else [])
-        result=''.join(f'<a href="{rel}{path}" class="{"active" if active==key else ""}"'+(' aria-current="page"' if active==key else '')+f'>{icon(ic)}<span>{E(name)}</span></a>' for key,path,name,ic in chosen)
-        return result.replace('邮件精华','邮件').replace('环球要闻','环球').replace('GitHub 热门','GitHub') if bottom else result
+        mode='private' if private else 'public'
+        slots=cfg.get('nav',{}).get('tabs',{}).get(mode,['mail' if private else 'all','daily','home','news','x'])
+        if len(slots)!=5 or slots[2]!='home' or len(set(slots))!=5:
+            raise ValueError('nav.tabs 必须为五个不同槽位，首页居中')
+        lookup={entry[0]:entry for entry in entries}
+        labels={'mail':'邮件','all':'全部','daily':'日报','home':'首页','news':'资讯','x':'推特爆款'}
+        result=''
+        for key in slots if bottom else lookup:
+            name=labels.get(key,by_id.get(key,{}).get('name',key))
+            if key not in lookup:
+                result+=f'<span class="nav-unavailable" aria-disabled="true">{E(name)}</span>'
+                continue
+            _,path,_,ic=lookup[key]
+            classes=('active ' if active==key else '')+('home-slot' if key=='home' else '')
+            result+=f'<a href="{rel}{path}" class="{classes.strip()}"'+(' aria-current="page"' if active==key else '')+f'>{icon(ic)}<span>{E(name)}</span></a>'
+        return result
     def column_row():
         cards=[]
         for s in columns:
@@ -83,7 +103,7 @@ def build(rows, hot, now, inbox_only=False):
     css=(ROOT/'style.css').read_text(); js=(ROOT/'app.js').read_text()
     logo=''
     def shell(title,rel,active,body,hero_image=None):
-        section=by_id.get(active,{}).get('icon',active)
+        section=by_id.get(active,{}).get('icon',{'daily':'archive','news':'hot'}.get(active,active))
         body=re.sub(r'<svg class="status-icon".*?</svg>',lambda _:section_icon(section),body,count=1)
         body='<svg class="glass-filters" aria-hidden="true" width="0" height="0"><defs><filter id="lg" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".012 .018" numOctaves="1" seed="7" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="16" xChannelSelector="R" yChannelSelector="G" result="lens"/><feImage href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27100%27 height=%27100%27%3E%3Crect width=%27100%27 height=%27100%27 fill=%27white%27/%3E%3Crect x=%278%27 y=%278%27 width=%2784%27 height=%2784%27 rx=%2716%27 fill=%27black%27/%3E%3C/svg%3E" preserveAspectRatio="none" result="rim"/><feColorMatrix in="rim" type="luminanceToAlpha" result="rim-alpha"/><feComposite in="lens" in2="rim-alpha" operator="in" result="edge"/><feComposite in="SourceGraphic" in2="rim-alpha" operator="out" result="center"/><feMerge><feMergeNode in="center"/><feMergeNode in="edge"/></feMerge></filter></defs></svg>'+body
         # All card media paths are root-relative to the generated tree, never host-root URLs.
@@ -97,7 +117,7 @@ def build(rows, hot, now, inbox_only=False):
         theme="const t=new URLSearchParams(location.search).get('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;"
         search_icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg>'
         menu_icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M5 7h14M5 12h14M5 17h14"/></svg>'
-        return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#eee8df"><title>{E(title)} · 拾光热点</title><link rel="icon" href="{rel}favicon.ico?v=20261017-4"><link rel="icon" type="image/svg+xml" href="{rel}favicon.svg?v=20261017-4"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png?v=20261017-4"><link rel="manifest" href="{rel}manifest.webmanifest?v=20261017-4"><script>{theme}</script><style>{css}{illumination}</style></head><body data-light-source="{E(image or 'fallback-sky')}"><div class="g-light" aria-hidden="true"></div><header><div class="top g-column"><a class="brand" href="{rel}index.html">{logo}拾光热点</a><nav class="desktop-nav g-seg" aria-label="主导航">{nav(rel,active,True)}</nav><div class="tools"><button id="search-toggle" aria-label="搜索">{search_icon}</button><button id="more-toggle" aria-label="菜单" aria-expanded="false">{menu_icon}</button></div></div></header><div class="layout g-column"><main>{body}<p id="none" hidden>换个词，再找找。</p><footer>今日信息，留一份清晰。<span>{now.strftime('%m-%d %H:%M')} 北京时间</span></footer></main></div><nav class="bottom" aria-label="主导航">{nav(rel,active,True)}</nav>{more}<dialog class="lightbox" aria-label="图片查看器"><button class="lightbox-close" aria-label="关闭">×</button><img alt="放大图片"></dialog><script>{js}</script></body></html>'''
+        return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#eee8df"><title>{E(title)} · 拾光热点</title><link rel="icon" href="{rel}favicon.ico?v=20261017-5"><link rel="icon" type="image/svg+xml" href="{rel}favicon.svg?v=20261017-5"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png?v=20261017-5"><link rel="manifest" href="{rel}manifest.webmanifest?v=20261017-5"><script>{theme}</script><style>{css}{illumination}</style></head><body data-light-source="{E(image or 'fallback-sky')}"><div class="g-light" aria-hidden="true"></div><header><div class="top g-column"><a class="brand" href="{rel}index.html">{logo}拾光热点</a><nav class="desktop-nav g-seg" aria-label="主导航">{nav(rel,active,True)}</nav><div class="tools"><button id="search-toggle" aria-label="搜索">{search_icon}</button><button id="more-toggle" aria-label="菜单" aria-expanded="false">{menu_icon}</button></div></div></header><div class="layout g-column"><main>{body}<p id="none" hidden>换个词，再找找。</p><footer>今日信息，留一份清晰。<span>{now.strftime('%m-%d %H:%M')} 北京时间</span></footer></main></div><nav class="bottom" aria-label="主导航">{nav(rel,active,True)}</nav>{more}<dialog class="lightbox" aria-label="图片查看器"><button class="lightbox-close" aria-label="关闭">×</button><img alt="放大图片"></dialog><script>{js}</script></body></html>'''
     def heading(title,desc):
         status='<svg class="status-icon"></svg>'
         return f'<div class="page-intro">{status}<h1>{E(title)}</h1><p>{E(desc)}</p></div>'
@@ -107,7 +127,9 @@ def build(rows, hot, now, inbox_only=False):
         pictures=''.join(f'<button class="photo {"screenshot" if not photo_like(str(image_path(p))) else ""}" data-image="{E(p)}" aria-label="放大图片"><img src="{E(p)}" alt="{E(r["title"])}" loading="lazy"></button>' for p in imgs[:4])
         source=by_id[r['source_id']]
         surface='g-sheet mail-reading' if reading and source.get('adapter')=='mail' else 'g-card'
-        labels=''.join(f'<span class="source-label g-wash">{E(part.strip())}</span>' for part in re.split(r'[|｜]',r['name']) if part.strip())
+        labels=f'<span class="source-label g-wash" data-source="{E(source["id"])}">{E(source["name"])}</span>'
+        if r['name']!=source['name']:
+            labels+=''.join(f'<span class="source-label g-wash">{E(part.strip())}</span>' for part in re.split(r'[|｜]',r['name']) if part.strip())
         return f'<article class="card news {surface} {kind}" data-cat="{E(r["cat"])}" data-ch="{E(r["ch"])}"><div class="copy"><div class="meta"><span class="g-wash">{E(r["cat"])}</span>{labels}<time>{E(r["ts"][11:16] or r["day"])}</time></div><h2>{title}</h2><p>{E(r["body"])}</p></div>{f"<div class='pictures'>{pictures}</div>" if pictures else ""}<div class="foot"><span>{E(r["day"])}</span><button class="expand" aria-expanded="false">展开全文 ＋</button>{f"<a href='{E(url)}' target='_blank' rel='noopener noreferrer'>阅读原文 ↗</a>" if url else ""}</div></article>'
     def filters(items):
         present={r['source_id'] for r in items}
@@ -152,16 +174,23 @@ def build(rows, hot, now, inbox_only=False):
         for asset in (ROOT/'assets').iterdir():
             if asset.is_file(): shutil.copyfile(asset,out/asset.name)
         local_now=now.astimezone(ZoneInfo('Asia/Shanghai'))
-        def in_last_day(r):
-            stamp=datetime.fromisoformat(r['ts'])
-            if stamp.tzinfo is None: stamp=stamp.replace(tzinfo=ZoneInfo('Asia/Shanghai'))
-            return local_now-timedelta(hours=24)<=stamp<=local_now
-        light_item,home_image=qualifying(r for r in hot if in_last_day(r))
-        hero=light_item or next(iter(hot),None)
-        if light_item:
-            hero['images']=[home_image]+[p for p in hero['images'] if p!=home_image]
-        stream=[r for r in rows[:100] if r is not hero]
-        for n,r in enumerate(latest_cards[:12]): stream.insert(min(2+n*5,len(stream)),r)
+        def rank(r):
+            try: stamp=datetime.fromisoformat(r['ts'].replace('Z','+00:00'))
+            except ValueError: stamp=datetime.fromisoformat(r['day'])
+            stamp=stamp.replace(tzinfo=stamp.tzinfo or ZoneInfo('Asia/Shanghai'))
+            age=max(0,(local_now-stamp).total_seconds()/3600)
+            return by_id[r['source_id']].get('home_weight',1)/(1+age/24)
+        # Round-based ranking gives each source a turn before a source repeats.
+        buckets={}
+        for s in sources:
+            candidates=[r for r in rows+latest_cards if r['source_id']==s['id']]
+            buckets[s['id']]=sorted(candidates,key=lambda r:(rank(r),r['ts']),reverse=True)[:s.get('home_cap',4 if s['type']=='telegram' else 8)]
+        ranked=[]
+        for n in range(max((len(v) for v in buckets.values()),default=0)):
+            ranked.extend(sorted((v[n] for v in buckets.values() if len(v)>n),key=rank,reverse=True))
+        hero=next(iter(ranked),None)
+        home_image=qualifying([hero] if hero else [])[1]
+        stream=ranked[1:]
         today=now.date().isoformat()
         count=sum(r['day']==today for r in rows+latest_cards)
         note=f'{now.month}月{now.day}日 周{"一二三四五六日"[now.weekday()]} · 更新于 {now:%H:%M} · {len({r["source_id"] for r in rows+latest_cards})} 个来源'
@@ -170,16 +199,31 @@ def build(rows, hot, now, inbox_only=False):
         content+=column_row()+filters(stream+([hero] if hero else []))+'<div class="stream-title"><h2>最新动态</h2><span>实时收录 · 持续更新</span></div>'+''.join(card(r) for r in stream)
         write('index.html',shell('首页','','home',content,home_image))
         write('all.html',shell('全部','','all',heading('全部动态','完整收录，按来源和分类查找。')+filters(rows+latest_cards)+''.join(card(r) for r in rows+latest_cards)))
-        write('hot.html',shell('热点','','hot',heading('这几条大家都在说','过去 48 小时 · 多个来源共同关注')+''.join(f'<div class="ordinal">{n:02}</div>'+card(r) for n,r in enumerate(hot,1))))
+        write('hot.html',shell('资讯','','news',heading('这几条大家都在说','过去 48 小时 · 多个来源共同关注')+''.join(f'<div class="ordinal">{n:02}</div>'+card(r) for n,r in enumerate(hot,1))))
         for source in sources:
             if source['type']=='telegram':
                 source_rows=[r for r in rows if r['source_id']==source['id']]
                 if source_rows: write(source['id']+'/index.html',shell(source['name'],'../',source['id'],heading('看看'+source['name']+'的新消息','Telegram 频道资讯')+''.join(card(r) for r in source_rows),qualifying(newest(source_rows))[1]))
-        days=sorted({r['day'] for r in rows},reverse=True)
+        days=sorted({r['day'] for r in rows}|{d['date'] for loaded in issues.values() for d,_ in loaded},reverse=True)
+        def digest(day):
+            content=''
+            ordered=sorted(sources,key=lambda s:(s.get('daily_order',50 if s['type']=='telegram' else 45),s.get('nav',{}).get('order',100),s['id']))
+            telegram=[s for s in ordered if s['type']=='telegram']
+            for s in [s for s in ordered if s['type']=='inbox']:
+                data=next((d for d,_ in issues.get(s['id'],[]) if d['date']==day),None)
+                if data:
+                    content+=f'<section class="digest-source" data-source="{E(s["id"])}"><h2 class="sticky-title">{E(s["name"])}</h2>'+blocks(data)+''.join(card(r) for r in inbox_rows(dict(data,blocks=[]),s))+'</section>'
+            tg=[r for s in telegram for r in rows if r['source_id']==s['id'] and r['day']==day]
+            if tg:
+                content+='<section class="digest-source"><h2 class="sticky-title">TG 资讯</h2>'
+                for topic in list(cfg['categories'])+['综合']:
+                    group=[r for r in tg if r['cat']==topic]
+                    if group: content+=f'<h3 class="sticky-title">{E(topic)}</h3>'+''.join(card(r) for r in group)
+                content+='</section>'
+            return content
         for day in days:
-            day_rows=[r for r in rows if r['day']==day]
-            write(f'archive/{day}.html',shell(day+' 日报','../','archive',heading(day+' 日报','按北京时间归档')+filters(day_rows)+''.join(card(r) for r in day_rows)))
-        write('archive/index.html',shell('日报归档','../','archive',heading('每一天，都有迹可循','回看世界变化的每个切片。')+''.join(f'<a class="g-card archive-entry" href="{d}.html">{d} 日报 ↗</a>' for d in days)))
+            write(f'archive/{day}.html',shell(day+' 日报','../','daily',heading(day+' 日报','按北京时间汇集各来源精选')+digest(day)))
+        write('archive/index.html',shell('日报','../','daily',heading('每一天，都有迹可循','回看世界变化的每个切片。')+('<div class="archives">'+''.join(f'<a href="{d}.html">{d} 日报</a>' for d in days)+'</div>'+digest(days[0]) if days else '')))
         write('.nojekyll','')
     if not private:
         forbidden=[s for s in cfg['sources'] if s['visibility']=='private']

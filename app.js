@@ -27,7 +27,10 @@ function filterNews() {
 }
 document.querySelectorAll('.pill').forEach(button => button.addEventListener('click', () => {
   category = button.dataset.value;
-  document.querySelectorAll('.pill').forEach(pill => pill.classList.toggle('selected', pill === button));
+  document.querySelectorAll('.pill').forEach(pill => {
+    pill.classList.toggle('selected', pill === button);
+    pill.setAttribute('aria-pressed', String(pill === button));
+  });
   filterNews();
 }));
 search?.addEventListener('input', filterNews);
@@ -88,7 +91,7 @@ document.querySelector('#search-toggle')?.addEventListener('click', () => {
 // One physical selection surface per control; native anchors keep navigation.
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 if (/Chrome|Chromium/.test(navigator.userAgent) && CSS.supports('backdrop-filter', 'url(#lg) blur(16px)')) document.documentElement.dataset.glassLens = '';
-const selections = [...document.querySelectorAll('.bottom,.desktop-nav.g-seg,.filters')].map(control => {
+const selections = [...document.querySelectorAll('.bottom')].map(control => {
   const indicator = document.createElement('span');
   indicator.className = 'selection-pill';
   indicator.setAttribute('aria-hidden', 'true');
@@ -140,3 +143,102 @@ reducedMotion.addEventListener('change', () => {
     document.documentElement.style.removeProperty('--sheen-y');
   } else scheduleSheen();
 });
+
+const bottomBar = document.querySelector('nav.bottom');
+if (bottomBar) {
+  const root = document.documentElement;
+  const header = document.querySelector('header');
+  function measureChrome() {
+    root.style.setProperty('--tab-bar-height', `${bottomBar.offsetHeight + 22}px`);
+    if (header) root.style.setProperty('--header-height', `${header.offsetHeight}px`);
+  }
+  const chromeObserver = new ResizeObserver(measureChrome);
+  chromeObserver.observe(bottomBar);
+  if (header) chromeObserver.observe(header);
+  measureChrome();
+  let lastY = Math.max(0, scrollY), direction = 0, distance = 0;
+  function updateBottomBar() {
+    const y = Math.max(0, scrollY);
+    const delta = y - lastY;
+    const nextDirection = Math.sign(delta);
+    if (nextDirection !== direction) distance = 0;
+    distance += Math.abs(delta);
+    direction = nextDirection;
+    const atEdge = y < 80 || y + innerHeight >= root.scrollHeight - 80;
+    if (atEdge || document.querySelector('dialog[open]') || bottomBar.contains(document.activeElement)) {
+      bottomBar.classList.remove('is-hidden');
+    } else if (distance >= 8) {
+      bottomBar.classList.toggle('is-hidden', delta > 0);
+    }
+    lastY = y;
+  }
+  addEventListener('scroll', updateBottomBar, {passive: true});
+  bottomBar.addEventListener('focusin', () => bottomBar.classList.remove('is-hidden'));
+  addEventListener('pageshow', updateBottomBar);
+
+  const refresh = document.createElement('div');
+  refresh.className = 'pull-refresh';
+  refresh.hidden = true;
+  refresh.setAttribute('role', 'status');
+  refresh.setAttribute('aria-live', 'polite');
+  refresh.innerHTML = '<span class="refresh-symbol" aria-hidden="true">↓</span><span class="refresh-label">下拉刷新</span>';
+  document.body.append(refresh);
+  const refreshLabel = refresh.querySelector('.refresh-label');
+  let gesture = null, refreshing = false;
+  function horizontalTarget(target) {
+    for (let element = target; element instanceof Element; element = element.parentElement) {
+      if (element.matches('.column-row,.filters,.archives,input,select,textarea,[contenteditable]')) return true;
+      const overflow = getComputedStyle(element).overflowX;
+      if (element.scrollWidth > element.clientWidth && /auto|scroll/.test(overflow)) return true;
+    }
+    return false;
+  }
+  function cancelPull() {
+    gesture = null;
+    if (!refreshing) {
+      refresh.hidden = true;
+      refresh.classList.remove('is-ready');
+      refresh.style.removeProperty('--pull');
+    }
+  }
+  document.addEventListener('touchstart', event => {
+    cancelPull();
+    if (refreshing || scrollY > 0 || event.touches.length !== 1 ||
+        document.querySelector('dialog[open]') || horizontalTarget(event.target)) return;
+    const touch = event.touches[0];
+    gesture = {x: touch.clientX, y: touch.clientY, pull: 0, vertical: false};
+  }, {passive: true});
+  document.addEventListener('touchmove', event => {
+    if (!gesture) return;
+    if (event.touches.length !== 1 || document.querySelector('dialog[open]')) return cancelPull();
+    const dx = Math.abs(event.touches[0].clientX - gesture.x);
+    const dy = event.touches[0].clientY - gesture.y;
+    if (dy < 0 || dx > Math.abs(dy)) return cancelPull();
+    if (!gesture.vertical && dy < 8) return;
+    gesture.vertical = true;
+    if (event.cancelable) event.preventDefault();
+    gesture.pull = Math.min(110, dy * .5);
+    refresh.hidden = false;
+    refresh.style.setProperty('--pull', `${gesture.pull}px`);
+    refresh.classList.toggle('is-ready', gesture.pull >= 70);
+    refreshLabel.textContent = gesture.pull >= 70 ? '松开刷新' : '下拉刷新';
+  }, {passive: false});
+  document.addEventListener('touchend', () => {
+    if (!gesture || gesture.pull < 70 || document.querySelector('dialog[open]')) return cancelPull();
+    refreshing = true;
+    gesture = null;
+    refresh.classList.add('is-refreshing');
+    refreshLabel.textContent = '刷新中…';
+    refresh.querySelector('.refresh-symbol').textContent = '↻';
+    const url = new URL(location.href);
+    url.searchParams.set('r', Date.now().toString());
+    requestAnimationFrame(() => requestAnimationFrame(() => location.replace(url.href)));
+  }, {passive: true});
+  document.addEventListener('touchcancel', cancelPull, {passive: true});
+  addEventListener('pageshow', () => {
+    refreshing = false;
+    refresh.classList.remove('is-refreshing');
+    refresh.querySelector('.refresh-symbol').textContent = '↓';
+    cancelPull();
+  });
+}
