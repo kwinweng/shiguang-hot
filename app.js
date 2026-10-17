@@ -63,3 +63,12 @@ lightbox?.addEventListener('click', event => {
   if (event.target === lightbox) lightbox.close();
 });
 lightbox?.addEventListener('close', () => photoTrigger?.focus({preventScroll: true}));
+document.querySelector('#theme')?.addEventListener('click', () => {
+  const dark = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+});
+document.querySelector('#more-toggle')?.addEventListener('click', event => {
+  const panel = document.querySelector('#more-nav');
+  panel.hidden = !panel.hidden;
+  event.currentTarget.setAttribute('aria-expanded', String(!panel.hidden));
+});

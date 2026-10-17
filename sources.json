@@ -1,0 +1,106 @@
+{
+  "categories": {
+    "全球": "国际|美国|俄罗斯|乌克兰|特朗普|以色列|战争|停火|总统|巴基斯坦|印度|联合国",
+    "财经": "市场|经济|股|央行|美联储|利率|美元|财报|GDP|CPI|关税|投资",
+    "科技": "AI|人工智能|芯片|苹果|手机|英伟达|OpenAI|谷歌|科技|电子|SpaceX"
+  },
+  "sources": [
+    {
+      "id": "xhqcankao",
+      "type": "telegram",
+      "channel": "xhqcankao",
+      "name": "风向旗参考快讯",
+      "icon": "all",
+      "color": "#4279c2",
+      "visibility": "public",
+      "nav": {
+        "enabled": false,
+        "order": 10
+      }
+    },
+    {
+      "id": "tnews365",
+      "type": "telegram",
+      "channel": "tnews365",
+      "name": "竹新社",
+      "icon": "all",
+      "color": "#7565be",
+      "visibility": "public",
+      "nav": {
+        "enabled": false,
+        "order": 11
+      }
+    },
+    {
+      "id": "FinanceNewsDaily",
+      "type": "telegram",
+      "channel": "FinanceNewsDaily",
+      "name": "华尔街见闻·财经时讯",
+      "icon": "all",
+      "color": "#a66338",
+      "visibility": "public",
+      "nav": {
+        "enabled": false,
+        "order": 12
+      }
+    },
+    {
+      "id": "CE_Observe",
+      "type": "telegram",
+      "channel": "CE_Observe",
+      "name": "每日消费电子观察",
+      "icon": "all",
+      "color": "#477cb0",
+      "visibility": "public",
+      "nav": {
+        "enabled": false,
+        "order": 13
+      }
+    },
+    {
+      "id": "freechinese",
+      "type": "telegram",
+      "channel": "freechinese",
+      "name": "FREE 中文",
+      "icon": "all",
+      "color": "#a45e98",
+      "visibility": "public",
+      "nav": {
+        "enabled": false,
+        "order": 14
+      }
+    },
+    {
+      "id": "mail",
+      "type": "inbox",
+      "name": "邮件精华",
+      "icon": "mail",
+      "color": "#1f6fd1",
+      "visibility": "private",
+      "nav": {
+        "enabled": true,
+        "order": 30
+      },
+      "directory": "/workspace/mail-digest",
+      "filename": "digest.json",
+      "adapter": "mail",
+      "env": "MAIL_FEED_DIR"
+    },
+    {
+      "id": "world",
+      "type": "inbox",
+      "name": "环球要闻",
+      "icon": "world",
+      "color": "#1f6fd1",
+      "visibility": "public",
+      "nav": {
+        "enabled": true,
+        "order": 20
+      },
+      "directory": "/workspace/world-brief",
+      "filename": "brief.json",
+      "adapter": "world",
+      "env": "WORLD_FEED_DIR"
+    }
+  ]
+}

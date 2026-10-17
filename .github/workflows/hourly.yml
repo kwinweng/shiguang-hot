@@ -12,7 +12,7 @@ jobs:
           key: telegram-media-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             telegram-media-${{ runner.os }}-
-      - run: pip install beautifulsoup4 pillow && TZ=Asia/Shanghai python3 pipeline.py
+      - run: pip install beautifulsoup4 pillow && SITE_MODE=public MAIL_DIGEST=0 TZ=Asia/Shanghai python3 pipeline.py
       - run: |
           git config user.name bot; git config user.email bot@users.noreply.github.com
           git add tg.db && git commit -m "data $(date -u +%FT%H)" && git push || true
