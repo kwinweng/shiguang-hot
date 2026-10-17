@@ -110,7 +110,7 @@
       "color": "#4f5b66",
       "visibility": "public",
       "nav": {
-        "enabled": false,
+        "enabled": true,
         "order": 25
       },
       "directory": "/workspace/feeds-inbox/github",
