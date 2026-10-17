@@ -179,14 +179,32 @@ const selections = [...document.querySelectorAll('.bottom')].map(control => {
   control.prepend(indicator);
   const items = [...control.querySelectorAll('a,.pill')];
   let selected = control.querySelector('.active,.selected');
-  function position() {
+  function position(animate = false) {
     indicator.hidden = !selected;
     if (!selected) return;
-    indicator.style.setProperty('--pill-x', `${selected.offsetLeft}px`);
-    indicator.style.setProperty('--pill-y', `${selected.offsetTop}px`);
-    indicator.style.setProperty('--pill-width', `${selected.offsetWidth}px`);
-    indicator.style.setProperty('--pill-height', `${selected.offsetHeight}px`);
+    // Only user-driven moves should slide: browser repositioning (resize,
+    // ResizeObserver, fonts, pageshow) snaps instead of animating a stale pill.
+    if (!animate) control.classList.add('pill-instant');
+    // Measure against the control's own border box (viewport-space rects are
+    // immune to offsetParent mismatches and integer offset rounding) and
+    // subtract the border width: the pill's absolute containing block is the
+    // control's padding box (border box + border), same origin offsetTop/
+    // offsetLeft use, so the translate lands the pill exactly on the active slot.
+    const origin = control.getBoundingClientRect();
+    const box = selected.getBoundingClientRect();
+    const style = getComputedStyle(control);
+    const offX = parseFloat(style.borderLeftWidth);
+    const offY = parseFloat(style.borderTopWidth);
+    indicator.style.setProperty('--pill-x', `${box.left - origin.left - offX}px`);
+    indicator.style.setProperty('--pill-y', `${box.top - origin.top - offY}px`);
+    indicator.style.setProperty('--pill-width', `${box.width}px`);
+    indicator.style.setProperty('--pill-height', `${box.height}px`);
+    if (!animate) {
+      void indicator.offsetWidth;
+      control.classList.remove('pill-instant');
+    }
   }
+  const reposition = () => position();
   items.forEach(item => {
     if (item.matches('button')) item.setAttribute('aria-pressed', String(item === selected));
     item.addEventListener('click', event => {
@@ -196,12 +214,16 @@ const selections = [...document.querySelectorAll('.bottom')].map(control => {
         other.classList.toggle(other.matches('button') ? 'selected' : 'active', other === item);
         if (other.matches('button')) other.setAttribute('aria-pressed', String(other === item));
       });
-      position();
+      position(true);
     });
+    new ResizeObserver(reposition).observe(item);
   });
   position();
-  requestAnimationFrame(() => control.classList.add('glass-ready'));
-  new ResizeObserver(position).observe(control);
+  requestAnimationFrame(() => { position(); control.classList.add('glass-ready'); });
+  new ResizeObserver(reposition).observe(control);
+  addEventListener('resize', reposition, {passive: true});
+  addEventListener('load', reposition);
+  if (document.fonts?.ready) document.fonts.ready.then(reposition);
   return position;
 });
 addEventListener('pageshow', () => selections.forEach(position => position()));

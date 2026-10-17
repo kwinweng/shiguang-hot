@@ -48,6 +48,7 @@ html[data-theme=dark]{--chrome:rgba(28,26,34,.30);--chrome-top:rgba(28,26,34,.38
 .bottom.glass-ready{position:fixed}
 .selection-pill{position:absolute;left:0;top:0;z-index:-1;pointer-events:none;background:var(--sun);border-radius:999px;box-shadow:inset 0 1px 1px #ffffff70,0 3px 8px -5px var(--depth);transform:translate(var(--pill-x),var(--pill-y));width:var(--pill-width);height:var(--pill-height)}
 .glass-ready .selection-pill{transition:transform 360ms cubic-bezier(.22,1.08,.32,1),width 360ms cubic-bezier(.22,1.08,.32,1),height 360ms ease}
+.pill-instant .selection-pill{transition:none!important}
 .glass-ready :is(a,.pill){position:relative;background:transparent;transition:color 180ms}
 .glass-ready :is(.active,.selected){background:transparent;color:var(--on-sun)}
 .pill[aria-pressed=true]{color:var(--on-sun)}
@@ -125,3 +126,8 @@ body:has(.filters) .filters{background:var(--page);top:calc(var(--header-height)
 @media(max-width:360px){.tiles{grid-template-columns:1fr}}
 /* 首页 tab：中性圆点替代房屋图标，不显示文字 */
 .bottom .home-slot .home-dot,.desktop-nav .home-slot .home-dot{display:block;width:22px;height:22px;fill:currentColor;filter:none}
+/* 底栏：五个槽位等宽网格；槽位与胶囊共享同一坐标空间，胶囊精确覆盖激活槽 */
+.bottom{width:calc(100% - 28px);max-width:460px;display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
+.bottom a,.bottom .nav-unavailable{min-width:0;padding-inline:8px}
+@media(max-width:420px){.bottom a,.bottom .nav-unavailable{font-size:13px;padding-inline:6px}}
+@media(max-width:360px){.bottom a,.bottom .nav-unavailable{padding-inline:4px}}
