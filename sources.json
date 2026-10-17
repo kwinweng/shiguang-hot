@@ -106,7 +106,7 @@
       "id": "github",
       "type": "inbox",
       "name": "GitHub 热门",
-      "icon": "all",
+      "icon": "code",
       "color": "#4f5b66",
       "visibility": "public",
       "nav": {

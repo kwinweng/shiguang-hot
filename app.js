@@ -68,11 +68,18 @@ document.querySelector('#theme')?.addEventListener('click', () => {
   const dark = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'light' : 'dark';
 });
-document.querySelector('#more-toggle')?.addEventListener('click', event => {
-  const panel = document.querySelector('#more-nav');
-  panel.hidden = !panel.hidden;
-  event.currentTarget.setAttribute('aria-expanded', String(!panel.hidden));
+const morePanel = document.querySelector('#more-nav');
+const moreToggle = document.querySelector('#more-toggle');
+moreToggle?.setAttribute('aria-controls', 'more-nav');
+moreToggle?.addEventListener('click', () => {
+  if (morePanel.open) morePanel.close();
+  else morePanel.showModal();
+  moreToggle.setAttribute('aria-expanded', String(morePanel.open));
 });
+morePanel?.addEventListener('click', event => {
+  if (event.target === morePanel || event.target.closest('a')) morePanel.close();
+});
+morePanel?.addEventListener('close', () => moreToggle?.setAttribute('aria-expanded', 'false'));
 document.querySelector('#search-toggle')?.addEventListener('click', () => {
   if (search) { search.scrollIntoView({block: 'center'}); search.focus({preventScroll: true}); }
   else location.href = document.querySelector('.brand').getAttribute('href').replace('index.html', 'all.html') + '#q';

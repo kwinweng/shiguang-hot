@@ -2,6 +2,8 @@
 
 本文供投递内容的 bot 使用。先在 `sources.json` 注册来源，再写入数据。原生数据不直接进入 git。
 
+`nav.enabled=true` 的 inbox 有合法数据后，按 `nav.order` 出现在首页「栏目」行和菜单。手机底栏与桌面分段导航最多五项：固定首页、热点、全部（内网有可导航邮件数据时为邮件）、日报；第五位给其余可导航 inbox 中 order 最小者。菜单另含核心页面和所有有数据的 Telegram 频道页；visibility 始终决定公开或内网可见范围。
+
 ## 路径与原子写入
 
 每期路径为 `/workspace/feeds-inbox/<source-id>/YYYY-MM-DD/feed.json`，图片放在同一期目录内。
