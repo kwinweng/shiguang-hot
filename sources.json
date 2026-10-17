@@ -103,6 +103,19 @@
       "env": "WORLD_FEED_DIR"
     },
     {
+      "id": "x",
+      "type": "inbox",
+      "name": "X 大V爆款",
+      "icon": "x",
+      "color": "#3a3f47",
+      "visibility": "public",
+      "nav": {"enabled": true, "order": 22},
+      "directory": "/workspace/x-digest",
+      "filename": "{date}.json",
+      "adapter": "x",
+      "env": "X_FEED_DIR"
+    },
+    {
       "id": "github",
       "type": "inbox",
       "name": "GitHub 热门",

@@ -80,6 +80,8 @@ visibility 以 `sources.json` 为唯一依据，投递文件无法自行修改�
 
 ## 兼容适配器
 
+`x` 读取平铺的 `/workspace/x-digest/YYYY-MM-DD.json`（filename 为 `{date}.json`，`X_FEED_DIR` 可覆盖目录）；仅当对应日期文件不存在时使用 `latest.json` 的 date。忽略 Markdown，映射 kol_posts、debates、threads 为三个栏目，跳过 overseas、markets 和图片；公开原生投递仍保留最近 14 天。
+
 `mail` 读取 `/workspace/mail-digest/YYYY-MM-DD/digest.json` 的 date、sections，映射为统一 schema，固定来源 mail，private。
 `world` 读取 `/workspace/world-brief/YYYY-MM-DD/brief.json`，将 oneliner、markets、chart、tomorrow 映射到 blocks，保留 sections，固定来源 world，public。
 `native` 直接读取 feed.json；配置 directory、filename、adapter，默认目录 `/workspace/feeds-inbox/<id>`。

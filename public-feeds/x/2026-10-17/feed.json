@@ -1,0 +1,104 @@
+{
+  "schema": "shiguang.feed/1",
+  "source": "x",
+  "date": "2026-10-17",
+  "generated_at": "2026-10-17T17:10:00+08:00",
+  "sections": [
+    {
+      "title": "大V爆款",
+      "items": [
+        {
+          "title": "Elon Musk（X、特斯拉和 SpaceX 的老板）",
+          "body": "以后 X 上所有广告都要符合“合理的审美标准”，广告难看、太吵、太刺耳或者夸大产品效果，广告主会被禁止投放。\n今天最火的大V帖。网友大多叫好，也有人吐槽“丑”根本没法定义。\n♥ 181,543 · ↻ 11,978",
+          "source": "X",
+          "link": "https://x.com/elonmusk/status/2111131160348688395",
+          "date": "2026-10-17 00:24"
+        },
+        {
+          "title": "Sam Altman（OpenAI CEO）",
+          "body": "公开夸马斯克：“哇，新款 Roadster 看起来相当惊艳，干得好。”\n两人打了好几年官司，这次 OpenAI 掌门公开点赞，评论区都在说“难得”。\n♥ 57,464 · ↻ 1,638",
+          "source": "X",
+          "link": "https://x.com/sama/status/2111131677351432197",
+          "date": "2026-10-17 00:26"
+        },
+        {
+          "title": "Bill Ackman（潘兴广场基金 CEO，对冲基金大佬）",
+          "body": "发长文说五年前发生了“一起重大的司法不公”，主角是 MIT 和 HHMI 的科学家 David Sabatini。我只抓到开头，没有全文。\n顶级基金经理亲自下场替一位被处分的科学家喊冤，很容易引发站队。\n♥ 5,188 · ↻ 614",
+          "source": "X",
+          "link": "https://x.com/BillAckman/status/2111246367750283532",
+          "date": "2026-10-17 08:02"
+        },
+        {
+          "title": "Michael Burry（《大空头》原型，账号自称 Cassandra Unchained）",
+          "body": "如果 AMD 再便宜点就值得买，理由是一旦英伟达被以反垄断起诉，AMD 能拿到三倍赔偿。\n暗示英伟达有反垄断风险，而这周芯片股正在大跌。\n♥ 597 · ↻ 42",
+          "source": "X",
+          "link": "https://x.com/michaeljburry/status/2111305688450576423",
+          "date": "2026-10-17 11:57"
+        },
+        {
+          "title": "Alexandr Wang（Meta 首席 AI 官，Meta 超级智能实验室（MSL）负责人）",
+          "body": "Meta 本周发布 Muse Wonder 完整版、开源 Muse Spark 之后，他写信感谢团队，说组建 MSL 才一年多就达成了一个“特别的里程碑”。\n外界说法是扎克伯格宣称 Meta 已经走到 AI 前沿，并拒绝放慢 AI 发展。\n♥ 2,738 · ↻ 116",
+          "source": "X",
+          "link": "https://x.com/alexandr_wang/status/2111237499083252185",
+          "date": "2026-10-17 07:26"
+        },
+        {
+          "title": "Paul Graham（YC 创始人）",
+          "body": "投资人用听起来很蠢的理由拒绝创始人时，要么投资人真的蠢，要么他们就是不喜欢你、随便编了个理由，而且两者并不互斥。\n很多创业者被戳中，转发吐槽自己的融资经历。\n♥ 1,999 · ↻ 62",
+          "source": "X",
+          "link": "https://x.com/paulg/status/2111056376763961665",
+          "date": "2026-10-16 19:27"
+        },
+        {
+          "title": "Anthony Pompliano（加密投资人、播客主）",
+          "body": "现在的感觉就像当年互联网和电脑刚出来时的早期用户：你知道世界要变了，但街上大多数人完全没察觉这种加速。\nAI 乐观派一片认同，怀疑派觉得这是泡沫顶部的典型说法。\n♥ 894 · ↻ 54",
+          "source": "X",
+          "link": "https://x.com/APompliano/status/2111293355141341557",
+          "date": "2026-10-17 11:08"
+        },
+        {
+          "title": "zerohedge（匿名财经大号，风格偏空）",
+          "body": "高盛动量股篮子今年的涨幅已经转负，6 月底还涨了 70%，就在那之后中国开源模型涌进了 AI 市场。\n把动量股崩盘和中国开源模型挂钩，是这周美股 AI 交易退潮的一个叙事。\n♥ 187 · ↻ 32",
+          "source": "X",
+          "link": "https://x.com/zerohedge/status/2111283317547106413",
+          "date": "2026-10-17 10:29"
+        }
+      ]
+    },
+    {
+      "title": "X 今日吵什么",
+      "items": [
+        {
+          "title": "AI 该不该“批量做数学”？陶哲轩 vs OpenAI",
+          "body": "10 月 6 日 OpenAI 发布了 722 篇 AI 生成的数学论文，解决了大约 4,000 个问题，其中几篇后来被修改或撤回。今天奥特曼还晒了 Navier-Stokes 里程碑纪念 T 恤。\n反对：陶哲轩担心论文泛滥是重数量、轻洞见，会让年轻研究者的课题作废；Gary Marcus 说 OpenAI 无视学术伦理。\n支持：有人认为结果最重要，也有人称赞 OpenAI 给数学项目捐了 500 万美元。",
+          "source": "X",
+          "link": "https://x.com/sama/status/2111139227761266699"
+        },
+        {
+          "title": "特朗普冻结对俄制裁",
+          "body": "特朗普签行政令暂缓《格雷厄姆对俄制裁法》，其中包括对俄商品征 500% 关税。离生效只剩两天，理由是符合美国国家利益。\n批评：@RpsAgainstTrump 骂这是耻辱，议员 Beyer 说这是向普京投降。\n另一方：印度媒体欢迎能源关税松绑，支持者认为美国没有义务优先管这场冲突。",
+          "source": "X",
+          "link": "https://x.com/i/trending/2111271642290905216"
+        }
+      ]
+    },
+    {
+      "title": "值得一读",
+      "items": [
+        {
+          "title": "Kylie Kim（@0xkyliekim）",
+          "body": "她认为伊朗战争可能从油价问题变成流动性问题，而币圈还把霍尔木兹局势当作普通地缘新闻。",
+          "source": "X",
+          "link": "https://x.com/0xkyliekim/status/2110998484992282766"
+        },
+        {
+          "title": "Bill Ackman（@BillAckman）",
+          "body": "为 David Sabatini 喊冤的长文，只抓到了开头。",
+          "source": "X",
+          "link": "https://x.com/BillAckman/status/2111246367750283532"
+        }
+      ]
+    }
+  ],
+  "blocks": []
+}

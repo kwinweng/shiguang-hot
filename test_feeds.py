@@ -46,6 +46,36 @@ class FeedTests(unittest.TestCase):
         errors,warnings=feeds.validate(self.feed,self.root,'sample')
         self.assertFalse(errors);self.assertTrue(warnings)
 
+    def test_x_mapping_and_flat_loading(self):
+        source=dict(self.source,id='x',adapter='x',filename='{date}.json')
+        raw=dict(date='2026-10-17',generated_at='2026-10-17T01:00:00Z',
+                 kol_posts=[dict(author_name='作者',handle='writer',who='',zh_summary='摘要',why_hot='原因',likes=181543,reposts=11978,url='https://x.com/post',created_at='2026-10-16T16:24:26Z')],
+                 debates=[dict(title='争论',zh_summary='背景',sides=['支持','反对'],urls=['https://x.com/debate'])],
+                 threads=[dict(author_name='长帖作者',handle='thread',zh_summary='长帖',url='javascript:bad')],
+                 overseas=[dict(title='忽略')],markets=[dict(title='忽略')])
+        feed=feeds.normalize(raw,source)
+        self.assertFalse(feeds.validate(feed,self.root,'x')[0])
+        self.assertEqual([s['title'] for s in feed['sections']],['大V爆款','X 今日吵什么','值得一读'])
+        post=feed['sections'][0]['items'][0]
+        self.assertEqual(post['title'],'作者（@writer）')
+        self.assertEqual(post['body'],'摘要\n原因\n♥ 181,543 · ↻ 11,978')
+        self.assertEqual(post['date'],'2026-10-17 00:24')
+        self.assertEqual(post['link'],'https://x.com/post')
+        self.assertEqual(feed['sections'][1]['items'][0]['body'],'背景\n支持\n反对')
+        self.assertEqual(feed['sections'][2]['items'][0]['title'],'长帖作者（@thread）')
+        self.assertEqual(feed['sections'][2]['items'][0]['link'],'')
+        self.assertFalse(list(feeds.image_refs(feed)))
+        dated=self.root/'2026-10-17.json';dated.write_text(json.dumps(raw))
+        (self.root/'latest.json').write_text(json.dumps(dict(raw,kol_posts=[])))
+        (self.root/'notes.md').write_text('ignore')
+        with patch.object(feeds,'ROOT',self.root/'repo'):
+            self.assertEqual(len(feeds.load_issues(source,True)[0][0]['sections']),3)
+            self.assertFalse(feeds.load_issues(source,False))
+            dated.unlink()
+            self.assertEqual(len(feeds.load_issues(source,True)[0][0]['sections']),2)
+            (self.root/'latest.json').write_text(json.dumps(dict(raw,kol_posts=[],debates=[],threads=[])))
+            self.assertFalse(feeds.load_issues(source,True))
+
     def test_local_precedence_and_public_does_not_load_local(self):
         local=self.root/'local'/'2026-10-17';local.mkdir(parents=True)
         public=self.root/'repo'/'public-feeds'/'sample'/'2026-10-17';public.mkdir(parents=True)

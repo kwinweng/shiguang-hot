@@ -1,7 +1,8 @@
 """Source configuration, feed adapters, validation and bounded image handling."""
 import copy, hashlib, json, os, re
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from urllib.parse import urlsplit
 from PIL import Image, ImageOps
 ROOT = Path(__file__).resolve().parent
@@ -18,7 +19,7 @@ def config():
         ids.add(s['id'])
         if s['visibility'] not in ('public', 'private') or s['type'] not in ('telegram', 'inbox'):
             raise ValueError('来源类型或 visibility 非法')
-        if s['type'] == 'inbox' and s.get('adapter', 'native') not in ('native', 'mail', 'world'):
+        if s['type'] == 'inbox' and s.get('adapter', 'native') not in ('native', 'mail', 'world', 'x'):
             raise ValueError('未知 adapter')
     return data
 
@@ -27,6 +28,38 @@ def directory(source):
 
 def normalize(data, source):
     d = copy.deepcopy(data)
+    if source.get('adapter') == 'x':
+        d = dict(schema='shiguang.feed/1', source=source['id'], date=data.get('date'),
+                 generated_at=data.get('generated_at'), sections=[], blocks=[])
+        for kind, title in [('kol_posts', '大V爆款'), ('debates', 'X 今日吵什么'), ('threads', '值得一读')]:
+            items = []
+            for post in data.get(kind, []) or []:
+                summary = post.get('zh_summary') or ''
+                author, handle = post.get('author_name') or '', (post.get('handle') or '').lstrip('@')
+                url = post.get('url') or ''
+                body = summary
+                if kind == 'kol_posts':
+                    who = post.get('who') or ('@' + handle if handle else '')
+                    name = f'{author}（{who}）' if who else author
+                    counts = ' · '.join(f'{symbol} {post[key]:,}' for key, symbol in [('likes', '♥'), ('reposts', '↻')]
+                                        if isinstance(post.get(key), (int, float)) and not isinstance(post[key], bool))
+                    body = '\n'.join(part for part in (summary, post.get('why_hot'), counts) if part)
+                elif kind == 'debates':
+                    name = post.get('title') or ''
+                    body = '\n'.join(part for part in [summary] + (post.get('sides') or []) if part)
+                    url = (post.get('urls') or [''])[0]
+                else:
+                    name = f'{author}（@{handle}）' if author and handle else author or summary[:30]
+                if not name and not body: continue
+                item = dict(title=name, body=body, source='X', link=url if urlsplit(url).scheme in ('http', 'https') else '')
+                if post.get('created_at'):
+                    try:
+                        stamp = datetime.fromisoformat(post['created_at'].replace('Z', '+00:00'))
+                        item['date'] = stamp.replace(tzinfo=stamp.tzinfo or ZoneInfo('Asia/Shanghai')).astimezone(ZoneInfo('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M')
+                    except (ValueError, TypeError): pass
+                items.append(item)
+            if items: d['sections'].append(dict(title=title, items=items))
+        return d
     if source.get('adapter', 'native') != 'native':
         d['schema'] = 'shiguang.feed/1'
         d['source'] = source['id']
@@ -104,13 +137,17 @@ def load_issues(source, local=False):
         roots = [(directory(source), source.get('filename', 'feed.json'), False), (Path('/workspace/feeds-inbox') / source['id'], 'feed.json', True)] + roots
     result = {}
     for root, filename, native in roots:
-        for file in sorted(root.glob('????-??-??/' + filename), reverse=True):
-            if file.parent.name in result: continue
+        flat = not native and filename == '{date}.json'
+        files = sorted(root.glob('????-??-??.json' if flat else '????-??-??/' + filename), reverse=True)
+        if flat and (root / 'latest.json').is_file(): files.append(root / 'latest.json')
+        for file in files:
             try:
                 d = json.loads(file.read_text())
+                day = d.get('date') if flat and file.name == 'latest.json' else file.stem if flat else file.parent.name
+                if day in result or (flat and file.name == 'latest.json' and (root / (str(day) + '.json')).exists()): continue
                 d = normalize(d, dict(source, adapter='native') if native else source)
                 errors, warnings = validate(d, file.parent, source['id'])
-                if d.get('date') != file.parent.name: errors.append('目录日期与 date 不符')
+                if d.get('date') != day: errors.append('路径日期与 date 不符')
                 if errors: print(f'{file}: ' + '; '.join(errors)); continue
                 if not any(section.get('items') for section in d.get('sections', [])) and not any(b.get('type') in ('oneliner','markets','tomorrow') and b.get('items') or b.get('type')=='chart' and b.get('image') for b in d.get('blocks', [])): continue
                 result[d['date']] = (d, file.parent)

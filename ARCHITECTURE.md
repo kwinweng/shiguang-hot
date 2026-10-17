@@ -3,12 +3,13 @@
 ## 模块与配置
 
 `pipeline.py` 保留 Telegram t.me/s 抓取、断行清洗、SQLite 增量去重、14 天图片缓存和热点评分。
-`feeds.py` 管理 JSON 配置、三种适配器、验证和图片压缩；`sitebuild.py` 统一渲染卡片、导航、栏目和归档。
+`feeds.py` 管理 JSON 配置、四种适配器、验证和图片压缩；`sitebuild.py` 统一渲染卡片、导航、栏目和归档。
 `style.css`、`app.js` 提供共享视觉与交互。`build_icons.py` 生成蓝色图标、manifest 并检验边缘。
 `validate_feed.py` 为独立投递校验入口；规范见 INGEST.md。`mailbuild.py` 兼容旧入口，仅重建内网 inbox。
 
 `sources.json` 声明 id、type、name、icon、color、visibility、nav（enabled/order）。
-Telegram 使用 channel；inbox 使用 directory、filename、adapter（native/mail/world）和可选 env。
+Telegram 使用 channel；inbox 使用 directory、filename、adapter（native/mail/world/x）和可选 env。
+`x` 使用平铺 `/workspace/x-digest/YYYY-MM-DD.json`，filename 为 `{date}.json`；`latest.json` 仅补缺失日期，忽略 Markdown。`X_FEED_DIR` 可覆盖目录，公开输出仍为原生 feed.json，保留最近 14 天。
 分类正则位于 categories。导航按顺序自动生成；inbox 有合法数据才显示。
 手机底栏与桌面分段导航最多五项：固定首页、热点、全部（内网有可导航邮件数据时替换为邮件）、日报；第五位给其余有合法数据且 nav.enabled 的 inbox 中 nav.order 最小者。全部此类栏目按 order 出现在首页「栏目」行；菜单包含核心页面、这些栏目及所有有数据的 Telegram 频道页。可见范围仍由 visibility 决定；链接使用相对路径，支持 Pages `/tg-digest/`。
 
@@ -41,7 +42,7 @@ Telegram 使用 channel；inbox 使用 directory、filename、adapter（native/m
 
 新增 Telegram：只增加一个 type=telegram 配置，填写 channel、唯一 id、名称、配色及可见范围。
 新增原生栏目：只增加 type=inbox、adapter=native 配置；将合法 feed.json 和图片原子写入约定目录。
-无需修改渲染代码。图标 key 支持 home/hot/all/archive/mail/world/code，未知 key 回退 all。
+无需修改渲染代码。图标 key 支持 home/hot/all/archive/mail/world/x/code，未知 key 回退 all。
 需要导航的 inbox 设置 nav.enabled=true 和 order。无有效数据时隐藏入口，不生成空栏目。
 本机执行 validate_feed.py <id>，再运行 sync.sh。public 内容经 publish_public.py 进入仓库后，Actions 才能获得。
 可用 publish_public.py --no-push 仅准备文件，不执行 git 操作。

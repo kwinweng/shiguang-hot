@@ -8,11 +8,13 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 E = lambda v: html.escape(str(v or ''), quote=True)
 ICONS = {'home':'<path d="m3 10 9-7 9 7v11H6V10M9 21v-8h6v8"/>','hot':'<path d="M13 3c2 6-3 6-1 10 2-1 3-3 3-4 7 7 4 12-3 12S3 14 8 8c0 4 2 4 2 4-1-5 3-6 3-9Z"/>','all':'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 8h8m-8 4h8m-8 4h5"/>','archive':'<rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 10h16"/>','mail':'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/>','world':'<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/>'}
+ICONS['x'] = '<path d="M5 4h14a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-8l-6 3 1-4a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z"/><path d="M7 9h10M7 13h6"/>'
 def icon(key): return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS.get(key, ICONS['all'])+'</svg>'
 def link(url): return str(url or '') if urlsplit(str(url or '')).scheme in ('http','https') else ''
 
 def section_icon(key):
     shapes = {
+        'x':'<path d="M16 16h31a9 9 0 0 1 9 9v17a9 9 0 0 1-9 9H29L17 57l2-9a9 9 0 0 1-9-9V25a9 9 0 0 1 6-9Z" fill="var(--icon-shade)"/><path d="M16 11h29a9 9 0 0 1 9 9v17a9 9 0 0 1-9 9H27L14 53l3-10a9 9 0 0 1-9-9V20a9 9 0 0 1 8-9Z" fill="url(#status-paper)"/><path d="M18 23h17m-17 8h12"/><path d="M43 22c3 5-3 6-1 10 2-1 3-3 3-4 6 6 3 11-2 11s-8-5-4-9c0 3 1 3 1 3-1-5 2-6 3-11Z" fill="url(#status-sun)" stroke="none"/>',
         'code':'<rect x="9" y="14" width="46" height="38" rx="8" fill="url(#status-paper)"/><path d="m25 25-9 8 9 8m14-16 9 8-9 8m-4-20-6 24" stroke="var(--sun)" stroke-width="3"/>',
         'home':'<circle cx="46" cy="19" r="10" fill="url(#status-sun)" stroke="none"/><path d="M46 5V2m11 10 3-2M33 10l-2-2m27 16 3 1" stroke="var(--sun)"/><path d="m14 20 35 4 5 27-34 3Z" fill="var(--icon-shade)"/><path d="M10 19 43 16 46 49 15 53a4 4 0 0 1-4-4Z" fill="url(#status-paper)"/><path d="m43 16 7 7-6 1Z" fill="var(--icon-light)"/><path d="m16 26 21-2m-20 6 21-2" stroke="var(--sun)" stroke-width="3"/><path d="m17 36 8-1 1 9-8 1Z" fill="var(--sun)" stroke="none"/><path d="m30 35 8-1m-8 6 8-1m-8 6 8-1m-22 5 23-2"/><path d="m46 30 2 18c0 3 4 3 5 1" stroke="var(--icon-light)"/>',
         'hot':'<path d="M35 8c4 15-12 17-5 28 5-2 9-8 9-13 18 18 12 32-7 32C12 55 9 37 21 24c-1 9 4 11 4 11-3-13 6-18 10-27Z" fill="var(--sun)"/><path d="M30 46c-5-6 1-12 4-15-1 8 8 9 5 15-2 5-7 5-9 0Z" fill="url(#status-paper)" stroke="none"/>',
@@ -52,7 +54,7 @@ def build(rows, hot, now, inbox_only=False):
         return [dict(title=i.get('title') or '未命名条目', body=i.get('body') or '', images=[im['file'] for im in i.get('images',[]) or [] if isinstance(im,dict) and im.get('file')], name=i.get('source') or ' / '.join(str(x) for x in i.get('sources',[]) or []) or s['name'], cat=s['name'], source_id=s['id'], ch=s['id'], day=data['date'], ts=i.get('date') or data['date'], url=link(i.get('link'))) for section in data.get('sections',[]) for i in section['items']]
     for s in sources:
         if s['type']!='inbox': continue
-        loaded=load_issues(s,private or os.getenv('NO_FETCH')=='1')
+        loaded=load_issues(s,private)
         shutil.rmtree(out/s['id'],ignore_errors=True)
         if not loaded: continue
         issues[s['id']]=[(compress_images(d,base,out/s['id']/'img',s['id']+'/img/'),base) for d,base in loaded]
@@ -133,7 +135,11 @@ def build(rows, hot, now, inbox_only=False):
         for n,(d,base) in enumerate(loaded):
             count=sum(len(section['items']) for section in d.get('sections',[]))
             lead=f'今天邮箱里 {count} 封值得看' if s.get('adapter')=='mail' else '看看今天世界发生了什么' if s.get('adapter')=='world' else s['name']
-            content=heading(lead,d['date']+' · '+s['name']+' · '+('仅内网可见' if s['visibility']=='private' else '每日精选'))+archives+blocks(d)
+            note=d['date']+' · '+s['name']+' · '+('仅内网可见' if s['visibility']=='private' else '每日精选')
+            if s.get('adapter')=='x':
+                count=sum(len(section['items']) for section in d.get('sections',[]) if section['title']=='大V爆款')
+                lead=f'今天 X 上 {count} 条大V爆款'; note=d['date']+' · 来自 X 公开帖'
+            content=heading(lead,note)+archives+blocks(d)
             for section in d.get('sections',[]):
                 section_title=''.join('<span class="g-wash">'+E(part.strip())+'</span>' for part in re.split(r'[|｜]',section.get('title') or '') if part.strip())
                 content+='<section class="mail-section"><h2 class="sticky-title">'+section_title+'</h2>'+''.join(card(r,reading=True) for r in inbox_rows(dict(d,sections=[section]),s))+'</section>'
