@@ -9,7 +9,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent   # repository root
 WEB = ROOT / 'web'                               # style.css, app.js, assets/
-RESERVED = ('archive', 'media', 'assets', 'img', 'index', 'hot', 'all', 'columns', 'favorites')
+RESERVED = ('archive', 'media', 'assets', 'img', 'index', 'hot', 'all', 'columns', 'favorites', 'tag')
+TYPES = ('telegram', 'inbox', 'feed')
+# 栏目「按渠道」: platform key -> label, in display order. A source names its platform; the default
+# follows its type (telegram -> telegram, feed -> rss, inbox -> brief).
+PLATFORMS = {'brief': '每日简报', 'x': 'X（推特）', 'youtube': 'YouTube', 'rss': 'RSS 订阅',
+             'newsletter': '电邮订阅', 'github': 'GitHub', 'telegram': 'Telegram', 'mail': '邮件'}
 
 
 def private_mode():
@@ -23,10 +28,20 @@ def _number(value, name, minimum=None):
 
 
 def prepare(data):
-    """Check a parsed sources.json and fill in every default."""
-    topics = data.get('topics', data.get('categories', {}))
-    for name, pattern in topics.items():
-        re.compile(pattern)
+    """Check a parsed sources.json and fill in every default.
+
+    `topics` is a list of {name, slug, pattern} in display order (the first pattern that matches
+    wins); the older form {name: pattern} still works and gets slugs t1, t2…
+    """
+    raw_topics = data.get('topics', data.get('categories', {}))
+    if isinstance(raw_topics, dict):
+        raw_topics = [dict(name=name, slug=f't{n}', pattern=pattern) for n, (name, pattern) in enumerate(raw_topics.items(), 1)]
+    topics, slugs = {}, {}
+    for t in raw_topics:
+        re.compile(t['pattern'])
+        if not re.fullmatch(r'[a-z0-9-]+', t['slug']) or t['slug'] in slugs.values() or t['name'] in topics:
+            raise ValueError('话题 slug 非法或重复')
+        topics[t['name']] = t['pattern']; slugs[t['name']] = t['slug']
     hot = dict(data.get('hot', {}))
     hot.setdefault('keywords', [])
     hot.setdefault('source', None)
@@ -36,11 +51,16 @@ def prepare(data):
         if not re.fullmatch(r'[a-zA-Z0-9_-]+', s['id']) or s['id'] in ids or s['id'] in RESERVED:
             raise ValueError('来源 id 非法或重复')
         ids.add(s['id'])
-        if s['visibility'] not in ('public', 'private') or s['type'] not in ('telegram', 'inbox'):
+        if s['visibility'] not in ('public', 'private') or s['type'] not in TYPES:
             raise ValueError('来源类型或 visibility 非法')
+        if s['type'] == 'feed' and not re.match(r'https?://', s.get('url', '')):
+            raise ValueError('feed 来源需要 http(s) url')
+        s.setdefault('platform', {'telegram': 'telegram', 'feed': 'rss'}.get(s['type'], 'brief'))
+        if s['platform'] not in PLATFORMS:
+            raise ValueError('未知 platform: ' + s['platform'])
         if s['type'] == 'inbox' and s.get('adapter', 'native') not in ('native', 'mail', 'world', 'x'):
             raise ValueError('未知 adapter')
-        stream = s['type'] == 'telegram'
+        stream = s['type'] != 'inbox'
         s['order'] = _number(s.get('order', s.get('daily_order', 50 if stream else 45)), 'order')
         home = dict(s.get('home', {}))
         home.setdefault('weight', s.get('home_weight', 1))
@@ -55,7 +75,7 @@ def prepare(data):
         sources.append(s)
     if hot['source'] and hot['source'] not in ids:
         raise ValueError('hot.source 必须是已注册的来源')
-    return dict(topics=topics, hot=hot, sources=sources)
+    return dict(topics=topics, topic_slugs=slugs, hot=hot, sources=sources)
 
 
 def config():

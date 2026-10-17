@@ -44,6 +44,7 @@ class Item:
     via: list = field(default_factory=list)   # sub-sources shown after the source name
     images: list = field(default_factory=list)  # site-root-relative paths
     native_id: object = None  # Telegram message id; part of the bookmark identity
+    reach: int = 0          # channels that reported the story (热点); 0 when unknown
 
     @property
     def moment(self):
@@ -65,6 +66,13 @@ def from_telegram(row, source, public):
                 topic='' if row['cat'] == OTHER else row['cat'],
                 day=row['day'], ts=row['ts'], url=safe_link(row.get('url')), images=list(row.get('images', [])),
                 native_id=row.get('id'))
+
+
+def from_entry(row, source):
+    """A feed entry (shiguang.ingest.web): RSS / YouTube."""
+    return Item(source_id=source['id'], filter_key=source['id'], category='', title=row['title'] or row['body'][:60],
+                body=row['body'] if row['body'] != row['title'] else '', day=row['ts'][:10], ts=row['ts'],
+                url=safe_link(row.get('url')), images=list(row.get('images', [])), native_id=row['id'])
 
 
 def _via(entry, source):

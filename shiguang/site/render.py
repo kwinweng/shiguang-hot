@@ -9,7 +9,7 @@ data-* attributes.
 """
 import hashlib, html, json, re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Callable
 from shiguang.model import BEIJING
 from shiguang.site.icons import icon, sprite, status_icon
@@ -50,14 +50,15 @@ class Page:
         source = self.site.sources.get(self.active)
         if source:
             return source.get('icon', 'all')
-        return {'daily': 'archive', 'hot': 'hot', 'favorites': 'bookmark', 'columns': 'all'}.get(self.active, self.active)
+        return {'today': 'home', 'hot': 'hot', 'favorites': 'bookmark', 'columns': 'all'}.get(self.active, self.active)
 
     def url(self, path):
         """Site-root-relative path -> link from this page. External URLs pass through."""
         return path if re.match(r'https?://', path) else self.rel + path
 
 
-SLOT_LABELS = {'favorites': '收藏', 'daily': '日报', 'home': '首页', 'hot': '热点', 'columns': '栏目'}
+SLOT_LABELS = {'today': '今日', 'hot': '热点', 'columns': '栏目', 'favorites': '收藏'}
+WEEKDAYS = '一二三四五六日'
 BLOCK_TITLES = {'oneliner': '一句话速览', 'markets': '市场看板', 'chart': '一张图', 'tomorrow': '明日看点'}
 EXTERNAL = 'target="_blank" rel="noopener noreferrer"'
 
@@ -142,6 +143,8 @@ def card(page, item, kind=None, reading=False, rank=None, more=False):
     label = f'<span class="rank">{rank:02}</span>' if rank else ''
     label += f'<span class="source" data-source="{E(source["id"])}">{E(source["name"])}</span>'
     label += ''.join(f'<span class="sub">{E(part)}</span>' for part in item.via)
+    if item.reach >= 2:
+        label += f'<span class="reach">{item.reach} 个频道</span>'
     if item.topic:
         label += f'<span class="cat">{E(item.topic)}</span>'
 
@@ -185,7 +188,7 @@ def ranked(page, items):
 
 # ---------- Page sections ----------
 
-def filters(page, items):
+def filters(page, items, topics=True):
     """Two separate questions: which topic (pills) and which source (select), plus search.
 
     Only topics and sources present on the page are offered. app.js also reads ?topic= and
@@ -194,7 +197,7 @@ def filters(page, items):
     site = page.site
     present_topics = {item.category for item in items}
     present_keys = {item.filter_key for item in items}
-    names = ['全部'] + [name for name in site.topics if name in present_topics]
+    names = ['全部'] + [name for name in site.topics if name in present_topics] if topics else []
     pills = ''.join(
         f'<button class="g-pill pill{" selected" if i == 0 else ""}" type="button" data-value="{E(name if i else "")}" '
         f'aria-pressed="{"true" if i == 0 else "false"}">{E(name)}</button>'
@@ -203,8 +206,8 @@ def filters(page, items):
         f'<option value="{E(key)}">{E(s["name"])}</option>'
         for s in sorted(site.sources.values(), key=lambda s: s['order'])
         for key in [s['channel'] if s['type'] == 'telegram' else s['id']] if key in present_keys)
-    return (f'<div class="filterbar"><div class="filters" role="toolbar" aria-label="话题">{pills}</div></div>'
-            '<div class="searchline">'
+    bar = f'<div class="filterbar"><div class="filters" role="toolbar" aria-label="话题">{pills}</div></div>' if topics else ''
+    return (bar + '<div class="searchline">'
             f'<label class="g-field g-field--search">{icon("search")}'
             '<input id="q" type="search" placeholder="搜索" aria-label="搜索" autocomplete="off"></label>'
             f'<label class="g-field g-field--select"><select id="channel" aria-label="筛选来源"><option value="">全部来源</option>{options}</select>'
@@ -397,3 +400,99 @@ def redirect(target, title):
             f'<title>{E(title)} · 拾光热点</title>'
             f'<script>location.replace({json.dumps(target)}+location.hash)</script></head>'
             f'<body><p>这个页面已合并，<a href="{E(target)}">前往{E(title)}</a>。</p></body></html>')
+
+
+# ---------- 今日: time machine ----------
+
+def day_label(day, today=None, short=False):
+    """10月17日 周六 (or 今天); short: 10/17."""
+    d = date.fromisoformat(day)
+    if short:
+        return '今天' if day == today else f'{d.month}/{d.day}'
+    return f'{d.month}月{d.day}日 周{WEEKDAYS[d.weekday()]}'
+
+
+def day_path(day, today):
+    return 'index.html' if day == today else f'archive/{day}.html'
+
+
+def time_machine(page, days, current, today):
+    """The last week as chips, and a calendar sheet for every day with content."""
+    chips = ''.join(
+        f'<a class="g-pill tm-day" href="{E(page.url(day_path(d, today)))}"' + (' aria-current="page"' if d == current else '')
+        + f'><b>{E(day_label(d, today, short=True))}</b><span>周{WEEKDAYS[date.fromisoformat(d).weekday()]}</span></a>'
+        for d in days[:7])
+    available = set(days)
+    months = sorted({d[:7] for d in days}, reverse=True)
+    grids = ''
+    for month in months:
+        first = date.fromisoformat(month + '-01')
+        cells = '<i></i>' * first.weekday()
+        day = first
+        while day.month == first.month:
+            iso = day.isoformat()
+            if iso in available:
+                current_attr = ' aria-current="page"' if iso == current else ''
+                cells += (f'<a href="{E(page.url(day_path(iso, today)))}"{current_attr}'
+                          + (' class="is-today"' if iso == today else '') + f'>{day.day}</a>')
+            else:
+                cells += f'<span>{day.day}</span>'
+            day += timedelta(days=1)
+        grids += (f'<h3 class="sheet__group">{first.year}年{first.month}月</h3>'
+                  '<div class="tm-week" aria-hidden="true">' + ''.join(f'<i>{w}</i>' for w in WEEKDAYS) + '</div>'
+                  f'<div class="tm-grid">{cells}</div>')
+    return (f'<div class="tm"><button class="g-round tm-open" type="button" data-dialog="time-machine" aria-haspopup="dialog" '
+            f'aria-label="时光机：选择日期">{icon("archive")}</button>'
+            f'<nav class="archives tm-strip" aria-label="最近几天">{chips}</nav></div>'
+            '<dialog class="g-panel sheet tm-sheet" id="time-machine" aria-labelledby="tm-title">'
+            '<div class="sheet__head"><h2 id="tm-title">时光机</h2>'
+            f'<button class="g-round" type="button" data-close aria-label="关闭">{icon("close")}</button></div>'
+            f'{grids}</dialog>')
+
+
+def show_all(count):
+    """Reveals the filter-only cards of a day without choosing a filter."""
+    return f'<p class="more-link"><button class="g-btn g-btn--text show-all" type="button"><span>展开这一天全部 {count} 条</span>{icon("chevron")}</button></p>'
+
+
+# ---------- 热点: timeline ----------
+
+def timeline(page, buckets, days, now_key):
+    """24 hour bars per day, oldest left. `buckets` maps 'YYYY-MM-DD-HH' -> stories in that hour.
+
+    Dragging the track scrubs the list (app.js); without script each bar is a link to its hour.
+    """
+    peak = max(buckets.values(), default=1) or 1
+    cells = ''
+    for day in days:
+        cells += f'<div class="tl-day" data-day="{day}"><span class="tl-date">{E(day_label(day))}</span><div class="tl-hours">'
+        for hour in range(24):
+            key = f'{day}-{hour:02}'
+            count = buckets.get(key, 0)
+            future = key > now_key
+            tick = f'<small>{hour}</small>' if hour % 6 == 0 else ''
+            label = f'{day_label(day)} {hour}:00，{count} 条'
+            if future:
+                cells += f'<span class="tl-hour is-future" data-key="{key}" aria-hidden="true"><i></i>{tick}</span>'
+            else:
+                cells += (f'<a class="tl-hour{" is-empty" if not count else ""}" href="#h-{key}" data-key="{key}" '
+                          f'style="--n:{count / peak:.2f}" aria-label="{E(label)}"><i></i>{tick}</a>')
+        cells += '</div></div>'
+    return ('<div class="filterbar timeline" data-timeline>'
+            f'<div class="tl-track" aria-label="按小时跳转">{cells}</div>'
+            '<div class="tl-marker" aria-hidden="true"></div>'
+            '<p class="tl-now" aria-live="polite"></p></div>')
+
+
+def hour_heading(key):
+    day, hour = key[:10], int(key[11:])
+    return f'<h3 class="tl-anchor" id="h-{key}" data-key="{key}"><b>{hour:02}:00</b><span>{E(day_label(day))}</span></h3>'
+
+
+# ---------- 栏目: two ways in ----------
+
+def view_switch(views):
+    """Segmented switch between panels marked data-panel; the first is shown without script too."""
+    items = ''.join(f'<button class="g-seg__item" type="button" data-view="{key}" aria-pressed="{"true" if n == 0 else "false"}">{E(label)}</button>'
+                    for n, (key, label) in enumerate(views))
+    return f'<div class="g-seg view-switch" role="group" aria-label="分类方式">{items}</div>'

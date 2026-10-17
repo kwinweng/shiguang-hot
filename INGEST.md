@@ -2,10 +2,11 @@
 
 本文供投递内容的 bot 使用。先在 `sources.json` 注册来源，再写入数据。原生数据不直接进入 git。
 
-有合法数据的 inbox 来源会自动出现在「栏目」页、菜单、首页信息流和对应日期的日报里，顺序由来源的 `order` 决定（今日重点 0、邮件精华 10、环球要闻 20、推特爆款 30、GitHub 热门 40；新来源默认 45）。底栏固定为 收藏 / 日报 / 首页 / 热点 / 栏目，新来源不会占用底栏。`sources.json` 的 `hot.source` 指定的来源（今日重点）显示在「热点」页顶部，不进栏目页。visibility 始终决定可见范围。
+有合法数据的 inbox 来源会自动出现在「栏目」页（按 `platform` 分组）、菜单、对应日期的「今日」信息流和标签页里，顺序由来源的 `order` 决定（今日重点 0、邮件精华 10、环球要闻 20、推特爆款 30、GitHub 热门 40；新来源默认 45）。底栏固定为 今日 / 热点 / 栏目 / 收藏，新来源不会占用底栏。`sources.json` 的 `hot.source` 指定的来源（今日重点）显示在「今日」顶部。visibility 始终决定可见范围。
 
-首页取每个 inbox 最新一期和 TG 消息，每卡显示来源。来源可配置 `home.weight`（默认 1，按 weight / (1 + 年龄小时 / 24) 排名）和 `home.cap`（TG 默认 4，inbox 默认 8，0 表示不入首页）；每轮每来源最多取一条。只有 blocks 的期刊也可进入首页。
-日报汇集当天所有可见数据：每个期刊显示 blocks 和前 3 条，链接到完整一期 `<id>/<date>.html`；最后 TG 按话题分组。仅 inbox 有数据的日期也生成日报。邮件内容绝不进入 public 构建。
+「今日」取当天的 TG 消息和当天各期刊的条目，每卡显示来源。来源可配置 `home.weight`（默认 1，按 weight / (1 + 年龄小时 / 24) 排名）和 `home.cap`（TG 默认 4，inbox 默认 8，0 表示不入信息流）；超出上限的条目保留在页面里供筛选和「展开这一天全部」。每个期刊在「今日」底部显示 blocks 和前 3 条，链接到完整一期 `<id>/<date>.html`。只有 blocks 的期刊也可进入信息流。邮件内容绝不进入 public 构建。
+
+RSS 和 YouTube 不走本文的投递流程：在 `sources.json` 加 `type: "feed"` 和 `url` 即可，由每 30 分钟的构建直接抓取。
 
 ## 路径与原子写入
 
@@ -88,6 +89,6 @@ visibility 以 `sources.json` 为唯一依据，投递文件无法自行修改�
 `mail` 读取 `/workspace/mail-digest/YYYY-MM-DD/digest.json` 的 date、sections，映射为统一 schema，固定来源 mail，private。
 `world` 读取 `/workspace/world-brief/YYYY-MM-DD/brief.json`，将 oneliner、markets、chart、tomorrow 映射到 blocks，保留 sections，固定来源 world，public。
 `native` 直接读取 feed.json；配置 directory、filename、adapter，默认目录 `/workspace/feeds-inbox/<id>`。
-已注册原生 public 栏目：`github`（GitHub 热门）和 `hot-daily`（今日重点）。`hot-daily` 仅使用配置中的 5 个公开 TG 频道内容，由「热点日报」bot 每晚北京时间 22:00 生成，投递至 `/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json`，显示在「热点」页顶部。
+已注册原生 public 栏目：`github`（GitHub 热门）和 `hot-daily`（今日重点）。`hot-daily` 仅使用配置中的 5 个公开 TG 频道内容，由「热点日报」bot 每晚北京时间 22:00 生成，投递至 `/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json`，显示在「今日」顶部。
 `MAIL_FEED_DIR`、`WORLD_FEED_DIR` 可覆盖兼容目录；其他来源可在配置 env 指定变量。
 `SOURCES_OVERRIDE` 可指定完整替代配置文件，仅用于隔离验证；不要改变 private 的真实可见范围。

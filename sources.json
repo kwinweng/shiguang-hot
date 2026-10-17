@@ -1,11 +1,15 @@
 {
-  "topics": {
-    "全球": "国际|美国|俄罗斯|乌克兰|特朗普|以色列|战争|停火|总统|巴基斯坦|印度|联合国",
-    "财经": "市场|经济|股|央行|美联储|利率|美元|财报|GDP|CPI|关税|投资",
-    "AI": "(?<![A-Za-z])AI(?![A-Za-z])|人工智能|大模型|OpenAI|ChatGPT|Claude|Gemini|DeepSeek|智能体|算力",
-    "开发者": "GitHub|开源|编程|开发者|代码库|Python|Rust|JavaScript|TypeScript|SDK|命令行",
-    "科技": "芯片|苹果|手机|英伟达|谷歌|科技|电子|SpaceX"
-  },
+  "topics": [
+    {"name": "全球", "slug": "world", "pattern": "国际|美国|俄罗斯|乌克兰|特朗普|以色列|伊朗|战争|停火|总统|巴基斯坦|印度|联合国|欧盟|北约"},
+    {"name": "财经", "slug": "finance", "pattern": "市场|经济|股|指数|综指|期货|央行|美联储|利率|美元|人民币|汇率|财报|营收|净利|GDP|CPI|关税|投资|原油|油价|金价|黄金|债"},
+    {"name": "AI", "slug": "ai", "pattern": "(?<![A-Za-z])AI(?![A-Za-z])|人工智能|大模型|OpenAI|ChatGPT|Claude|Gemini|DeepSeek|Anthropic|智能体|算力"},
+    {"name": "科技", "slug": "tech", "pattern": "芯片|半导体|处理器|内存|科技|SpaceX|火箭|卫星|谷歌|微软|英伟达|Intel|字节|腾讯|阿里|漏洞|量子"},
+    {"name": "数码", "slug": "gadgets", "pattern": "iPhone|iPad|Mac|苹果|安卓|Android|手机|折叠屏|平板|耳机|相机|Galaxy|三星|小米|华为|vivo|OPPO|荣耀|App Store|消费电子"},
+    {"name": "汽车", "slug": "auto", "pattern": "汽车|车企|电车|新能源车|乘用车|特斯拉|Tesla|问界|尊界|比亚迪|小鹏|蔚来|理想汽车|极氪|智驾|自动驾驶"},
+    {"name": "开发者", "slug": "dev", "pattern": "GitHub|开源|编程|开发者|代码库|Python|Rust|JavaScript|TypeScript|SDK|命令行"},
+    {"name": "社会", "slug": "society", "pattern": "警方|法院|判决|刑事|事故|死亡|身亡|受伤|地震|火灾|辟谣|地铁|高铁|铁路|学校|医院"},
+    {"name": "娱乐", "slug": "fun", "pattern": "游戏|Steam|Switch|PS5|Xbox|任天堂|电影|演唱会|明星|综艺|动漫|IGN"}
+  ],
   "hot": {"source": "hot-daily", "keywords": ["美联储", "降息", "关税", "停火", "战争", "GDP", "财报", "AI", "苹果", "英伟达", "OpenAI", "特朗普", "央行", "芯片"]},
   "sources": [
     {"id": "xhqcankao", "type": "telegram", "name": "风向旗参考快讯", "icon": "all", "visibility": "public", "channel": "xhqcankao", "order": 50},
@@ -21,10 +25,10 @@
     {"id": "liangjiahepost", "type": "telegram", "name": "梁家河邮报", "icon": "all", "visibility": "public", "channel": "liangjiahepost", "order": 60},
     {"id": "titan_pain", "type": "telegram", "name": "某科学的一个频道", "icon": "all", "visibility": "public", "channel": "titan_pain", "order": 61},
     {"id": "NewlearnerChannel", "type": "telegram", "name": "Newlearnerの自留地", "icon": "all", "visibility": "public", "channel": "NewlearnerChannel", "order": 62},
-    {"id": "mail", "type": "inbox", "name": "邮件精华", "icon": "mail", "visibility": "private", "order": 10, "reading": true, "lead": "今天邮箱里 {count} 封值得看", "adapter": "mail", "directory": "/workspace/mail-digest", "filename": "digest.json", "env": "MAIL_FEED_DIR"},
-    {"id": "world", "type": "inbox", "name": "环球要闻", "icon": "world", "visibility": "public", "order": 20, "lead": "看看今天世界发生了什么", "adapter": "world", "directory": "/workspace/world-brief", "filename": "brief.json", "env": "WORLD_FEED_DIR"},
-    {"id": "x", "type": "inbox", "name": "推特爆款", "icon": "x", "visibility": "public", "order": 30, "lead": "今天推特上 {count} 条值得看", "note": "来自 X 公开帖", "adapter": "x", "directory": "/workspace/x-digest", "filename": "{date}.json", "env": "X_FEED_DIR"},
-    {"id": "github", "type": "inbox", "name": "GitHub 热门", "icon": "code", "visibility": "public", "order": 40, "topic": "开发者", "adapter": "native", "directory": "/workspace/feeds-inbox/github", "filename": "feed.json"},
-    {"id": "hot-daily", "type": "inbox", "name": "今日重点", "icon": "all", "visibility": "public", "order": 0, "home": {"weight": 1.2}, "note": "每晚 22:00 发布", "adapter": "native", "directory": "/workspace/feeds-inbox/hot-daily", "filename": "feed.json"}
+    {"id": "mail", "type": "inbox", "name": "邮件精华", "icon": "mail", "visibility": "private", "order": 10, "reading": true, "lead": "今天邮箱里 {count} 封值得看", "adapter": "mail", "directory": "/workspace/mail-digest", "filename": "digest.json", "env": "MAIL_FEED_DIR", "platform": "mail"},
+    {"id": "world", "type": "inbox", "name": "环球要闻", "icon": "world", "visibility": "public", "order": 20, "lead": "看看今天世界发生了什么", "adapter": "world", "directory": "/workspace/world-brief", "filename": "brief.json", "env": "WORLD_FEED_DIR", "platform": "brief"},
+    {"id": "x", "type": "inbox", "name": "推特爆款", "icon": "x", "visibility": "public", "order": 30, "lead": "今天推特上 {count} 条值得看", "note": "来自 X 公开帖", "adapter": "x", "directory": "/workspace/x-digest", "filename": "{date}.json", "env": "X_FEED_DIR", "platform": "x"},
+    {"id": "github", "type": "inbox", "name": "GitHub 热门", "icon": "code", "visibility": "public", "order": 40, "topic": "开发者", "adapter": "native", "directory": "/workspace/feeds-inbox/github", "filename": "feed.json", "platform": "github"},
+    {"id": "hot-daily", "type": "inbox", "name": "今日重点", "icon": "all", "visibility": "public", "order": 0, "home": {"weight": 1.2}, "note": "每晚 22:00 发布", "adapter": "native", "directory": "/workspace/feeds-inbox/hot-daily", "filename": "feed.json", "platform": "brief"}
   ]
 }

@@ -117,7 +117,7 @@ class ConfigTests(unittest.TestCase):
     def test_topics_for_every_source(self):
         from shiguang.enrich.topics import assign
         from shiguang.model import Item
-        topics=json.loads((ROOT/'sources.json').read_text())['topics']
+        topics=prepare(json.loads((ROOT/'sources.json').read_text()))['topics']
         make=lambda title,category='': Item(source_id='s',filter_key='s',category=category,title=title,body='',day='2026-10-17',ts='2026-10-17')
         items=assign([make('OpenAI 发布新模型'),make('Thailand said yes'),make('一个工具'),make('自定','财经')],topics,'开发者')
         self.assertEqual([i.category for i in items],['AI','开发者','开发者','财经'])
@@ -134,7 +134,7 @@ class ConfigTests(unittest.TestCase):
         self.assertIs(legacy.validate,feeds.validate)
 
 class PrivacyBuildTests(unittest.TestCase):
-    def test_cross_source_home_daily_and_fixed_tabs(self):
+    def test_today_hot_columns_and_tabs(self):
         from bs4 import BeautifulSoup
         from datetime import datetime
         from zoneinfo import ZoneInfo
@@ -157,18 +157,36 @@ class PrivacyBuildTests(unittest.TestCase):
                     with patch.dict(os.environ,dict(SITE_MODE=mode,MAIL_DIGEST='0',SITE_OUT=str(target))):
                         sitebuild.build(rows,[],datetime(2026,10,17,12,tzinfo=ZoneInfo('Asia/Shanghai')))
                     home=BeautifulSoup((target/'index.html').read_text(),'html.parser')
-                    expected=set(issues)|{'tg'}
+                    expected=(set(issues)-{'hot-daily'})|{'tg'}
                     if mode=='public': expected.remove('mail')
                     badges=home.select('article:not([data-more]) [data-source]')
-                    # Cards beyond each source's cap stay on the page for filtering, hidden.
+                    # 今日: today's stream, capped per source; the rest stays hidden for filters and 展开全部.
                     self.assertTrue(all(a.has_attr('hidden') for a in home.select('article[data-more]')))
                     self.assertEqual(len(home.select('article[data-more][data-ch="tg"]')),18)
-                    self.assertEqual({b['data-source'] for b in badges},expected)
-                    for source in expected: self.assertEqual(sum(b['data-source']==source for b in badges),2)
-                    self.assertEqual(home.select_one('article [data-source]')['data-source'],'future')
-                    # 「光」: the tab bar holds words only, home in the middle.
-                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['收藏','日报','首页','热点','栏目'])
+                    self.assertIsNotNone(home.select_one('.show-all'))
+                    self.assertEqual({b['data-source'] for b in badges if not b.find_parent(class_='digest-source')},expected)
+                    stream=[b for b in badges if not b.find_parent(class_='digest-source')]
+                    for source in expected: self.assertEqual(sum(b['data-source']==source for b in stream),2)
+                    self.assertEqual(stream[0]['data-source'],'future')
+                    # The hot-topics issue sits on top of 今日; the other columns follow, short, in order.
+                    top=home.select_one('section.today-top')
+                    self.assertIn('hot-daily summary',top.get_text())
+                    ordered=[s['data-source'] for s in home.select('section.digest-source[data-source]')]
+                    self.assertEqual(ordered,[id for id in issues if id in expected or id=='hot-daily'])
+                    world=home.select_one('section[data-source="world"]')
+                    self.assertEqual(len(world.select('article')),3)
+                    self.assertEqual(world.select_one('.more-link a')['href'],'world/2026-10-17.html')
+                    # Time machine: chips for recent days and a calendar of every day with content.
+                    self.assertEqual([a['href'] for a in home.select('.tm-strip a')],['index.html','archive/2026-10-16.html'])
+                    self.assertEqual(len(home.select('#time-machine .tm-grid a')),2)
+                    past=BeautifulSoup((target/'archive/2026-10-16.html').read_text(),'html.parser')
+                    self.assertIn('older future',past.get_text())
+                    self.assertEqual(past.select_one('.tm-strip a[aria-current]')['href'],'../archive/2026-10-16.html')
+                    self.assertEqual(past.select_one('nav.bottom a.active').get_text(),'今日')
+                    # 「光」: the tab bar holds words only.
+                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['今日','热点','栏目','收藏'])
                     self.assertIsNone(home.select_one('nav.bottom svg'))
+                    self.assertEqual(home.select_one('nav.bottom a.active')['aria-current'],'page')
                     self.assertTrue(home.select('article button.bookmark[aria-pressed="false"][aria-label="收藏"]'))
                     favorites=BeautifulSoup((target/'favorites.html').read_text(),'html.parser')
                     self.assertFalse(favorites.select('[data-bookmark]'))
@@ -177,27 +195,25 @@ class PrivacyBuildTests(unittest.TestCase):
                     self.assertIn('还没有收藏',favorites.get_text())
                     self.assertIsNotNone(home.select_one('#more-nav a[href="columns.html"]'))
                     self.assertFalse(home.select('#more-nav a[href="tg/index.html"]'))
-                    # 栏目 lists every issue source except the one shown on 热点, then the channels.
+                    # 栏目: by channel (grouped by platform), and by tag.
                     columns=BeautifulSoup((target/'columns.html').read_text(),'html.parser')
-                    self.assertEqual([a['href'] for a in columns.select('a.column-entry')],
-                                     [id+'/index.html' for id in issues if id in expected and id!='hot-daily']+['index.html?source=tg'])
+                    channel=columns.select_one('[data-panel="channel"]')
+                    self.assertEqual([a['href'] for a in channel.select('a.column-entry')],
+                                     ['hot-daily/2026-10-17.html']+[id+'/index.html' for id in issues if id in expected and id!='tg']+['tg/index.html'])
+                    self.assertEqual([h.get_text() for h in channel.select('.section-label h2')],['每日简报','Telegram'])
+                    self.assertEqual([a['href'] for a in columns.select('[data-panel="tag"] a.column-entry')],['tag/other.html'])
+                    self.assertIn('TG 0',(target/'tag/other.html').read_text())
                     hot=BeautifulSoup((target/'hot.html').read_text(),'html.parser')
-                    self.assertIn('hot-daily summary',hot.get_text())
-                    self.assertIn('url=../hot.html',(target/'hot-daily/index.html').read_text())
+                    self.assertIsNotNone(hot.select_one('[data-timeline] .tl-track'))
+                    self.assertEqual(len(hot.select('.tl-day')),3)
+                    # Merged pages keep their addresses.
+                    self.assertIn('url=../index.html"',(target/'hot-daily/index.html').read_text())
+                    self.assertIn('url=../index.html"',(target/'archive/index.html').read_text())
                     self.assertIn('url=index.html"',(target/'all.html').read_text())
-                    self.assertIn('url=../index.html?source=tg"',(target/'tg/index.html').read_text())
+                    channel_page=BeautifulSoup((target/'tg/index.html').read_text(),'html.parser')
+                    self.assertEqual(len(channel_page.select('article')),20)
+                    self.assertEqual(channel_page.select_one('nav.bottom a.active').get_text(),'栏目')
                     self.assertEqual(BeautifulSoup((target/'x/index.html').read_text(),'html.parser').select_one('nav.bottom a.active').get_text(),'栏目')
-                    self.assertEqual(home.select_one('nav.bottom a.home-slot')['aria-current'],'page')
-                    day=BeautifulSoup((target/'archive/2026-10-17.html').read_text(),'html.parser')
-                    ordered=[s['data-source'] for s in day.select('section.digest-source[data-source]')]
-                    self.assertEqual(ordered,[id for id in issues if id in expected])
-                    self.assertIn('TG 频道',day.get_text())
-                    # The digest keeps each issue short and links to the whole issue.
-                    world=day.select_one('section[data-source="world"]')
-                    self.assertEqual(len(world.select('article')),3)
-                    self.assertEqual(world.select_one('.more-link a')['href'],'../world/2026-10-17.html')
-                    self.assertIn('older future',(target/'archive/2026-10-16.html').read_text())
-                    self.assertIn('hot-daily summary',(target/'archive/index.html').read_text())
                     if mode=='public': self.assertFalse((target/'mail').exists())
 
     def test_public_rebuild_scrubs_private_tree_and_detects_private_copy(self):
