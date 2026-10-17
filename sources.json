@@ -101,6 +101,21 @@
       "filename": "brief.json",
       "adapter": "world",
       "env": "WORLD_FEED_DIR"
+    },
+    {
+      "id": "github",
+      "type": "inbox",
+      "name": "GitHub 热门",
+      "icon": "all",
+      "color": "#4f5b66",
+      "visibility": "public",
+      "nav": {
+        "enabled": false,
+        "order": 25
+      },
+      "directory": "/workspace/feeds-inbox/github",
+      "filename": "feed.json",
+      "adapter": "native"
     }
   ]
 }
