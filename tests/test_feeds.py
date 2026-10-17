@@ -122,6 +122,8 @@ class ConfigTests(unittest.TestCase):
         items=assign([make('OpenAI 发布新模型'),make('Thailand said yes'),make('一个工具'),make('自定','财经')],topics,'开发者')
         self.assertEqual([i.category for i in items],['AI','开发者','开发者','财经'])
         self.assertEqual(assign([make('Thailand said yes')],topics)[0].topic,'')  # 其他 is never shown on a card
+        from shiguang.enrich.topics import classify
+        self.assertEqual(classify('DeepSeek 发布新模型。美国市场关注。',topics,'DeepSeek 发布新模型'),'AI')  # title first
 
     def test_legacy_feeds_module(self):
         import importlib, sys

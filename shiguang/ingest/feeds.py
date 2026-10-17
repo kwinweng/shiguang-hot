@@ -52,7 +52,7 @@ def validate(feed, base, expected=None):
         if not isinstance(section.get('title', ''), str): errors.append('section.title 必须为字符串')
         for item in section['items']:
             if not isinstance(item, dict): errors.append('item 必须为对象'); continue
-            for field in ('title', 'body', 'link', 'source', 'date'):
+            for field in ('title', 'body', 'link', 'source', 'date', 'topic'):
                 if field in item and item[field] is not None and not isinstance(item[field], str): errors.append('item.' + field + ' 必须为字符串')
             if not item.get('title'): warnings.append('条目缺 title，将回退')
             if not item.get('body'): warnings.append('条目缺 body')

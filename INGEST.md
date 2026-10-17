@@ -2,10 +2,10 @@
 
 本文供投递内容的 bot 使用。先在 `sources.json` 注册来源，再写入数据。原生数据不直接进入 git。
 
-`nav.enabled=true` 的 inbox 有合法数据后，按来源的 `nav.order` 出现在首页「栏目」行和菜单。顶层 `nav.tabs` 独立指定五个固定槽位：首页必须在第三位。private 默认为 mail/daily/home/news/x，public 为 all/daily/home/news/x；显示邮件/全部、日报、首页、资讯、推特爆款。资讯保留 hot.html URL。缺数据的槽位禁用；新来源不会自动占用底栏。菜单另含核心页面和所有有数据的 TG 频道页；visibility 始终决定可见范围。
+有合法数据的 inbox 来源会自动出现在「栏目」页、菜单、首页信息流和对应日期的日报里，顺序由来源的 `order` 决定（今日重点 0、邮件精华 10、环球要闻 20、推特爆款 30、GitHub 热门 40；新来源默认 45）。底栏固定为 收藏 / 日报 / 首页 / 热点 / 栏目，新来源不会占用底栏。`sources.json` 的 `hot.source` 指定的来源（今日重点）显示在「热点」页顶部，不进栏目页。visibility 始终决定可见范围。
 
-注册来源并投递合法数据后，完整构建自动纳入首页和日报，无需修改代码，也不要求 nav.enabled。首页使用 inbox 最新一期和 TG 消息，每卡显示来源徽标。来源可配置 `home_weight`（默认 1，按 weight / (1 + 年龄小时 / 24) 排名）、`home_cap`（TG 默认 4，inbox 默认 8，0 表示不入首页）。每轮每来源最多取一条；此刻要闻与信息流共用限额。只有 blocks 的期刊也可进入首页。
-日报入口及 archive/<date>.html 汇集该日所有可见数据，不受 home_cap 限制。来源 `daily_order` 控制顺序：今日重点 0、邮件精华 10（仅内网）、环球要闻 20、推特爆款 30、GitHub 热门 40；新 inbox 默认 45，同值按 nav.order、id 排序，最后 TG 按话题汇总，频道 daily_order 默认 50。日报保留期刊 blocks 与条目；仅 inbox 有数据的日期也生成归档。邮件内容绝不进入 public 构建。
+首页取每个 inbox 最新一期和 TG 消息，每卡显示来源。来源可配置 `home.weight`（默认 1，按 weight / (1 + 年龄小时 / 24) 排名）和 `home.cap`（TG 默认 4，inbox 默认 8，0 表示不入首页）；每轮每来源最多取一条。只有 blocks 的期刊也可进入首页。
+日报汇集当天所有可见数据：每个期刊显示 blocks 和前 3 条，链接到完整一期 `<id>/<date>.html`；最后 TG 按话题分组。仅 inbox 有数据的日期也生成日报。邮件内容绝不进入 public 构建。
 
 ## 路径与原子写入
 
@@ -30,7 +30,7 @@ os.replace(tmp, folder / 'feed.json')
 根节点为对象：`schema` 固定 `shiguang.feed/1`；`source` 为注册 id；`date` 为 YYYY-MM-DD。
 `title` 为可选期刊标题。`blocks` 和 `sections` 为数组，可为空，至少提供一类内容。
 section 包含 `title` 和 `items` 数组。
-item 支持 `title`、`body` 字符串；可选 `link`（http/https）、`source`（来源名）、`sources`（来源名字符串数组）、`date`（显示日期）、`images`。
+item 支持 `title`、`body` 字符串；可选 `link`（http/https）、`source`（来源名）、`sources`（来源名字符串数组）、`date`（显示日期）、`topic`（话题，取 `sources.json` 的 `topics` 之一；不填则按正文自动判断）、`images`。
 body 的换行保留，默认卡片收起显示两行，点击展开全文。内容按纯文本转义，不接受 HTML。
 缺 title 回退为“未命名条目”；缺 body、link、source、date 或图片时可继续渲染。
 
@@ -50,7 +50,7 @@ file 必须为期刊目录内的相对文件名；禁止绝对路径、越界 `.
 
 ## 校验与可见范围
 
-运行 `python3 validate_feed.py /workspace/feeds-inbox/example/2026-10-17/feed.json`。
+运行 `python3 validate_feed.py /workspace/feeds-inbox/example/2026-10-17/feed.json`（实现在 `tools/validate_feed.py`，根目录的同名文件是兼容入口）。
 运行 `python3 validate_feed.py mail` 会按配置适配并检查真实原始邮件数据。
 退出码 0 表示无错误（可能有警告），1 表示错误或无数据。错误包括 schema、source、日期、数组或字段类型不符。
 缺字段、缺图、非法图片路径、非 HTTP 链接、未知 block 给出警告；不合法期刊在构建时跳过。
@@ -88,6 +88,6 @@ visibility 以 `sources.json` 为唯一依据，投递文件无法自行修改�
 `mail` 读取 `/workspace/mail-digest/YYYY-MM-DD/digest.json` 的 date、sections，映射为统一 schema，固定来源 mail，private。
 `world` 读取 `/workspace/world-brief/YYYY-MM-DD/brief.json`，将 oneliner、markets、chart、tomorrow 映射到 blocks，保留 sections，固定来源 world，public。
 `native` 直接读取 feed.json；配置 directory、filename、adapter，默认目录 `/workspace/feeds-inbox/<id>`。
-已注册原生 public 栏目：`github`（GitHub 热门）和 `hot-daily`（今日重点）。`hot-daily` 仅使用配置中的 5 个公开 TG 频道内容，由「热点日报」bot 每晚北京时间 22:00 生成，投递至 `/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json`，导航 order 为 26。
+已注册原生 public 栏目：`github`（GitHub 热门）和 `hot-daily`（今日重点）。`hot-daily` 仅使用配置中的 5 个公开 TG 频道内容，由「热点日报」bot 每晚北京时间 22:00 生成，投递至 `/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json`，显示在「热点」页顶部。
 `MAIL_FEED_DIR`、`WORLD_FEED_DIR` 可覆盖兼容目录；其他来源可在配置 env 指定变量。
 `SOURCES_OVERRIDE` 可指定完整替代配置文件，仅用于隔离验证；不要改变 private 的真实可见范围。
