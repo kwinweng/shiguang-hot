@@ -283,7 +283,6 @@ def _build(rows, hot, now, out, inbox_only=False):
         stream=ranked[1:]
         today=local_now.date().isoformat()
         today_items=[r for r in rows+latest_cards if r['day']==today]
-        count=len(today_items)
         def today_card(r):
             source=by_id[r['source_id']]; url=link(r.get('url'))
             title=f'<a href="{E(url)}" target="_blank" rel="noopener noreferrer">{E(r["title"])}</a>' if url else E(r['title'])
@@ -328,7 +327,8 @@ def _build(rows, hot, now, out, inbox_only=False):
                 cards+=f'<a class="g-tile" href="{E(url)}"{external}>{tile_icon}<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span class="tile-title">{E(app.get("name"))}</span><span class="tile-note">{E(app.get("note"))}</span></a>'
             return '<section class="apps" aria-label="常用"><div class="section-label"><b>常用</b></div><div class="tiles">'+cards+'</div></section>'
         note=f'{now.month}月{now.day}日 周{"一二三四五六日"[now.weekday()]} · 更新于 {now:%H:%M} · {len({r["source_id"] for r in rows+latest_cards})} 个来源'
-        content=heading(f'今天 {count} 件值得看' if count else '今天值得看',note)
+        picks_count=len(today_picks())
+        content=heading(f'今天 {picks_count} 件值得看' if picks_count else '今天值得看',note)
         content+=today_section()
         content+=column_row()+apps_section()
         if hero: content+='<div class="section-label"><b>此刻要闻</b><span>精选</span></div>'+card(hero,'hero')
