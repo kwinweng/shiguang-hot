@@ -1,71 +1,150 @@
-"""One line-icon family for the whole site, shipped once per page as an inline SVG sprite.
+"""Icons, shipped once per page as an inline SVG sprite and referenced with <use>.
 
-Grid: 24 × 24, 1.75 stroke, round caps and joins (stroke settings live in style.css on `.i`).
-Every icon has a *body* (its main closed shape) and optional *details*. The body is painted with
-`--i-fill`, which is transparent by default; active and saved states set it, so one symbol serves
-both the outline and the filled look. Pages reference symbols with <use href="#i-name">, which
-keeps every card small and lets CSS colour icons through `currentColor`.
+Two families, following the 「光」 spec:
+- Function icons: Tabler Icons 3.48.0 outline (stroke 1.75 set in style.css), colour follows the
+  text. Paths are copied verbatim from the @tabler/icons package. Licence (MIT) at the bottom.
+- Status icons: the site's own 3D illustrations (volume, a little shadow), 58 in a lead block and
+  15–22 in lists. One family; gradients are defined once in the sprite.
+
+Generated from the package files by a script; edit the tables below, not the sprite output.
 """
 import html
 
-
-def _rrect(x, y, w, h, r):
-    return (f'M{x + r} {y}h{w - 2 * r}a{r} {r} 0 0 1 {r} {r}v{h - 2 * r}a{r} {r} 0 0 1 -{r} {r}'
-            f'h-{w - 2 * r}a{r} {r} 0 0 1 -{r} -{r}v-{h - 2 * r}a{r} {r} 0 0 1 {r} -{r}z')
-
-
-def _circle(cx, cy, r):
-    return f'M{cx} {cy - r}a{r} {r} 0 1 1 0 {2 * r}a{r} {r} 0 1 1 0 -{2 * r}z'
-
-
-# name -> (body paths, detail paths)
-GLYPHS = {
-    'home': (['M4.5 10.3 12 4l7.5 6.3V19a1 1 0 0 1-1 1H15v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5H5.5a1 1 0 0 1-1-1z'], []),
-    'flame': (['M12 3.5c.5 3 3.3 4.5 4.7 7.1A5.6 5.6 0 1 1 6.4 14c0-2 .9-3.6 2.2-4.8.2 1.4 1 2.4 2.1 2.8-.3-3.2.1-6 1.3-8.5z'], []),
-    'list': ([_rrect(4, 4, 16, 16, 2.5)], ['M8 9h8M8 12.5h8M8 16h5']),
-    'calendar': ([_rrect(4, 5.5, 16, 14.5, 2.5)], ['M4 10h16M8.5 3.5v4M15.5 3.5v4']),
-    'bookmark': (['M7.5 4h9A1.5 1.5 0 0 1 18 5.5V20l-6-3.9L6 20V5.5A1.5 1.5 0 0 1 7.5 4z'], []),
-    'mail': ([_rrect(3, 5.5, 18, 13, 2.5)], ['m3.6 7.6 8.4 6 8.4-6']),
-    'globe': ([_circle(12, 12, 8.5)], ['M3.5 12h17M12 3.5c2.4 2.5 3.6 5.3 3.6 8.5s-1.2 6-3.6 8.5M12 3.5C9.6 6 8.4 8.8 8.4 12s1.2 6 3.6 8.5']),
-    'chat': (['M6 4.5h12A2.5 2.5 0 0 1 20.5 7v8a2.5 2.5 0 0 1-2.5 2.5h-6.4L7 20.5v-3H6A2.5 2.5 0 0 1 3.5 15V7A2.5 2.5 0 0 1 6 4.5z'], ['M8 9.5h8M8 13h5']),
-    'code': ([_rrect(3.5, 4.5, 17, 15, 2.5)], ['m10 9.5-2.5 2.5 2.5 2.5M14 9.5l2.5 2.5-2.5 2.5']),
-    'send': (['M20.5 3.5 3.5 10.4l6.6 2.6 2.7 7.5z'], ['m20.5 3.5-10.4 9.5']),
-    'search': ([_circle(10.8, 10.8, 6.3)], ['m15.5 15.5 4.5 4.5']),
-    'grid': ([_rrect(4.5, 4.5, 6, 6, 1.6), _rrect(13.5, 4.5, 6, 6, 1.6), _rrect(4.5, 13.5, 6, 6, 1.6), _rrect(13.5, 13.5, 6, 6, 1.6)], []),
-    'close': ([], ['M6.5 6.5l11 11M17.5 6.5l-11 11']),
-    'external': ([], ['M13.5 5H19v5.5M19 5l-8 8M17 13.5V18a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4.5']),
-    'chevron': ([], ['m6.5 9.5 5.5 5.5 5.5-5.5']),
-    'sun': ([_circle(12, 12, 4)], ['M12 2.8v2.1M12 19.1v2.1M2.8 12h2.1M19.1 12h2.1M5.5 5.5 7 7M17 17l1.5 1.5M5.5 18.5 7 17M17 7l1.5-1.5']),
+TABLER_VERSION = '3.48.0'
+TABLER = {
+ "search": [
+  "M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0",
+  "M21 21l-6 -6"
+ ],
+ "menu-2": [
+  "M4 6l16 0",
+  "M4 12l16 0",
+  "M4 18l16 0"
+ ],
+ "x": [
+  "M18 6l-12 12",
+  "M6 6l12 12"
+ ],
+ "bookmark": [
+  "M18 7v14l-6 -4l-6 4v-14a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4"
+ ],
+ "external-link": [
+  "M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6",
+  "M11 13l9 -9",
+  "M15 4h5v5"
+ ],
+ "chevron-down": [
+  "M6 9l6 6l6 -6"
+ ],
+ "home": [
+  "M5 12l-2 0l9 -9l9 9l-2 0",
+  "M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7",
+  "M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"
+ ],
+ "flame": [
+  "M12 10.941c2.333 -3.308 .167 -7.823 -1 -8.941c0 3.395 -2.235 5.299 -3.667 6.706c-1.43 1.408 -2.333 3.294 -2.333 5.588c0 3.704 3.134 6.706 7 6.706c3.866 0 7 -3.002 7 -6.706c0 -1.712 -1.232 -4.403 -2.333 -5.588c-2.084 3.353 -3.257 3.353 -4.667 2.235"
+ ],
+ "news": [
+  "M16 6h3a1 1 0 0 1 1 1v11a2 2 0 0 1 -4 0v-13a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1v12a3 3 0 0 0 3 3h11",
+  "M8 8l4 0",
+  "M8 12l4 0",
+  "M8 16l4 0"
+ ],
+ "calendar": [
+  "M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12",
+  "M16 3v4",
+  "M8 3v4",
+  "M4 11h16",
+  "M11 15h1",
+  "M12 15v3"
+ ],
+ "message": [
+  "M8 9h8",
+  "M8 13h6",
+  "M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12"
+ ],
+ "code": [
+  "M7 8l-4 4l4 4",
+  "M17 8l4 4l-4 4",
+  "M14 4l-4 16"
+ ],
+ "world": [
+  "M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0",
+  "M3.6 9h16.8",
+  "M3.6 15h16.8",
+  "M11.5 3a17 17 0 0 0 0 18",
+  "M12.5 3a17 17 0 0 1 0 18"
+ ],
+ "mail": [
+  "M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10",
+  "M3 7l9 6l9 -6"
+ ],
+ "brand-telegram": [
+  "M15 10l-4 4l6 6l4 -16l-18 7l4 2l2 6l3 -4"
+ ],
+ "sun": [
+  "M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0",
+  "M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"
+ ]
+}
+TABLER_FILLED = {
+ "bookmark": [
+  "M14 2a5 5 0 0 1 5 5v14a1 1 0 0 1 -1.555 .832l-5.445 -3.63l-5.444 3.63a1 1 0 0 1 -1.55 -.72l-.006 -.112v-14a5 5 0 0 1 5 -5h4z"
+ ]
 }
 
-# sources.json `icon` keys and page sections -> glyph names. Unknown keys fall back to list.
-ALIASES = {'home': 'home', 'hot': 'flame', 'all': 'list', 'archive': 'calendar', 'mail': 'mail', 'world': 'globe',
-           'x': 'chat', 'code': 'code', 'bookmark': 'bookmark', 'telegram': 'send'}
+# Status icons on a 64 × 64 grid. Strokes and fills read the page tokens (--ink-2, --sun, --wash,
+# --icon-light, --icon-shade), so one drawing works in light and dark.
+STATUS = {
+ "x": "<path d=\"M16 16h31a9 9 0 0 1 9 9v17a9 9 0 0 1-9 9H29L17 57l2-9a9 9 0 0 1-9-9V25a9 9 0 0 1 6-9Z\" fill=\"var(--icon-shade)\"/><path d=\"M16 11h29a9 9 0 0 1 9 9v17a9 9 0 0 1-9 9H27L14 53l3-10a9 9 0 0 1-9-9V20a9 9 0 0 1 8-9Z\" fill=\"url(#status-paper)\"/><path d=\"M18 23h17m-17 8h12\"/><path d=\"M43 22c3 5-3 6-1 10 2-1 3-3 3-4 6 6 3 11-2 11s-8-5-4-9c0 3 1 3 1 3-1-5 2-6 3-11Z\" fill=\"url(#status-sun)\" stroke=\"none\"/>",
+ "code": "<rect x=\"9\" y=\"14\" width=\"46\" height=\"38\" rx=\"8\" fill=\"url(#status-paper)\"/><path d=\"m25 25-9 8 9 8m14-16 9 8-9 8m-4-20-6 24\" stroke=\"var(--sun)\" stroke-width=\"3\"/>",
+ "home": "<circle cx=\"46\" cy=\"19\" r=\"10\" fill=\"url(#status-sun)\" stroke=\"none\"/><path d=\"M46 5V2m11 10 3-2M33 10l-2-2m27 16 3 1\" stroke=\"var(--sun)\"/><path d=\"m14 20 35 4 5 27-34 3Z\" fill=\"var(--icon-shade)\"/><path d=\"M10 19 43 16 46 49 15 53a4 4 0 0 1-4-4Z\" fill=\"url(#status-paper)\"/><path d=\"m43 16 7 7-6 1Z\" fill=\"var(--icon-light)\"/><path d=\"m16 26 21-2m-20 6 21-2\" stroke=\"var(--sun)\" stroke-width=\"3\"/><path d=\"m17 36 8-1 1 9-8 1Z\" fill=\"var(--sun)\" stroke=\"none\"/><path d=\"m30 35 8-1m-8 6 8-1m-8 6 8-1m-22 5 23-2\"/><path d=\"m46 30 2 18c0 3 4 3 5 1\" stroke=\"var(--icon-light)\"/>",
+ "hot": "<path d=\"M35 8c4 15-12 17-5 28 5-2 9-8 9-13 18 18 12 32-7 32C12 55 9 37 21 24c-1 9 4 11 4 11-3-13 6-18 10-27Z\" fill=\"var(--sun)\"/><path d=\"M30 46c-5-6 1-12 4-15-1 8 8 9 5 15-2 5-7 5-9 0Z\" fill=\"url(#status-paper)\" stroke=\"none\"/>",
+ "mail": "<rect x=\"11\" y=\"19\" width=\"43\" height=\"34\" rx=\"7\" fill=\"url(#status-paper)\"/><path d=\"m12 23 20 16 21-16M12 50l14-15m27 15L39 36\"/><rect x=\"37\" y=\"10\" width=\"17\" height=\"16\" rx=\"5\" fill=\"var(--sun)\" stroke=\"none\"/>",
+ "world": "<circle cx=\"32\" cy=\"31\" r=\"23\" fill=\"url(#status-paper)\"/><ellipse cx=\"32\" cy=\"31\" rx=\"11\" ry=\"23\"/><path d=\"M10 31h44M14 18c11 6 25 6 36 0M14 44c11-6 25-6 36 0\"/><path d=\"m24 16 8-5 7 7-4 10-10-3-5 9-7-6 3-11Zm16 18 10 4-8 11-5-6Z\" fill=\"var(--sun)\" stroke=\"none\"/>",
+ "archive": "<rect x=\"12\" y=\"14\" width=\"40\" height=\"40\" rx=\"8\" fill=\"url(#status-paper)\"/><path d=\"M12 24h40\"/><path d=\"M13 23v-3a6 6 0 0 1 6-6h26a6 6 0 0 1 6 6v3Z\" fill=\"var(--sun)\" stroke=\"none\"/><path d=\"M23 9v10m18-10v10M22 34h5m10 0h5m-20 9h5\"/><rect x=\"35\" y=\"39\" width=\"9\" height=\"9\" rx=\"3\" fill=\"var(--sun)\" stroke=\"none\"/>",
+ "all": "<rect x=\"17\" y=\"12\" width=\"34\" height=\"38\" rx=\"7\" transform=\"rotate(10 34 31)\" fill=\"var(--wash)\"/><rect x=\"11\" y=\"18\" width=\"35\" height=\"36\" rx=\"7\" transform=\"rotate(-7 29 36)\" fill=\"url(#status-paper)\"/><path d=\"M19 37h19m-18 8h13\"/><rect x=\"19\" y=\"24\" width=\"19\" height=\"6\" rx=\"3\" fill=\"var(--sun)\" stroke=\"none\"/>",
+ "bookmark": "<rect x=\"12\" y=\"12\" width=\"40\" height=\"42\" rx=\"8\" fill=\"url(#status-paper)\"/><path d=\"M24 8h16v26l-8-6-8 6Z\" fill=\"var(--sun)\" stroke=\"none\"/><path d=\"M21 42h22m-22 6h14\"/>"
+}
+STATUS_DEFS = '<linearGradient id="status-sun" x2=".6" y2="1"><stop stop-color="#ffe6a2"/><stop offset="1" stop-color="var(--sun)"/></linearGradient><linearGradient id="status-paper" x2=".7" y2="1"><stop stop-color="var(--icon-light)"/><stop offset="1" stop-color="var(--icon-shade)"/></linearGradient>'
+STATUS_GROUND = '<ellipse cx="32" cy="56" rx="22" ry="4" fill="var(--wash)"/>'
+STATUS_GROUP = '<g fill="none" stroke="var(--ink-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">'
+
+# Names used by the templates -> Tabler names. sources.json icon keys map to the same words.
+FUNCTION = {'search': 'search', 'menu': 'menu-2', 'close': 'x', 'bookmark': 'bookmark', 'external': 'external-link',
+            'chevron': 'chevron-down', 'home': 'home', 'hot': 'flame', 'all': 'news', 'archive': 'calendar',
+            'x': 'message', 'code': 'code', 'world': 'world', 'mail': 'mail', 'telegram': 'brand-telegram', 'sun': 'sun'}
 
 
-def glyph(key):
-    key = ALIASES.get(key, key)
-    return key if key in GLYPHS else 'list'
+def status_key(key):
+    return key if key in STATUS else 'all'
 
 
 def sprite():
-    """Hidden <svg> holding every symbol; emitted once at the top of <body>."""
-    symbols = []
-    for name, (bodies, details) in GLYPHS.items():
-        paths = ''.join(f'<path class="i-body" style="fill:var(--i-fill,none)" d="{d}"/>' for d in bodies)
-        paths += ''.join(f'<path d="{d}"/>' for d in details)
-        symbols.append(f'<symbol id="i-{name}" viewBox="0 0 24 24">{paths}</symbol>')
+    """Hidden <svg> with every symbol; emitted once at the top of <body>."""
+    symbols = [f'<symbol id="t-{name}" viewBox="0 0 24 24">' + ''.join(f'<path d="{d}"/>' for d in ds) + '</symbol>'
+               for name, ds in TABLER.items()]
+    symbols += [f'<symbol id="tf-{name}" viewBox="0 0 24 24">' + ''.join(f'<path d="{d}"/>' for d in ds) + '</symbol>'
+                for name, ds in TABLER_FILLED.items()]
+    symbols += [f'<symbol id="s-{key}" viewBox="0 0 64 64">{STATUS_GROUND}{STATUS_GROUP}{shape}</g></symbol>'
+                for key, shape in STATUS.items()]
     return ('<svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">'
-            + ''.join(symbols) + '</svg>')
+            f'<!-- Tabler Icons {TABLER_VERSION} (MIT, Paweł Kuna) -->'
+            f'<defs>{STATUS_DEFS}</defs>' + ''.join(symbols) + '</svg>')
 
 
 def icon(key, cls=''):
-    name = glyph(key)
+    """A function icon (Tabler outline). A saved bookmark also carries the filled glyph, shown by CSS."""
+    name = FUNCTION.get(key, 'news')
     classes = html.escape(('i ' + cls).strip(), quote=True)
-    return f'<svg class="{classes}" aria-hidden="true" focusable="false"><use href="#i-{name}"/></svg>'
+    filled = f'<use class="i__fill" href="#tf-{name}"/>' if name in TABLER_FILLED else ''
+    return f'<svg class="{classes}" aria-hidden="true" focusable="false"><use href="#t-{name}"/>{filled}</svg>'
 
 
-def badge(key, size=''):
-    """Section mark: a glass tile with the line icon and a small sun disc, the site's light motif."""
-    modifier = f' badge--{size}' if size else ''
-    return f'<span class="badge{modifier}" data-glyph="{glyph(key)}" aria-hidden="true">{icon(key)}</span>'
+def status_icon(key, size='lead'):
+    """A 3D status icon: size 'lead' (58, the lead block) or 'list' (22, tiles and lists)."""
+    return (f'<svg class="s-icon s-icon--{size}" data-section="{status_key(key)}" viewBox="0 0 64 64" aria-hidden="true" '
+            f'focusable="false"><use href="#s-{status_key(key)}"/></svg>')
+
+
+TABLER_LICENSE = 'MIT License\n\nCopyright (c) 2020-2026 Paweł Kuna\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the "Software"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.'

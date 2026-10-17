@@ -1,16 +1,18 @@
-"""HTML components. Pure functions of (page context, data) -> markup; no file or network access.
+"""HTML components of the 「光」 design system, applied to 拾光热点.
 
-Every user-visible string is escaped with E(). Paths inside the site are site-root-relative and
-become page-relative links through Page.url(), so pages work under /tg-digest/ and from file://.
-Class names follow the component sections of style.css; behaviour hooks used by app.js are ids
-and data-* attributes, never styling classes.
+Class names follow the spec's components (g-light, g-lead, g-card, g-sheet, g-wash, g-pill, g-btn,
+g-round, g-topbar, g-tabbar, g-seg, g-panel); style.css implements them from the spec's tokens.
+Pure functions of (page context, data) -> markup; no file or network access. Every user-visible
+string is escaped with E(). Paths inside the site are site-root-relative and become page-relative
+through Page.url(), so pages work under /tg-digest/ and from file://. app.js hooks only ids and
+data-* attributes.
 """
 import hashlib, html, json, re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable
 from items import BEIJING
-from icons import badge, icon, sprite
+from icons import icon, sprite, status_icon
 
 E = lambda v: html.escape(str(v or ''), quote=True)
 
@@ -48,7 +50,7 @@ class Page:
 
     @property
     def section(self):
-        """Icon key of the badge in the page intro."""
+        """Key of the 3D status icon in the lead block."""
         source = self.site.sources.get(self.active)
         if source:
             return source.get('icon', 'all')
@@ -60,29 +62,29 @@ class Page:
 
 
 SLOT_LABELS = {'mail': '邮件', 'all': '全部', 'daily': '日报', 'home': '首页', 'news': '资讯', 'x': '推特爆款'}
-SLOT_ICONS = {'mail': 'mail', 'all': 'all', 'daily': 'archive', 'home': 'home', 'news': 'hot', 'x': 'x', 'favorites': 'bookmark'}
 BLOCK_TITLES = {'oneliner': '一句话速览', 'markets': '市场看板', 'chart': '一张图', 'tomorrow': '明日看点'}
 EXTERNAL = 'target="_blank" rel="noopener noreferrer"'
 
 
-# ---------- Headings ----------
+# ---------- Lead block and headings (placed on the light, never in a card) ----------
 
 def heading(page, title, description):
-    """Page intro: section badge, title, one line of context."""
-    return (f'<div class="intro">{badge(page.section, "lg")}'
-            f'<div class="intro__text"><h1>{E(title)}</h1><p>{E(description)}</p></div></div>')
+    """Lead block: 58 3D icon, one sentence in `lead`, one line of `note`."""
+    return (f'<div class="g-lead">{status_icon(page.section, "lead")}'
+            f'<div class="g-lead__text"><h1 class="g-lead__title">{E(title)}</h1>'
+            f'<p class="g-lead__note">{E(description)}</p></div></div>')
 
 
 def section_label(title, note=''):
-    """Small heading above a run of content, with an optional note on the right."""
-    return (f'<div class="section-head"><h2>{E(title)}</h2>'
+    """Small `section` label above a run of content, with a `note` on the right."""
+    return (f'<div class="section-label"><h2>{E(title)}</h2>'
             + (f'<span>{E(note)}</span>' if note else '') + '</div>')
 
 
 def group(parts, content, level=2, source_id=None, cls='group'):
-    """A titled group of cards. `parts` are shown as one heading; several parts become chips."""
+    """A titled group of cards. One part reads as a `subhead`; several parts become pills."""
     parts = [p for p in parts if p]
-    title = E(parts[0]) if len(parts) == 1 else ''.join(f'<span class="chip chip--static">{E(p)}</span>' for p in parts)
+    title = E(parts[0]) if len(parts) == 1 else ''.join(f'<span class="g-pill">{E(p)}</span>' for p in parts)
     data = f' data-source="{E(source_id)}"' if source_id else ''
     return f'<section class="{cls}"{data}><h{level} class="group__title">{title}</h{level}>{content}</section>'
 
@@ -104,7 +106,7 @@ def bookmark_button(item, source):
     identity = json.dumps([item.source_id, item.native_id or item.url or item.title, item.ts], ensure_ascii=False)
     saved = dict(id=hashlib.sha256(identity.encode()).hexdigest(), title=item.title, url=item.url,
                  source=source['name'], time=item.ts, snippet=item.body[:500])
-    return (f'<button class="act act--icon bookmark" type="button" data-bookmark="{E(json.dumps(saved, ensure_ascii=False))}" '
+    return (f'<button class="icon-btn bookmark" type="button" data-bookmark="{E(json.dumps(saved, ensure_ascii=False))}" '
             f'aria-pressed="false" aria-label="收藏">{icon("bookmark")}</button>')
 
 
@@ -114,15 +116,18 @@ def card_media(page, item):
         return 'text'
     if len(images) > 1:
         return 'multi'
-    # Photos sit beside the text; screenshots (e.g. GitHub previews) need a full-width banner.
+    # Photos sit beside the text; screenshots (e.g. GitHub previews) keep their own shape below it.
     return 'side' if page.site.is_photo(images[0]) else 'wide'
 
 
-def card(page, item, kind=None, reading=False):
-    """One news item. kind: hero | side | wide | multi | text (derived from the images when omitted)."""
+def card(page, item, kind=None, reading=False, rank=None):
+    """One news item as a glass card (`g-card`); long mail reading goes on paper (`g-sheet`).
+
+    kind: hero | side | wide | multi | text (derived from the images when omitted).
+    """
     source = page.site.sources[item.source_id]
     kind = kind or card_media(page, item)
-    variant = ' card--reading' if reading and source.get('adapter') == 'mail' else ''
+    surface = 'g-sheet card--reading' if reading and source.get('adapter') == 'mail' else 'g-card'
 
     if item.url:
         title = f'<a href="{E(item.url)}" {EXTERNAL}>{E(item.title)}</a>'
@@ -131,10 +136,11 @@ def card(page, item, kind=None, reading=False):
     else:
         title = E(item.title)
 
-    meta = f'<span class="source" data-source="{E(source["id"])}"{color_style(source)}>{E(source["name"])}</span>'
-    meta += ''.join(f'<span class="sub">{E(part)}</span>' for part in item.via)
+    label = f'<span class="rank">{rank:02}</span>' if rank else ''
+    label += f'<span class="source" data-source="{E(source["id"])}"{color_style(source)}>{E(source["name"])}</span>'
+    label += ''.join(f'<span class="sub">{E(part)}</span>' for part in item.via)
     if item.topic:
-        meta += f'<span class="cat">{E(item.topic)}</span>'
+        label += f'<span class="cat">{E(item.topic)}</span>'
 
     photos = ''.join(
         f'<button class="photo" type="button" data-image="{E(page.url(path))}" aria-label="放大图片">'
@@ -142,12 +148,13 @@ def card(page, item, kind=None, reading=False):
         for path in item.images[:3])
     media = f'<div class="card__media">{photos}</div>' if photos else ''
     body = f'<p class="card__body">{E(item.body)}</p>' if item.body else ''
-    expand = ('<button class="act expand" type="button" aria-expanded="false"><span>展开全文</span>'
+    expand = (f'<button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span>'
               f'{icon("chevron")}</button>') if item.body else ''
-    original = f'<a class="act" href="{E(item.url)}" {EXTERNAL}><span>阅读原文</span>{icon("external")}</a>' if item.url else ''
+    original = (f'<a class="g-btn g-btn--text" href="{E(item.url)}" {EXTERNAL}><span>阅读原文</span>{icon("external")}</a>'
+                if item.url else '')
 
-    return (f'<article class="card news card--{kind}{variant}" data-cat="{E(item.category)}" data-ch="{E(item.filter_key)}">'
-            f'<div class="card__meta">{meta}{time_tag(page, item)}</div>'
+    return (f'<article class="{surface} card news card--{kind}" data-cat="{E(item.category)}" data-ch="{E(item.filter_key)}">'
+            f'<div class="g-card__label"><span class="g-card__who">{label}</span>{time_tag(page, item)}</div>'
             f'<h2 class="card__title">{title}</h2>'
             f'{body}{media}'
             f'<div class="card__actions">{expand}{original}{bookmark_button(item, source)}</div>'
@@ -159,37 +166,35 @@ def cards(page, items):
 
 
 def ranked(page, items):
-    """Numbered cards for the 资讯 ranking; the order itself is the information."""
-    return '<ol class="ranked">' + ''.join(
-        f'<li><span class="rank" aria-hidden="true">{n:02}</span>{card(page, item)}</li>'
-        for n, item in enumerate(items, 1)) + '</ol>'
+    """The 资讯 ranking. The order is the information, so each card carries its ordinal in `ink-3`."""
+    return '<ol class="ranked">' + ''.join(f'<li>{card(page, item, rank=n)}</li>' for n, item in enumerate(items, 1)) + '</ol>'
 
 
 # ---------- Page sections ----------
 
 def filters(page, items):
-    """Sticky category chips plus search and source select, limited to sources present on the page."""
+    """Category pills plus search and source select, limited to sources present on the page."""
     site = page.site
     present = {item.source_id for item in items}
     inbox_names = [s['name'] for s in site.sources.values() if s['type'] == 'inbox' and s['id'] in present]
     names = ['推荐'] + site.categories + inbox_names
-    chips = ''.join(
-        f'<button class="chip pill{" selected" if i == 0 else ""}" type="button" data-value="{E(name if i else "")}" '
+    pills = ''.join(
+        f'<button class="g-pill pill{" selected" if i == 0 else ""}" type="button" data-value="{E(name if i else "")}" '
         f'aria-pressed="{"true" if i == 0 else "false"}">{E(name)}</button>'
         for i, name in enumerate(names))
     options = ''.join(
         f'<option value="{E(s["channel"] if s["type"] == "telegram" else s["id"])}">{E(s["name"])}</option>'
         for s in site.sources.values() if s['id'] in present)
-    return (f'<div class="filters" role="toolbar" aria-label="分类">{chips}</div>'
+    return (f'<div class="filterbar"><div class="filters" role="toolbar" aria-label="分类">{pills}</div></div>'
             '<div class="searchline">'
-            f'<label class="field field--search">{icon("search")}'
+            f'<label class="g-field g-field--search">{icon("search")}'
             '<input id="q" type="search" placeholder="搜索资讯" aria-label="搜索资讯" autocomplete="off"></label>'
-            f'<label class="field field--select"><select id="channel" aria-label="筛选来源"><option value="">全部来源</option>{options}</select>'
+            f'<label class="g-field g-field--select"><select id="channel" aria-label="筛选来源"><option value="">全部来源</option>{options}</select>'
             f'{icon("chevron")}</label></div>')
 
 
 def column_row(page, columns):
-    """Shortcut tiles to favorites and every inbox column. `columns` is [(source, lead text)]."""
+    """Entry cards to favorites and every inbox column. `columns` is [(source, lead text)]."""
     favorites = page.site.favorites
     entries = []
     if favorites.get('enabled') and favorites.get('column'):
@@ -198,42 +203,44 @@ def column_row(page, columns):
     if not entries:
         return ''
     links = ''.join(
-        f'<a class="tile column-entry" href="{E(href)}">{badge(key)}'
-        f'<span class="tile__text"><b>{E(name)}</b><span>{E(lead)}</span></span></a>'
+        f'<a class="g-card entry column-entry" href="{E(href)}">{status_icon(key, "list")}'
+        f'<span class="entry__text"><b>{E(name)}</b><span>{E(lead)}</span></span></a>'
         for href, key, name, lead in entries)
     return f'<section class="columns" aria-label="栏目">{section_label("栏目")}<div class="column-row">{links}</div></section>'
 
 
-def date_chips(dates, current, suffix=''):
-    links = ''.join(f'<a class="chip" href="{d}.html"' + (' aria-current="page"' if d == current else '') + f'>{d}{suffix}</a>'
-                    for d in dates)
-    return f'<nav class="archives" aria-label="往期列表">{links}</nav>'
+def date_chips(dates, current, suffix='', today=None):
+    """Issue dates as pills; the one shown is ink, today carries the sun 「今天」 mark."""
+    def chip(d):
+        mark = '<span class="g-pill g-pill--sun">今天</span>' if d == today else ''
+        return (f'<a class="g-pill" href="{d}.html"' + (' aria-current="page"' if d == current else '')
+                + f'>{d}{suffix}{mark}</a>')
+    return f'<nav class="archives" aria-label="往期列表">{"".join(chip(d) for d in dates)}</nav>'
 
 
 def blocks(page, issue):
-    """Summary panels of an inbox issue: one-liners, markets, chart, tomorrow."""
+    """Summary blocks of an inbox issue. They are editorial / AI writing, so they carry the sun wash."""
     result = ''
     for block in issue.get('blocks', []):
         kind = block.get('type')
         title = block.get('title') or BLOCK_TITLES.get(kind, '')
         if kind in ('oneliner', 'tomorrow'):
-            content = '<ul class="panel__list">' + ''.join(
+            content = '<ul class="brief">' + ''.join(
                 '<li>' + E(x if isinstance(x, str) else x.get('title') or x.get('body')) + '</li>'
                 for x in block.get('items', [])) + '</ul>'
         elif kind == 'markets':
             def market(m):
                 down = str(m.get('change', '')).startswith('-')
-                return (f'<div class="market">{E(m.get("name"))}<strong>{E(m.get("value"))}</strong>'
-                        f'<span class="{"down" if down else "up"}">{"↓" if down else "↑"} {E(m.get("change"))}</span>'
-                        f'<small>{E(m.get("note"))}</small></div>')
+                return (f'<div class="g-wash market"><span>{E(m.get("name"))}</span><strong>{E(m.get("value"))}</strong>'
+                        f'<span>{"↓" if down else "↑"} {E(m.get("change"))}</span><small>{E(m.get("note"))}</small></div>')
             content = '<div class="markets">' + ''.join(market(m) for m in block.get('items', [])) + '</div>'
         elif kind == 'chart':
             image = block.get('image')
             image = image.get('file') if isinstance(image, dict) else image
-            content = (f'<img src="{E(page.url(image))}" alt="{E(title)}" loading="lazy">' if image else '') + f'<p>{E(block.get("caption"))}</p>'
+            content = (f'<img class="chart" src="{E(page.url(image))}" alt="{E(title)}" loading="lazy">' if image else '') + f'<p>{E(block.get("caption"))}</p>'
         else:
             continue
-        result += f'<section class="panel block"><h2>{E(title)}</h2>{content}</section>'
+        result += f'<section class="g-card g-card--sun block"><h2 class="g-card__label">{E(title)}</h2>{content}</section>'
     return result
 
 
@@ -247,9 +254,9 @@ def chart_images(issue):
 
 
 def empty(key, text, element_id='', hidden=False):
-    """Empty state: a quiet badge and one sentence."""
+    """A quiet message on the light: the 3D icon and one sentence."""
     ident = f' id="{element_id}"' if element_id else ''
-    return f'<div class="empty"{ident}{" hidden" if hidden else ""}>{badge(key)}<p>{E(text)}</p></div>'
+    return f'<div class="empty"{ident}{" hidden" if hidden else ""}>{status_icon(key, "lead")}<p>{E(text)}</p></div>'
 
 
 def favorites_body(page):
@@ -263,7 +270,11 @@ def favorites_body(page):
 # ---------- Navigation ----------
 
 def nav_slots(page):
-    """The five fixed slots, shared by the mobile tab bar and the desktop nav."""
+    """The five fixed slots, shared by the mobile tab bar and the desktop switch.
+
+    Words only, as the spec asks; the 首页 slot keeps its centred house (a product decision).
+    The selected slot's bright-glass block is its own element so it can slide between pages.
+    """
     site = page.site
     lookup = {entry[0]: entry for entry in site.entries}
     labels = dict(SLOT_LABELS, favorites=site.favorites.get('label', '收藏'))
@@ -271,24 +282,21 @@ def nav_slots(page):
     for n, key in enumerate(site.tabs, 1):
         name = labels.get(key, site.sources.get(key, {}).get('name', key))
         if key not in lookup:
-            glyph_key = SLOT_ICONS.get(key, site.sources.get(key, {}).get('icon', 'all'))
-            result += f'<span class="tab slot-{n} nav-unavailable" aria-disabled="true">{icon(glyph_key)}<span>{E(name)}</span></span>'
+            result += f'<span class="tab slot-{n} nav-unavailable" aria-disabled="true">{E(name)}</span>'
             continue
-        _, path, _, glyph_key = lookup[key]
+        _, path, _, _ = lookup[key]
         active = page.active == key
         classes = ' '.join(c for c in ('tab', f'slot-{n}', 'active' if active else '', 'home-slot' if key == 'home' else '') if c)
-        content = icon(glyph_key) if key == 'home' else f'{icon(glyph_key)}<span>{E(name)}</span>'
+        content = icon('home') if key == 'home' else E(name)
         result += (f'<a href="{page.url(path)}" class="{classes}"' + (' aria-label="首页"' if key == 'home' else '')
                    + (' aria-current="page"' if active else '') + f'>{content}</a>')
         if active:
-            # The highlight is its own element sharing the active tab's grid cell. Painted before the
-            # tabs, it can glide underneath them from one page to the next (see style.css, Motion).
             result = f'<span class="tab__pill slot-{n}" aria-hidden="true"></span>' + result
     return result
 
 
 def more_menu(page):
-    """Full navigation sheet, grouped as pages / inbox columns / Telegram channels."""
+    """Full navigation on an opaque panel, grouped as pages / inbox columns / Telegram channels."""
     site = page.site
     core = {'home', 'news', 'all', 'daily', 'favorites'}
     telegram = {key for key, s in site.sources.items() if s['type'] == 'telegram'}
@@ -301,13 +309,13 @@ def more_menu(page):
 
     body = ''.join(
         f'<h3 class="sheet__group">{E(label)}</h3><div class="sheet__grid">'
-        + ''.join(f'<a class="sheet__link" href="{page.url(path)}"' + (' aria-current="page"' if key == page.active else '')
+        + ''.join(f'<a class="g-wash sheet__link" href="{page.url(path)}"' + (' aria-current="page"' if key == page.active else '')
                   + f'>{mark(key, glyph_key)}<span>{E(name)}</span></a>' for key, path, name, glyph_key in group)
         + '</div>'
         for label, group in groups if group)
-    return ('<dialog class="sheet more-nav" id="more-nav" aria-labelledby="more-title">'
+    return ('<dialog class="g-panel sheet more-nav" id="more-nav" aria-labelledby="more-title">'
             '<div class="sheet__head"><h2 id="more-title">全部导航</h2>'
-            f'<button class="btn-icon" type="button" data-close aria-label="关闭">{icon("close")}</button></div>'
+            f'<button class="g-round" type="button" data-close aria-label="关闭">{icon("close")}</button></div>'
             + body + '</dialog>')
 
 
@@ -319,7 +327,7 @@ THEME_SCRIPT = ("document.documentElement.classList.add('js');"
 
 
 def document(page, title, body, illumination, light_source):
-    """Full HTML page. `illumination` is the per-page ambient light CSS from light.py."""
+    """Full HTML page. `illumination` is the per-page light (light.py) as CSS custom properties."""
     site, assets = page.site, page.site.assets
     version = assets['version']
     slots = nav_slots(page)
@@ -329,8 +337,8 @@ def document(page, title, body, illumination, light_source):
         '<!doctype html><html lang="zh-CN"><head>'
         '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
         '<meta name="color-scheme" content="light dark">'
-        '<meta name="theme-color" content="#f8f4ee" media="(prefers-color-scheme: light)">'
-        '<meta name="theme-color" content="#18171c" media="(prefers-color-scheme: dark)">'
+        '<meta name="theme-color" content="#FAF6EF" media="(prefers-color-scheme: light)">'
+        '<meta name="theme-color" content="#0C0B0F" media="(prefers-color-scheme: dark)">'
         f'<title>{E(title)} · 拾光热点</title>'
         f'<link rel="icon" href="{page.url("favicon.ico")}?v={version}">'
         f'<link rel="icon" type="image/svg+xml" href="{page.url("favicon.svg")}?v={version}">'
@@ -343,20 +351,21 @@ def document(page, title, body, illumination, light_source):
         '</head>'
         f'<body data-bookmark-scope="{"private" if site.private else "public"}"{favorites_url} data-light-source="{E(light_source or "fallback-sky")}">'
         f'{sprite()}'
-        '<div class="g-light" aria-hidden="true"></div>'
-        '<header class="topbar"><div class="topbar__inner g-column">'
-        f'<a class="brand" href="{page.url("index.html")}"><img class="brand__mark" src="{page.url("favicon.svg")}?v={version}" alt="" width="28" height="28">拾光热点</a>'
-        f'<nav class="desktop-nav glass" aria-label="主导航">{slots}</nav>'
-        f'<div class="tools"><button class="btn-icon glass" type="button" id="search-toggle" aria-label="搜索">{icon("search")}</button>'
-        f'<button class="btn-icon glass" type="button" id="more-toggle" aria-label="全部导航" aria-expanded="false" aria-controls="more-nav">{icon("grid")}</button></div>'
+        '<div class="g-light" aria-hidden="true"><i class="g-light__field"></i></div>'
+        '<header class="g-topbar"><div class="g-topbar__inner g-column">'
+        f'<a class="g-topbar__brand" href="{page.url("index.html")}"><img class="brand__mark" src="{page.url("favicon.svg")}?v={version}" alt="" width="26" height="26">拾光热点</a>'
+        f'<span class="g-topbar__where" aria-hidden="true">{E(title)}</span>'
+        f'<nav class="g-seg desktop-nav" aria-label="主导航">{slots}</nav>'
+        f'<div class="g-topbar__actions"><button class="g-round" type="button" id="search-toggle" aria-label="搜索">{icon("search")}</button>'
+        f'<button class="g-round" type="button" id="more-toggle" aria-label="全部导航" aria-expanded="false" aria-controls="more-nav">{icon("menu")}</button></div>'
         '</div></header>'
         '<div class="layout g-column"><main id="main">'
         f'{body}'
-        f'{empty("search", "换个词，再找找。", "none", hidden=True)}'
+        f'{empty("all", "换个词，再找找。", "none", hidden=True)}'
         f'<footer class="footer"><span>今日信息，留一份清晰。</span><span>更新于 {site.now.strftime("%m-%d %H:%M")} 北京时间</span></footer>'
         '</main></div>'
-        f'<nav class="bottom tabbar glass" aria-label="主导航">{slots}</nav>'
+        f'<nav class="g-tabbar bottom" aria-label="主导航">{slots}</nav>'
         f'{more_menu(page)}'
-        f'<dialog class="lightbox" aria-label="图片查看器"><button class="btn-icon glass lightbox__close" type="button" data-close aria-label="关闭">{icon("close")}</button><img alt=""></dialog>'
-        '<div class="toast glass" id="toast" role="status" aria-live="polite"><span class="toast__text"></span><a class="toast__action" hidden></a><button class="toast__action" type="button" hidden></button></div>'
+        f'<dialog class="lightbox" aria-label="图片查看器"><button class="g-round lightbox__close" type="button" data-close aria-label="关闭">{icon("close")}</button><img alt=""></dialog>'
+        '<div class="toast" id="toast" role="status" aria-live="polite"><span class="toast__text"></span><a class="g-btn g-btn--primary toast__action" hidden></a><button class="g-btn g-btn--primary toast__action" type="button" hidden></button></div>'
         '</body></html>')

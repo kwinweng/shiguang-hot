@@ -204,7 +204,7 @@ def _build(rows, hot, now, out, inbox_only=False):
 
             def body(page, issue=issue, lead=lead, note=note):
                 content = render.heading(page, lead, note)
-                content += render.date_chips(dates, issue['date']) if len(dates) > 1 else ''
+                content += render.date_chips(dates, issue['date'], today=site.today) if len(dates) > 1 else ''
                 content += render.blocks(page, issue)
                 for section in issue.get('sections', []):
                     parts = [part.strip() for part in re.split(r'[|｜]', section.get('title') or '')]
@@ -297,10 +297,10 @@ def _build(rows, hot, now, out, inbox_only=False):
         for day in days:
             write(f'archive/{day}.html', 'daily', day + ' 日报', lambda page, day=day:
                   render.heading(page, day + ' 日报', '按北京时间汇集各来源精选')
-                  + render.date_chips(days, day) + digest(page, day), digest_images(day))
+                  + render.date_chips(days, day, today=site.today) + digest(page, day), digest_images(day))
         write('archive/index.html', 'daily', '日报', lambda page:
               render.heading(page, '每一天，都有迹可循', '回看世界变化的每个切片。')
-              + (render.date_chips(days, days[0], ' 日报') + digest(page, days[0]) if days else ''),
+              + (render.date_chips(days, days[0], ' 日报', today=site.today) + digest(page, days[0]) if days else ''),
               digest_images(days[0]) if days else [])
         (out / '.nojekyll').write_text('')
 

@@ -62,7 +62,7 @@ class CardTests(unittest.TestCase):
         self.assertEqual(item.title, '电邮标题')
         html = render.card(page('../'), item)
         soup = BeautifulSoup(html, 'html.parser')
-        self.assertEqual([s.get_text() for s in soup.select('.card__meta span')], ['频道'])  # 综合 adds nothing
+        self.assertEqual([s.get_text() for s in soup.select('.g-card__who span')], ['频道'])  # 综合 adds nothing
         self.assertEqual(soup.select_one('.source')['style'], '--source:#4279c2')
         self.assertEqual(soup.select_one('time').get_text(), '09:30')
         self.assertEqual(soup.select_one('img')['src'], '../media/chan/photo.webp')
@@ -77,7 +77,7 @@ class CardTests(unittest.TestCase):
                  images=[dict(file='x/img/shot.webp')])])])
         item = issue_items(issue, INBOX)[0]
         soup = BeautifulSoup(render.card(page(), item), 'html.parser')
-        self.assertEqual([s.get_text() for s in soup.select('.card__meta span')], ['推特爆款', 'X'])
+        self.assertEqual([s.get_text() for s in soup.select('.g-card__who span')], ['推特爆款', 'X'])
         self.assertEqual(soup.select_one('time').get_text(), '10-16 08:00')
         self.assertIn('card--wide', soup.article['class'])  # a screenshot, not a photo
         self.assertIsNone(soup.select_one('h2 a'))   # unsafe link dropped
@@ -91,34 +91,66 @@ class CardTests(unittest.TestCase):
 
 
 class DesignSystemTests(unittest.TestCase):
+    """Rules of the 「光」 spec that the stylesheet and templates must keep."""
+    css = (Path(__file__).parent / 'style.css').read_text()
+
     def test_every_icon_reference_has_a_symbol(self):
         import re
-        from icons import GLYPHS, sprite
-        defined = re.findall(r'<symbol id="i-([a-z-]+)"', sprite())
+        from icons import sprite
+        defined = re.findall(r'<symbol id="([a-z]+-[a-z0-9-]+)"', sprite())
         self.assertEqual(len(defined), len(set(defined)))
-        self.assertEqual(set(defined), set(GLYPHS))
+        self.assertEqual(sprite().count('id="status-sun"'), 1)  # gradients defined once, not per icon
         site = page().site
         site.entries = [('home', 'index.html', '首页', 'home'), ('daily', 'archive/index.html', '日报', 'archive')]
         site.tabs = ['favorites', 'daily', 'home', 'news', 'x']
         site.favorites = {'enabled': True, 'label': '收藏', 'path': 'favorites.html', 'column': True}
         site.assets = {'css': 'style.css', 'js': 'app.js', 'version': '1'}
         row = dict(ch='chan', id=1, ts='2026-10-17T09:30:00+08:00', title='t', body='b', cat='科技', day='2026-10-17', url='https://t.me/chan/1')
-        html = render.document(render.Page(site, '', 'home'), 'x', render.card(page(), from_telegram(row, TG, True)), '', '')
-        used = set(re.findall(r'href="#i-([a-z-]+)"', html))
+        p = render.Page(site, '', 'home')
+        html = render.document(p, 'x', render.heading(p, '今天 1 条要闻', 'note') + render.card(page(), from_telegram(row, TG, True)), '', '')
+        used = set(re.findall(r'href="#([a-z]+-[a-z0-9-]+)"', html))
         self.assertTrue(used)
         self.assertLessEqual(used, set(defined))
         self.assertEqual(html.count('<svg class="sprite"'), 1)
         soup = BeautifulSoup(html, 'html.parser')
         self.assertIsNotNone(soup.select_one('nav.bottom a.home-slot.active.slot-3'))
         self.assertIn('slot-3', soup.select_one('nav.bottom .tab__pill')['class'])
-        self.assertEqual(len(soup.select('nav.bottom .tab__pill')), 1)
+        # Tab bar: words only, except the centred house.
+        for slot in soup.select('nav.bottom .tab'):
+            self.assertEqual(slot.find('svg') is not None, 'home-slot' in slot['class'], slot)
+        # Lead block uses a 3D status icon at lead size.
+        self.assertIsNotNone(soup.select_one('.g-lead .s-icon--lead'))
 
     def test_sun_is_only_ever_a_fill(self):
-        # README 设计规范: sun is the only accent colour and is used only as a fill.
         import re
-        css = (Path(__file__).parent / 'style.css').read_text()
-        offending = re.findall(r'(?<![-\w])(color|stroke|outline[-a-z]*|border[-a-z]*|text-decoration[-a-z]*)\s*:[^;{}]*var\(--sun\)', css)
+        offending = re.findall(r'(?<![-\w])(color|stroke|outline[-a-z]*|border[-a-z]*|text-decoration[-a-z]*)\s*:[^;{}]*var\(--sun\)', self.css)
         self.assertEqual(offending, [])
+
+    def test_weights_and_letter_spacing(self):
+        import re
+        self.assertLessEqual({int(w) for w in re.findall(r'font-weight:\s*(\d+)', self.css)}, {400, 500, 600, 700})
+        spaced = {sel.strip().split(',')[0] for sel, val in re.findall(r'([^{}]+)\{[^}]*?letter-spacing:([\d.]+)px', self.css) if float(val) > 0}
+        self.assertLessEqual(spaced, {'.g-card__label', '.g-topbar__brand', '.section-label h2', '.sheet__group'})
+
+    def test_glass_cards_never_blur(self):
+        import re
+        for selector, body in re.findall(r'([^{}]+)\{([^}]*)\}', self.css):
+            if 'backdrop-filter:blur' in body:
+                self.assertFalse(re.search(r'\.(g-card|g-sheet|card)\b', selector), selector)
+
+    def test_light_follows_the_spec(self):
+        import light
+        from items import BEIJING  # noqa: F401
+        dawn = light.ambient_pixels(None, 'light')
+        self.assertEqual(len(dawn), 30 * 40)
+        # Dawn sky: warmer at the top than at the bottom.
+        top, bottom = dawn[0], dawn[-1]
+        self.assertGreater(top[0] - top[2], bottom[0] - bottom[2])
+        for scheme, (lo, hi) in (('light', (.77, .94)), ('dark', (.17, .47))):
+            for rgb in light.ambient_pixels(None, scheme)[::97]:
+                L = light.oklab(tuple(v / 255 for v in rgb))[0]
+                self.assertGreaterEqual(L, lo - .02); self.assertLessEqual(L, hi + .02)
+        self.assertTrue(light.light_css('/no/such/file.jpg').startswith(':root{--light-image:url("data:image/png;base64,'))
 
 
 class AssetTests(unittest.TestCase):

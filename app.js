@@ -13,9 +13,13 @@
 
   // ---------- Motion helpers ----------
   const canTransition = () => !reduced.matches && typeof document.startViewTransition === 'function';
-  function transition(update) {
-    if (!canTransition()) { update(); return Promise.resolve(); }
-    return document.startViewTransition(update).finished.catch(() => {});
+  // In-page transitions (filters, photo viewer) are short and leave the light alone; the 900ms
+  // light cross-fade belongs to moving between pages. The page takes no taps while one runs.
+  function localTransition(update) {
+    root.classList.add('vt-local');
+    const run = document.startViewTransition(update);
+    run.finished.finally(() => root.classList.remove('vt-local'));
+    return run;
   }
   function animateHeight(element, from, to) {
     if (reduced.matches || from === to) return Promise.resolve();
@@ -24,13 +28,21 @@
     const animation = element.animate([{height: `${from}px`}, {height: `${to}px`}], {duration, easing: EASE});
     return animation.finished.catch(() => {}).then(() => { element.style.overflow = ''; });
   }
-  function icon(name) {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  // Tabler symbols from the page sprite (icons.py); a bookmark also carries its filled glyph.
+  function icon(name, filled = false) {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
     svg.setAttribute('class', 'i');
     svg.setAttribute('aria-hidden', 'true');
-    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-    use.setAttribute('href', `#i-${name}`);
+    const use = document.createElementNS(ns, 'use');
+    use.setAttribute('href', `#t-${name}`);
     svg.append(use);
+    if (filled) {
+      const fill = document.createElementNS(ns, 'use');
+      fill.setAttribute('class', 'i__fill');
+      fill.setAttribute('href', `#tf-${name}`);
+      svg.append(fill);
+    }
     return svg;
   }
   const tick = () => navigator.vibrate?.(8);
@@ -79,15 +91,18 @@
 
   function favoriteCard(item) {
     const card = document.createElement('article');
-    card.className = 'card card--text';
+    card.className = 'g-card card card--text';
     const meta = document.createElement('div');
-    meta.className = 'card__meta';
+    meta.className = 'g-card__label';
+    const who = document.createElement('span');
+    who.className = 'g-card__who';
     const source = document.createElement('span');
     source.className = 'source';
     source.textContent = item.source;
+    who.append(source);
     const time = document.createElement('time');
     time.textContent = item.time.replace('T', ' ').slice(5, 16);
-    meta.append(source, time);
+    meta.append(who, time);
     const title = document.createElement('h2');
     title.className = 'card__title';
     let url;
@@ -109,9 +124,9 @@
     actions.className = 'card__actions';
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'act act--icon bookmark';
+    button.className = 'icon-btn bookmark';
     button.dataset.bookmark = JSON.stringify(item);
-    button.append(icon('bookmark'));
+    button.append(icon('bookmark', true));
     actions.append(button);
     card.append(actions);
     return card;
@@ -196,20 +211,19 @@
     if (line && line.getBoundingClientRect().top < 0) line.scrollIntoView({block: 'start', behavior: reduced.matches ? 'auto' : 'smooth'});
   }
   $$('.filters .pill').forEach(chip => chip.addEventListener('click', () => {
+    // Filters answer instantly: a transition here would swallow quick follow-up taps.
     category = chip.dataset.value;
-    transition(() => {
-      $$('.filters .pill').forEach(other => {
-        other.classList.toggle('selected', other === chip);
-        other.setAttribute('aria-pressed', String(other === chip));
-      });
-      filterNews();
+    $$('.filters .pill').forEach(other => {
+      other.classList.toggle('selected', other === chip);
+      other.setAttribute('aria-pressed', String(other === chip));
     });
+    filterNews();
     chip.scrollIntoView({inline: 'center', block: 'nearest', behavior: reduced.matches ? 'auto' : 'smooth'});
     revealResults();
   }));
   let typing = 0;
   search?.addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(filterNews, 120); });
-  channel?.addEventListener('change', () => { transition(filterNews); revealResults(); });
+  channel?.addEventListener('change', () => { filterNews(); revealResults(); });
 
   // ---------- Expanding cards ----------
   // "展开全文" only appears when the clamped text really hides something.
@@ -250,7 +264,8 @@
   addEventListener('resize', () => requestAnimationFrame(updateExpanders));
 
   // ---------- Times ----------
-  // Recent items read as "N 分钟前"; older ones keep the build-time date and time.
+  // Recent items read as "N 分钟前"; older ones keep the build-time date and time. Items from the
+  // last hour carry the sun 「新」 mark (the sun's job: in progress, today, new).
   function updateTimes() {
     for (const time of $$('time[datetime]')) {
       const moment = new Date(time.dateTime);
@@ -259,6 +274,14 @@
       const minutes = Math.max(0, Math.floor((Date.now() - moment) / 60000));
       time.title = moment.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}) + '（北京时间）';
       time.textContent = minutes < 1 ? '刚刚' : minutes < 60 ? `${minutes} 分钟前` : minutes < 1440 ? `${Math.floor(minutes / 60)} 小时前` : time.dataset.absolute;
+      const who = time.parentElement.querySelector('.g-card__who');
+      const mark = who?.querySelector('.is-new');
+      if (who && minutes < 60 && !mark) {
+        const pill = document.createElement('span');
+        pill.className = 'g-pill g-pill--sun is-new';
+        pill.textContent = '新';
+        who.append(pill);
+      } else if (mark && minutes >= 60) mark.remove();
     }
   }
 
@@ -286,7 +309,7 @@
     await big.decode().catch(() => {});
     lightbox.classList.add('is-morph');
     thumb.style.viewTransitionName = 'lightbox-image';
-    await document.startViewTransition(() => {
+    await localTransition(() => {
       thumb.style.viewTransitionName = '';
       big.style.viewTransitionName = 'lightbox-image';
       lightbox.showModal();
@@ -300,7 +323,7 @@
     if (canTransition() && thumb && inView(thumb)) {
       lightbox.classList.add('is-morph');
       big.style.viewTransitionName = 'lightbox-image';
-      await document.startViewTransition(() => {
+      await localTransition(() => {
         big.style.viewTransitionName = '';
         thumb.style.viewTransitionName = 'lightbox-image';
         lightbox.close();
@@ -382,22 +405,20 @@
   // The top bar gains depth once content slides under it; the tab bar steps aside while reading
   // downward and returns on any upward scroll. Tapping the current tab scrolls back to the top.
   const tabbar = $('nav.bottom');
-  const header = $('.topbar');
+  const header = $('.g-topbar');
+  const filterbar = $('.filterbar');
   function measure() {
-    if (tabbar) root.style.setProperty('--tab-bar-height', `${tabbar.offsetHeight + 14}px`);
-    if (header) root.style.setProperty('--header-height', `${header.offsetHeight}px`);
+    if (tabbar) root.style.setProperty('--tab-bar-height', `${tabbar.offsetHeight + 8}px`);
   }
-  if ('ResizeObserver' in window) {
-    const observer = new ResizeObserver(measure);
-    [tabbar, header].forEach(element => element && observer.observe(element));
-  }
+  if ('ResizeObserver' in window && tabbar) new ResizeObserver(measure).observe(tabbar);
   measure();
   let lastY = Math.max(0, scrollY), travel = 0, frame = 0;
   function onScroll() {
     frame = 0;
     const y = Math.max(0, scrollY);
     const delta = y - lastY;
-    root.toggleAttribute('data-scrolled', y > 4);
+    root.toggleAttribute('data-scrolled', y > 30);
+    if (filterbar && header) filterbar.toggleAttribute('data-stuck', filterbar.getBoundingClientRect().top <= header.getBoundingClientRect().bottom + 0.5);
     if (tabbar && delta) {
       travel = Math.sign(delta) === Math.sign(travel) ? travel + delta : delta;
       const atEdge = y < 80 || y + innerHeight >= root.scrollHeight - 80;
