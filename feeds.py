@@ -28,6 +28,19 @@ def config():
         cap=s.get('home_cap',4 if s['type']=='telegram' else 8)
         if isinstance(cap,bool) or not isinstance(cap,int) or cap<0:
             raise ValueError('home_cap 必须为非负整数')
+    app_ids=set()
+    for app in data.get('apps',[]):
+        if not isinstance(app,dict) or not re.fullmatch(r'[a-zA-Z0-9_-]+',str(app.get('id',''))) or app['id'] in app_ids:
+            raise ValueError('应用 id 非法或重复')
+        app_ids.add(app['id'])
+        visibility=app.get('visibility','public')
+        if not (visibility in ('public','private') or isinstance(visibility,dict) and isinstance(visibility.get('users'),list)):
+            raise ValueError('应用 visibility 非法')
+        if not isinstance(app.get('name'),str) or not app['name']:
+            raise ValueError('应用 name 必填')
+        url=str(app.get('url',''))
+        if not url.startswith('#') and urlsplit(url).scheme not in ('http','https'):
+            raise ValueError('应用 url 必须为 http(s) 或 # 开头')
     return data
 
 def directory(source):

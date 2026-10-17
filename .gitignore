@@ -22,3 +22,5 @@ feeds-inbox/
 tg.db-journal
 private-feeds/
 assets/icon-preview.png
+out-public/
+out-private/

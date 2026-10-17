@@ -7,16 +7,18 @@
 `style.css`、`app.js` 提供共享视觉与交互。`build_icons.py` 生成蓝色图标、manifest 并检验边缘。
 `validate_feed.py` 为独立投递校验入口；规范见 INGEST.md。`mailbuild.py` 兼容旧入口，仅重建内网 inbox。
 
-`sources.json` 声明 id、type、name、icon、color、visibility、nav（enabled/order）。
+`sources.json` 声明 id、type、name、icon、color、visibility、nav（enabled/order）；顶层 `apps` 声明首页「常用」入口（id、name、url、icon、note、visibility、order）。
 Telegram 使用 channel；inbox 使用 directory、filename、adapter（native/mail/world/x）和可选 env。
 `x` 使用平铺 `/workspace/x-digest/YYYY-MM-DD.json`，filename 为 `{date}.json`；`latest.json` 仅补缺失日期，忽略 Markdown。`X_FEED_DIR` 可覆盖目录，公开输出仍为原生 feed.json，保留最近 14 天。
 分类正则位于 categories。导航按顺序自动生成；inbox 有合法数据才显示。
-手机底栏与桌面导航使用顶层 `nav.tabs` 的五个固定槽位：private 为邮件、日报、首页、资讯、推特爆款；public 为收藏、日报、首页、资讯、推特爆款。首页必须居中，以透明玻璃描边的 inline SVG 房屋显示，不显示文字，aria-label 为首页；缺数据的栏目保留禁用槽位，不生成空页。资讯继续使用 hot.html。底栏只有当前项使用 sun 填充。
+手机底栏与桌面导航使用顶层 `nav.tabs` 的五个固定槽位：private 为邮件、日报、首页、资讯、推特爆款；public 为收藏、日报、首页、资讯、推特爆款。首页必须居中，以中性圆点占位、不显示文字，aria-label 为首页；缺数据的栏目保留禁用槽位，不生成空页。资讯继续使用 hot.html。底栏只有当前项使用 sun 填充。
 `nav.favorites` 配置 enabled、label、path、column，控制收藏页、菜单入口与栏目入口。两种模式菜单均保留 all.html。收藏页只生成空容器，由客户端读取 localStorage 后呈现，可逐条移除，空列表显示温和提示。
 每张信息卡提供书签按钮，aria-pressed 表示状态，aria-label 使用收藏或取消收藏。仅存储 id、title、url、source、time、snippet；id 由来源、原始 id 或链接或标题及时间的 SHA-256 生成。收藏不会上传；public/private 使用独立存储键，即使同源也不混用。内网邮件收藏仅留在设备浏览器，favorites.html 不嵌入任何服务端邮件卡片或正文。不同页面和标签页同步收藏状态；存储不可用时显示提示。
 来源的 `nav.enabled` 和 `nav.order` 只控制「栏目」行及菜单，不再争夺第五个槽位。所有有数据且启用导航的 inbox 均出现在栏目行和菜单，包括 world、github、hot-daily；菜单另含核心页面及有数据的 TG 频道页。链接使用相对路径，支持 Pages `/tg-digest/`。
 
 ## 首页与跨来源日报
+
+首页顶部「今日」依次显示跨来源精选（每个来源最多一条，今日重点首条优先，最多 5 条）、环球早知道（只读当日 brief.json 的 oneliner，最多 4 条）和待办（仅内网构建，读当日 todo.json 中 status=open 的前 5 条）。缺失的块直接隐藏，不写空状态。其下为「常用」应用卡（public 只显示 public，private 显示 public+private），再接原有栏目与信息流。
 
 渲染层将 TG 消息和 inbox sections 归一化为带 source_id、日期、正文、图片的卡片；每张卡片标明注册来源。仅有 blocks 的期刊也生成首页候选。首页候选取每个 inbox 最新一期以及 TG 消息，与 nav.enabled 无关；visibility 在加载前过滤，邮件只进入内网构建。
 `home_weight` 默认 1，排名为 weight / (1 + 消息年龄小时数 / 24)，未来时间按年龄 0 处理。每个来源按排名取 `home_cap` 条（TG 默认 4，inbox 默认 8）；按轮次混排，每轮每来源最多一条。此刻要闻为首条，剩余为首页信息流，头条也计入限额。五个 TG 频道合计默认最多 20 条，避免单一频道占满首页。

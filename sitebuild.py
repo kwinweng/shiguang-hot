@@ -11,8 +11,41 @@ from zoneinfo import ZoneInfo
 E = lambda v: html.escape(str(v or ''), quote=True)
 ICONS = {'home':'<path d="m3 10 9-7 9 7v11H6V10M9 21v-8h6v8"/>','hot':'<path d="M13 3c2 6-3 6-1 10 2-1 3-3 3-4 7 7 4 12-3 12S3 14 8 8c0 4 2 4 2 4-1-5 3-6 3-9Z"/>','all':'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 8h8m-8 4h8m-8 4h5"/>','archive':'<rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 10h16"/>','mail':'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/>','world':'<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/>'}
 ICONS['x'] = '<path d="M5 4h14a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-8l-6 3 1-4a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z"/><path d="M7 9h10M7 13h6"/>'
+ICONS['film'] = '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/>'
+ICONS['note'] = '<path d="M4 20l4-1L19.5 7.5a2.12 2.12 0 0 0-3-3L5 16l-1 4Z"/><path d="m13.5 6.5 4 4"/>'
 def icon(key): return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS.get(key, ICONS['all'])+'</svg>'
 def link(url): return str(url or '') if urlsplit(str(url or '')).scheme in ('http','https') else ''
+
+def visible(item, private):
+    """Visibility gate; the dict form reserves per-user lists like {"users": [...]}."""
+    value = item.get('visibility', 'public')
+    if isinstance(value, dict): return private and bool(value.get('users'))
+    return value == 'public' or (value == 'private' and private)
+
+def entry_url(value):
+    """App/entry links may be external HTTP(S) or an in-page anchor."""
+    value = str(value or '')
+    return value if value.startswith('#') or urlsplit(value).scheme in ('http', 'https') else ''
+
+def read_json(path):
+    try: data = json.loads(Path(path).read_text())
+    except (OSError, ValueError): return {}
+    return data if isinstance(data, dict) else {}
+
+def world_oneliners(day):
+    root = Path(os.getenv('WORLD_BRIEF_DIR', '/workspace/world-brief'))
+    items = read_json(root / day / 'brief.json').get('oneliner') or []
+    result = []
+    for item in items:
+        text = (item.get('title') or item.get('body')) if isinstance(item, dict) else item
+        if text: result.append(str(text))
+    return result[:4]
+
+def open_todos(day, private):
+    if not private: return []
+    root = Path(os.getenv('TODO_DIR', '/workspace/feeds-inbox/todo'))
+    items = read_json(root / day / 'todo.json').get('items') or []
+    return [item for item in items if isinstance(item, dict) and item.get('status') == 'open' and item.get('title')][:5]
 
 def section_icon(key):
     shapes = {
@@ -134,7 +167,7 @@ def _build(rows, hot, now, out, inbox_only=False):
                 continue
             _,path,_,ic=lookup[key]
             classes=('active ' if active==key else '')+('home-slot' if key=='home' else '')
-            content=icon(ic) if key=='home' else f'{icon(ic)}<span>{E(name)}</span>'
+            content='<svg class="home-dot" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/></svg>' if key=='home' else f'{icon(ic)}<span>{E(name)}</span>'
             result+=f'<a href="{rel}{path}" class="{classes.strip()}"'+(' aria-label="首页"' if key=='home' else '')+(' aria-current="page"' if active==key else '')+f'>{content}</a>'
         return result
     def column_row():
@@ -167,7 +200,8 @@ def _build(rows, hot, now, out, inbox_only=False):
         theme="const t=new URLSearchParams(location.search).get('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;"
         search_icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg>'
         menu_icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M5 7h14M5 12h14M5 17h14"/></svg>'
-        return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#eee8df"><title>{E(title)} · 拾光热点</title><link rel="icon" href="{rel}favicon.ico?v=20261017-8"><link rel="icon" type="image/svg+xml" href="{rel}favicon.svg?v=20261017-8"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png?v=20261017-8"><link rel="manifest" href="{rel}manifest.webmanifest?v=20261017-8"><script>{theme}</script><style>{css}{illumination}</style></head><body data-bookmark-scope="{'private' if private else 'public'}" data-light-source="{E(image or 'fallback-sky')}"><div class="g-light" aria-hidden="true"></div><header><div class="top g-column"><a class="brand" href="{rel}index.html">{logo}拾光热点</a><nav class="desktop-nav g-seg" aria-label="主导航">{nav(rel,active,True)}</nav><div class="tools"><button id="search-toggle" aria-label="搜索">{search_icon}</button><button id="more-toggle" aria-label="菜单" aria-expanded="false">{menu_icon}</button></div></div></header><div class="layout g-column"><main>{body}<p id="none" hidden>换个词，再找找。</p><footer>今日信息，留一份清晰。<span>{now.strftime('%m-%d %H:%M')} 北京时间</span></footer></main></div><nav class="bottom" aria-label="主导航">{nav(rel,active,True)}</nav>{more}<dialog class="lightbox" aria-label="图片查看器"><button class="lightbox-close" aria-label="关闭">×</button><img alt="放大图片"></dialog><script>{js}</script></body></html>'''
+        page_title='拾光 · 今天' if active=='home' else f'{E(title)} · 拾光'
+        return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#eee8df"><title>{page_title}</title><link rel="icon" href="{rel}favicon.ico?v=20261017-8"><link rel="icon" type="image/svg+xml" href="{rel}favicon.svg?v=20261017-8"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png?v=20261017-8"><link rel="manifest" href="{rel}manifest.webmanifest?v=20261017-8"><script>{theme}</script><style>{css}{illumination}</style></head><body data-bookmark-scope="{'private' if private else 'public'}" data-light-source="{E(image or 'fallback-sky')}"><div class="g-light" aria-hidden="true"></div><header><div class="top g-column"><a class="brand" href="{rel}index.html">{logo}拾光</a><nav class="desktop-nav g-seg" aria-label="主导航">{nav(rel,active,True)}</nav><div class="tools"><button id="search-toggle" aria-label="搜索">{search_icon}</button><button id="more-toggle" aria-label="菜单" aria-expanded="false">{menu_icon}</button></div></div></header><div class="layout g-column"><main>{body}<p id="none" hidden>换个词，再找找。</p><footer>今日信息，留一份清晰。<span>{now.strftime('%m-%d %H:%M')} 北京时间</span></footer></main></div><nav class="bottom" aria-label="主导航">{nav(rel,active,True)}</nav>{more}<dialog class="lightbox" aria-label="图片查看器"><button class="lightbox-close" aria-label="关闭">×</button><img alt="放大图片"></dialog><script>{js}</script></body></html>'''
     def heading(title,desc):
         status='<svg class="status-icon"></svg>'
         return f'<div class="page-intro">{status}<h1>{E(title)}</h1><p>{E(desc)}</p></div>'
@@ -247,12 +281,58 @@ def _build(rows, hot, now, out, inbox_only=False):
         hero=next(iter(ranked),None)
         home_image=qualifying([hero] if hero else [])[1]
         stream=ranked[1:]
-        today=now.date().isoformat()
-        count=sum(r['day']==today for r in rows+latest_cards)
+        today=local_now.date().isoformat()
+        today_items=[r for r in rows+latest_cards if r['day']==today]
+        count=len(today_items)
+        def today_card(r):
+            source=by_id[r['source_id']]; url=link(r.get('url'))
+            title=f'<a href="{E(url)}" target="_blank" rel="noopener noreferrer">{E(r["title"])}</a>' if url else E(r['title'])
+            note=f'<p class="note">{E(r["body"][:120])}</p>' if r.get('body') else ''
+            return f'<article class="g-card news today-card"><div class="meta"><span class="g-wash">{E(source["name"])}</span><time>{E(r["ts"][11:16] or r["day"])}</time></div><h3>{title}</h3>{note}</article>'
+        def today_picks():
+            hot_first=next((r for r in today_items if r['source_id']=='hot-daily'),None)
+            picks=[hot_first] if hot_first else []
+            candidates=[]
+            for s in sources:
+                if hot_first and s['id']=='hot-daily': continue
+                options=[r for r in today_items if r['source_id']==s['id']]
+                if options: candidates.append(max(options,key=lambda r:(rank(r),r['ts'])))
+            candidates.sort(key=lambda r:(rank(r),r['ts']),reverse=True)
+            return (picks+candidates)[:5]
+        def today_section():
+            parts=''
+            picks=today_picks()
+            if picks: parts+='<div class="today-list">'+''.join(today_card(r) for r in picks)+'</div>'
+            oneliners=world_oneliners(today)
+            if oneliners:
+                more='<a class="card-more" href="world/index.html">环球要闻 →</a>' if 'world' in issues else ''
+                parts+='<article class="g-card today-brief"><div class="card-head"><h3>环球早知道</h3></div><ul class="points">'+''.join(f'<li><span class="dot"></span><span>{E(text)}</span></li>' for text in oneliners)+'</ul>'+more+'</article>'
+            todos=open_todos(today,private)
+            if todos:
+                items_html=''
+                for item in todos:
+                    url=entry_url(item.get('link'))
+                    title=f'<a href="{E(url)}">{E(item["title"])}</a>' if url else E(item['title'])
+                    due=f'<span class="todo-due">{E(item["due"])}</span>' if item.get('due') else ''
+                    items_html+=f'<li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/></svg><span class="todo-title">{title}</span>{due}</li>'
+                parts+='<article class="g-card today-todo"><div class="card-head"><h3>待办</h3><span class="badge">私密</span></div><ul class="todos">'+items_html+'</ul></article>'
+            if not parts: return ''
+            return '<section class="today" aria-label="今日"><div class="section-label"><b>今日</b></div><div class="today-stack">'+parts+'</div></section>'
+        def apps_section():
+            apps=sorted((a for a in cfg.get('apps',[]) if visible(a,private) and entry_url(a.get('url'))),key=lambda a:(a.get('order',100),str(a.get('id',''))))
+            if not apps: return ''
+            cards=''
+            for app in apps:
+                url=entry_url(app['url']); external=' target="_blank" rel="noopener noreferrer"' if url.startswith('http') else ''
+                tile_icon=icon(app.get('icon') or 'all').replace('<svg ','<svg class="tile-ico" ',1)
+                cards+=f'<a class="g-tile" href="{E(url)}"{external}>{tile_icon}<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span class="tile-title">{E(app.get("name"))}</span><span class="tile-note">{E(app.get("note"))}</span></a>'
+            return '<section class="apps" aria-label="常用"><div class="section-label"><b>常用</b></div><div class="tiles">'+cards+'</div></section>'
         note=f'{now.month}月{now.day}日 周{"一二三四五六日"[now.weekday()]} · 更新于 {now:%H:%M} · {len({r["source_id"] for r in rows+latest_cards})} 个来源'
-        content=heading(f'今天 {count} 条要闻',note)
+        content=heading(f'今天 {count} 件值得看' if count else '今天值得看',note)
+        content+=today_section()
+        content+=column_row()+apps_section()
         if hero: content+='<div class="section-label"><b>此刻要闻</b><span>精选</span></div>'+card(hero,'hero')
-        content+=column_row()+filters(stream+([hero] if hero else []))+'<div class="stream-title"><h2>最新动态</h2><span>实时收录 · 持续更新</span></div>'+''.join(card(r) for r in stream)
+        content+=filters(stream+([hero] if hero else []))+'<div class="stream-title"><h2>最新动态</h2><span>实时收录 · 持续更新</span></div>'+''.join(card(r) for r in stream)
         write('index.html',shell('首页','','home',content,home_image))
         write('all.html',shell('全部','','all',heading('全部动态','完整收录，按来源和分类查找。')+filters(rows+latest_cards)+''.join(card(r) for r in rows+latest_cards)))
         write('hot.html',shell('资讯','','news',heading('这几条大家都在说','过去 48 小时 · 多个来源共同关注')+''.join(f'<div class="ordinal">{n:02}</div>'+card(r) for n,r in enumerate(hot,1))))
