@@ -207,11 +207,9 @@ def _build(rows, hot, now, out, inbox_only=False):
                 content += render.date_chips(dates, issue['date']) if len(dates) > 1 else ''
                 content += render.blocks(page, issue)
                 for section in issue.get('sections', []):
-                    labels = ''.join(f'<span class="g-wash">{E(part.strip())}</span>'
-                                     for part in re.split(r'[|｜]', section.get('title') or '') if part.strip())
-                    content += (f'<section class="mail-section"><h2 class="sticky-title">{labels}</h2>'
-                                + ''.join(render.card(page, item, reading=True) for item in section_items(section, issue, s))
-                                + '</section>')
+                    parts = [part.strip() for part in re.split(r'[|｜]', section.get('title') or '')]
+                    content += render.group(parts, ''.join(render.card(page, item, reading=True)
+                                                           for item in section_items(section, issue, s)))
                 return content
             light = all_images(issue_items(issue, s))
             write(f'{sid}/{issue["date"]}.html', sid, s['name'], body, light)
@@ -219,11 +217,7 @@ def _build(rows, hot, now, out, inbox_only=False):
 
     if not inbox_only:
         if favorites.get('enabled'):
-            write(favorites['path'], 'favorites', favorites['label'], lambda page:
-                  render.heading(page, '留住想再读的内容', '收藏保存在这台设备上。')
-                  + '<div id="favorites-list"></div>'
-                  + '<p id="favorites-empty" class="g-card favorites-empty">还没有收藏，点卡片上的书签收藏</p>'
-                  + '<p id="favorites-status" role="status" aria-live="polite"></p>')
+            write(favorites['path'], 'favorites', favorites['label'], render.favorites_body)
         shutil.copytree(ROOT / 'media', out / 'media', dirs_exist_ok=True)
         for asset in (ROOT / 'assets').iterdir():
             if asset.is_file(): shutil.copyfile(asset, out / asset.name)
@@ -248,7 +242,7 @@ def _build(rows, hot, now, out, inbox_only=False):
             if hero: content += render.section_label('此刻要闻', '精选') + render.card(page, hero, 'hero')
             content += render.column_row(page, leads)
             content += render.filters(page, stream + ([hero] if hero else []))
-            content += '<div class="stream-title"><h2>最新动态</h2><span>实时收录 · 持续更新</span></div>'
+            content += render.section_label('最新动态', '实时收录 · 持续更新')
             return content + render.cards(page, stream)
         write('index.html', 'home', '首页', home, all_images([hero] if hero else []))
 
@@ -258,7 +252,7 @@ def _build(rows, hot, now, out, inbox_only=False):
               + render.filters(page, everything) + render.cards(page, everything), shown_images(everything))
         write('hot.html', 'news', '资讯', lambda page:
               render.heading(page, '这几条大家都在说', '过去 48 小时 · 多个来源共同关注')
-              + ''.join(f'<div class="ordinal">{n:02}</div>' + render.card(page, item) for n, item in enumerate(hot, 1)),
+              + render.ranked(page, hot),
               shown_images(hot))
         for s in sources.values():
             own = [item for item in telegram if item.source_id == s['id']]
@@ -287,13 +281,12 @@ def _build(rows, hot, now, out, inbox_only=False):
             parts, topics = digest_parts(day)
             content = ''
             for s, issue, items in parts:
-                content += (f'<section class="digest-source" data-source="{E(s["id"])}"><h2 class="sticky-title">{E(s["name"])}</h2>'
-                            + render.blocks(page, issue) + render.cards(page, items) + '</section>')
+                content += render.group([s['name']], render.blocks(page, issue) + render.cards(page, items),
+                                        source_id=s['id'], cls='group digest-source')
             if any(group for _, group in topics):
-                content += '<section class="digest-source"><h2 class="sticky-title">TG 资讯</h2>'
-                content += ''.join(f'<h3 class="sticky-title">{E(topic)}</h3>' + render.cards(page, group)
-                                   for topic, group in topics if group)
-                content += '</section>'
+                inner = ''.join(render.group([topic], render.cards(page, group), level=3, cls='group group--sub')
+                                for topic, group in topics if group)
+                content += render.group(['TG 资讯'], inner, cls='group digest-source')
             return content
 
         def digest_images(day):

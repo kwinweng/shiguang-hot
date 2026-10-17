@@ -62,11 +62,11 @@ class CardTests(unittest.TestCase):
         self.assertEqual(item.title, '电邮标题')
         html = render.card(page('../'), item)
         soup = BeautifulSoup(html, 'html.parser')
-        self.assertEqual([s.get_text() for s in soup.select('.meta span')], ['频道'])  # 综合 adds nothing
+        self.assertEqual([s.get_text() for s in soup.select('.card__meta span')], ['频道'])  # 综合 adds nothing
         self.assertEqual(soup.select_one('.source')['style'], '--source:#4279c2')
         self.assertEqual(soup.select_one('time').get_text(), '09:30')
         self.assertEqual(soup.select_one('img')['src'], '../media/chan/photo.webp')
-        self.assertIn('side', soup.article['class'])
+        self.assertIn('card--side', soup.article['class'])
         identity = json.dumps(['tg', 42, row['ts']], ensure_ascii=False)
         saved = json.loads(soup.select_one('[data-bookmark]')['data-bookmark'])
         self.assertEqual(saved['id'], hashlib.sha256(identity.encode()).hexdigest())
@@ -77,9 +77,9 @@ class CardTests(unittest.TestCase):
                  images=[dict(file='x/img/shot.webp')])])])
         item = issue_items(issue, INBOX)[0]
         soup = BeautifulSoup(render.card(page(), item), 'html.parser')
-        self.assertEqual([s.get_text() for s in soup.select('.meta span')], ['推特爆款', 'X'])
+        self.assertEqual([s.get_text() for s in soup.select('.card__meta span')], ['推特爆款', 'X'])
         self.assertEqual(soup.select_one('time').get_text(), '10-16 08:00')
-        self.assertIn('wide', soup.article['class'])  # a screenshot, not a photo
+        self.assertIn('card--wide', soup.article['class'])  # a screenshot, not a photo
         self.assertIsNone(soup.select_one('h2 a'))   # unsafe link dropped
 
     def test_block_only_issue_links_to_its_page(self):
@@ -88,6 +88,37 @@ class CardTests(unittest.TestCase):
         soup = BeautifulSoup(render.card(page(), item), 'html.parser')
         self.assertEqual(soup.select_one('h2 a')['href'], 'x/2026-10-17.html')
         self.assertEqual(soup.select_one('time').get_text(), '今天')
+
+
+class DesignSystemTests(unittest.TestCase):
+    def test_every_icon_reference_has_a_symbol(self):
+        import re
+        from icons import GLYPHS, sprite
+        defined = re.findall(r'<symbol id="i-([a-z-]+)"', sprite())
+        self.assertEqual(len(defined), len(set(defined)))
+        self.assertEqual(set(defined), set(GLYPHS))
+        site = page().site
+        site.entries = [('home', 'index.html', '首页', 'home'), ('daily', 'archive/index.html', '日报', 'archive')]
+        site.tabs = ['favorites', 'daily', 'home', 'news', 'x']
+        site.favorites = {'enabled': True, 'label': '收藏', 'path': 'favorites.html', 'column': True}
+        site.assets = {'css': 'style.css', 'js': 'app.js', 'version': '1'}
+        row = dict(ch='chan', id=1, ts='2026-10-17T09:30:00+08:00', title='t', body='b', cat='科技', day='2026-10-17', url='https://t.me/chan/1')
+        html = render.document(render.Page(site, '', 'home'), 'x', render.card(page(), from_telegram(row, TG, True)), '', '')
+        used = set(re.findall(r'href="#i-([a-z-]+)"', html))
+        self.assertTrue(used)
+        self.assertLessEqual(used, set(defined))
+        self.assertEqual(html.count('<svg class="sprite"'), 1)
+        soup = BeautifulSoup(html, 'html.parser')
+        self.assertIsNotNone(soup.select_one('nav.bottom a.home-slot.active.slot-3'))
+        self.assertIn('slot-3', soup.select_one('nav.bottom .tab__pill')['class'])
+        self.assertEqual(len(soup.select('nav.bottom .tab__pill')), 1)
+
+    def test_sun_is_only_ever_a_fill(self):
+        # README 设计规范: sun is the only accent colour and is used only as a fill.
+        import re
+        css = (Path(__file__).parent / 'style.css').read_text()
+        offending = re.findall(r'(?<![-\w])(color|stroke|outline[-a-z]*|border[-a-z]*|text-decoration[-a-z]*)\s*:[^;{}]*var\(--sun\)', css)
+        self.assertEqual(offending, [])
 
 
 class AssetTests(unittest.TestCase):

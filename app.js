@@ -1,333 +1,488 @@
-// Bookmarks never leave this origin's device storage. Separate build modes also
-// prevent private bookmarks appearing when both builds share an origin.
-const bookmarkKey = document.body.dataset.bookmarkScope === 'private' ? 'shiguang-favorites-private' : 'shiguang-favorites-public';
-const bookmarkList = document.querySelector('#favorites-list');
-function readBookmarks() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(bookmarkKey) || '[]');
-    return Array.isArray(saved) ? saved.filter(item => item && ['id','title','url','source','time','snippet'].every(key => typeof item[key] === 'string')) : [];
-  } catch { return []; }
-}
-function bookmarkButton(item, remove = false) {
-  const button = document.createElement('button');
-  button.className = 'bookmark';
-  button.dataset.bookmark = JSON.stringify(item);
-  if (remove) {
-    button.textContent = '移除';
-    button.classList.add('bookmark-remove');
+// 拾光热点 — interactions. One plain script, no dependencies.
+// Modules: motion helpers · toast · bookmarks · filters · expanding cards · times · photo viewer ·
+// navigation sheet · scroll chrome · pull to refresh. Every animation checks reduced motion first.
+(() => {
+  'use strict';
+  const root = document.documentElement;
+  const body = document.body;
+  const $ = (selector, scope = document) => scope.querySelector(selector);
+  const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const EASE = 'cubic-bezier(.2,.8,.2,1)';
+  root.classList.add('js-ready');
+
+  // ---------- Motion helpers ----------
+  const canTransition = () => !reduced.matches && typeof document.startViewTransition === 'function';
+  function transition(update) {
+    if (!canTransition()) { update(); return Promise.resolve(); }
+    return document.startViewTransition(update).finished.catch(() => {});
   }
-  return button;
-}
-function syncBookmarks() {
-  const saved = readBookmarks();
-  if (bookmarkList) {
-    const focusedId = bookmarkList.contains(document.activeElement) ? document.activeElement?.dataset.bookmark : null;
-    bookmarkList.replaceChildren();
-    saved.forEach(item => {
-      const card = document.createElement('article');
-      card.className = 'card g-card';
-      const title = document.createElement('h2');
-      let url;
-      try { url = new URL(item.url); } catch {}
-      if (url && ['http:','https:'].includes(url.protocol)) {
-        const anchor = document.createElement('a');
-        anchor.href = url.href;
-        anchor.textContent = item.title;
-        anchor.target = '_blank';
-        anchor.rel = 'noopener noreferrer';
-        title.append(anchor);
-      } else title.textContent = item.title;
-      const meta = document.createElement('div');
-      meta.className = 'meta';
-      const source = document.createElement('span');
-      source.className = 'source';
-      source.textContent = item.source;
-      const time = document.createElement('time');
-      time.textContent = item.time.replace('T', ' ').slice(5, 16);
-      meta.append(source, time);
+  function animateHeight(element, from, to) {
+    if (reduced.matches || from === to) return Promise.resolve();
+    element.style.overflow = 'hidden';
+    const duration = Math.min(560, 240 + Math.abs(to - from) * 0.35);
+    const animation = element.animate([{height: `${from}px`}, {height: `${to}px`}], {duration, easing: EASE});
+    return animation.finished.catch(() => {}).then(() => { element.style.overflow = ''; });
+  }
+  function icon(name) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'i');
+    svg.setAttribute('aria-hidden', 'true');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', `#i-${name}`);
+    svg.append(use);
+    return svg;
+  }
+  const tick = () => navigator.vibrate?.(8);
+
+  // ---------- Toast ----------
+  const toast = (() => {
+    const element = $('#toast');
+    if (!element) return () => {};
+    const text = $('.toast__text', element);
+    const link = $('a.toast__action', element);
+    const button = $('button.toast__action', element);
+    let timer = 0;
+    const hide = () => element.classList.remove('is-shown');
+    return (message, action) => {
+      clearTimeout(timer);
+      text.textContent = message;
+      link.hidden = button.hidden = true;
+      if (action?.href) { link.href = action.href; link.textContent = action.label; link.hidden = false; }
+      if (action?.run) {
+        button.textContent = action.label; button.hidden = false;
+        button.onclick = () => { action.run(); hide(); };
+      }
+      element.classList.remove('is-shown');
+      void element.offsetWidth; // restart the entrance when toasts follow each other
+      element.classList.add('is-shown');
+      timer = setTimeout(hide, 3600);
+    };
+  })();
+
+  // ---------- Bookmarks ----------
+  // Saved only in this browser. Public and private builds use separate keys even on one origin.
+  const bookmarkKey = body.dataset.bookmarkScope === 'private' ? 'shiguang-favorites-private' : 'shiguang-favorites-public';
+  const favoritesList = $('#favorites-list');
+  const favoritesUrl = body.dataset.favorites;
+  const FIELDS = ['id', 'title', 'url', 'source', 'time', 'snippet'];
+
+  function readBookmarks() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(bookmarkKey) || '[]');
+      return Array.isArray(saved) ? saved.filter(item => item && FIELDS.every(key => typeof item[key] === 'string')) : [];
+    } catch { return []; }
+  }
+  function writeBookmarks(list) {
+    try { localStorage.setItem(bookmarkKey, JSON.stringify(list)); return true; } catch { return false; }
+  }
+
+  function favoriteCard(item) {
+    const card = document.createElement('article');
+    card.className = 'card card--text';
+    const meta = document.createElement('div');
+    meta.className = 'card__meta';
+    const source = document.createElement('span');
+    source.className = 'source';
+    source.textContent = item.source;
+    const time = document.createElement('time');
+    time.textContent = item.time.replace('T', ' ').slice(5, 16);
+    meta.append(source, time);
+    const title = document.createElement('h2');
+    title.className = 'card__title';
+    let url;
+    try { url = new URL(item.url); } catch {}
+    if (url && ['http:', 'https:'].includes(url.protocol)) {
+      const anchor = document.createElement('a');
+      anchor.href = url.href; anchor.target = '_blank'; anchor.rel = 'noopener noreferrer';
+      anchor.textContent = item.title;
+      title.append(anchor);
+    } else title.textContent = item.title;
+    card.append(meta, title);
+    if (item.snippet) {
       const snippet = document.createElement('p');
+      snippet.className = 'card__body';
       snippet.textContent = item.snippet;
-      const foot = document.createElement('div');
-      foot.className = 'foot';
-      foot.append(bookmarkButton(item, true));
-      card.append(meta, title, snippet, foot);
-      bookmarkList.append(card);
-    });
-    document.querySelector('#favorites-empty').hidden = saved.length > 0;
-    if (focusedId) bookmarkList.querySelector('button')?.focus();
-  }
-  document.querySelectorAll('[data-bookmark]').forEach(button => {
-    const item = JSON.parse(button.dataset.bookmark);
-    const pressed = saved.some(savedItem => savedItem.id === item.id);
-    button.setAttribute('aria-pressed', String(pressed));
-    button.setAttribute('aria-label', pressed ? '取消收藏' : '收藏');
-  });
-}
-document.addEventListener('click', event => {
-  const button = event.target.closest('[data-bookmark]');
-  if (!button) return;
-  const item = JSON.parse(button.dataset.bookmark);
-  const saved = readBookmarks();
-  const next = saved.some(savedItem => savedItem.id === item.id) ? saved.filter(savedItem => savedItem.id !== item.id) : [item, ...saved];
-  try {
-    localStorage.setItem(bookmarkKey, JSON.stringify(next));
-    syncBookmarks();
-  } catch {
-    let status = document.querySelector('#favorites-status');
-    if (!status) {
-      status = document.createElement('p');
-      status.id = 'favorites-status';
-      status.setAttribute('role', 'status');
-      button.closest('article').append(status);
+      card.append(snippet);
     }
-    status.textContent = '这次没能保存，请检查设备存储空间和浏览器设置。';
+    const actions = document.createElement('div');
+    actions.className = 'card__actions';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'act act--icon bookmark';
+    button.dataset.bookmark = JSON.stringify(item);
+    button.append(icon('bookmark'));
+    actions.append(button);
+    card.append(actions);
+    return card;
   }
-});
-addEventListener('storage', event => { if (!event.key || event.key === bookmarkKey) syncBookmarks(); });
-addEventListener('pageshow', syncBookmarks);
-syncBookmarks();
 
-const articles = [...document.querySelectorAll('.news')];
-const search = document.querySelector('#q');
-const channel = document.querySelector('#channel');
-let category = '';
-function filterNews() {
-  const query = (search?.value || '').trim().toLocaleLowerCase();
-  let count = 0;
-  articles.forEach(article => {
-    article.hidden = !!((category && article.dataset.cat !== category) ||
-      (channel?.value && article.dataset.ch !== channel.value) ||
-      (query && !article.textContent.toLocaleLowerCase().includes(query)));
-    if (!article.hidden) count++;
-  });
-  const empty = document.querySelector('#none');
-  if (empty) empty.hidden = count > 0 || articles.length === 0;
-  updateExpanders();
-}
-document.querySelectorAll('.pill').forEach(button => button.addEventListener('click', () => {
-  category = button.dataset.value;
-  document.querySelectorAll('.pill').forEach(pill => {
-    pill.classList.toggle('selected', pill === button);
-    pill.setAttribute('aria-pressed', String(pill === button));
-  });
-  filterNews();
-}));
-search?.addEventListener('input', filterNews);
-channel?.addEventListener('change', filterNews);
-// Only offer "展开全文" when the clamped text actually hides something.
-function updateExpanders() {
-  articles.forEach(article => {
-    const button = article.querySelector('.expand');
-    const text = article.querySelector('.copy p');
-    if (!button || !text || article.classList.contains('expanded') || article.hidden) return;
-    button.hidden = text.scrollHeight <= text.clientHeight + 2;
-  });
-}
-addEventListener('load', updateExpanders);
-addEventListener('resize', () => requestAnimationFrame(updateExpanders));
-articles.forEach(article => {
-  const button = article.querySelector('.expand');
-  if (!button) return;
-  button.addEventListener('click', () => {
-    const expanded = article.classList.toggle('expanded');
-    button.setAttribute('aria-expanded', expanded);
-    button.textContent = expanded ? '收起' : '展开全文';
-  });
-});
-// Recent items read as "N 分钟前"; older ones keep the build-time date and time.
-function updateTimes() {
-  document.querySelectorAll('time[datetime]').forEach(time => {
-    const moment = new Date(time.dateTime);
-    if (Number.isNaN(moment.getTime())) return;
-    time.dataset.absolute ??= time.textContent;
-    const minutes = Math.max(0, Math.floor((Date.now() - moment) / 60000));
-    time.title = moment.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}) + '（北京时间）';
-    time.textContent = minutes < 1 ? '刚刚' : minutes < 60 ? `${minutes} 分钟前` : minutes < 1440 ? `${Math.floor(minutes / 60)} 小时前` : time.dataset.absolute;
-  });
-}
-filterNews();
-updateTimes();
-setInterval(updateTimes, 60000);
-const lightbox = document.querySelector('.lightbox');
-let photoTrigger;
-document.querySelectorAll('.photo').forEach(button => button.addEventListener('click', () => {
-  photoTrigger = button;
-  lightbox.querySelector('img').src = button.dataset.image;
-  lightbox.querySelector('img').alt = button.querySelector('img').alt;
-  lightbox.showModal();
-}));
-lightbox?.querySelector('.lightbox-close').addEventListener('click', () => lightbox.close());
-lightbox?.addEventListener('click', event => {
-  if (event.target === lightbox) lightbox.close();
-});
-lightbox?.addEventListener('close', () => photoTrigger?.focus({preventScroll: true}));
-const morePanel = document.querySelector('#more-nav');
-const moreToggle = document.querySelector('#more-toggle');
-moreToggle?.setAttribute('aria-controls', 'more-nav');
-moreToggle?.addEventListener('click', () => {
-  if (morePanel.open) morePanel.close();
-  else morePanel.showModal();
-  moreToggle.setAttribute('aria-expanded', String(morePanel.open));
-});
-morePanel?.addEventListener('click', event => {
-  if (event.target === morePanel || event.target.closest('a,[data-close]')) morePanel.close();
-});
-morePanel?.addEventListener('close', () => moreToggle?.setAttribute('aria-expanded', 'false'));
-document.querySelector('#search-toggle')?.addEventListener('click', () => {
-  if (search) { search.scrollIntoView({block: 'center'}); search.focus({preventScroll: true}); }
-  else location.href = document.querySelector('.brand').getAttribute('href').replace('index.html', 'all.html') + '#q';
-});
-
-// One physical selection surface per control; native anchors keep navigation.
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const selections = [...document.querySelectorAll('.bottom')].map(control => {
-  const indicator = document.createElement('span');
-  indicator.className = 'selection-pill';
-  indicator.setAttribute('aria-hidden', 'true');
-  control.prepend(indicator);
-  const items = [...control.querySelectorAll('a,.pill')];
-  let selected = control.querySelector('.active,.selected');
-  function position() {
-    indicator.hidden = !selected;
-    if (!selected) return;
-    indicator.style.setProperty('--pill-x', `${selected.offsetLeft}px`);
-    indicator.style.setProperty('--pill-y', `${selected.offsetTop}px`);
-    indicator.style.setProperty('--pill-width', `${selected.offsetWidth}px`);
-    indicator.style.setProperty('--pill-height', `${selected.offsetHeight}px`);
-  }
-  items.forEach(item => {
-    if (item.matches('button')) item.setAttribute('aria-pressed', String(item === selected));
-    item.addEventListener('click', event => {
-      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      selected = item;
-      items.forEach(other => {
-        other.classList.toggle(other.matches('button') ? 'selected' : 'active', other === item);
-        if (other.matches('button')) other.setAttribute('aria-pressed', String(other === item));
-      });
-      position();
+  function syncBookmarks() {
+    const saved = readBookmarks();
+    const ids = new Set(saved.map(item => item.id));
+    if (favoritesList) {
+      const focused = favoritesList.contains(document.activeElement);
+      favoritesList.replaceChildren(...saved.map(favoriteCard));
+      $('#favorites-empty').hidden = saved.length > 0;
+      if (focused) favoritesList.querySelector('button')?.focus();
+    }
+    $$('[data-bookmark]').forEach(button => {
+      const pressed = ids.has(JSON.parse(button.dataset.bookmark).id);
+      button.setAttribute('aria-pressed', String(pressed));
+      button.setAttribute('aria-label', pressed ? '取消收藏' : '收藏');
     });
-  });
-  position();
-  requestAnimationFrame(() => control.classList.add('glass-ready'));
-  new ResizeObserver(position).observe(control);
-  return position;
-});
-addEventListener('pageshow', () => selections.forEach(position => position()));
-let sheenFrame = 0, pointerX = .24, pointerY = 0;
-function updateSheen() {
-  sheenFrame = 0;
-  const root = document.documentElement;
-  root.style.setProperty('--sheen-x', `${(18 + pointerX * 42).toFixed(1)}%`);
-  root.style.setProperty('--sheen-y', `${(pointerY * 24 + Math.min(scrollY / Math.max(1, root.scrollHeight - innerHeight), 1) * 28).toFixed(1)}%`);
-}
-function scheduleSheen() {
-  if (!reducedMotion.matches && !sheenFrame) sheenFrame = requestAnimationFrame(updateSheen);
-}
-addEventListener('pointermove', event => { pointerX = event.clientX / innerWidth; pointerY = event.clientY / innerHeight; scheduleSheen(); }, {passive:true});
-addEventListener('scroll', scheduleSheen, {passive:true});
-reducedMotion.addEventListener('change', () => {
-  if (reducedMotion.matches) {
-    cancelAnimationFrame(sheenFrame); sheenFrame = 0;
-    document.documentElement.style.removeProperty('--sheen-x');
-    document.documentElement.style.removeProperty('--sheen-y');
-  } else scheduleSheen();
-});
+  }
 
-const bottomBar = document.querySelector('nav.bottom');
-if (bottomBar) {
-  const root = document.documentElement;
-  const header = document.querySelector('header');
-  function measureChrome() {
-    root.style.setProperty('--tab-bar-height', `${bottomBar.offsetHeight + 22}px`);
+  async function toggleBookmark(button) {
+    const item = JSON.parse(button.dataset.bookmark);
+    const saved = readBookmarks();
+    const index = saved.findIndex(entry => entry.id === item.id);
+    const next = index >= 0 ? saved.filter(entry => entry.id !== item.id) : [item, ...saved];
+    if (!writeBookmarks(next)) {
+      const status = $('#favorites-status');
+      const message = '这次没能保存，请检查设备存储空间和浏览器设置。';
+      if (status) status.textContent = message;
+      toast(message);
+      return;
+    }
+    tick();
+    button.classList.remove('is-popping'); void button.offsetWidth; button.classList.add('is-popping');
+    if (index >= 0) {
+      const card = favoritesList && button.closest('article');
+      if (card && !reduced.matches) {
+        await card.animate([{opacity: 1, scale: 1}, {opacity: 0, scale: .96}], {duration: 200, easing: EASE, fill: 'forwards'}).finished.catch(() => {});
+        await animateHeight(card, card.offsetHeight, 0);
+      }
+      syncBookmarks();
+      toast('已取消收藏', {label: '撤销', run: () => {
+        const list = readBookmarks().filter(entry => entry.id !== item.id);
+        list.splice(Math.min(index, list.length), 0, item);
+        if (writeBookmarks(list)) syncBookmarks();
+      }});
+    } else {
+      syncBookmarks();
+      toast('已收藏', favoritesUrl && !favoritesList ? {label: '查看', href: favoritesUrl} : undefined);
+    }
+  }
+  document.addEventListener('click', event => {
+    const button = event.target.closest('[data-bookmark]');
+    if (button) toggleBookmark(button);
+  });
+  addEventListener('storage', event => { if (!event.key || event.key === bookmarkKey) syncBookmarks(); });
+  addEventListener('pageshow', syncBookmarks);
+  syncBookmarks();
+
+  // ---------- Filters ----------
+  const articles = $$('article.news');
+  const search = $('#q');
+  const channel = $('#channel');
+  let category = '';
+
+  function filterNews() {
+    const query = (search?.value || '').trim().toLocaleLowerCase();
+    let shown = 0;
+    for (const article of articles) {
+      article.hidden = !!((category && article.dataset.cat !== category) ||
+        (channel?.value && article.dataset.ch !== channel.value) ||
+        (query && !article.textContent.toLocaleLowerCase().includes(query)));
+      if (!article.hidden) shown++;
+    }
+    const empty = $('#none');
+    if (empty) empty.hidden = shown > 0 || articles.length === 0;
+    updateExpanders();
+  }
+  function revealResults() {
+    const line = $('.searchline');
+    if (line && line.getBoundingClientRect().top < 0) line.scrollIntoView({block: 'start', behavior: reduced.matches ? 'auto' : 'smooth'});
+  }
+  $$('.filters .pill').forEach(chip => chip.addEventListener('click', () => {
+    category = chip.dataset.value;
+    transition(() => {
+      $$('.filters .pill').forEach(other => {
+        other.classList.toggle('selected', other === chip);
+        other.setAttribute('aria-pressed', String(other === chip));
+      });
+      filterNews();
+    });
+    chip.scrollIntoView({inline: 'center', block: 'nearest', behavior: reduced.matches ? 'auto' : 'smooth'});
+    revealResults();
+  }));
+  let typing = 0;
+  search?.addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(filterNews, 120); });
+  channel?.addEventListener('change', () => { transition(filterNews); revealResults(); });
+
+  // ---------- Expanding cards ----------
+  // "展开全文" only appears when the clamped text really hides something.
+  function updateExpanders() {
+    for (const article of articles) {
+      const button = $('.expand', article);
+      const text = $('.card__body', article);
+      if (!button || !text || article.hidden || article.classList.contains('expanded')) continue;
+      button.hidden = text.scrollHeight <= text.clientHeight + 2;
+    }
+  }
+  function setExpandLabel(button, expanded) {
+    button.setAttribute('aria-expanded', String(expanded));
+    button.querySelector('span').textContent = expanded ? '收起' : '展开全文';
+  }
+  document.addEventListener('click', async event => {
+    const button = event.target.closest('.expand');
+    if (!button) return;
+    const article = button.closest('article');
+    const text = $('.card__body', article);
+    const from = text.getBoundingClientRect().height;
+    if (!article.classList.contains('expanded')) {
+      article.classList.add('expanded');
+      setExpandLabel(button, true);
+      animateHeight(text, from, text.getBoundingClientRect().height);
+    } else {
+      article.classList.remove('expanded');
+      const to = text.getBoundingClientRect().height;
+      article.classList.add('expanded');
+      setExpandLabel(button, false);
+      await animateHeight(text, from, to);
+      article.classList.remove('expanded');
+      const top = article.getBoundingClientRect().top;
+      if (top < 0) article.scrollIntoView({block: 'start', behavior: reduced.matches ? 'auto' : 'smooth'});
+    }
+  });
+  addEventListener('load', updateExpanders);
+  addEventListener('resize', () => requestAnimationFrame(updateExpanders));
+
+  // ---------- Times ----------
+  // Recent items read as "N 分钟前"; older ones keep the build-time date and time.
+  function updateTimes() {
+    for (const time of $$('time[datetime]')) {
+      const moment = new Date(time.dateTime);
+      if (Number.isNaN(moment.getTime())) continue;
+      time.dataset.absolute ??= time.textContent;
+      const minutes = Math.max(0, Math.floor((Date.now() - moment) / 60000));
+      time.title = moment.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}) + '（北京时间）';
+      time.textContent = minutes < 1 ? '刚刚' : minutes < 60 ? `${minutes} 分钟前` : minutes < 1440 ? `${Math.floor(minutes / 60)} 小时前` : time.dataset.absolute;
+    }
+  }
+
+  // ---------- Images ----------
+  for (const image of $$('.photo img')) {
+    const done = () => image.classList.add('is-loaded');
+    if (image.complete) done(); else { image.addEventListener('load', done, {once: true}); image.addEventListener('error', done, {once: true}); }
+  }
+
+  // ---------- Photo viewer ----------
+  // The thumbnail morphs into the full view (View Transitions); drag down or tap outside to close.
+  const lightbox = $('.lightbox');
+  const big = lightbox && $('img', lightbox);
+  let trigger = null;
+  function inView(element) {
+    const box = element.getBoundingClientRect();
+    return box.bottom > 0 && box.top < innerHeight;
+  }
+  async function openPhoto(button) {
+    trigger = button;
+    const thumb = $('img', button);
+    big.src = button.dataset.image;
+    big.alt = thumb.alt;
+    if (!canTransition()) { lightbox.showModal(); return; }
+    await big.decode().catch(() => {});
+    lightbox.classList.add('is-morph');
+    thumb.style.viewTransitionName = 'lightbox-image';
+    await document.startViewTransition(() => {
+      thumb.style.viewTransitionName = '';
+      big.style.viewTransitionName = 'lightbox-image';
+      lightbox.showModal();
+    }).finished.catch(() => {});
+    big.style.viewTransitionName = '';
+    lightbox.classList.remove('is-morph');
+  }
+  async function closePhoto() {
+    if (!lightbox.open) return;
+    const thumb = trigger && $('img', trigger);
+    if (canTransition() && thumb && inView(thumb)) {
+      lightbox.classList.add('is-morph');
+      big.style.viewTransitionName = 'lightbox-image';
+      await document.startViewTransition(() => {
+        big.style.viewTransitionName = '';
+        thumb.style.viewTransitionName = 'lightbox-image';
+        lightbox.close();
+      }).finished.catch(() => {});
+      thumb.style.viewTransitionName = '';
+      lightbox.classList.remove('is-morph');
+    } else lightbox.close();
+    lightbox.style.removeProperty('--drag');
+    trigger?.focus({preventScroll: true});
+  }
+
+  // Shared drag-down-to-dismiss gesture: follows the finger, closes past a distance or on a flick.
+  function dragToDismiss(handle, target, dismiss, distance) {
+    let start = null;
+    handle.addEventListener('pointerdown', event => {
+      if (event.button !== 0 || event.target.closest('button,a')) return;
+      start = {y: event.clientY, t: performance.now(), dy: 0};
+      handle.setPointerCapture(event.pointerId);
+      target.classList.add('is-dragging');
+    });
+    handle.addEventListener('pointermove', event => {
+      if (!start) return;
+      start.dy = Math.max(0, event.clientY - start.y);
+      target.style.setProperty('--drag', `${start.dy}px`);
+    });
+    const end = () => {
+      if (!start) return;
+      const moved = start.dy;
+      const speed = moved / Math.max(1, performance.now() - start.t);
+      start = null;
+      target.classList.remove('is-dragging');
+      if (moved > distance || (moved > 24 && speed > 0.6)) dismiss();
+      else target.style.removeProperty('--drag');
+    };
+    handle.addEventListener('pointerup', end);
+    handle.addEventListener('pointercancel', end);
+  }
+
+  if (lightbox) {
+    document.addEventListener('click', event => {
+      const button = event.target.closest('.photo');
+      if (button) openPhoto(button);
+    });
+    lightbox.addEventListener('click', event => {
+      if (event.target === lightbox || event.target.closest('[data-close]')) closePhoto();
+    });
+    lightbox.addEventListener('cancel', event => { event.preventDefault(); closePhoto(); });
+    dragToDismiss(big, lightbox, closePhoto, 110);
+  }
+
+  // ---------- Navigation sheet ----------
+  const sheet = $('#more-nav');
+  const menuButton = $('#more-toggle');
+  if (sheet && menuButton) {
+    const close = () => sheet.open && sheet.close();
+    menuButton.addEventListener('click', () => {
+      if (sheet.open) close(); else { sheet.showModal(); menuButton.setAttribute('aria-expanded', 'true'); }
+    });
+    sheet.addEventListener('click', event => {
+      if (event.target === sheet || event.target.closest('a,[data-close]')) close();
+    });
+    sheet.addEventListener('close', () => {
+      menuButton.setAttribute('aria-expanded', 'false');
+      setTimeout(() => sheet.style.removeProperty('--drag'), 450);
+    });
+    dragToDismiss($('.sheet__head', sheet), sheet, close, 90);
+  }
+
+  // ---------- Search button ----------
+  $('#search-toggle')?.addEventListener('click', () => {
+    if (search) {
+      $('.searchline').scrollIntoView({block: 'start', behavior: reduced.matches ? 'auto' : 'smooth'});
+      search.focus({preventScroll: true});
+    } else location.href = $('.brand').getAttribute('href').replace('index.html', 'all.html') + '#q';
+  });
+  if (location.hash === '#q' && search) search.focus();
+
+  // ---------- Scroll chrome ----------
+  // The top bar gains depth once content slides under it; the tab bar steps aside while reading
+  // downward and returns on any upward scroll. Tapping the current tab scrolls back to the top.
+  const tabbar = $('nav.bottom');
+  const header = $('.topbar');
+  function measure() {
+    if (tabbar) root.style.setProperty('--tab-bar-height', `${tabbar.offsetHeight + 14}px`);
     if (header) root.style.setProperty('--header-height', `${header.offsetHeight}px`);
   }
-  const chromeObserver = new ResizeObserver(measureChrome);
-  chromeObserver.observe(bottomBar);
-  if (header) chromeObserver.observe(header);
-  measureChrome();
-  let lastY = Math.max(0, scrollY), direction = 0, distance = 0;
-  function updateBottomBar() {
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(measure);
+    [tabbar, header].forEach(element => element && observer.observe(element));
+  }
+  measure();
+  let lastY = Math.max(0, scrollY), travel = 0, frame = 0;
+  function onScroll() {
+    frame = 0;
     const y = Math.max(0, scrollY);
     const delta = y - lastY;
-    const nextDirection = Math.sign(delta);
-    if (nextDirection !== direction) distance = 0;
-    distance += Math.abs(delta);
-    direction = nextDirection;
-    const atEdge = y < 80 || y + innerHeight >= root.scrollHeight - 80;
-    if (atEdge || document.querySelector('dialog[open]') || bottomBar.contains(document.activeElement)) {
-      bottomBar.classList.remove('is-hidden');
-    } else if (distance >= 8) {
-      bottomBar.classList.toggle('is-hidden', delta > 0);
+    root.toggleAttribute('data-scrolled', y > 4);
+    if (tabbar && delta) {
+      travel = Math.sign(delta) === Math.sign(travel) ? travel + delta : delta;
+      const atEdge = y < 80 || y + innerHeight >= root.scrollHeight - 80;
+      if (atEdge || $('dialog[open]') || tabbar.contains(document.activeElement)) tabbar.classList.remove('is-hidden');
+      else if (Math.abs(travel) > 12) tabbar.classList.toggle('is-hidden', travel > 0);
     }
     lastY = y;
   }
-  addEventListener('scroll', updateBottomBar, {passive: true});
-  bottomBar.addEventListener('focusin', () => bottomBar.classList.remove('is-hidden'));
-  addEventListener('pageshow', updateBottomBar);
+  addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(onScroll); }, {passive: true});
+  onScroll();
+  $$('.tab.active').forEach(tab => tab.addEventListener('click', event => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+    event.preventDefault();
+    scrollTo({top: 0, behavior: reduced.matches ? 'auto' : 'smooth'});
+  }));
 
-  const refresh = document.createElement('div');
-  refresh.className = 'pull-refresh';
-  refresh.hidden = true;
-  refresh.setAttribute('role', 'status');
-  refresh.setAttribute('aria-live', 'polite');
-  refresh.innerHTML = '<span class="refresh-symbol" aria-hidden="true">↓</span><span class="refresh-label">下拉刷新</span>';
-  document.body.append(refresh);
-  const refreshLabel = refresh.querySelector('.refresh-label');
-  let gesture = null, refreshing = false;
-  function horizontalTarget(target) {
-    for (let element = target; element instanceof Element; element = element.parentElement) {
-      if (element.matches('.column-row,.filters,.archives,input,select,textarea,[contenteditable]')) return true;
-      const overflow = getComputedStyle(element).overflowX;
-      if (element.scrollWidth > element.clientWidth && /auto|scroll/.test(overflow)) return true;
-    }
-    return false;
-  }
-  function cancelPull() {
-    gesture = null;
-    if (!refreshing) {
+  // ---------- Pull to refresh ----------
+  if (tabbar && matchMedia('(pointer: coarse)').matches) {
+    const refresh = document.createElement('div');
+    refresh.className = 'pull-refresh glass';
+    refresh.hidden = true;
+    refresh.setAttribute('role', 'status');
+    refresh.setAttribute('aria-live', 'polite');
+    const sun = document.createElement('span');
+    sun.className = 'sun';
+    sun.append(icon('sun'));
+    const label = document.createElement('span');
+    label.textContent = '下拉刷新';
+    refresh.append(sun, label);
+    body.append(refresh);
+    const THRESHOLD = 70;
+    let gesture = null, refreshing = false;
+    const horizontal = target => {
+      for (let element = target; element instanceof Element; element = element.parentElement) {
+        if (element.matches('.column-row,.filters,.archives,input,select,textarea,dialog')) return true;
+        if (element.scrollWidth > element.clientWidth && /auto|scroll/.test(getComputedStyle(element).overflowX)) return true;
+      }
+      return false;
+    };
+    const reset = () => {
+      gesture = null;
+      if (refreshing) return;
       refresh.hidden = true;
       refresh.classList.remove('is-ready');
       refresh.style.removeProperty('--pull');
-    }
+    };
+    document.addEventListener('touchstart', event => {
+      reset();
+      if (refreshing || scrollY > 0 || event.touches.length !== 1 || $('dialog[open]') || horizontal(event.target)) return;
+      gesture = {x: event.touches[0].clientX, y: event.touches[0].clientY, pull: 0, vertical: false};
+    }, {passive: true});
+    document.addEventListener('touchmove', event => {
+      if (!gesture) return;
+      if (event.touches.length !== 1) return reset();
+      const dx = Math.abs(event.touches[0].clientX - gesture.x);
+      const dy = event.touches[0].clientY - gesture.y;
+      if (dy < 0 || dx > Math.abs(dy)) return reset();
+      if (!gesture.vertical && dy < 8) return;
+      gesture.vertical = true;
+      if (event.cancelable) event.preventDefault();
+      // Rubber band: resistance grows with distance.
+      gesture.pull = Math.min(120, dy * 0.55 - dy * dy * 0.0006);
+      refresh.hidden = false;
+      refresh.style.setProperty('--pull', `${gesture.pull}px`);
+      const ready = gesture.pull >= THRESHOLD;
+      if (ready && !refresh.classList.contains('is-ready')) tick();
+      refresh.classList.toggle('is-ready', ready);
+      label.textContent = ready ? '松开刷新' : '下拉刷新';
+    }, {passive: false});
+    document.addEventListener('touchend', () => {
+      if (!gesture || gesture.pull < THRESHOLD) return reset();
+      refreshing = true;
+      gesture = null;
+      refresh.style.setProperty('--pull', `${THRESHOLD}px`);
+      refresh.classList.add('is-refreshing');
+      label.textContent = '刷新中…';
+      const url = new URL(location.href);
+      url.searchParams.set('r', Date.now().toString());
+      requestAnimationFrame(() => requestAnimationFrame(() => location.replace(url.href)));
+    }, {passive: true});
+    document.addEventListener('touchcancel', reset, {passive: true});
+    addEventListener('pageshow', () => { refreshing = false; refresh.classList.remove('is-refreshing'); reset(); });
   }
-  document.addEventListener('touchstart', event => {
-    cancelPull();
-    if (refreshing || scrollY > 0 || event.touches.length !== 1 ||
-        document.querySelector('dialog[open]') || horizontalTarget(event.target)) return;
-    const touch = event.touches[0];
-    gesture = {x: touch.clientX, y: touch.clientY, pull: 0, vertical: false};
-  }, {passive: true});
-  document.addEventListener('touchmove', event => {
-    if (!gesture) return;
-    if (event.touches.length !== 1 || document.querySelector('dialog[open]')) return cancelPull();
-    const dx = Math.abs(event.touches[0].clientX - gesture.x);
-    const dy = event.touches[0].clientY - gesture.y;
-    if (dy < 0 || dx > Math.abs(dy)) return cancelPull();
-    if (!gesture.vertical && dy < 8) return;
-    gesture.vertical = true;
-    if (event.cancelable) event.preventDefault();
-    gesture.pull = Math.min(110, dy * .5);
-    refresh.hidden = false;
-    refresh.style.setProperty('--pull', `${gesture.pull}px`);
-    refresh.classList.toggle('is-ready', gesture.pull >= 70);
-    refreshLabel.textContent = gesture.pull >= 70 ? '松开刷新' : '下拉刷新';
-  }, {passive: false});
-  document.addEventListener('touchend', () => {
-    if (!gesture || gesture.pull < 70 || document.querySelector('dialog[open]')) return cancelPull();
-    refreshing = true;
-    gesture = null;
-    refresh.classList.add('is-refreshing');
-    refreshLabel.textContent = '刷新中…';
-    refresh.querySelector('.refresh-symbol').textContent = '↻';
-    const url = new URL(location.href);
-    url.searchParams.set('r', Date.now().toString());
-    requestAnimationFrame(() => requestAnimationFrame(() => location.replace(url.href)));
-  }, {passive: true});
-  document.addEventListener('touchcancel', cancelPull, {passive: true});
-  addEventListener('pageshow', () => {
-    refreshing = false;
-    refresh.classList.remove('is-refreshing');
-    refresh.querySelector('.refresh-symbol').textContent = '↓';
-    cancelPull();
-  });
-}
+
+  filterNews();
+  updateTimes();
+  setInterval(updateTimes, 60000);
+})();
