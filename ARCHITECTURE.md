@@ -2,19 +2,38 @@
 
 ## 模块与配置
 
-`pipeline.py` 保留 Telegram t.me/s 抓取、断行清洗、SQLite 增量去重、14 天图片缓存和热点评分。
-`feeds.py` 管理 JSON 配置、四种适配器、验证和图片压缩；`sitebuild.py` 统一渲染卡片、导航、栏目和归档。
-`style.css`、`app.js` 提供共享视觉与交互。`build_icons.py` 生成蓝色图标、manifest 并检验边缘。
+`pipeline.py` 保留 Telegram t.me/s 抓取、SQLite 增量去重、14 天图片缓存和热点评分。
+`textclean.py` 把消息正文清洗为标题与正文：优先【标题】、其次开头粗体、再次首句；网址和「====」分隔线不进入标题，正文去掉裸网址，只剩标题时正文留空。
+`feeds.py` 管理 JSON 配置、四种适配器、验证和图片压缩。
+`items.py` 把 TG 消息与 inbox 条目统一为 `Item`（来源、子来源、分类、时间、图片、链接）；`render.py` 只含 HTML 模板，按页面上下文生成相对链接，不读写文件；`sitebuild.py` 只负责取数、排序、组页、隐私自检和原子发布。新增来源或调整版式通常只需改其中一层。
+`icons.py` 定义图标与 sprite；`style.css`、`app.js` 以内容哈希命名（如 `style.<hash>.css`）独立发布，浏览器可长期缓存，无需手动改版本号；仅更新栏目时保留旧哈希文件，避免上次完整构建的页面失去样式。`build_icons.py` 生成蓝色图标、manifest 并检验边缘。
 `validate_feed.py` 为独立投递校验入口；规范见 INGEST.md。`mailbuild.py` 兼容旧入口，仅重建内网 inbox。
 
 `sources.json` 声明 id、type、name、icon、color、visibility、nav（enabled/order）。
 Telegram 使用 channel；inbox 使用 directory、filename、adapter（native/mail/world/x）和可选 env。
 `x` 使用平铺 `/workspace/x-digest/YYYY-MM-DD.json`，filename 为 `{date}.json`；`latest.json` 仅补缺失日期，忽略 Markdown。`X_FEED_DIR` 可覆盖目录，公开输出仍为原生 feed.json，保留最近 14 天。
 分类正则位于 categories。导航按顺序自动生成；inbox 有合法数据才显示。
-手机底栏与桌面导航使用顶层 `nav.tabs` 的五个固定槽位：private 为邮件、日报、首页、资讯、推特爆款；public 为收藏、日报、首页、资讯、推特爆款。首页必须居中，以透明玻璃描边的 inline SVG 房屋显示，不显示文字，aria-label 为首页；缺数据的栏目保留禁用槽位，不生成空页。资讯继续使用 hot.html。底栏只有当前项使用 sun 填充。
+手机底栏与桌面导航使用顶层 `nav.tabs` 的五个固定槽位：private 为邮件、日报、首页、资讯、推特爆款；public 为收藏、日报、首页、资讯、推特爆款。首页必须居中；按「光」规范所有槽位都只有文字，不放图标；缺数据的栏目保留禁用槽位，不生成空页。资讯继续使用 hot.html。当前项用亮玻璃（glass-strong）块标出，不用金色。
 `nav.favorites` 配置 enabled、label、path、column，控制收藏页、菜单入口与栏目入口。两种模式菜单均保留 all.html。收藏页只生成空容器，由客户端读取 localStorage 后呈现，可逐条移除，空列表显示温和提示。
 每张信息卡提供书签按钮，aria-pressed 表示状态，aria-label 使用收藏或取消收藏。仅存储 id、title、url、source、time、snippet；id 由来源、原始 id 或链接或标题及时间的 SHA-256 生成。收藏不会上传；public/private 使用独立存储键，即使同源也不混用。内网邮件收藏仅留在设备浏览器，favorites.html 不嵌入任何服务端邮件卡片或正文。不同页面和标签页同步收藏状态；存储不可用时显示提示。
 来源的 `nav.enabled` 和 `nav.order` 只控制「栏目」行及菜单，不再争夺第五个槽位。所有有数据且启用导航的 inbox 均出现在栏目行和菜单，包括 world、github、hot-daily；菜单另含核心页面及有数据的 TG 频道页。链接使用相对路径，支持 Pages `/tg-digest/`。
+
+## 视觉规范
+
+本站遵循「光」视觉规范：https://claude.ai/artifact/R2fskGqeaA8ozH9e7BHfNE 。颜色、字号、间距、圆角、阴影、时长都取自规范的 tokens（`style.css` 第 1 节），组件沿用规范的类名（`g-light`、`g-lead`、`g-card`、`g-sheet`、`g-wash`、`g-pill`、`g-btn`、`g-round`、`g-topbar`、`g-tabbar`、`g-seg`、`g-panel`）。和规范的对应：
+
+- **光**：`light.py` 是规范 `Guang` 取色的 Python 移植（主图缩到 16×24，取横 4 纵 6 余弦分量，在 OKLab 里按浅/深两套参数调色，还原成 30×40 的小图），逐格结果与规范的 bundle.js 完全一致。每页在构建时算好浅色、深色两张，铺满并四周放大 14%，上面盖薄纱和右上角暖光；没有图或读不了图时是清晨的天色。有照片的分组另带一组光（`data-light`），列表滚进哪一组，光就换成那一组的颜色，回到顶部换回本页的光。换页和换组时光都用 900 毫秒叠化。
+- **表面**：信息卡是玻璃卡（不做背景模糊）；邮件正文进纸（`g-sheet`，`reading` 字号）；邮件页顶部有阅读字号切换（16.5/31、18/33、19.5/36，记在本机）；卡里再分层用冲淡块；多图是照片条（高 232，宽按比例夹在 0.56–1.78、最多 59vw，下面圆点跟随滑动）；一句话速览、市场看板等编辑/AI 的内容加金色一抹（`g-card--sun`）。毛玻璃只给浮动控件：顶栏圆按钮、底栏、提示条、下拉刷新。会盖住整页的导航面板用不透明的 `page`。
+- **打头块**：每页开头是 58 的立体状态图标 + 一句 `lead`（28/32·700）+ 一行 `note`，直接放在光上。
+- **图标**：`icons.py` 两套，每页输出一次 sprite。功能图标是 Tabler Icons 3.48.0 线性图标（线宽 1.75，路径原样取自官方包，许可证见 `LICENSES/tabler-icons.txt`）；状态图标是本站原有的立体插画（打头 58、栏目卡 22），渐变只定义一次。
+- **顶栏**：本身没有底色；滚过 30 后顶边（`edge`）淡入、中间出现当前页名。分类胶囊吸顶时接上同样的顶边。
+- **底栏**：居中的胶囊，只有字，不放图标，每格 72×46、字 15/20，当前项亮玻璃；换页时亮玻璃用不回弹的弹簧滑到新位置，文字始终在它上面。电脑上改为顶栏里的玻璃切换（`g-seg`）。
+- **金色**只表示「新」「今天」「进行中」：一小时内的条目带「新」，今天的日报日期带「今天」，下拉刷新时的转圈是金色。不当字色、不做装饰。
+- **品牌**：顶栏只放产品名文字，不放 logo；来源不再各配一种颜色。
+- **字**：只用系统字体；字重只用 400/500/600/700；只有卡片小标题（`section`）和顶栏产品名（`brand`）有字距。`ink-3` 只给序号、箭头、占位。
+- **动效**：叠化和滑动按规范时长（光 900、顶边 250、照片 240），切换类用不回弹的弹簧；系统开启「减弱动态效果」时全部直接到位，「减弱透明度」时毛玻璃换成不透明的 `page`。网页不做振动；底栏不随滚动隐藏。
+
+`test_render.py` 会检查：金色只作填充、字重与字距范围、玻璃卡不做背景模糊、光的明度范围与清晨天色、每个引用的图标都在 sprite 里。
 
 ## 首页与跨来源日报
 
