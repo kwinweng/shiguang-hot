@@ -1,8 +1,14 @@
-"""The live ranking: Telegram stories of the last 48 hours that several channels are covering."""
+"""热点: Telegram stories of the last few days, in time order, that clear a heat threshold.
+
+Heat = channels that reported the story × 4 + keyword hits (sources.json hot.keywords) + a length
+bonus of up to 2. A story reported by two channels always qualifies; a single report needs keywords
+or substance. Each story appears once, at its first report.
+"""
 import re
 from datetime import datetime, timedelta
 
-SIZE = 10
+DIGEST = re.compile(r'早餐|新闻汇总|要闻汇总|日报|收评|数据汇总')
+WINDOW = timedelta(hours=12)   # reports further apart than this are separate stories
 
 
 def grams(t):
@@ -10,18 +16,35 @@ def grams(t):
     return {t[i:i+3] for i in range(len(t)-2)}
 
 
-def hot_list(rows, now, keywords=()):
-    """Score = channels covering the story × 4 + keyword hits (sources.json hot.keywords) + length bonus;
-    near-duplicates collapse."""
-    recent = [r for r in rows if datetime.fromisoformat(r['ts']) >= now-timedelta(hours=48) and not re.search(r'早餐|新闻汇总|要闻汇总|日报|收评', r['title'])]
+def heat(row, keywords):
+    text = row['text'].lower()
+    return row['sources'] * 4 + sum(k.lower() in text for k in keywords) + min(len(row['text']) / 240, 2)
+
+
+def hot_stream(rows, now, keywords=(), days=30, threshold=6):
+    """Newest first. Each returned row carries `sources` (channels that reported it) and `heat`."""
+    floor = now - timedelta(days=days)
+    recent = sorted((r for r in rows if datetime.fromisoformat(r['ts']) >= floor and not DIGEST.search(r['title'])),
+                    key=lambda r: r['ts'])
     G = [grams(r['text']) for r in recent]
+    T = [grams(r['title']) for r in recent]
+    when = [datetime.fromisoformat(r['ts']) for r in recent]
+    kept, channels = [], []
     for i, r in enumerate(recent):
-        sources = {r['ch']} | {recent[j]['ch'] for j in range(len(recent)) if len(G[i] & G[j]) >= 8}
-        r['sources'] = len(sources)
-        r['score'] = len(sources)*4 + sum(k.lower() in r['text'].lower() for k in keywords) + min(len(r['text'])/240, 2)
-    hot = []
-    for r in sorted(recent, key=lambda r: r['score'], reverse=True):
-        if any(len(grams(r['title']) & grams(x['title'])) >= 6 for x in hot): continue
-        hot.append(r)
-        if len(hot) == SIZE: break
-    return hot
+        story = None
+        for k in range(len(kept) - 1, -1, -1):   # newest stories first; older than the window cannot match
+            j = kept[k]
+            if when[i] - when[j] > WINDOW: break
+            if len(G[i] & G[j]) >= 8 or len(T[i] & T[j]) >= 6:
+                story = k; break
+        if story is None:
+            kept.append(i); channels.append({r['ch']})
+        else:
+            channels[story].add(r['ch'])
+    stories = []
+    for j, reported in zip(kept, channels):
+        story = dict(recent[j], sources=len(reported))
+        story['heat'] = heat(story, keywords)
+        if story['heat'] >= threshold:
+            stories.append(story)
+    return sorted(stories, key=lambda r: r['ts'], reverse=True)

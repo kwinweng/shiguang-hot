@@ -138,7 +138,13 @@ def expire_media(db, now):
     for c, i, ts, images in db.execute("select ch,id,ts,images from msg where images!='[]'").fetchall():
         if datetime.fromisoformat(ts) < media_floor:
             db.execute("update msg set images='[]' where ch=? and id=?", (c, i))
-    retained = {path for (images,) in db.execute("select images from msg") for path in json.loads(images)}
+    if db.execute("select 1 from sqlite_master where type='table' and name='entry'").fetchone():
+        for source, i, ts, images in db.execute("select source,id,ts,images from entry where images!='[]'").fetchall():
+            if datetime.fromisoformat(ts) < media_floor:
+                db.execute("update entry set images='[]' where source=? and id=?", (source, i))
+        retained = {path for (images,) in db.execute("select images from msg union all select images from entry") for path in json.loads(images)}
+    else:
+        retained = {path for (images,) in db.execute("select images from msg") for path in json.loads(images)}
     for path in Path(MEDIA).rglob('*'):
         if path.is_file() and path.relative_to(D).as_posix() not in retained: path.unlink()
 

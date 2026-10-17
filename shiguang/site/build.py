@@ -49,11 +49,11 @@ def staged_output(destination):
             shutil.rmtree(temporary, ignore_errors=True)
             for sig,handler in handlers.items(): signal.signal(sig,handler)
 
-def build(rows, hot, now, inbox_only=False):
+def build(rows, hot, now, entries=(), inbox_only=False):
     out = Path(os.getenv('SITE_OUT', ROOT/'site')).resolve()
     if out == ROOT or ROOT.is_relative_to(out): raise ValueError('SITE_OUT 不能覆盖仓库')
     with staged_output(out) as temporary:
-        cfg = write_pages(rows, hot, now, temporary, publish_assets(temporary, not inbox_only), inbox_only)
+        cfg = write_pages(rows, hot, now, temporary, publish_assets(temporary, not inbox_only), entries, inbox_only)
         if not private_mode():
             verify_public(temporary, cfg)
     print(f'built site -> {out}')

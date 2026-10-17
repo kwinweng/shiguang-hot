@@ -192,8 +192,8 @@
 
   function filterNews() {
     const query = (search?.value || '').trim().toLocaleLowerCase();
-    // Cards marked data-more only serve filters: the unfiltered stream stays the ranked one.
-    const filtering = !!(category || channel?.value || query);
+    // Cards marked data-more only serve filters (or 展开全部): the plain stream stays the ranked one.
+    const filtering = !!(category || channel?.value || query || root.dataset.all);
     let shown = 0;
     for (const article of articles) {
       article.hidden = !!(('more' in article.dataset && !filtering) ||
@@ -405,6 +405,145 @@
       setTimeout(() => sheet.style.removeProperty('--drag'), 450);
     });
     dragToDismiss($('.sheet__head', sheet), sheet, close, 90);
+  }
+
+  // ---------- Dialogs opened from a button (时光机) ----------
+  $$('[data-dialog]').forEach(button => {
+    const dialog = document.getElementById(button.dataset.dialog);
+    if (!dialog) return;
+    const close = () => dialog.open && dialog.close();
+    button.addEventListener('click', () => { dialog.showModal(); button.setAttribute('aria-expanded', 'true'); });
+    dialog.addEventListener('click', event => {
+      if (event.target === dialog || event.target.closest('a,[data-close]')) close();
+    });
+    dialog.addEventListener('close', () => {
+      button.setAttribute('aria-expanded', 'false');
+      setTimeout(() => dialog.style.removeProperty('--drag'), 450);
+    });
+    const head = $('.sheet__head', dialog);
+    if (head) dragToDismiss(head, dialog, close, 90);
+    // Open on the month being shown.
+    dialog.addEventListener('toggle', () => { if (dialog.open) $('[aria-current=page]', dialog)?.scrollIntoView({block: 'center'}); });
+  });
+
+  // ---------- 展开全部: a day's filter-only cards, without choosing a filter ----------
+  $('.show-all')?.addEventListener('click', event => {
+    root.dataset.all = '1';
+    filterNews();
+    event.currentTarget.closest('.more-link').hidden = true;
+  });
+
+  // ---------- 栏目: by channel / by tag ----------
+  const views = $$('.view-switch [data-view]');
+  if (views.length) {
+    const show = key => {
+      views.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === key)));
+      $$('[data-panel]').forEach(panel => { panel.hidden = panel.dataset.panel !== key; });
+      try { localStorage.setItem('shiguang-columns-view', key); } catch (error) { /* private mode */ }
+    };
+    views.forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
+    let initial = location.hash.slice(1);
+    if (!views.some(b => b.dataset.view === initial)) {
+      try { initial = localStorage.getItem('shiguang-columns-view'); } catch (error) { initial = null; }
+    }
+    show(views.some(b => b.dataset.view === initial) ? initial : views[0].dataset.view);
+  }
+
+  // ---------- 热点: 24-hour timeline ----------
+  // The bar under the marker is the hour being read. Dragging the bars jumps the list to that hour
+  // (or the closest earlier hour with stories); scrolling the list moves the bars along.
+  const timeline = $('[data-timeline]');
+  if (timeline) {
+    const track = $('.tl-track', timeline);
+    const label = $('.tl-now', timeline);
+    const cells = $$('.tl-hour', track);
+    const anchors = $$('.tl-anchor');           // newest first
+    const byKey = new Map(cells.map(cell => [cell.dataset.key, cell]));
+    // Each direction mutes the other while it moves things itself: bars moved by the list must not
+    // jump the list, and the list moved by the bars must not drag the bars.
+    let current = null, trackQuiet = 0, listQuiet = 0, settle = 0, trailing = 0;
+    const format = key => `${+key.slice(5, 7)}月${+key.slice(8, 10)}日 ${+key.slice(11)}:00`;
+    const nearest = () => {
+      const middle = track.getBoundingClientRect().left + track.clientWidth / 2;
+      let best = null, distance = Infinity;
+      for (const cell of cells) {
+        const box = cell.getBoundingClientRect();
+        const d = Math.abs(box.left + box.width / 2 - middle);
+        if (d < distance) { distance = d; best = cell; }
+      }
+      return best;
+    };
+    const mark = cell => {
+      if (!cell || cell === current) return;
+      current?.classList.remove('is-current');
+      current = cell;
+      cell.classList.add('is-current');
+      label.textContent = format(cell.dataset.key) + (cell.classList.contains('is-future') ? ' · 还没到' : '');
+    };
+    const centre = (cell, smooth) => {
+      if (!cell) return;
+      trackQuiet = performance.now() + 700;
+      const box = cell.getBoundingClientRect(), frame = track.getBoundingClientRect();
+      track.scrollBy({left: box.left + box.width / 2 - (frame.left + frame.width / 2), behavior: smooth && !reduced.matches ? 'smooth' : 'auto'});
+      mark(cell);
+    };
+    // Where the list is read: just under the timeline once it is stuck below the top bar.
+    const readLine = () => ($('.g-topbar')?.getBoundingClientRect().bottom || 0) + timeline.offsetHeight + 8;
+    const jump = key => {
+      const anchor = anchors.find(a => a.dataset.key <= key) || anchors.at(-1);
+      if (!anchor) return;
+      listQuiet = performance.now() + 300;
+      // Instant: scrubbing should land where the finger stops, not chase it.
+      scrollTo({top: anchor.getBoundingClientRect().top + scrollY - readLine(), behavior: 'instant'});
+    };
+    track.addEventListener('scroll', () => {
+      requestAnimationFrame(() => mark(nearest()));
+      if (performance.now() < trackQuiet) return;
+      clearTimeout(settle);
+      settle = setTimeout(() => { if (current && !current.classList.contains('is-future')) jump(current.dataset.key); }, 180);
+    }, {passive: true});
+    cells.forEach(cell => cell.addEventListener('click', event => {
+      event.preventDefault();
+      if (cell.classList.contains('is-future')) return;
+      centre(cell, true);
+      jump(cell.dataset.key);
+    }));
+    // Mouse drag (touch scrolls natively).
+    let drag = null;
+    track.addEventListener('pointerdown', event => {
+      if (event.pointerType !== 'mouse') return;
+      drag = {x: event.clientX, left: track.scrollLeft, moved: false};
+      track.classList.add('is-dragging');
+    });
+    addEventListener('pointermove', event => {
+      if (!drag) return;
+      if (Math.abs(event.clientX - drag.x) > 3) drag.moved = true;
+      track.scrollLeft = drag.left - (event.clientX - drag.x);
+    });
+    addEventListener('pointerup', () => {
+      if (!drag) return;
+      track.classList.remove('is-dragging');
+      if (drag.moved) track.addEventListener('click', e => e.preventDefault(), {capture: true, once: true});
+      drag = null;
+    });
+    // The list moves the bars: the last hour heading above the timeline's foot is the one being read.
+    let ticking = false;
+    const follow = () => {
+      const line = readLine() + 4;
+      let reading = anchors[0];
+      for (const anchor of anchors) { if (anchor.getBoundingClientRect().top <= line) reading = anchor; else break; }
+      const cell = reading && byKey.get(reading.dataset.key);
+      if (cell && cell !== current) centre(cell, false);
+    };
+    addEventListener('scroll', () => {
+      clearTimeout(trailing);
+      trailing = setTimeout(follow, 160);   // always settle on where the list stopped
+      if (ticking || performance.now() < listQuiet) return;
+      ticking = true;
+      requestAnimationFrame(() => { ticking = false; follow(); });
+    }, {passive: true});
+    // Start on the newest hour that has passed.
+    centre(cells.filter(cell => !cell.classList.contains('is-future')).at(-1), false);
   }
 
   // ---------- Search button ----------

@@ -136,23 +136,23 @@ class DesignSystemTests(unittest.TestCase):
         self.assertEqual(len(defined), len(set(defined)))
         self.assertEqual(sprite().count('id="status-sun"'), 1)  # gradients defined once, not per icon
         site = page().site
-        site.entries = [('home', 'index.html', '首页', 'home'), ('daily', 'archive/index.html', '日报', 'archive')]
-        site.tabs = ['favorites', 'daily', 'home', 'hot', 'columns']
+        site.entries = [('today', 'index.html', '今日', 'home'), ('hot', 'hot.html', '热点', 'hot')]
+        site.tabs = ['today', 'hot', 'columns', 'favorites']
         site.favorites = {'enabled': True, 'label': '收藏', 'path': 'favorites.html', 'column': True}
         site.assets = {'css': 'style.css', 'js': 'app.js', 'version': '1'}
         row = dict(ch='chan', id=1, ts='2026-10-17T09:30:00+08:00', title='t', body='b', cat='科技', day='2026-10-17', url='https://t.me/chan/1')
-        p = render.Page(site, '', 'home')
+        p = render.Page(site, '', 'today')
         html = render.document(p, 'x', render.heading(p, '今天 1 条要闻', 'note') + render.card(page(), from_telegram(row, TG, True)), '', '')
         used = set(re.findall(r'href="#([a-z]+-[a-z0-9-]+)"', html))
         self.assertTrue(used)
         self.assertLessEqual(used, set(defined))
         self.assertEqual(html.count('<svg class="sprite"'), 1)
         soup = BeautifulSoup(html, 'html.parser')
-        self.assertIsNotNone(soup.select_one('nav.bottom a.home-slot.active.slot-3'))
-        self.assertIn('slot-3', soup.select_one('nav.bottom .tab__pill')['class'])
+        self.assertIsNotNone(soup.select_one('nav.bottom a.active.slot-1'))
+        self.assertIn('slot-1', soup.select_one('nav.bottom .tab__pill')['class'])
         # Tab bar: words only.
         self.assertIsNone(soup.select_one('nav.bottom svg'))
-        self.assertEqual(soup.select_one('nav.bottom a.home-slot').get_text(), '首页')
+        self.assertEqual(soup.select_one('nav.bottom a.active').get_text(), '今日')
         # Lead block uses a 3D status icon at lead size.
         self.assertIsNotNone(soup.select_one('.g-lead .s-icon--lead'))
 

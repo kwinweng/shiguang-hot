@@ -138,7 +138,7 @@ html[data-scrolled] .g-topbar::before,html[data-scrolled] .g-topbar__where{opaci
 
 /* Tab bar: a centred capsule of words, 8 above the safe area. */
 .g-tabbar{position:fixed;z-index:30;left:50%;bottom:calc(var(--space-2) + env(safe-area-inset-bottom,0px));translate:-50% 0;
-  display:grid;grid-template-columns:repeat(5,min(72px,calc((100vw - 34px) / 5)));height:56px;padding:5px;border-radius:var(--radius-pill);
+  display:grid;grid-template-columns:repeat(4,min(72px,calc((100vw - 34px) / 4)));height:56px;padding:5px;border-radius:var(--radius-pill);
   background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow-card);
   -webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5)}
 .g-tabbar .tab,.g-tabbar .tab__pill{height:46px}
@@ -181,7 +181,7 @@ html[data-scrolled] .g-topbar::before,html[data-scrolled] .g-topbar__where{opaci
 .card .g-card__label{grid-area:label}
 .g-card__who{display:flex;align-items:center;flex-wrap:wrap;gap:2px 8px;min-width:0}
 .source{display:inline-flex;align-items:center;gap:6px}
-.g-card__who :is(.sub,.cat)::before{content:"·";margin-right:8px;color:var(--ink-3)}
+.g-card__who :is(.sub,.cat,.reach)::before{content:"·";margin-right:8px;color:var(--ink-3)}
 .rank{color:var(--ink-3);font-weight:600;letter-spacing:0}
 .card__title{grid-area:title;margin:0 0 6px;font-size:15.5px;line-height:22px;font-weight:600;color:var(--ink);text-wrap:pretty;overflow-wrap:anywhere}
 .card__title a{display:block}
@@ -424,3 +424,46 @@ html.vt-local::view-transition-group(lightbox-image){animation-duration:var(--du
   html{scroll-behavior:auto}
   *,*::before,*::after{transition-duration:0s!important;animation:none!important}
 }
+
+/* ---------- 今日: time machine ---------- */
+.tm{display:flex;align-items:center;gap:var(--space-3);margin:0 0 var(--space-2)}
+.tm-open{flex:0 0 auto}
+.tm-strip{flex:1 1 auto;margin:0 calc(-1 * var(--space-5)) 0 0;padding-left:2px}
+.tm-day{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;min-width:56px;height:auto;padding:6px 12px;line-height:1.2}
+.tm-day b{font-size:14px;font-weight:600}
+.tm-day span{font-size:11.5px;color:var(--ink-2)}
+.tm-day[aria-current=page] span{color:inherit}
+.tm-sheet .sheet__group{margin-top:var(--space-6)}
+.tm-week,.tm-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:var(--space-1);text-align:center}
+.tm-week i{font-style:normal;font-size:12px;line-height:24px;color:var(--ink-2)}
+.tm-grid>*{display:grid;place-items:center;height:40px;border-radius:12px;font-size:15px;font-variant-numeric:tabular-nums}
+.tm-grid span{color:var(--ink-3)}
+.tm-grid a{position:relative;background:var(--wash);color:var(--ink);text-decoration:none;font-weight:500}
+.tm-grid a[aria-current=page]{background:var(--ink);color:var(--page);font-weight:600}
+.tm-grid a.is-today::after{content:"";position:absolute;bottom:5px;width:5px;height:5px;border-radius:3px;background:var(--sun)}
+.today-top{margin-top:var(--space-6)}
+.show-all svg{transition:transform var(--duration-edge) ease}
+
+/* ---------- 热点: 24-hour timeline ---------- */
+.timeline{margin-top:var(--space-4);padding:0 0 var(--space-2)}
+.tl-track{display:flex;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;padding:22px 50% 16px;cursor:grab;overscroll-behavior-x:contain}
+.tl-track::-webkit-scrollbar{display:none}
+.tl-track.is-dragging{cursor:grabbing;scroll-snap-type:none}
+.tl-day{position:relative;flex:0 0 auto;padding-right:10px}
+.tl-date{position:absolute;left:0;top:-20px;font-size:12px;line-height:16px;color:var(--ink-2);white-space:nowrap}
+.tl-hours{display:flex;gap:2px}
+.tl-hour{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;width:12px;height:46px;scroll-snap-align:center;text-decoration:none}
+.tl-hour i{display:block;width:8px;height:calc(4px + var(--n,0) * 32px);border-radius:3px;background:var(--ink-2);transition:background var(--duration-edge) ease}
+.tl-hour.is-empty i{height:3px;background:var(--wash)}
+.tl-hour.is-future i{height:3px;background:transparent;border-top:1px dashed var(--wash)}
+.tl-hour.is-current i{background:var(--ink)}
+.tl-hour small{position:absolute;top:100%;font-size:10.5px;line-height:14px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.tl-marker{position:absolute;left:50%;top:18px;width:2px;height:52px;margin-left:-1px;border-radius:1px;background:var(--ink);pointer-events:none}
+.tl-now{margin:2px 0 0;text-align:center;font-size:13px;line-height:18px;font-weight:600;min-height:18px}
+.tl-anchor{display:flex;align-items:baseline;gap:var(--space-3);margin:var(--space-7) 0 var(--space-4);padding:0 var(--space-2);scroll-margin-top:60px}
+.tl-anchor b{font-size:17px;line-height:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.tl-anchor span{font-size:12px;color:var(--ink-2)}
+
+/* ---------- 栏目: channel / tag switch ---------- */
+.view-switch{margin:0 0 var(--space-4)}
+[data-panel][hidden]{display:none}
