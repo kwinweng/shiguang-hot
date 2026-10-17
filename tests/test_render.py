@@ -9,10 +9,10 @@ from unittest.mock import patch
 
 from bs4 import BeautifulSoup
 
-import render
-import sitebuild
-from items import BEIJING, from_telegram, home_candidates, issue_items
-from textclean import clean, headline
+from shiguang.config import WEB
+from shiguang.enrich.clean import clean, headline
+from shiguang.model import BEIJING, from_telegram, home_candidates, issue_items
+from shiguang.site import build as sitebuild, render
 
 TG = dict(id='tg', type='telegram', channel='chan', name='频道', color='#4279c2', icon='all')
 INBOX = dict(id='x', type='inbox', name='推特爆款', color='#222', icon='x', adapter='x')
@@ -107,18 +107,18 @@ class SpecComponentTests(unittest.TestCase):
     def test_reading_switch_has_three_sizes(self):
         soup = BeautifulSoup(render.reading_switch(), 'html.parser')
         self.assertEqual([b['data-reading'] for b in soup.select('.g-seg__item')], ['1', '2', '3'])
-        css = (Path(__file__).parent / 'style.css').read_text()
+        css = (WEB / 'style.css').read_text()
         self.assertIn('font-size:18px;line-height:33px', css)
         self.assertIn('font-size:19.5px;line-height:36px', css)
 
 
 class DesignSystemTests(unittest.TestCase):
     """Rules of the 「光」 spec that the stylesheet and templates must keep."""
-    css = (Path(__file__).parent / 'style.css').read_text()
+    css = (WEB / 'style.css').read_text()
 
     def test_every_icon_reference_has_a_symbol(self):
         import re
-        from icons import sprite
+        from shiguang.site.icons import sprite
         defined = re.findall(r'<symbol id="([a-z]+-[a-z0-9-]+)"', sprite())
         self.assertEqual(len(defined), len(set(defined)))
         self.assertEqual(sprite().count('id="status-sun"'), 1)  # gradients defined once, not per icon
@@ -161,8 +161,7 @@ class DesignSystemTests(unittest.TestCase):
                 self.assertFalse(re.search(r'\.(g-card|g-sheet|card)\b', selector), selector)
 
     def test_light_follows_the_spec(self):
-        import light
-        from items import BEIJING  # noqa: F401
+        from shiguang.site import light
         dawn = light.ambient_pixels(None, 'light')
         self.assertEqual(len(dawn), 30 * 40)
         # Dawn sky: warmer at the top than at the bottom.
@@ -183,7 +182,7 @@ class AssetTests(unittest.TestCase):
             (root / 'assets' / 'favicon.svg').write_text('<svg/>')
             (root / 'style.css').write_text('body{}'); (root / 'app.js').write_text('1')
             (out / 'style.0000000000.css').write_text('old')
-            with patch.object(sitebuild, 'ROOT', root):
+            with patch.object(sitebuild, 'WEB', root):
                 names = sitebuild.publish_assets(out, full=False)
                 self.assertTrue((out / 'style.0000000000.css').exists())  # inbox-only builds keep old pages working
                 self.assertEqual((out / names['css']).read_text(), 'body{}')

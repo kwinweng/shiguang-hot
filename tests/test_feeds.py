@@ -3,11 +3,13 @@ import json, os, tempfile, unittest
 from pathlib import Path
 from unittest.mock import patch
 from PIL import Image
-import feeds
+from shiguang.config import ROOT
+from shiguang.ingest import feeds
+from shiguang.site import build as sitebuild, pages
 
 class FeedTests(unittest.TestCase):
     def test_hot_daily_registration(self):
-        cfg=json.loads((Path(__file__).parent/'sources.json').read_text())
+        cfg=json.loads((ROOT/'sources.json').read_text())
         source=next(s for s in cfg['sources'] if s['id']=='hot-daily')
         self.assertEqual(source['type'],'inbox')
         self.assertEqual(source['visibility'],'public')
@@ -96,7 +98,6 @@ class FeedTests(unittest.TestCase):
 
 class PrivacyBuildTests(unittest.TestCase):
     def test_cross_source_home_daily_and_fixed_tabs(self):
-        import sitebuild
         from bs4 import BeautifulSoup
         from datetime import datetime
         from zoneinfo import ZoneInfo
@@ -113,7 +114,7 @@ class PrivacyBuildTests(unittest.TestCase):
             sources.append(dict(id='tg',channel='tg',type='telegram',name='TG',visibility='public',icon='all',color='#123456',nav=dict(enabled=False),home_cap=2))
             rows=[dict(ch='tg',title='TG '+str(n),body='body',images=[],ts='2026-10-17 10:00',day='2026-10-17',cat='综合',url='') for n in range(20)]
             cfg=dict(categories={},sources=sources,nav=dict(tabs=dict(public=['favorites','daily','home','news','x'],private=['mail','daily','home','news','x'])))
-            with patch.object(sitebuild,'ROOT',root),patch.object(sitebuild,'config',return_value=cfg),patch.object(sitebuild,'load_issues',side_effect=lambda source,local: issues.get(source['id'],[])):
+            with patch.object(pages,'ROOT',root),patch.object(pages,'WEB',root),patch.object(sitebuild,'WEB',root),patch.object(pages,'config',return_value=cfg),patch.object(pages,'load_issues',side_effect=lambda source,local: issues.get(source['id'],[])),patch.object(sitebuild,'load_issues',side_effect=lambda source,local: issues.get(source['id'],[])):
                 for mode in ('private','public'):
                     target=root/mode
                     with patch.dict(os.environ,dict(SITE_MODE=mode,MAIL_DIGEST='0',SITE_OUT=str(target))):
@@ -146,7 +147,6 @@ class PrivacyBuildTests(unittest.TestCase):
                     if mode=='public': self.assertFalse((target/'mail').exists())
 
     def test_public_rebuild_scrubs_private_tree_and_detects_private_copy(self):
-        import sitebuild
         from datetime import datetime, timezone
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);(root/'assets').mkdir();(root/'media').mkdir()
@@ -156,11 +156,12 @@ class PrivacyBuildTests(unittest.TestCase):
             sources=[dict(id=id,type='inbox',name=name,visibility=visibility,icon='all',color='#1f6fd1',nav={'enabled':True}) for id,name,visibility in [('mail','邮件精华','private'),('world','环球要闻','public')]]
             cfg=dict(categories={},sources=sources)
             secret=dict(schema='shiguang.feed/1',source='mail',date='2026-10-17',blocks=[],sections=[dict(title='section',items=[dict(title='unique private story title for leak check',body='private body')])])
-            with patch.object(sitebuild,'ROOT',root),patch.object(sitebuild,'config',return_value=cfg),patch.dict(os.environ,{'SITE_MODE':'public','MAIL_DIGEST':'0','SITE_OUT':str(target)}):
-                with patch.object(sitebuild,'load_issues',side_effect=lambda source,local: [(secret,root)] if source['id']=='mail' else []):
+            with patch.object(pages,'ROOT',root),patch.object(pages,'WEB',root),patch.object(sitebuild,'WEB',root),patch.object(pages,'config',return_value=cfg),patch.dict(os.environ,{'SITE_MODE':'public','MAIL_DIGEST':'0','SITE_OUT':str(target)}):
+                only_mail=lambda source,local: [(secret,root)] if source['id']=='mail' else []
+                with patch.object(pages,'load_issues',side_effect=only_mail),patch.object(sitebuild,'load_issues',side_effect=only_mail):
                     sitebuild.build([],[],datetime.now(timezone.utc))
                 self.assertFalse((target/'mail').exists());self.assertFalse((target/'world').exists())
-                with patch.object(sitebuild,'load_issues',return_value=[(secret,root)]):
+                with patch.object(pages,'load_issues',return_value=[(secret,root)]),patch.object(sitebuild,'load_issues',return_value=[(secret,root)]):
                     with self.assertRaisesRegex(RuntimeError,'private 内容'):
                         sitebuild.build([],[],datetime.now(timezone.utc))
 

@@ -1,8 +1,8 @@
-site/
-site-private/
-site-private.tmp-*/
+/site/
+/site-private/
+/site-private.tmp-*/
 *.build.lock
-site.tmp-*/
+/site.tmp-*/
 *.log
 .env
 *.pem
@@ -13,7 +13,7 @@ __pycache__/
 
 # Private mail inputs and generated output
 mail-digest/
-site/mail/
+/site/mail/
 mail-preview/
 mail-sample/
 
@@ -21,4 +21,4 @@ proposal/
 feeds-inbox/
 tg.db-journal
 private-feeds/
-assets/icon-preview.png
+web/assets/icon-preview.png

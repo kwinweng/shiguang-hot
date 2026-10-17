@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from sitebuild import staged_output
+from shiguang.site.build import staged_output
 
 
 class AtomicOutputTests(unittest.TestCase):
@@ -36,7 +36,7 @@ class AtomicOutputTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             with staged_output(self.out):
                 raise RuntimeError('failed build')
-        with patch('sitebuild.ctypes.CDLL', side_effect=OSError('failed exchange')):
+        with patch('shiguang.site.build.ctypes.CDLL', side_effect=OSError('failed exchange')):
             with self.assertRaises(OSError):
                 with staged_output(self.out):
                     pass
@@ -47,11 +47,11 @@ class AtomicOutputTests(unittest.TestCase):
         code = '''
 import os, signal, sys
 from pathlib import Path
-from sitebuild import staged_output
+from shiguang.site.build import staged_output
 with staged_output(Path(sys.argv[1])):
     os.kill(os.getpid(), signal.SIGTERM)
 '''
-        result = subprocess.run([sys.executable, '-c', code, str(self.out)], cwd=Path(__file__).parent)
+        result = subprocess.run([sys.executable, '-c', code, str(self.out)], cwd=Path(__file__).resolve().parent.parent)
         self.assertEqual(result.returncode, 128 + signal.SIGTERM)
         self.assertEqual((self.out / 'index.html').read_text(), 'old')
         self.assert_clean()

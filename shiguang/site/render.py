@@ -11,8 +11,8 @@ import hashlib, html, json, re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable
-from items import BEIJING
-from icons import icon, sprite, status_icon
+from shiguang.model import BEIJING
+from shiguang.site.icons import icon, sprite, status_icon
 
 E = lambda v: html.escape(str(v or ''), quote=True)
 

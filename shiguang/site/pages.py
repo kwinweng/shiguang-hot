@@ -1,59 +1,16 @@
-"""Build the static site: load sources, normalize items, rank, render pages, verify privacy.
+"""What goes on which page: load sources, normalize items, rank, and write every page.
 
-Data shapes live in items.py and all markup in render.py; this module only decides what goes on
-which page. Output is staged in a temporary tree and swapped in atomically.
+Data shapes live in model.py and all markup in render.py; this module only decides what goes on
+which page. build.py stages the output and swaps it in.
 """
-import ctypes, fcntl, hashlib, os, re, shutil, signal, tempfile, threading
-from contextlib import contextmanager
-from datetime import datetime
-from pathlib import Path
-from feeds import ROOT, config, private_mode, load_issues, compress_images
-from light import ambient_uris, light_css, photo_like
-from items import BEIJING, from_telegram, home_candidates, issue_items, section_items
-import render
-from render import E, Page, Site
-
-@contextmanager
-def staged_output(destination):
-    """Keep live output untouched until a complete tree passes validation."""
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    with open(destination.with_name(destination.name+'.build.lock'), 'a') as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        # SIGKILL cannot run cleanup; reclaim abandoned staging trees next build.
-        for stale in destination.parent.glob(destination.name+'.tmp-*'):
-            if stale.is_dir() and not stale.is_symlink(): shutil.rmtree(stale)
-        temporary=Path(tempfile.mkdtemp(prefix=destination.name+'.tmp-', dir=destination.parent))
-        handlers={}
-        def interrupted(signum, frame):
-            raise SystemExit(128+signum)
-        if threading.current_thread() is threading.main_thread():
-            for sig in (signal.SIGTERM, signal.SIGINT):
-                handlers[sig]=signal.signal(sig, interrupted)
-        try:
-            if destination.exists():
-                shutil.copytree(destination, temporary, dirs_exist_ok=True, symlinks=True)
-            yield temporary
-            if destination.exists():
-                # Linux RENAME_EXCHANGE keeps the served path present throughout.
-                libc=ctypes.CDLL(None, use_errno=True)
-                exchange=libc.renameat2
-                exchange.argtypes=[ctypes.c_int,ctypes.c_char_p,ctypes.c_int,ctypes.c_char_p,ctypes.c_uint]
-                exchange.restype=ctypes.c_int
-                if exchange(-100,os.fsencode(temporary),-100,os.fsencode(destination),2):
-                    error=ctypes.get_errno()
-                    raise OSError(error,os.strerror(error),str(destination))
-            else:
-                os.rename(temporary,destination)
-        finally:
-            shutil.rmtree(temporary, ignore_errors=True)
-            for sig,handler in handlers.items(): signal.signal(sig,handler)
-
-def build(rows, hot, now, inbox_only=False):
-    out = Path(os.getenv('SITE_OUT', ROOT/'site')).resolve()
-    if out == ROOT or ROOT.is_relative_to(out): raise ValueError('SITE_OUT 不能覆盖仓库')
-    with staged_output(out) as temporary:
-        _build(rows, hot, now, temporary, inbox_only)
-    print(f'built site -> {out}')
+import re, shutil
+from shiguang.config import ROOT, WEB, config, private_mode
+from shiguang.ingest.feeds import load_issues, compress_images
+from shiguang.model import from_telegram, home_candidates, issue_items, section_items
+from shiguang.enrich.rank import rank_home
+from shiguang.site import render
+from shiguang.site.light import ambient_uris, light_css, photo_like
+from shiguang.site.render import Page, Site
 
 
 DEFAULT_FAVORITES = {'enabled': True, 'label': '收藏', 'path': 'favorites.html', 'column': True}
@@ -67,71 +24,8 @@ def nav_tabs(cfg, private):
     return tabs
 
 
-def publish_assets(out, full):
-    """Copy style.css / app.js under content-hashed names so browsers can cache them safely.
-
-    Inbox-only builds keep older hashed files: pages from the last full build still point at them.
-    """
-    names = {}
-    for kind, source in (('css', ROOT / 'style.css'), ('js', ROOT / 'app.js')):
-        data = source.read_bytes()
-        names[kind] = f'{source.stem}.{hashlib.sha256(data).hexdigest()[:10]}{source.suffix}'
-        if full:
-            for stale in out.glob(f'{source.stem}.*{source.suffix}'):
-                if stale.name != names[kind]: stale.unlink()
-        (out / names[kind]).write_bytes(data)
-    icons = hashlib.sha256()
-    for asset in sorted((ROOT / 'assets').iterdir()):
-        if asset.is_file(): icons.update(asset.read_bytes())
-    names['version'] = icons.hexdigest()[:10]
-    return names
-
-
-def rank_home(candidates, sources, now):
-    """Freshness-weighted ranking, then round-robin so every source gets a turn before any repeats."""
-    local_now = now.astimezone(BEIJING)
-
-    def score(item):
-        age = max(0, (local_now - item.moment).total_seconds() / 3600)
-        return sources[item.source_id].get('home_weight', 1) / (1 + age / 24)
-
-    buckets = []
-    for s in sources.values():
-        own = [item for item in candidates if item.source_id == s['id']]
-        cap = s.get('home_cap', 4 if s['type'] == 'telegram' else 8)
-        buckets.append(sorted(own, key=lambda item: (score(item), item.ts), reverse=True)[:cap])
-    ranked = []
-    for n in range(max((len(b) for b in buckets), default=0)):
-        ranked.extend(sorted((b[n] for b in buckets if len(b) > n), key=score, reverse=True))
-    return ranked
-
-
-def verify_public(out, cfg):
-    """Refuse to publish if anything from a private source leaked into the public tree."""
-    forbidden = [s for s in cfg['sources'] if s['visibility'] == 'private']
-    for s in forbidden:
-        if (out / s['id']).exists(): raise RuntimeError('公开产物存在 private 目录')
-    private_text = []
-    for source in forbidden:
-        if source['type'] == 'inbox':
-            for data, base in load_issues(source, True):
-                for section in data.get('sections', []):
-                    for item in section.get('items', []):
-                        private_text.extend(E(item.get(field)) for field in ('title', 'body') if len(item.get(field) or '') >= 16)
-                for block in data.get('blocks', []):
-                    values = [block.get('title'), block.get('caption')]
-                    for item in block.get('items', []) or []:
-                        values.extend([item] if isinstance(item, str) else [item.get('title'), item.get('body')])
-                    private_text.extend(E(value) for value in values if isinstance(value, str) and len(value) >= 16)
-    for p in out.rglob('*'):
-        if p.suffix in ('.html', '.json', '.webmanifest', '.svg', '.css', '.js'):
-            text = p.read_text()
-            if any(s['name'] in text or f'{s["id"]}/' in text for s in forbidden): raise RuntimeError('公开产物存在 private 标记: ' + str(p))
-            if '邮件' in text: raise RuntimeError('公开产物存在私有栏目字样')
-            if any(value in text for value in private_text): raise RuntimeError('公开产物存在 private 内容: ' + str(p))
-
-
-def _build(rows, hot, now, out, inbox_only=False):
+def write_pages(rows, hot, now, out, assets, inbox_only=False):
+    """Write every page into `out`; returns the config used (build.py checks the public tree with it)."""
     cfg = config(); private = private_mode()
     sources = {s['id']: s for s in cfg['sources'] if private or s['visibility'] == 'public'}
     by_channel = {s['channel']: s for s in sources.values() if s['type'] == 'telegram'}
@@ -172,7 +66,7 @@ def _build(rows, hot, now, out, inbox_only=False):
 
     site = Site(sources=sources, entries=entries, tabs=nav_tabs(cfg, private), favorites=favorites,
                 private=private, now=now, categories=list(cfg['categories']) + ['综合'],
-                assets=publish_assets(out, not inbox_only), is_photo=is_photo)
+                assets=assets, is_photo=is_photo)
 
     def write(path, active, title, body, light_from=()):
         """Render one page. `light_from` lists candidate images; the first photo tints the background."""
@@ -227,7 +121,7 @@ def _build(rows, hot, now, out, inbox_only=False):
         if favorites.get('enabled'):
             write(favorites['path'], 'favorites', favorites['label'], render.favorites_body)
         shutil.copytree(ROOT / 'media', out / 'media', dirs_exist_ok=True)
-        for asset in (ROOT / 'assets').iterdir():
+        for asset in (WEB / 'assets').iterdir():
             if asset.is_file(): shutil.copyfile(asset, out / asset.name)
 
         # Home: one lead story, column shortcuts, then the mixed stream.
@@ -314,10 +208,5 @@ def _build(rows, hot, now, out, inbox_only=False):
               digest_images(days[0]) if days else [])
         (out / '.nojekyll').write_text('')
 
-    if not private:
-        verify_public(out, cfg)
     print(f'built {len(telegram)} TG, {len(issues)} inbox sources -> {out}')
-
-
-if __name__ == '__main__':
-    build([], [], datetime.now(BEIJING), inbox_only=True)
+    return cfg
