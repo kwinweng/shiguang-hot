@@ -125,9 +125,9 @@ class PrivacyBuildTests(unittest.TestCase):
                     self.assertEqual({b['data-source'] for b in badges},expected)
                     for source in expected: self.assertEqual(sum(b['data-source']==source for b in badges),2)
                     self.assertEqual(home.select_one('article [data-source]')['data-source'],'future')
-                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['邮件' if mode=='private' else '收藏','日报','','资讯','推特爆款'])
-                    self.assertEqual(home.select_one('nav.bottom a.home-slot')['aria-label'],'首页')
-                    self.assertIsNotNone(home.select_one('nav.bottom a.home-slot svg'))
+                    # 「光」: the tab bar holds words only, home in the middle.
+                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['邮件' if mode=='private' else '收藏','日报','首页','资讯','推特爆款'])
+                    self.assertIsNone(home.select_one('nav.bottom svg'))
                     self.assertTrue(home.select('article button.bookmark[aria-pressed="false"][aria-label="收藏"]'))
                     favorites=BeautifulSoup((target/'favorites.html').read_text(),'html.parser')
                     self.assertFalse(favorites.select('[data-bookmark]'))

@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from feeds import ROOT, config, private_mode, load_issues, compress_images
-from light import light_css, photo_like
+from light import ambient_uris, light_css, photo_like
 from items import BEIJING, from_telegram, home_candidates, issue_items, section_items
 import render
 from render import E, Page, Site
@@ -183,6 +183,11 @@ def _build(rows, hot, now, out, inbox_only=False):
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(render.document(page, title, body(page), illumination, light))
 
+    def group_light(paths):
+        """Light of a group's first photo, or None to keep the page's light."""
+        photo = next((p for p in paths if is_photo(p)), None)
+        return ambient_uris(str(image_path(photo))) if photo else None
+
     def shown_images(items):
         return [p for item in items for p in item.images[:3]]
 
@@ -205,11 +210,14 @@ def _build(rows, hot, now, out, inbox_only=False):
             def body(page, issue=issue, lead=lead, note=note):
                 content = render.heading(page, lead, note)
                 content += render.date_chips(dates, issue['date'], today=site.today) if len(dates) > 1 else ''
+                if s.get('adapter') == 'mail':
+                    content += render.reading_switch()
                 content += render.blocks(page, issue)
                 for section in issue.get('sections', []):
                     parts = [part.strip() for part in re.split(r'[|｜]', section.get('title') or '')]
-                    content += render.group(parts, ''.join(render.card(page, item, reading=True)
-                                                           for item in section_items(section, issue, s)))
+                    members = section_items(section, issue, s)
+                    content += render.group(parts, ''.join(render.card(page, item, reading=True) for item in members),
+                                            light=group_light(all_images(members)))
                 return content
             light = all_images(issue_items(issue, s))
             write(f'{sid}/{issue["date"]}.html', sid, s['name'], body, light)
@@ -282,9 +290,11 @@ def _build(rows, hot, now, out, inbox_only=False):
             content = ''
             for s, issue, items in parts:
                 content += render.group([s['name']], render.blocks(page, issue) + render.cards(page, items),
-                                        source_id=s['id'], cls='group digest-source')
+                                        source_id=s['id'], cls='group digest-source',
+                                        light=group_light(list(render.chart_images(issue)) + all_images(items)))
             if any(group for _, group in topics):
-                inner = ''.join(render.group([topic], render.cards(page, group), level=3, cls='group group--sub')
+                inner = ''.join(render.group([topic], render.cards(page, group), level=3, cls='group group--sub',
+                                             light=group_light(all_images(group)))
                                 for topic, group in topics if group)
                 content += render.group(['TG 资讯'], inner, cls='group digest-source')
             return content

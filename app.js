@@ -45,7 +45,6 @@
     }
     return svg;
   }
-  const tick = () => navigator.vibrate?.(8);
 
   // ---------- Toast ----------
   const toast = (() => {
@@ -160,8 +159,6 @@
       toast(message);
       return;
     }
-    tick();
-    button.classList.remove('is-popping'); void button.offsetWidth; button.classList.add('is-popping');
     if (index >= 0) {
       const card = favoritesList && button.closest('article');
       if (card && !reduced.matches) {
@@ -402,8 +399,8 @@
   if (location.hash === '#q' && search) search.focus();
 
   // ---------- Scroll chrome ----------
-  // The top bar gains depth once content slides under it; the tab bar steps aside while reading
-  // downward and returns on any upward scroll. Tapping the current tab scrolls back to the top.
+  // Past 30 of scroll the top bar's edge and the page name fade in; a stuck filter row continues
+  // the edge. Tapping the current tab scrolls back to the top.
   const tabbar = $('nav.bottom');
   const header = $('.g-topbar');
   const filterbar = $('.filterbar');
@@ -412,19 +409,13 @@
   }
   if ('ResizeObserver' in window && tabbar) new ResizeObserver(measure).observe(tabbar);
   measure();
-  let lastY = Math.max(0, scrollY), travel = 0, frame = 0;
+  let lastY = Math.max(0, scrollY), frame = 0;
   function onScroll() {
     frame = 0;
     const y = Math.max(0, scrollY);
     const delta = y - lastY;
     root.toggleAttribute('data-scrolled', y > 30);
     if (filterbar && header) filterbar.toggleAttribute('data-stuck', filterbar.getBoundingClientRect().top <= header.getBoundingClientRect().bottom + 0.5);
-    if (tabbar && delta) {
-      travel = Math.sign(delta) === Math.sign(travel) ? travel + delta : delta;
-      const atEdge = y < 80 || y + innerHeight >= root.scrollHeight - 80;
-      if (atEdge || $('dialog[open]') || tabbar.contains(document.activeElement)) tabbar.classList.remove('is-hidden');
-      else if (Math.abs(travel) > 12) tabbar.classList.toggle('is-hidden', travel > 0);
-    }
     lastY = y;
   }
   addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(onScroll); }, {passive: true});
@@ -484,7 +475,6 @@
       refresh.hidden = false;
       refresh.style.setProperty('--pull', `${gesture.pull}px`);
       const ready = gesture.pull >= THRESHOLD;
-      if (ready && !refresh.classList.contains('is-ready')) tick();
       refresh.classList.toggle('is-ready', ready);
       label.textContent = ready ? '松开刷新' : '下拉刷新';
     }, {passive: false});
@@ -502,6 +492,78 @@
     document.addEventListener('touchcancel', reset, {passive: true});
     addEventListener('pageshow', () => { refreshing = false; refresh.classList.remove('is-refreshing'); reset(); });
   }
+
+  // ---------- Light per group ----------
+  // 「光」: when the list scrolls into another group, the light changes to that group's photo
+  // (900ms cross-fade, instant under reduced motion); outside any lit group it is the page's own.
+  const lightLayer = $('.g-light');
+  const leafGroups = $$('.group').filter(group => !group.querySelector('.group'));
+  if (lightLayer && leafGroups.some(group => group.dataset.light) && 'IntersectionObserver' in window) {
+    let shown = null;
+    const showLight = group => {
+      const key = group?.dataset.light ? group : null;
+      if (key === shown) return;
+      shown = key;
+      const field = document.createElement('i');
+      field.className = 'g-light__field';
+      if (key) {
+        field.style.setProperty('--light-image', `url("${key.dataset.light}")`);
+        field.style.setProperty('--dark-image', `url("${key.dataset.lightDark}")`);
+      }
+      const old = $$('.g-light__field', lightLayer);
+      lightLayer.append(field);
+      if (reduced.matches) { old.forEach(layer => layer.remove()); return; }
+      field.style.opacity = '0';
+      requestAnimationFrame(() => {
+        field.style.transition = 'opacity 900ms cubic-bezier(.45,0,.55,1)';
+        field.style.opacity = '1';
+        setTimeout(() => old.forEach(layer => layer.remove()), 950);
+      });
+    };
+    // The group crossing a thin band just above the middle of the screen owns the light.
+    const inBand = new Set();
+    const watcher = new IntersectionObserver(entries => {
+      entries.forEach(entry => (entry.isIntersecting ? inBand.add(entry.target) : inBand.delete(entry.target)));
+      showLight([...inBand].pop() || null);
+    }, {rootMargin: '-45% 0px -50% 0px'});
+    leafGroups.forEach(group => watcher.observe(group));
+  }
+
+  // ---------- Photo strip ----------
+  // Each print takes its photo's shape (ratio held within 0.56–1.78) once the size is known; the
+  // dots follow the print nearest the start of the strip.
+  for (const print of $$('.g-print')) {
+    const image = $('img', print);
+    const fit = () => {
+      const ratio = image.naturalWidth && image.naturalHeight ? image.naturalWidth / image.naturalHeight : 0.75;
+      print.style.width = `${Math.round(232 * Math.min(1.78, Math.max(0.56, ratio)))}px`;
+    };
+    if (image.complete && image.naturalWidth) fit(); else image.addEventListener('load', fit, {once: true});
+  }
+  for (const strip of $$('.g-strip')) {
+    const dots = $$('.g-dots i', strip.parentElement);
+    strip.addEventListener('scroll', () => {
+      const prints = [...strip.children];
+      let nearest = 0;
+      prints.forEach((print, index) => {
+        if (Math.abs(print.offsetLeft - strip.offsetLeft - strip.scrollLeft) < Math.abs(prints[nearest].offsetLeft - strip.offsetLeft - strip.scrollLeft)) nearest = index;
+      });
+      dots.forEach((dot, index) => dot.toggleAttribute('aria-current', index === nearest));
+    }, {passive: true});
+  }
+
+  // ---------- Reading size ----------
+  // Text on paper can grow to 18/33 and 19.5/36; only the reading text changes, never the interface.
+  const READING_KEY = 'shiguang-reading';
+  const setReading = size => {
+    root.dataset.reading = size;
+    $$('.reading-size [data-reading]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.reading === size)));
+  };
+  try { const saved = localStorage.getItem(READING_KEY); if (['1', '2', '3'].includes(saved)) setReading(saved); } catch {}
+  $$('.reading-size [data-reading]').forEach(button => button.addEventListener('click', () => {
+    setReading(button.dataset.reading);
+    try { localStorage.setItem(READING_KEY, button.dataset.reading); } catch {}
+  }));
 
   filterNews();
   updateTimes();

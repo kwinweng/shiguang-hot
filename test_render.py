@@ -63,7 +63,7 @@ class CardTests(unittest.TestCase):
         html = render.card(page('../'), item)
         soup = BeautifulSoup(html, 'html.parser')
         self.assertEqual([s.get_text() for s in soup.select('.g-card__who span')], ['频道'])  # 综合 adds nothing
-        self.assertEqual(soup.select_one('.source')['style'], '--source:#4279c2')
+        self.assertIsNone(soup.select_one('.source').get('style'))  # no decorative source colours
         self.assertEqual(soup.select_one('time').get_text(), '09:30')
         self.assertEqual(soup.select_one('img')['src'], '../media/chan/photo.webp')
         self.assertIn('card--side', soup.article['class'])
@@ -88,6 +88,28 @@ class CardTests(unittest.TestCase):
         soup = BeautifulSoup(render.card(page(), item), 'html.parser')
         self.assertEqual(soup.select_one('h2 a')['href'], 'x/2026-10-17.html')
         self.assertEqual(soup.select_one('time').get_text(), '今天')
+
+
+class SpecComponentTests(unittest.TestCase):
+    def test_several_photos_make_a_strip_with_dots(self):
+        row = dict(ch='chan', id=7, ts='2026-10-17T09:30:00+08:00', title='t', body='b', cat='综合', day='2026-10-17',
+                   url='https://t.me/chan/7', images=['media/a.webp', 'media/b.webp', 'media/c.webp'])
+        soup = BeautifulSoup(render.card(page(), from_telegram(row, TG, True)), 'html.parser')
+        self.assertEqual(len(soup.select('.g-strip .g-print img')), 3)
+        self.assertEqual(len(soup.select('.g-dots i')), 3)
+        self.assertEqual(len(soup.select('.g-dots i[aria-current]')), 1)
+
+    def test_group_carries_its_light(self):
+        soup = BeautifulSoup(render.group(['推特爆款'], '', light=('data:light', 'data:dark')), 'html.parser')
+        self.assertEqual((soup.section['data-light'], soup.section['data-light-dark']), ('data:light', 'data:dark'))
+        self.assertNotIn('data-light', render.group(['x'], ''))
+
+    def test_reading_switch_has_three_sizes(self):
+        soup = BeautifulSoup(render.reading_switch(), 'html.parser')
+        self.assertEqual([b['data-reading'] for b in soup.select('.g-seg__item')], ['1', '2', '3'])
+        css = (Path(__file__).parent / 'style.css').read_text()
+        self.assertIn('font-size:18px;line-height:33px', css)
+        self.assertIn('font-size:19.5px;line-height:36px', css)
 
 
 class DesignSystemTests(unittest.TestCase):
@@ -115,9 +137,9 @@ class DesignSystemTests(unittest.TestCase):
         soup = BeautifulSoup(html, 'html.parser')
         self.assertIsNotNone(soup.select_one('nav.bottom a.home-slot.active.slot-3'))
         self.assertIn('slot-3', soup.select_one('nav.bottom .tab__pill')['class'])
-        # Tab bar: words only, except the centred house.
-        for slot in soup.select('nav.bottom .tab'):
-            self.assertEqual(slot.find('svg') is not None, 'home-slot' in slot['class'], slot)
+        # Tab bar: words only.
+        self.assertIsNone(soup.select_one('nav.bottom svg'))
+        self.assertEqual(soup.select_one('nav.bottom a.home-slot').get_text(), '首页')
         # Lead block uses a 3D status icon at lead size.
         self.assertIsNotNone(soup.select_one('.g-lead .s-icon--lead'))
 

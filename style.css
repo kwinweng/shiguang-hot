@@ -20,7 +20,6 @@
   --shadow-photo:0 26px 48px -24px rgba(62,42,12,.5),0 2px 8px 0 rgba(62,42,12,.10);
   /* paint of the 3D status icons (not part of the colour tokens) */
   --icon-light:#FFFEFB;--icon-shade:#D5C7AE;
-  --illumination:var(--light-image);
 
   --font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
   --space-1:4px;--space-2:8px;--space-3:10px;--space-4:12px;--space-5:14px;--space-6:18px;--space-7:22px;--space-8:44px;
@@ -29,7 +28,7 @@
   --ease-light:cubic-bezier(.45,0,.55,1);
   /* "crisp" spring: critically damped, settles without overshoot (switches, the tab highlight, sheets) */
   --ease-crisp:cubic-bezier(.2,.75,.25,1);
-  --duration-slide:360ms;--duration-press:120ms;
+  --duration-slide:360ms;
   --bar-height:52px;--header-height:52px;--tab-bar-height:72px;
   --tab-clearance:calc(var(--tab-bar-height) + env(safe-area-inset-bottom,0px) + var(--space-7));
 }
@@ -48,7 +47,6 @@
   --shadow-card:0 18px 44px -18px rgba(0,0,0,.62);
   --shadow-photo:0 26px 50px -22px rgba(0,0,0,.72),0 2px 8px 0 rgba(0,0,0,.3);
   --icon-light:#57524B;--icon-shade:#29272B;
-  --illumination:var(--dark-image);
 }}
 html[data-theme=dark]{
   color-scheme:dark;
@@ -61,7 +59,6 @@ html[data-theme=dark]{
   --shadow-card:0 18px 44px -18px rgba(0,0,0,.62);
   --shadow-photo:0 26px 50px -22px rgba(0,0,0,.72),0 2px 8px 0 rgba(0,0,0,.3);
   --icon-light:#57524B;--icon-shade:#29272B;
-  --illumination:var(--dark-image);
 }
 
 /* ============ 2. Base ============ */
@@ -93,7 +90,9 @@ h1,h2,h3{text-wrap:balance}
 /* The page's ground: this page's light (light.py) stretched 14% past every edge, a veil from
    28% down, and the warm beam in the top-right corner. Fixed, so it stays while content scrolls. */
 .g-light{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--ground);pointer-events:none;view-transition-name:light}
-.g-light__field{position:absolute;left:-14%;top:-14%;width:128%;height:128%;background:var(--illumination) 0 0/100% 100% no-repeat}
+.g-light__field{position:absolute;left:-14%;top:-14%;width:128%;height:128%;background:var(--light-image) 0 0/100% 100% no-repeat}
+@media(prefers-color-scheme:dark){html:not([data-theme=light]) .g-light__field{background-image:var(--dark-image)}}
+html[data-theme=dark] .g-light__field{background-image:var(--dark-image)}
 .g-light::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,transparent 0%,transparent 28%,var(--veil) 100%)}
 .g-light::after{content:"";position:absolute;inset:0;z-index:1;background:radial-gradient(74% 46% at 96% -8%,var(--beam) 0%,transparent 72%)}
 
@@ -120,7 +119,6 @@ h1,h2,h3{text-wrap:balance}
 .g-topbar__inner{position:relative;display:flex;align-items:center;gap:var(--space-2);height:var(--bar-height)}
 .g-topbar__brand{display:flex;align-items:center;gap:var(--space-3);min-height:var(--space-8);padding-left:var(--space-2);
   font-size:17px;line-height:24px;font-weight:600;letter-spacing:1.7px;color:var(--ink);white-space:nowrap}
-.brand__mark{width:26px;height:26px;border-radius:7px}
 .g-topbar__where{position:absolute;left:50%;transform:translateX(-50%);max-width:40%;overflow:hidden;text-overflow:ellipsis;
   font-size:14px;line-height:20px;font-weight:500;color:var(--ink-2);opacity:0;white-space:nowrap;transition:opacity var(--duration-edge) ease;pointer-events:none}
 html[data-scrolled] .g-topbar::before,html[data-scrolled] .g-topbar__where{opacity:1}
@@ -136,23 +134,27 @@ html[data-scrolled] .g-topbar::before,html[data-scrolled] .g-topbar__where{opaci
 .tab{position:relative;z-index:1;display:grid;place-items:center;min-width:0;border-radius:var(--radius-pill);color:var(--ink-2);font-weight:500;white-space:nowrap;transition:color var(--duration-edge) ease}
 .tab.active{color:var(--ink);font-weight:600}
 .tab__pill{position:relative;z-index:0;border-radius:var(--radius-pill);background:var(--glass-strong)}
-.home-slot .i{width:22px;height:22px}
 .nav-unavailable{color:var(--ink-3);cursor:default}
 
 /* Tab bar: a centred capsule of words, 8 above the safe area. */
 .g-tabbar{position:fixed;z-index:30;left:50%;bottom:calc(var(--space-2) + env(safe-area-inset-bottom,0px));translate:-50% 0;
   display:grid;grid-template-columns:repeat(5,min(72px,calc((100vw - 34px) / 5)));height:56px;padding:5px;border-radius:var(--radius-pill);
   background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow-card);
-  -webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);transition:translate var(--duration-slide) var(--ease-crisp)}
+  -webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5)}
 .g-tabbar .tab,.g-tabbar .tab__pill{height:46px}
 .g-tabbar .tab{font-size:15px;line-height:20px}
-.g-tabbar.is-hidden{translate:-50% calc(100% + 24px + env(safe-area-inset-bottom,0px))}
-.g-tabbar:focus-within{translate:-50% 0}
 
-/* Switch (desktop navigation): sized to its content, bright glass on the chosen one. */
-.g-seg{display:none;padding:var(--space-1);border-radius:var(--radius-pill);background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow-card)}
-.g-seg .tab,.g-seg .tab__pill{height:36px}
-.g-seg .tab{padding:0 17px;font-size:14.5px;line-height:20px}
+/* Switch: a glass capsule sized to its content; the chosen item is bright glass. */
+.g-seg{display:inline-flex;padding:var(--space-1);border-radius:var(--radius-pill);background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow-card)}
+.g-seg__item{height:36px;padding:0 17px;border:0;border-radius:var(--radius-pill);background:transparent;font-size:14.5px;line-height:20px;font-weight:500;color:var(--ink-2);cursor:pointer}
+.g-seg__item[aria-pressed=true]{background:var(--glass-strong);color:var(--ink);font-weight:600}
+.g-seg--ink{background:var(--wash);border-color:transparent;box-shadow:none}
+.g-seg--ink .g-seg__item[aria-pressed=true]{background:var(--ink);color:var(--page)}
+/* The desktop navigation is a switch in the top bar (hidden on phones, where the tab bar does the job). */
+.desktop-nav{display:none}
+.desktop-nav .tab,.desktop-nav .tab__pill{height:36px}
+.desktop-nav .tab{padding:0 17px;font-size:14.5px;line-height:20px}
+.reading-size{margin:0 0 var(--space-4)}
 
 /* ============ 6. Content ============ */
 .layout{padding-top:0;padding-bottom:var(--tab-clearance)}
@@ -175,11 +177,10 @@ html[data-scrolled] .g-topbar::before,html[data-scrolled] .g-topbar__where{opaci
 
 /* News card: a glass card laid out as label / title / body / media / actions. */
 .card{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"label" "title" "body" "media" "actions";
-  margin-bottom:var(--space-4);padding-bottom:6px;content-visibility:auto;contain-intrinsic-size:auto 200px}
+  margin-bottom:var(--space-4);content-visibility:auto;contain-intrinsic-size:auto 200px}
 .card .g-card__label{grid-area:label}
 .g-card__who{display:flex;align-items:center;flex-wrap:wrap;gap:2px 8px;min-width:0}
 .source{display:inline-flex;align-items:center;gap:6px}
-.source::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--source,var(--ink-3))}
 .g-card__who :is(.sub,.cat)::before{content:"·";margin-right:8px;color:var(--ink-3)}
 .rank{color:var(--ink-3);font-weight:600;letter-spacing:0}
 .card__title{grid-area:title;margin:0 0 6px;font-size:15.5px;line-height:22px;font-weight:600;color:var(--ink);text-wrap:pretty;overflow-wrap:anywhere}
@@ -187,7 +188,7 @@ html[data-scrolled] .g-topbar::before,html[data-scrolled] .g-topbar__where{opaci
 @media(hover:hover){.card__title a:hover{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}}
 .card__body{grid-area:body;margin:0;font-size:14px;line-height:22px;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .card.expanded .card__body{display:block;white-space:pre-line;color:var(--ink);-webkit-line-clamp:unset}
-.card__actions{grid-area:actions;display:flex;align-items:center;margin:var(--space-2) -8px 0}
+.card__actions{grid-area:actions;display:flex;align-items:center;margin:var(--space-1) -8px calc(-1 * var(--space-4))}
 .icon-btn{display:inline-grid;place-items:center;width:var(--space-8);height:var(--space-8);margin-left:auto;padding:0;border:0;border-radius:var(--radius-pill);background:transparent;color:var(--ink-2)}
 .bookmark[aria-pressed=true]{color:var(--ink)}
 .bookmark[aria-pressed=true] .i__fill{opacity:1}
@@ -209,7 +210,16 @@ html[data-scrolled] .g-topbar::before,html[data-scrolled] .g-topbar__where{opaci
 .photo{position:relative;display:block;flex:1;min-width:0;padding:0;border:0;border-radius:var(--radius-sm);overflow:hidden;background:var(--wash);box-shadow:var(--shadow-photo);cursor:zoom-in}
 .photo img{display:block;width:100%;height:auto;transition:opacity var(--duration-photo) ease}
 .js-ready .photo img:not(.is-loaded){opacity:0}
-.card--multi .photo img{aspect-ratio:1;object-fit:cover}
+/* Photo strip: one height, each photo its own shape (ratio held within 0.56–1.78), a dot per photo.
+   The width eases from a placeholder to the photo's shape once it is known (duration-photo). */
+.card--multi .card__media{display:block;margin-inline:calc(-1 * var(--space-6))}
+.g-strip{display:flex;gap:var(--space-3);overflow-x:auto;scroll-snap-type:x mandatory;padding:0 var(--space-6) 28px;scrollbar-width:none}
+.g-strip::-webkit-scrollbar{display:none}
+.g-print{flex:none;width:174px;max-width:59vw;height:232px;border-radius:var(--radius-photo);scroll-snap-align:start;scroll-margin-left:var(--space-6);transition:width var(--duration-photo) ease}
+.g-print img{height:100%;object-fit:cover}
+.g-dots{display:flex;justify-content:center;gap:5px;margin-top:-12px}
+.g-dots i{width:5px;height:5px;border-radius:3px;background:var(--ink-3);transition:width var(--duration-edge) ease}
+.g-dots i[aria-current]{width:14px;background:var(--ink)}
 .card--wide .photo img{max-height:240px;object-fit:cover;object-position:top}
 .card--side{grid-template-columns:minmax(0,1fr) 96px;column-gap:var(--space-5);grid-template-areas:"label label" "title media" "body media" "actions actions"}
 .card--side .card__media{margin:2px 0 0;align-self:start}
@@ -225,6 +235,8 @@ html[data-scrolled] .g-topbar::before,html[data-scrolled] .g-topbar__where{opaci
 .card--reading .card__title{font-size:19px;line-height:28px}
 .card--reading .card__body{display:block;white-space:pre-line;font-size:16.5px;line-height:31px;color:var(--ink);-webkit-line-clamp:unset}
 .card--reading .expand{display:none}
+html[data-reading="2"] .card--reading .card__body{font-size:18px;line-height:33px}
+html[data-reading="3"] .card--reading .card__body{font-size:19.5px;line-height:36px}
 .card--reading.card--side{grid-template-columns:minmax(0,1fr);grid-template-areas:"label" "title" "body" "media" "actions"}
 
 .ranked{list-style:none;margin:0;padding:0}
@@ -304,8 +316,6 @@ dialog::backdrop{background:var(--scrim)}
 .sheet__link .i{color:var(--ink-2)}
 .sheet__link[aria-current=page]{background:var(--ink);color:var(--page);font-weight:600}
 .sheet__link[aria-current=page] .i{color:var(--page)}
-.dot{width:20px;display:grid;place-items:center;flex:none}
-.dot::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--source,var(--ink-3))}
 
 .lightbox{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:transparent;display:grid;place-items:center}
 .lightbox:not([open]){display:none}
@@ -340,11 +350,7 @@ dialog::backdrop{background:var(--scrim)}
 }
 
 /* ============ 8. Motion ============ */
-/* Press: controls give a little under the finger. */
-:is(.g-round,.g-btn,.g-pill,.icon-btn,.tab,.entry,.photo,.sheet__link):active{scale:.96}
-:is(.g-round,.g-btn,.g-pill,.icon-btn,.tab,.entry,.photo,.sheet__link){transition:scale var(--duration-press) ease,background-color var(--duration-edge) ease,color var(--duration-edge) ease}
 .bookmark .i__fill{transition:opacity var(--duration-edge) ease}
-.bookmark.is-popping .i{animation:pop var(--duration-slide) var(--ease-crisp)}
 
 /* Panel, toast and photo viewer animate in and out (@starting-style, discrete transitions). */
 .sheet{transition:translate var(--duration-slide) var(--ease-crisp),display var(--duration-slide) allow-discrete,overlay var(--duration-slide) allow-discrete}
@@ -378,8 +384,7 @@ dialog[open]::backdrop{opacity:1}
   .g-seg .tab.slot-4{view-transition-name:tab-4}.g-seg .tab.slot-5{view-transition-name:tab-5}
 }
 ::view-transition-group(light){animation-duration:var(--duration-light);animation-timing-function:var(--ease-light)}
-::view-transition-old(root){animation:var(--duration-edge) ease both page-out}
-::view-transition-new(root){animation:var(--duration-slide) var(--ease-crisp) both page-in}
+::view-transition-old(root),::view-transition-new(root){animation-duration:var(--duration-edge)}
 ::view-transition-group(tab-pill){animation-duration:var(--duration-slide);animation-timing-function:var(--ease-crisp)}
 ::view-transition-group(lightbox-image){animation-duration:var(--duration-slide);animation-timing-function:var(--ease-crisp)}
 /* In-page transitions stay short and never re-run the light. */
@@ -387,9 +392,6 @@ html.vt-local .g-light{view-transition-name:none}
 html.vt-local::view-transition-group(*),html.vt-local::view-transition-old(*),html.vt-local::view-transition-new(*){animation-duration:var(--duration-edge)}
 html.vt-local::view-transition-group(lightbox-image){animation-duration:var(--duration-slide)}
 
-@keyframes page-out{to{opacity:0}}
-@keyframes page-in{from{opacity:0;translate:0 8px}}
-@keyframes pop{0%{scale:1}40%{scale:.84}100%{scale:1}}
 @keyframes spin{to{rotate:360deg}}
 
 /* ============ 9. Responsive ============ */
@@ -400,9 +402,8 @@ html.vt-local::view-transition-group(lightbox-image){animation-duration:var(--du
   .card--side{grid-template-columns:minmax(0,1fr) 128px}
 }
 @media(min-width:900px){
-  :root{--bar-height:64px;--header-height:64px}
   .g-tabbar{display:none}
-  .g-seg{display:grid;margin-left:auto}
+  .desktop-nav{display:grid;margin-left:auto}
   .g-topbar__where{display:none}
   .g-topbar__actions{margin-left:var(--space-2)}
   .layout{padding-bottom:var(--space-8)}

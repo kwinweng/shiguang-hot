@@ -17,11 +17,6 @@ from icons import icon, sprite, status_icon
 E = lambda v: html.escape(str(v or ''), quote=True)
 
 
-def color_style(source):
-    color = str(source.get('color') or '')
-    return f' style="--source:{color}"' if re.fullmatch(r'#[0-9a-fA-F]{3,8}', color) else ''
-
-
 # ---------- Context ----------
 
 @dataclass
@@ -81,11 +76,17 @@ def section_label(title, note=''):
             + (f'<span>{E(note)}</span>' if note else '') + '</div>')
 
 
-def group(parts, content, level=2, source_id=None, cls='group'):
-    """A titled group of cards. One part reads as a `subhead`; several parts become pills."""
+def group(parts, content, level=2, source_id=None, cls='group', light=None):
+    """A titled group of cards. One part reads as a `subhead`; several parts become pills.
+
+    `light` is this group's (light, dark) image pair: when the reader scrolls into the group the
+    page's light cross-fades to it, as the spec asks for a list moving to another group.
+    """
     parts = [p for p in parts if p]
     title = E(parts[0]) if len(parts) == 1 else ''.join(f'<span class="g-pill">{E(p)}</span>' for p in parts)
     data = f' data-source="{E(source_id)}"' if source_id else ''
+    if light:
+        data += f' data-light="{E(light[0])}" data-light-dark="{E(light[1])}"'
     return f'<section class="{cls}"{data}><h{level} class="group__title">{title}</h{level}>{content}</section>'
 
 
@@ -137,16 +138,25 @@ def card(page, item, kind=None, reading=False, rank=None):
         title = E(item.title)
 
     label = f'<span class="rank">{rank:02}</span>' if rank else ''
-    label += f'<span class="source" data-source="{E(source["id"])}"{color_style(source)}>{E(source["name"])}</span>'
+    label += f'<span class="source" data-source="{E(source["id"])}">{E(source["name"])}</span>'
     label += ''.join(f'<span class="sub">{E(part)}</span>' for part in item.via)
     if item.topic:
         label += f'<span class="cat">{E(item.topic)}</span>'
 
-    photos = ''.join(
-        f'<button class="photo" type="button" data-image="{E(page.url(path))}" aria-label="放大图片">'
-        f'<img src="{E(page.url(path))}" alt="{E(item.title)}" loading="lazy" decoding="async"></button>'
-        for path in item.images[:3])
-    media = f'<div class="card__media">{photos}</div>' if photos else ''
+    if kind == 'multi':
+        # Photo strip: each photo keeps its own shape at one height, a dot per photo below.
+        prints = ''.join(
+            f'<button class="g-print photo" type="button" data-image="{E(page.url(path))}" aria-label="放大图片">'
+            f'<img src="{E(page.url(path))}" alt="{E(item.title)}" loading="lazy" decoding="async"></button>'
+            for path in item.images[:7])
+        dots = ''.join('<i aria-current="true"></i>' if n == 0 else '<i></i>' for n in range(len(item.images[:7])))
+        media = f'<div class="card__media"><div class="g-strip">{prints}</div><div class="g-dots" aria-hidden="true">{dots}</div></div>'
+    else:
+        photos = ''.join(
+            f'<button class="photo" type="button" data-image="{E(page.url(path))}" aria-label="放大图片">'
+            f'<img src="{E(page.url(path))}" alt="{E(item.title)}" loading="lazy" decoding="async"></button>'
+            for path in item.images[:1])
+        media = f'<div class="card__media">{photos}</div>' if photos else ''
     body = f'<p class="card__body">{E(item.body)}</p>' if item.body else ''
     expand = (f'<button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span>'
               f'{icon("chevron")}</button>') if item.body else ''
@@ -244,6 +254,14 @@ def blocks(page, issue):
     return result
 
 
+def reading_switch():
+    """The three reading sizes for text on paper (16.5/31, 18/33, 19.5/36); app.js remembers the choice."""
+    sizes = [('1', '标准'), ('2', '大'), ('3', '特大')]
+    items = ''.join(f'<button class="g-seg__item" type="button" data-reading="{n}" aria-pressed="{"true" if n == "1" else "false"}">{label}</button>'
+                    for n, label in sizes)
+    return f'<div class="g-seg reading-size" role="group" aria-label="正文字号">{items}</div>'
+
+
 def chart_images(issue):
     for block in issue.get('blocks', []):
         if block.get('type') == 'chart':
@@ -272,8 +290,8 @@ def favorites_body(page):
 def nav_slots(page):
     """The five fixed slots, shared by the mobile tab bar and the desktop switch.
 
-    Words only, as the spec asks; the 首页 slot keeps its centred house (a product decision).
-    The selected slot's bright-glass block is its own element so it can slide between pages.
+    Words only, as the spec asks. The selected slot's bright-glass block is its own element so it
+    can slide between pages.
     """
     site = page.site
     lookup = {entry[0]: entry for entry in site.entries}
@@ -287,9 +305,8 @@ def nav_slots(page):
         _, path, _, _ = lookup[key]
         active = page.active == key
         classes = ' '.join(c for c in ('tab', f'slot-{n}', 'active' if active else '', 'home-slot' if key == 'home' else '') if c)
-        content = icon('home') if key == 'home' else E(name)
-        result += (f'<a href="{page.url(path)}" class="{classes}"' + (' aria-label="首页"' if key == 'home' else '')
-                   + (' aria-current="page"' if active else '') + f'>{content}</a>')
+        result += (f'<a href="{page.url(path)}" class="{classes}"'
+                   + (' aria-current="page"' if active else '') + f'>{E(name)}</a>')
         if active:
             result = f'<span class="tab__pill slot-{n}" aria-hidden="true"></span>' + result
     return result
@@ -305,7 +322,7 @@ def more_menu(page):
               ('TG 频道', [e for e in site.entries if e[0] in telegram])]
 
     def mark(key, glyph_key):
-        return f'<i class="dot"{color_style(site.sources[key])}></i>' if key in telegram else icon(glyph_key)
+        return icon('telegram') if key in telegram else icon(glyph_key)
 
     body = ''.join(
         f'<h3 class="sheet__group">{E(label)}</h3><div class="sheet__grid">'
@@ -353,7 +370,7 @@ def document(page, title, body, illumination, light_source):
         f'{sprite()}'
         '<div class="g-light" aria-hidden="true"><i class="g-light__field"></i></div>'
         '<header class="g-topbar"><div class="g-topbar__inner g-column">'
-        f'<a class="g-topbar__brand" href="{page.url("index.html")}"><img class="brand__mark" src="{page.url("favicon.svg")}?v={version}" alt="" width="26" height="26">拾光热点</a>'
+        f'<a class="g-topbar__brand" href="{page.url("index.html")}">拾光热点</a>'
         f'<span class="g-topbar__where" aria-hidden="true">{E(title)}</span>'
         f'<nav class="g-seg desktop-nav" aria-label="主导航">{slots}</nav>'
         f'<div class="g-topbar__actions"><button class="g-round" type="button" id="search-toggle" aria-label="搜索">{icon("search")}</button>'

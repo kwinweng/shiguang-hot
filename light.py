@@ -128,12 +128,19 @@ def ambient_uri(components, scheme):
     return 'data:image/png;base64,' + base64.b64encode(buffer.getvalue()).decode()
 
 
-@lru_cache(maxsize=256)
+@lru_cache(maxsize=512)
+def ambient_uris(path=''):
+    """(light, dark) data URIs of the light for one image; the dawn sky when it cannot be read.
+    Cached: the same image is never toned twice in one build."""
+    components = components_of_image(path) if path else None
+    return ambient_uri(components, 'light'), ambient_uri(components, 'dark')
+
+
 def light_css(path=''):
     """Per-page CSS: the light and dark versions of this page's light as custom properties."""
-    components = components_of_image(path) if path else None
-    return (f':root{{--light-image:url("{ambient_uri(components, "light")}");'
-            f'--dark-image:url("{ambient_uri(components, "dark")}")}}')
+    light, dark = ambient_uris(path)
+    return f':root{{--light-image:url("{light}");--dark-image:url("{dark}")}}'
+
 
 
 @lru_cache(maxsize=1024)
