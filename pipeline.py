@@ -163,14 +163,20 @@ NAV_ICONS = {
   'all': '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/>',
   'archive': '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4m8-4v4M4 10h16M8 14h2m4 0h2m-8 3h2"/>',
 }
-def nav(rel,active):
-  return ''.join(f'<a class="{"active" if key==active else ""}" href="{rel}{path}"'+(' aria-current="page"' if key==active else '')+f'><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{NAV_ICONS[key]}</svg></span>{label}</a>' for key,path,label in [('home','index.html','精选'),('hot','hot.html','热点'),('all','all.html','全部动态'),('archive','archive/index.html','日报')])
+MAIL_ENABLED=os.environ.get('MAIL_DIGEST')=='1'
+NAV_ICONS['mail']='<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/>'
+def nav(rel,active,bottom=False):
+  entries=[('home','index.html','精选'),('hot','hot.html','热点'),('all','all.html','全部动态'),('archive','archive/index.html','日报')]
+  if MAIL_ENABLED:
+    if bottom: entries.pop()
+    entries.append(('mail','mail/index.html','邮件'))
+  return ''.join(f'<a class="{"active" if key==active else ""}" href="{rel}{path}"'+(' aria-current="page"' if key==active else '')+f'><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{NAV_ICONS[key]}</svg></span>{label}</a>' for key,path,label in entries)
 def sidebar(rel):
   counts=collections.Counter(r['ch'] for r in rows)
   return '<section class="sidebox"><div class="eyebrow">TRENDING NOW</div><h3>大家都在关注 <span>↗</span></h3>'+''.join(f'<a class="sidehot" href="{r["url"]}" target="_blank" rel="noopener"><b>{i:02}</b><span>{e(r["title"])}</span></a>' for i,r in enumerate(hot[:5],1))+'</section><section class="sidebox"><div class="eyebrow">OUR SOURCES</div><h3>五个视角，一个信息流</h3>'+''.join(f'<div class="channel" data-ch="{c}"><i>{["风","竹","华","电","F"][i]}</i><span>{name}<small>公开频道 · Telegram</small></span><b>{counts[c]}</b></div>' for i,(c,name) in enumerate(CH.items()))+f'</section><section class="sidebox about"><b>拾光热点 / 保持好奇，掌握此刻。</b><p>聚合公开频道资讯，每小时自动更新。<br>让重要的信息，先被看见。</p><p>最后更新：{upd}（北京时间）</p><a href="{rel}archive/index.html">浏览往期日报 ↗</a></section>'
 def shell(title,rel,active,main):
   main=main.replace('src="media/',f'src="{rel}media/').replace('data-image="media/',f'data-image="{rel}media/')
-  return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>{e(title)} · 拾光热点</title><meta name="theme-color" content="#123e45"><link rel="icon" href="{rel}favicon.ico?v=20261016-2" sizes="32x32"><link rel="icon" href="{rel}favicon.svg?v=20261016-2" type="image/svg+xml"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png?v=20261016-2" sizes="180x180"><link rel="manifest" href="{rel}manifest.webmanifest?v=20261016-2"><style>{CSS}</style></head><body><header><div class="top"><a class="brand" href="{rel}index.html">{LOGO}<span class="brand-name">拾光热点</span><span class="brand-note">拾起时光里的重要瞬间</span></a><nav>{nav(rel,active)}</nav><span class="live"><i></i> 每小时更新</span></div></header><div class="layout"><main>{main}</main><aside>{sidebar(rel)}</aside></div><footer>拾光热点 · 信息汇聚，视野更开阔 <span>最后更新：{upd}（北京时间）</span></footer><nav class="bottom">{nav(rel,active)}</nav><dialog class="lightbox" aria-label="图片查看器"><button class="lightbox-close" aria-label="关闭图片">×</button><img alt="放大图片"></dialog><script>{JS}</script></body></html>'''
+  return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>{e(title)} · 拾光热点</title><meta name="theme-color" content="#123e45"><link rel="icon" href="{rel}favicon.ico?v=20261017-1" sizes="32x32"><link rel="icon" href="{rel}favicon.svg?v=20261017-1" type="image/svg+xml"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png?v=20261017-1" sizes="180x180"><link rel="manifest" href="{rel}manifest.webmanifest?v=20261017-1"><style>{CSS}</style></head><body><header><div class="top"><a class="brand" href="{rel}index.html">{LOGO}<span class="brand-name">拾光热点</span><span class="brand-note">拾起时光里的重要瞬间</span></a><nav>{nav(rel,active)}</nav><span class="live"><i></i> 每小时更新</span></div></header><div class="layout"><main>{main}</main><aside>{sidebar(rel)}</aside></div><footer>拾光热点 · 信息汇聚，视野更开阔 <span>最后更新：{upd}（北京时间）</span></footer><nav class="bottom">{nav(rel,active,True)}</nav><dialog class="lightbox" aria-label="图片查看器"><button class="lightbox-close" aria-label="关闭图片">×</button><img alt="放大图片"></dialog><script>{JS}</script></body></html>'''
 def heading(kicker,title,desc):
   return f'<div class="pagehead"><div class="eyebrow">{kicker}</div><h1>{title}<span class="head-dot">.</span></h1><p>{desc}</p></div>'
 def filters():
@@ -191,11 +197,12 @@ def feed(rs,ranked=False):
   return s+'<div id="none" class="empty" hidden>没有匹配的资讯，请尝试其他关键词。</div>'
 def hotspots():
   return '<section class="hotpanel"><div class="sectionhead"><h2><span class="spark">✳</span> 当前热点</h2><a href="hot.html">查看排行 ↗</a></div>'+''.join(f'<a class="hotitem" href="{r["url"]}" target="_blank" rel="noopener"><span class="number">NO.{i:02}</span>{('<img class="hot-thumb" src="'+e(r['images'][0])+'" alt="" loading="lazy">') if r['images'] else ''}<b>{e(r["title"])}</b><em>{"热" if i==1 else "新"}</em></a>' for i,r in enumerate(hot[:3],1))+'<div class="hotnote">过去 48 小时 · 根据关键词与跨频道报道自动聚合</div></section>'
-out=os.path.join(D,'site');os.makedirs(out+'/archive',exist_ok=True)
+out=os.path.abspath(os.environ.get('SITE_OUT',os.path.join(D,'site')));os.makedirs(out+'/archive',exist_ok=True)
+if not MAIL_ENABLED: shutil.rmtree(os.path.join(out,'mail'),ignore_errors=True)
 shutil.copytree(MEDIA,os.path.join(out,'media'),dirs_exist_ok=True)
 for path in Path(out,'media').rglob('*'):
   if path.is_file() and not os.path.isfile(os.path.join(MEDIA,path.relative_to(os.path.join(out,'media')))): path.unlink()
-for asset in ('favicon.svg','favicon.ico','favicon-32x32.png','apple-touch-icon.png','icon-192.png','icon-512.png','manifest.webmanifest'):
+for asset in ('favicon.svg','favicon.ico','favicon-32x32.png','apple-touch-icon.png','apple-touch-icon-precomposed.png','icon-192.png','icon-512.png','manifest.webmanifest'):
   shutil.copyfile(os.path.join(D,'assets',asset),os.path.join(out,asset))
 def write(path,content):
   with open(out+'/'+path,'w') as f:f.write(content)
@@ -209,3 +216,7 @@ lst=''.join(f'<a class="archive-row" href="{d}.html"><span class="archive-icon">
 write('archive/index.html',shell('日报存档','../','archive',heading('THE DAILY ARCHIVE','每一天，都有迹可循',f'{len(days)} 份日报 · 回看世界变化的每一个切片')+lst))
 write('.nojekyll','')
 print('built',len(rows),'msgs,',len(days),'days ->',out,file=sys.stderr)
+
+if MAIL_ENABLED:
+  from mailbuild import build
+  build(out)

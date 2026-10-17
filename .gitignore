@@ -6,3 +6,9 @@ hosts.yml
 shots/
 media/
 __pycache__/
+
+# Private mail inputs and generated output
+mail-digest/
+site/mail/
+mail-preview/
+mail-sample/
