@@ -11,7 +11,9 @@
 Telegram 使用 channel；inbox 使用 directory、filename、adapter（native/mail/world/x）和可选 env。
 `x` 使用平铺 `/workspace/x-digest/YYYY-MM-DD.json`，filename 为 `{date}.json`；`latest.json` 仅补缺失日期，忽略 Markdown。`X_FEED_DIR` 可覆盖目录，公开输出仍为原生 feed.json，保留最近 14 天。
 分类正则位于 categories。导航按顺序自动生成；inbox 有合法数据才显示。
-手机底栏与桌面导航使用顶层 `nav.tabs` 的五个固定槽位：private 为邮件、日报、首页、资讯、推特爆款；public 为全部、日报、首页、资讯、推特爆款。首页必须居中；缺数据的栏目保留禁用槽位，不生成空页。资讯继续使用 hot.html。底栏只有当前项使用 sun 填充，首页仅以字重和字号强调。
+手机底栏与桌面导航使用顶层 `nav.tabs` 的五个固定槽位：private 为邮件、日报、首页、资讯、推特爆款；public 为收藏、日报、首页、资讯、推特爆款。首页必须居中，以透明玻璃描边的 inline SVG 房屋显示，不显示文字，aria-label 为首页；缺数据的栏目保留禁用槽位，不生成空页。资讯继续使用 hot.html。底栏只有当前项使用 sun 填充。
+`nav.favorites` 配置 enabled、label、path、column，控制收藏页、菜单入口与栏目入口。两种模式菜单均保留 all.html。收藏页只生成空容器，由客户端读取 localStorage 后呈现，可逐条移除，空列表显示温和提示。
+每张信息卡提供书签按钮，aria-pressed 表示状态，aria-label 使用收藏或取消收藏。仅存储 id、title、url、source、time、snippet；id 由来源、原始 id 或链接或标题及时间的 SHA-256 生成。收藏不会上传；public/private 使用独立存储键，即使同源也不混用。内网邮件收藏仅留在设备浏览器，favorites.html 不嵌入任何服务端邮件卡片或正文。不同页面和标签页同步收藏状态；存储不可用时显示提示。
 来源的 `nav.enabled` 和 `nav.order` 只控制「栏目」行及菜单，不再争夺第五个槽位。所有有数据且启用导航的 inbox 均出现在栏目行和菜单，包括 world、github、hot-daily；菜单另含核心页面及有数据的 TG 频道页。链接使用相对路径，支持 Pages `/tg-digest/`。
 
 ## 首页与跨来源日报

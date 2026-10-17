@@ -1,3 +1,84 @@
+// Bookmarks never leave this origin's device storage. Separate build modes also
+// prevent private bookmarks appearing when both builds share an origin.
+const bookmarkKey = document.body.dataset.bookmarkScope === 'private' ? 'shiguang-favorites-private' : 'shiguang-favorites-public';
+const bookmarkList = document.querySelector('#favorites-list');
+function readBookmarks() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(bookmarkKey) || '[]');
+    return Array.isArray(saved) ? saved.filter(item => item && ['id','title','url','source','time','snippet'].every(key => typeof item[key] === 'string')) : [];
+  } catch { return []; }
+}
+function bookmarkButton(item, remove = false) {
+  const button = document.createElement('button');
+  button.className = 'bookmark';
+  button.dataset.bookmark = JSON.stringify(item);
+  if (remove) button.textContent = '移除';
+  return button;
+}
+function syncBookmarks() {
+  const saved = readBookmarks();
+  if (bookmarkList) {
+    const focusedId = bookmarkList.contains(document.activeElement) ? document.activeElement?.dataset.bookmark : null;
+    bookmarkList.replaceChildren();
+    saved.forEach(item => {
+      const card = document.createElement('article');
+      card.className = 'card g-card';
+      const title = document.createElement('h2');
+      let url;
+      try { url = new URL(item.url); } catch {}
+      if (url && ['http:','https:'].includes(url.protocol)) {
+        const anchor = document.createElement('a');
+        anchor.href = url.href;
+        anchor.textContent = item.title;
+        anchor.target = '_blank';
+        anchor.rel = 'noopener noreferrer';
+        title.append(anchor);
+      } else title.textContent = item.title;
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = `${item.source} · ${item.time}`;
+      const snippet = document.createElement('p');
+      snippet.textContent = item.snippet;
+      const foot = document.createElement('div');
+      foot.className = 'foot';
+      foot.append(bookmarkButton(item, true));
+      card.append(meta, title, snippet, foot);
+      bookmarkList.append(card);
+    });
+    document.querySelector('#favorites-empty').hidden = saved.length > 0;
+    if (focusedId) bookmarkList.querySelector('button')?.focus();
+  }
+  document.querySelectorAll('[data-bookmark]').forEach(button => {
+    const item = JSON.parse(button.dataset.bookmark);
+    const pressed = saved.some(savedItem => savedItem.id === item.id);
+    button.setAttribute('aria-pressed', String(pressed));
+    button.setAttribute('aria-label', pressed ? '取消收藏' : '收藏');
+  });
+}
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-bookmark]');
+  if (!button) return;
+  const item = JSON.parse(button.dataset.bookmark);
+  const saved = readBookmarks();
+  const next = saved.some(savedItem => savedItem.id === item.id) ? saved.filter(savedItem => savedItem.id !== item.id) : [item, ...saved];
+  try {
+    localStorage.setItem(bookmarkKey, JSON.stringify(next));
+    syncBookmarks();
+  } catch {
+    let status = document.querySelector('#favorites-status');
+    if (!status) {
+      status = document.createElement('p');
+      status.id = 'favorites-status';
+      status.setAttribute('role', 'status');
+      button.closest('article').append(status);
+    }
+    status.textContent = '这次没能保存，请检查设备存储空间和浏览器设置。';
+  }
+});
+addEventListener('storage', event => { if (!event.key || event.key === bookmarkKey) syncBookmarks(); });
+addEventListener('pageshow', syncBookmarks);
+syncBookmarks();
+
 const articles = [...document.querySelectorAll('.news')];
 const search = document.querySelector('#q');
 const channel = document.querySelector('#channel');

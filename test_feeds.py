@@ -112,7 +112,7 @@ class PrivacyBuildTests(unittest.TestCase):
             issues['future'].append((dict(date='2026-10-16',sections=[],blocks=[dict(type='oneliner',items=['older future'])]),root))
             sources.append(dict(id='tg',channel='tg',type='telegram',name='TG',visibility='public',icon='all',color='#123456',nav=dict(enabled=False),home_cap=2))
             rows=[dict(ch='tg',title='TG '+str(n),body='body',images=[],ts='2026-10-17 10:00',day='2026-10-17',cat='综合',url='') for n in range(20)]
-            cfg=dict(categories={},sources=sources,nav=dict(tabs=dict(public=['all','daily','home','news','x'],private=['mail','daily','home','news','x'])))
+            cfg=dict(categories={},sources=sources,nav=dict(tabs=dict(public=['favorites','daily','home','news','x'],private=['mail','daily','home','news','x'])))
             with patch.object(sitebuild,'ROOT',root),patch.object(sitebuild,'config',return_value=cfg),patch.object(sitebuild,'load_issues',side_effect=lambda source,local: issues.get(source['id'],[])):
                 for mode in ('private','public'):
                     target=root/mode
@@ -125,7 +125,17 @@ class PrivacyBuildTests(unittest.TestCase):
                     self.assertEqual({b['data-source'] for b in badges},expected)
                     for source in expected: self.assertEqual(sum(b['data-source']==source for b in badges),2)
                     self.assertEqual(home.select_one('article [data-source]')['data-source'],'future')
-                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['邮件' if mode=='private' else '全部','日报','首页','资讯','推特爆款'])
+                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['邮件' if mode=='private' else '收藏','日报','','资讯','推特爆款'])
+                    self.assertEqual(home.select_one('nav.bottom a.home-slot')['aria-label'],'首页')
+                    self.assertIsNotNone(home.select_one('nav.bottom a.home-slot svg'))
+                    self.assertTrue(home.select('article button.bookmark[aria-pressed="false"][aria-label="收藏"]'))
+                    favorites=BeautifulSoup((target/'favorites.html').read_text(),'html.parser')
+                    self.assertFalse(favorites.select('[data-bookmark]'))
+                    self.assertFalse(favorites.select('[data-source]'))
+                    self.assertEqual(favorites.body['data-bookmark-scope'],mode)
+                    self.assertIn('还没有收藏',favorites.get_text())
+                    self.assertIsNotNone(home.select_one('#more-nav a[href="all.html"]'))
+                    self.assertIsNotNone(home.select_one('.column-row a[href="favorites.html"]'))
                     self.assertEqual(home.select_one('nav.bottom a.home-slot')['aria-current'],'page')
                     day=BeautifulSoup((target/'archive/2026-10-17.html').read_text(),'html.parser')
                     ordered=[s['data-source'] for s in day.select('section.digest-source[data-source]')]

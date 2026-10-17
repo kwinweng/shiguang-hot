@@ -1,4 +1,8 @@
 site/
+site-private/
+site-private.tmp-*/
+*.build.lock
+site.tmp-*/
 *.log
 .env
 *.pem

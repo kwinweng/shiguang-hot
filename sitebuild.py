@@ -1,5 +1,7 @@
 """Static presentation shared by Telegram and configured inbox sources."""
-import html, json, os, re, shutil
+import html, json, os, re, shutil, hashlib
+import ctypes, fcntl, signal, tempfile, threading
+from contextlib import contextmanager
 from pathlib import Path
 from urllib.parse import urlsplit
 from feeds import ROOT, config, private_mode, load_issues, compress_images
@@ -25,7 +27,49 @@ def section_icon(key):
     }
     return '<svg class="status-icon" data-section="'+key+'" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="status-sun" x2=".6" y2="1"><stop stop-color="#ffe6a2"/><stop offset="1" stop-color="var(--sun)"/></linearGradient><linearGradient id="status-paper" x2=".7" y2="1"><stop stop-color="var(--icon-light)"/><stop offset="1" stop-color="var(--icon-shade)"/></linearGradient></defs><ellipse cx="32" cy="56" rx="22" ry="4" fill="var(--wash)"/><g fill="none" stroke="var(--ink-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">'+shapes.get(key,shapes['all'])+'</g></svg>'
 
+@contextmanager
+def staged_output(destination):
+    """Keep live output untouched until a complete tree passes validation."""
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with open(destination.with_name(destination.name+'.build.lock'), 'a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        # SIGKILL cannot run cleanup; reclaim abandoned staging trees next build.
+        for stale in destination.parent.glob(destination.name+'.tmp-*'):
+            if stale.is_dir() and not stale.is_symlink(): shutil.rmtree(stale)
+        temporary=Path(tempfile.mkdtemp(prefix=destination.name+'.tmp-', dir=destination.parent))
+        handlers={}
+        def interrupted(signum, frame):
+            raise SystemExit(128+signum)
+        if threading.current_thread() is threading.main_thread():
+            for sig in (signal.SIGTERM, signal.SIGINT):
+                handlers[sig]=signal.signal(sig, interrupted)
+        try:
+            if destination.exists():
+                shutil.copytree(destination, temporary, dirs_exist_ok=True, symlinks=True)
+            yield temporary
+            if destination.exists():
+                # Linux RENAME_EXCHANGE keeps the served path present throughout.
+                libc=ctypes.CDLL(None, use_errno=True)
+                exchange=libc.renameat2
+                exchange.argtypes=[ctypes.c_int,ctypes.c_char_p,ctypes.c_int,ctypes.c_char_p,ctypes.c_uint]
+                exchange.restype=ctypes.c_int
+                if exchange(-100,os.fsencode(temporary),-100,os.fsencode(destination),2):
+                    error=ctypes.get_errno()
+                    raise OSError(error,os.strerror(error),str(destination))
+            else:
+                os.rename(temporary,destination)
+        finally:
+            shutil.rmtree(temporary, ignore_errors=True)
+            for sig,handler in handlers.items(): signal.signal(sig,handler)
+
 def build(rows, hot, now, inbox_only=False):
+    out = Path(os.getenv('SITE_OUT', ROOT/'site')).resolve()
+    if out == ROOT or ROOT.is_relative_to(out): raise ValueError('SITE_OUT 不能覆盖仓库')
+    with staged_output(out) as temporary:
+        _build(rows, hot, now, temporary, inbox_only)
+    print(f'built site -> {out}')
+
+def _build(rows, hot, now, out, inbox_only=False):
     cfg = config(); private = private_mode()
     sources = [s for s in cfg['sources'] if private or s['visibility']=='public']
     by_id = {s['id']:s for s in sources}; by_channel = {s['channel']:s for s in sources if s['type']=='telegram'}
@@ -36,10 +80,9 @@ def build(rows, hot, now, inbox_only=False):
         for r in rows + hot:
             for field in ('title', 'body'):
                 r[field] = r[field].replace('电子邮件', '电邮').replace('邮件', '电邮')
-    out = Path(os.getenv('SITE_OUT', ROOT/'site')).resolve()
-    if out == ROOT or ROOT.is_relative_to(out): raise ValueError('SITE_OUT 不能覆盖仓库')
-    if not inbox_only: shutil.rmtree(out, ignore_errors=True)
-    out.mkdir(parents=True,exist_ok=True)
+    if not private:
+        for source in cfg['sources']:
+            if source['visibility']=='private': shutil.rmtree(out/source['id'],ignore_errors=True)
     def image_path(image):
         return out/image if (out/image).is_file() else ROOT/image
     def qualifying(items):
@@ -64,12 +107,16 @@ def build(rows, hot, now, inbox_only=False):
     for s in sources:
         if s['type']!='inbox': continue
         loaded=load_issues(s,private)
-        shutil.rmtree(out/s['id'],ignore_errors=True)
+        # Preserve adapter-owned media and other files; regenerate only pages.
+        for page in (out/s['id']).glob('*.html'): page.unlink()
         if not loaded: continue
         issues[s['id']]=[(compress_images(d,base,out/s['id']/'img',s['id']+'/img/'),base) for d,base in loaded]
         latest_cards.extend(inbox_rows(issues[s['id']][0][0],s))
     columns=[s for s in sorted(sources,key=lambda s:s['nav'].get('order',100)) if s['id'] in issues and s['nav'].get('enabled')]
     entries=[('home','index.html','首页','home'),('news','hot.html','资讯','hot'),('all','all.html','全部','all'),('daily','archive/index.html','日报','archive')]
+    favorites=cfg.get('nav',{}).get('favorites',{'enabled':True,'label':'收藏','path':'favorites.html','column':True})
+    if favorites.get('enabled'):
+        entries.append(('favorites',favorites['path'],favorites['label'],'all'))
     entries += [(s['id'],s['id']+'/index.html',s['name'],s['icon']) for s in sources if s['type']=='telegram' and any(r['source_id']==s['id'] for r in rows)]
     entries += [(s['id'],s['id']+'/index.html',s['name'],s['icon']) for s in columns]
     def nav(rel,active,bottom=False):
@@ -78,7 +125,7 @@ def build(rows, hot, now, inbox_only=False):
         if len(slots)!=5 or slots[2]!='home' or len(set(slots))!=5:
             raise ValueError('nav.tabs 必须为五个不同槽位，首页居中')
         lookup={entry[0]:entry for entry in entries}
-        labels={'mail':'邮件','all':'全部','daily':'日报','home':'首页','news':'资讯','x':'推特爆款'}
+        labels={'mail':'邮件','all':'全部','favorites':favorites['label'],'daily':'日报','home':'首页','news':'资讯','x':'推特爆款'}
         result=''
         for key in slots if bottom else lookup:
             name=labels.get(key,by_id.get(key,{}).get('name',key))
@@ -87,10 +134,13 @@ def build(rows, hot, now, inbox_only=False):
                 continue
             _,path,_,ic=lookup[key]
             classes=('active ' if active==key else '')+('home-slot' if key=='home' else '')
-            result+=f'<a href="{rel}{path}" class="{classes.strip()}"'+(' aria-current="page"' if active==key else '')+f'>{icon(ic)}<span>{E(name)}</span></a>'
+            content=icon(ic) if key=='home' else f'{icon(ic)}<span>{E(name)}</span>'
+            result+=f'<a href="{rel}{path}" class="{classes.strip()}"'+(' aria-label="首页"' if key=='home' else '')+(' aria-current="page"' if active==key else '')+f'>{content}</a>'
         return result
     def column_row():
         cards=[]
+        if favorites.get('enabled') and favorites.get('column'):
+            cards.append(f'<a class="column-entry g-card" href="{E(favorites["path"])}"><span class="column-copy"><b>{E(favorites["label"])}</b><span>留住想再读的内容</span></span></a>')
         for s in columns:
             data=issues[s['id']][0][0]
             count=sum(len(section['items']) for section in data.get('sections',[]))
@@ -117,7 +167,7 @@ def build(rows, hot, now, inbox_only=False):
         theme="const t=new URLSearchParams(location.search).get('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;"
         search_icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg>'
         menu_icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M5 7h14M5 12h14M5 17h14"/></svg>'
-        return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#eee8df"><title>{E(title)} · 拾光热点</title><link rel="icon" href="{rel}favicon.ico?v=20261017-6"><link rel="icon" type="image/svg+xml" href="{rel}favicon.svg?v=20261017-6"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png?v=20261017-6"><link rel="manifest" href="{rel}manifest.webmanifest?v=20261017-6"><script>{theme}</script><style>{css}{illumination}</style></head><body data-light-source="{E(image or 'fallback-sky')}"><div class="g-light" aria-hidden="true"></div><header><div class="top g-column"><a class="brand" href="{rel}index.html">{logo}拾光热点</a><nav class="desktop-nav g-seg" aria-label="主导航">{nav(rel,active,True)}</nav><div class="tools"><button id="search-toggle" aria-label="搜索">{search_icon}</button><button id="more-toggle" aria-label="菜单" aria-expanded="false">{menu_icon}</button></div></div></header><div class="layout g-column"><main>{body}<p id="none" hidden>换个词，再找找。</p><footer>今日信息，留一份清晰。<span>{now.strftime('%m-%d %H:%M')} 北京时间</span></footer></main></div><nav class="bottom" aria-label="主导航">{nav(rel,active,True)}</nav>{more}<dialog class="lightbox" aria-label="图片查看器"><button class="lightbox-close" aria-label="关闭">×</button><img alt="放大图片"></dialog><script>{js}</script></body></html>'''
+        return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#eee8df"><title>{E(title)} · 拾光热点</title><link rel="icon" href="{rel}favicon.ico?v=20261017-8"><link rel="icon" type="image/svg+xml" href="{rel}favicon.svg?v=20261017-8"><link rel="apple-touch-icon" href="{rel}apple-touch-icon.png?v=20261017-8"><link rel="manifest" href="{rel}manifest.webmanifest?v=20261017-8"><script>{theme}</script><style>{css}{illumination}</style></head><body data-bookmark-scope="{'private' if private else 'public'}" data-light-source="{E(image or 'fallback-sky')}"><div class="g-light" aria-hidden="true"></div><header><div class="top g-column"><a class="brand" href="{rel}index.html">{logo}拾光热点</a><nav class="desktop-nav g-seg" aria-label="主导航">{nav(rel,active,True)}</nav><div class="tools"><button id="search-toggle" aria-label="搜索">{search_icon}</button><button id="more-toggle" aria-label="菜单" aria-expanded="false">{menu_icon}</button></div></div></header><div class="layout g-column"><main>{body}<p id="none" hidden>换个词，再找找。</p><footer>今日信息，留一份清晰。<span>{now.strftime('%m-%d %H:%M')} 北京时间</span></footer></main></div><nav class="bottom" aria-label="主导航">{nav(rel,active,True)}</nav>{more}<dialog class="lightbox" aria-label="图片查看器"><button class="lightbox-close" aria-label="关闭">×</button><img alt="放大图片"></dialog><script>{js}</script></body></html>'''
     def heading(title,desc):
         status='<svg class="status-icon"></svg>'
         return f'<div class="page-intro">{status}<h1>{E(title)}</h1><p>{E(desc)}</p></div>'
@@ -130,11 +180,15 @@ def build(rows, hot, now, inbox_only=False):
         labels=f'<span class="source-label g-wash" data-source="{E(source["id"])}">{E(source["name"])}</span>'
         if r['name']!=source['name']:
             labels+=''.join(f'<span class="source-label g-wash">{E(part.strip())}</span>' for part in re.split(r'[|｜]',r['name']) if part.strip())
+        identity=json.dumps([r['source_id'],r.get('id') or url or r['title'],r['ts']],ensure_ascii=False)
+        saved=dict(id=hashlib.sha256(identity.encode()).hexdigest(),title=r['title'],url=url,source=source['name'],time=r['ts'],snippet=r['body'][:500])
+        bookmark=f'<button class="bookmark" data-bookmark="{E(json.dumps(saved,ensure_ascii=False))}" aria-pressed="false" aria-label="收藏"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4Z"/></svg></button>'
+        labels+=bookmark
         return f'<article class="card news {surface} {kind}" data-cat="{E(r["cat"])}" data-ch="{E(r["ch"])}"><div class="copy"><div class="meta"><span class="g-wash">{E(r["cat"])}</span>{labels}<time>{E(r["ts"][11:16] or r["day"])}</time></div><h2>{title}</h2><p>{E(r["body"])}</p></div>{f"<div class='pictures'>{pictures}</div>" if pictures else ""}<div class="foot"><span>{E(r["day"])}</span><button class="expand" aria-expanded="false">展开全文 ＋</button>{f"<a href='{E(url)}' target='_blank' rel='noopener noreferrer'>阅读原文 ↗</a>" if url else ""}</div></article>'
     def filters(items):
         present={r['source_id'] for r in items}
         cats=['推荐']+list(cfg['categories'])+['综合']+[s['name'] for s in sources if s['id'] in issues and s['id'] in present]
-        return '<div class="filters">'+''.join(f'<button class="pill {"selected" if i==0 else ""}" data-value="{E(c if i else "")}">{E(c)}</button>' for i,c in enumerate(cats))+'</div><div class="searchline"><input id="q" type="search" placeholder="搜索资讯" aria-label="搜索资讯"><select id="channel" aria-label="筛选来源"><option value="">全部来源</option>'+''.join(f'<option value="{E(s["channel"] if s["type"]=="telegram" else s["id"])}">{E(s["name"])}</option>' for s in sources if s['id'] in present)+'</select></div>'
+        return '<div class="filters">'+''.join(f'<button class="pill {"selected" if i==0 else ""}" data-value="{E(c if i else "")}" aria-pressed="{"true" if i==0 else "false"}">{E(c)}</button>' for i,c in enumerate(cats))+'</div><div class="searchline"><input id="q" type="search" placeholder="搜索资讯" aria-label="搜索资讯"><select id="channel" aria-label="筛选来源"><option value="">全部来源</option>'+''.join(f'<option value="{E(s["channel"] if s["type"]=="telegram" else s["id"])}">{E(s["name"])}</option>' for s in sources if s['id'] in present)+'</select></div>'
     def write(path,text):
         p=out/path;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(text)
     def blocks(data):
@@ -170,6 +224,8 @@ def build(rows, hot, now, inbox_only=False):
             document=shell(s['name'],'../',id,content,first_image); write(f'{id}/{d["date"]}.html',document)
             if n==0: write(f'{id}/index.html',document)
     if not inbox_only:
+        if favorites.get('enabled'):
+            write(favorites['path'],shell(favorites['label'],'','favorites',heading('留住想再读的内容','收藏保存在这台设备上。')+'<div id="favorites-list"></div><p id="favorites-empty" class="g-card favorites-empty">还没有收藏，点卡片上的书签收藏</p><p id="favorites-status" role="status" aria-live="polite"></p>'))
         shutil.copytree(ROOT/'media',out/'media',dirs_exist_ok=True)
         for asset in (ROOT/'assets').iterdir():
             if asset.is_file(): shutil.copyfile(asset,out/asset.name)

@@ -19,7 +19,7 @@ html[data-theme=dark]{color-scheme:dark;--ground:#0f0e12;--page:#18171c;--line:r
 @media(prefers-color-scheme:dark){html:not([data-theme=light]){--top-bar-fill:rgba(24,23,28,.88)}}
 html[data-theme=dark]{--top-bar-fill:rgba(24,23,28,.88)}
 header{background:var(--top-bar-fill);border-bottom:1px solid var(--line);-webkit-backdrop-filter:blur(20px) saturate(1.4);backdrop-filter:blur(20px) saturate(1.4)}
-body:has(.filters) header{border-bottom:0}
+body:has(.filters) header{background:var(--page);border:0;box-shadow:none}
 .layout{padding-bottom:var(--tab-clearance)!important}
 .bottom{bottom:calc(22px + env(safe-area-inset-bottom,0px))!important}
 .hero .photo img{aspect-ratio:16/9!important;max-height:220px!important;object-fit:cover}
@@ -63,14 +63,23 @@ html[data-theme=dark]{--card-ink:rgba(246,243,236,.74)}
 @media(prefers-reduced-motion:reduce){:root{--sheen-x:24%!important;--sheen-y:0%!important}*,*::before,*::after{transition:none!important;animation:none!important}}
 /* Secondary controls stay flat; only bottom navigation owns the sun selection. */
 .bottom .home-slot,.desktop-nav .home-slot{font-size:15.5px;font-weight:700}
+.bottom .home-slot svg,.desktop-nav .home-slot svg{display:block;width:22px;height:22px;fill:var(--glass);filter:drop-shadow(0 1px 0 var(--rim))}
+.bookmark{display:inline-grid;place-items:center;min-width:44px;min-height:44px;padding:10px;border:0;border-radius:999px;background:transparent;color:var(--ink)}
+.bookmark svg{width:18px;height:18px}
+.bookmark[aria-pressed=true]{background:var(--sun);color:var(--on-sun)}
+.bookmark[aria-pressed=true] svg{fill:currentColor}
+.favorites-empty{padding:22px;font-size:14px;line-height:22px}
 .bottom .nav-unavailable,.desktop-nav .nav-unavailable{display:grid;place-items:center;min-width:44px;min-height:44px;padding:10px 12px;font-size:14px;line-height:20px;white-space:nowrap;color:var(--ink-2)}
 @media(max-width:420px){.bottom a,.bottom .nav-unavailable{padding-inline:9px}}
+@media(max-width:360px){.bottom{gap:0}.bottom a,.bottom .nav-unavailable{padding-inline:5px}}
 body{overscroll-behavior-y:contain}
 .filters{position:sticky;top:var(--header-height);z-index:19;isolation:auto;display:flex;width:100%;max-width:100%;overflow-x:auto;gap:8px;margin-top:0;padding:0;border:0;border-bottom:1px solid var(--line);border-radius:0;background:var(--top-bar-fill);box-shadow:none;text-shadow:none;-webkit-backdrop-filter:blur(20px) saturate(1.4)!important;backdrop-filter:blur(20px) saturate(1.4)!important}
 .filters .pill{flex:0 0 auto;position:relative;min-height:44px;padding:10px 12px;border:0;border-radius:0;background:none;color:var(--ink);font-weight:400}
 .filters .pill.selected{background:none;color:var(--ink);font-weight:600}
 .filters .pill.selected::after{content:"";position:absolute;bottom:0;left:12px;right:12px;height:2px;background:currentColor}
 .filters::-webkit-scrollbar{display:none}
+/* One continuous surface; only the tabs carry the bottom hairline. */
+body:has(.filters) .filters{background:var(--page);top:calc(var(--header-height) - 1px);border:0;border-bottom:1px solid var(--line);box-shadow:none;text-shadow:none;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 .searchline{position:static;background:none;border:0;border-radius:0;box-shadow:none}
 .searchline input,.searchline select{border:0;border-bottom:1px solid var(--line);border-radius:0;background:var(--wash);box-shadow:none;text-shadow:none;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 .desktop-nav.g-seg .active{background:var(--wash);color:var(--ink);font-weight:600}
@@ -78,7 +87,7 @@ body{overscroll-behavior-y:contain}
 .bottom.is-hidden{transform:translate(-50%,calc(100% + 44px + env(safe-area-inset-bottom,0px)));pointer-events:none}
 .bottom:focus-within{transform:translateX(-50%);pointer-events:auto}
 .pull-refresh{position:fixed;top:env(safe-area-inset-top,0px);left:50%;z-index:25;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 14px;background:var(--page);border-radius:16px;font-size:13px;line-height:18px;pointer-events:none;transform:translate(-50%,calc(var(--pull,0px) - 44px))}
-.refresh-symbol{display:inline-block;color:var(--sun);font-size:22px;line-height:28px}
+.refresh-symbol{display:inline-grid;place-items:center;width:28px;height:28px;flex-shrink:0;border-radius:50%;background:var(--sun);color:var(--on-sun);font-size:22px;line-height:28px}
 .is-ready .refresh-symbol{transform:rotate(180deg)}
 .is-refreshing .refresh-symbol{animation:refresh-spin 900ms linear infinite}
 @keyframes refresh-spin{to{transform:rotate(360deg)}}

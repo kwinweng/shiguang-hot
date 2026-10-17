@@ -1,5 +1,5 @@
 {
-  "nav": {"tabs": {"private": ["mail", "daily", "home", "news", "x"], "public": ["all", "daily", "home", "news", "x"]}},
+  "nav": {"tabs": {"private": ["mail", "daily", "home", "news", "x"], "public": ["favorites", "daily", "home", "news", "x"]}, "favorites": {"enabled": true, "label": "收藏", "path": "favorites.html", "column": true}},
   "categories": {
     "全球": "国际|美国|俄罗斯|乌克兰|特朗普|以色列|战争|停火|总统|巴基斯坦|印度|联合国",
     "财经": "市场|经济|股|央行|美联储|利率|美元|财报|GDP|CPI|关税|投资",
