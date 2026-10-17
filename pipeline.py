@@ -118,14 +118,7 @@ for path in ([] if NO_FETCH else Path(MEDIA).rglob('*')):
   if path.is_file() and path.relative_to(D).as_posix() not in retained: path.unlink()
 db.commit()
 # ---------- build ----------
-AD=re.compile(r'-{3,}\s*本条新闻由.*',re.S)
-def clean(t):
-  t=AD.sub('',t)
-  # 华尔街见闻把话题写成 " #美国 "，去掉 # 和它两侧人为插入的空格，让中文连续成句
-  t=re.sub(r'[ \t]*#(?:\s*#)*\s*([\w\u4e00-\u9fff]+)[ \t]*',r'\1',t)
-  t=re.sub(r'[ \t]{2,}',' ',t); t=re.sub(r'\n{3,}','\n\n',t)
-  return '\n'.join(l.strip() for l in t.split('\n')).strip()
-e=html.escape
+from textclean import clean, headline
 CATS=CONFIG['categories']
 KW=['美联储','降息','关税','停火','战争','GDP','财报','AI','苹果','英伟达','OpenAI','特朗普','央行','芯片']
 rows=[]
@@ -133,18 +126,9 @@ for ch,i,ts,t,raw,images in db.execute('select ch,id,ts,text,html,images from ms
   if ch not in CH: continue
   t=clean(t)
   if not t: continue
-  bold=BeautifulSoup(raw or '', 'html.parser').select_one('b, strong')
-  m=re.match(r'【([^】]+)】',t)
-  bold_title=clean(bold.get_text('')) if bold else ''
-  title=m.group(1) if m else (bold_title if len(bold_title)>=12 and t.startswith(bold_title) else re.split(r'[。！？\n]',t)[0])
-  title=title.strip('【】 ')
-  if len(title)<6: title=re.split(r'[。！？\n]',t)[0]
-  title=title[:86]+('…' if len(title)>86 else '')
-  body=t
-  if t.startswith('【'+title+'】'): body=t[len(title)+2:].strip()
-  elif t.startswith(title): body=t[len(title):].lstrip('。！？\n ')
+  title,body=headline(t,raw)
   cat=next((k for k,v in CATS.items() if re.search(v,t,re.I)), '综合')
-  rows.append(dict(images=[p for p in json.loads(images) if os.path.isfile(os.path.join(D,p))],ch=ch,id=i,ts=ts,text=t,title=title,body=body or t,cat=cat,day=ts[:10],url=f'https://t.me/{ch}/{i}'))
+  rows.append(dict(images=[p for p in json.loads(images) if os.path.isfile(os.path.join(D,p))],ch=ch,id=i,ts=ts,text=t,title=title,body=body,cat=cat,day=ts[:10],url=f'https://t.me/{ch}/{i}'))
 def grams(t):
   t=re.sub(r'\W','',t.lower())[:180]
   return {t[i:i+3] for i in range(len(t)-2)}
@@ -159,7 +143,6 @@ for r in sorted(recent,key=lambda r:r['score'],reverse=True):
   if any(len(grams(r['title'])&grams(x['title']))>=6 for x in hot): continue
   hot.append(r)
   if len(hot)==10: break
-upd=now.strftime('%Y-%m-%d %H:%M');days=sorted({r['day'] for r in rows},reverse=True)
 from sitebuild import build
 build(rows, hot, now)
 db.close()

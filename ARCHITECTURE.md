@@ -2,9 +2,11 @@
 
 ## 模块与配置
 
-`pipeline.py` 保留 Telegram t.me/s 抓取、断行清洗、SQLite 增量去重、14 天图片缓存和热点评分。
-`feeds.py` 管理 JSON 配置、四种适配器、验证和图片压缩；`sitebuild.py` 统一渲染卡片、导航、栏目和归档。
-`style.css`、`app.js` 提供共享视觉与交互。`build_icons.py` 生成蓝色图标、manifest 并检验边缘。
+`pipeline.py` 保留 Telegram t.me/s 抓取、SQLite 增量去重、14 天图片缓存和热点评分。
+`textclean.py` 把消息正文清洗为标题与正文：优先【标题】、其次开头粗体、再次首句；网址和「====」分隔线不进入标题，正文去掉裸网址，只剩标题时正文留空。
+`feeds.py` 管理 JSON 配置、四种适配器、验证和图片压缩。
+`items.py` 把 TG 消息与 inbox 条目统一为 `Item`（来源、子来源、分类、时间、图片、链接）；`render.py` 只含 HTML 模板，按页面上下文生成相对链接，不读写文件；`sitebuild.py` 只负责取数、排序、组页、隐私自检和原子发布。新增来源或调整版式通常只需改其中一层。
+`style.css`、`app.js` 以内容哈希命名（如 `style.<hash>.css`）独立发布，浏览器可长期缓存，无需手动改版本号；仅更新栏目时保留旧哈希文件，避免上次完整构建的页面失去样式。`build_icons.py` 生成蓝色图标、manifest 并检验边缘。
 `validate_feed.py` 为独立投递校验入口；规范见 INGEST.md。`mailbuild.py` 兼容旧入口，仅重建内网 inbox。
 
 `sources.json` 声明 id、type、name、icon、color、visibility、nav（enabled/order）。
