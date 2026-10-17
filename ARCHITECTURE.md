@@ -1,80 +1,121 @@
-# 拾光聚合平台
+# 拾光热点 · 架构
 
-## 模块与配置
+一条线：**来源 → 条目 → 页面**。每个渠道先变成同一种条目（`Item`），再由 5 个固定页面去取；没有为某个来源单独写的页面。接新渠道只动第一层：在 `sources.json` 加一项，按 `INGEST.md` 投递。
 
-`pipeline.py` 保留 Telegram t.me/s 抓取、SQLite 增量去重、14 天图片缓存和热点评分。
-`textclean.py` 把消息正文清洗为标题与正文：优先【标题】、其次开头粗体、再次首句；网址和「====」分隔线不进入标题，正文去掉裸网址，只剩标题时正文留空。
-`feeds.py` 管理 JSON 配置、四种适配器、验证和图片压缩。
-`items.py` 把 TG 消息与 inbox 条目统一为 `Item`（来源、子来源、分类、时间、图片、链接）；`render.py` 只含 HTML 模板，按页面上下文生成相对链接，不读写文件；`sitebuild.py` 只负责取数、排序、组页、隐私自检和原子发布。新增来源或调整版式通常只需改其中一层。
-`icons.py` 定义图标与 sprite；`style.css`、`app.js` 以内容哈希命名（如 `style.<hash>.css`）独立发布，浏览器可长期缓存，无需手动改版本号；仅更新栏目时保留旧哈希文件，避免上次完整构建的页面失去样式。`build_icons.py` 生成蓝色图标、manifest 并检验边缘。
-`validate_feed.py` 为独立投递校验入口；规范见 INGEST.md。`mailbuild.py` 兼容旧入口，仅重建内网 inbox。
+## 代码分层
 
-`sources.json` 声明 id、type、name、icon、color、visibility、nav（enabled/order）。
-Telegram 使用 channel；inbox 使用 directory、filename、adapter（native/mail/world/x）和可选 env。
-`x` 使用平铺 `/workspace/x-digest/YYYY-MM-DD.json`，filename 为 `{date}.json`；`latest.json` 仅补缺失日期，忽略 Markdown。`X_FEED_DIR` 可覆盖目录，公开输出仍为原生 feed.json，保留最近 14 天。
-分类正则位于 categories。导航按顺序自动生成；inbox 有合法数据才显示。
-手机底栏与桌面导航使用顶层 `nav.tabs` 的五个固定槽位：private 为邮件、日报、首页、资讯、推特爆款；public 为收藏、日报、首页、资讯、推特爆款。首页必须居中；按「光」规范所有槽位都只有文字，不放图标；缺数据的栏目保留禁用槽位，不生成空页。资讯继续使用 hot.html。当前项用亮玻璃（glass-strong）块标出，不用金色。
-`nav.favorites` 配置 enabled、label、path、column，控制收藏页、菜单入口与栏目入口。两种模式菜单均保留 all.html。收藏页只生成空容器，由客户端读取 localStorage 后呈现，可逐条移除，空列表显示温和提示。
-每张信息卡提供书签按钮，aria-pressed 表示状态，aria-label 使用收藏或取消收藏。仅存储 id、title、url、source、time、snippet；id 由来源、原始 id 或链接或标题及时间的 SHA-256 生成。收藏不会上传；public/private 使用独立存储键，即使同源也不混用。内网邮件收藏仅留在设备浏览器，favorites.html 不嵌入任何服务端邮件卡片或正文。不同页面和标签页同步收藏状态；存储不可用时显示提示。
-来源的 `nav.enabled` 和 `nav.order` 只控制「栏目」行及菜单，不再争夺第五个槽位。所有有数据且启用导航的 inbox 均出现在栏目行和菜单，包括 world、github、hot-daily；菜单另含核心页面及有数据的 TG 频道页。链接使用相对路径，支持 Pages `/tg-digest/`。
+| 位置 | 做什么 |
+| --- | --- |
+| `pipeline.py` | 入口：抓 TG → 清洗、分话题 → 热榜 → 建站。`main(now=None)` |
+| `shiguang/config.py` | 读取并校验 `sources.json`，补默认值；兼容旧字段名 |
+| `shiguang/ingest/telegram.py` | 抓 t.me/s 公开页写入 `tg.db`，图片缓存在 `media/`（按消息时间保留 14 天） |
+| `shiguang/ingest/feeds.py` | 找到各 inbox 来源的每一期、校验、压缩图片 |
+| `shiguang/ingest/adapters.py` | mail / world / x 三种旧格式转成统一格式（这些 bot 改写统一格式后删除） |
+| `shiguang/model.py` | `Item`，以及把 TG 消息和期刊条目变成 `Item` 的函数 |
+| `shiguang/enrich/` | `clean.py` 标题与正文清洗；`topics.py` 话题；`hot.py` 实时热榜；`rank.py` 首页排序 |
+| `shiguang/site/pages.py` | 每个页面一个函数：决定哪页放哪些条目 |
+| `shiguang/site/render.py` | 纯 HTML 组件，不读写文件；`icons.py` 图标；`light.py` 环境光 |
+| `shiguang/site/build.py` | 在临时目录建整站 → 公开版隐私检查 → 原子替换 `site/`；CSS/JS 用内容哈希命名 |
+| `web/` | `style.css`、`app.js`、`assets/`（图标、manifest） |
+| `tools/` | `validate_feed.py` 投递校验、`screenshot.py` 截图、`build_icons.py` 生成图标 |
+| `tests/` | `python3 -m unittest discover tests` |
+
+根目录另有几个兼容入口，给本机脚本用：`run.sh`、`mailbuild.py`（本机定时任务调用）、`validate_feed.py`（投递 bot 调用）、`feeds.py`（`publish_public.py` 可能 `import feeds`，其 `config()` 仍返回旧字段）。本机脚本收进仓库后删除后两个。
+
+## 页面
+
+| 页面 | 底栏 | 内容 |
+| --- | --- | --- |
+| `favorites.html` 收藏 | 第 1 格 | 本机收藏，由 app.js 从 localStorage 呈现 |
+| `archive/` 日报 | 第 2 格 | 某一天：每个期刊来源的摘要块和前 3 条，加「看完整一期」链接；最后 TG 频道按话题分组 |
+| `index.html` 首页 | 第 3 格 | 此刻要闻 + 信息流；话题胶囊和来源选择是两个独立的筛选 |
+| `hot.html` 热点 | 第 4 格 | 上：最新一期今日重点（每晚 22:00 发布）；下：48 小时实时热榜前 10 |
+| `columns.html` 栏目 | 第 5 格 | 每日栏目（推特爆款、GitHub 热门、环球要闻；内网版含邮件精华），然后 TG 频道 |
+| `<id>/<date>.html` | 栏目 | 一个期刊来源的一期；`<id>/index.html` 是最新一期 |
+
+公开版和内网版底栏相同：收藏 / 日报 / 首页 / 热点 / 栏目，首页居中。来源页标亮「栏目」，今日重点的期刊页标亮「热点」。
+
+合并掉的旧地址保留为跳转页：`all.html` → 首页；`<TG 频道>/index.html` → `index.html?source=<频道>`；`hot-daily/index.html` → 热点。
+
+首页筛选：`?source=` 预选来源，`?topic=` 预选话题。首页信息流每个来源有上限（见下），为了让按来源筛选时不只剩几条，页面还带上每个 TG 频道最近 30 条、每个期刊最新一期的全部条目，标 `data-more` 并隐藏，只有选了话题、来源或输入搜索词时才参与显示。
+
+## 规则
+
+- **话题**：所有来源共用 `sources.json` 的 `topics`（全球、财经、AI、开发者、科技，其余为「其他」）。条目自带 `topic` 就用它；否则先看标题、再看全文，按顺序取第一个匹配的正则；都不匹配用来源的 `topic`（如 GitHub 热门为「开发者」）；再不行是「其他」。「其他」不显示在卡片上。
+- **首页排序**：分数 = `home.weight` / (1 + 消息年龄小时数 / 24)。每个来源按分数取 `home.cap` 条（TG 默认 4，期刊默认 8），按轮次混排，每轮每来源最多一条。首条为此刻要闻。
+- **实时热榜**：48 小时内的 TG 消息，分数 = 报道的频道数 × 4 + `hot.keywords` 命中数 + 篇幅加分，近似重复合并，取前 10。
+- **顺序**：来源的 `order` 同时决定日报、栏目页、菜单和来源选择里的顺序（今日重点 0、邮件精华 10、环球要闻 20、推特爆款 30、GitHub 热门 40、TG 频道 50 起）。
+
+## sources.json
+
+```json
+{
+  "topics": {"全球": "正则", "AI": "正则"},
+  "hot": {"source": "hot-daily", "keywords": ["美联储"]},
+  "sources": [{"id": "x", "type": "inbox", "name": "推特爆款", "visibility": "public", "order": 30}]
+}
+```
+
+| 字段 | 说明 |
+| --- | --- |
+| `id` `name` `type` `visibility` | 必填。`type` 为 `telegram`（实时）或 `inbox`（期刊）；`visibility` 为 `public` 或 `private` |
+| `icon` | 状态图标：home / hot / all / archive / mail / world / x / code，默认 all |
+| `order` | 顺序，默认 TG 50、期刊 45 |
+| `home` | `{"weight": 1, "cap": 4或8}`，首页权重和条数，`cap: 0` 表示不进首页 |
+| `lead` `note` | 来源页打头的一句话（`{count}` 换成条目数）和小字说明 |
+| `topic` | 匹配不到话题时用的默认话题 |
+| `reading` | `true` 时正文用纸面和阅读字号切换（邮件精华） |
+| `channel` | TG 频道名 |
+| `adapter` `directory` `filename` `env` | 期刊来源的投递位置和格式，见 `INGEST.md` |
+
+旧字段 `categories`、`daily_order`、`nav.order`、`home_weight`、`home_cap` 仍能读取；`color`、`nav.enabled`、`nav.tabs`、`nav.favorites` 已不再使用。
+
+## 两种模式与数据流
+
+公开版（GitHub Actions 每小时，`.github/workflows/hourly.yml`）：
+
+1. 抓取配置中 public 的 TG 频道，按 `(channel, id)` 写入 `tg.db`，配图进 `media/`（Actions cache 保存）。
+2. 期刊只从仓库的 `public-feeds/<id>/<date>/feed.json` 读取。
+3. 建站后检查：不得出现 private 来源的目录、名称或正文，以及「邮件」字样；通过后部署 Pages。
+
+内网版（`SITE_MODE=private`，兼容 `MAIL_DIGEST=1`），在本机 `/workspace/tg-local` 的脚本里运行：
+
+1. `sync.sh` 取共用锁；工作区干净时 `pull --rebase --autostash`。
+2. `publish_public.py` 只处理 public 期刊：转换、压图、原子写 JSON，保留 14 天，有变化才提交推送 `public-feeds/`。
+3. 内网构建包含 public 与 private，本机原始目录优先，其次 `/workspace/feeds-inbox`，最后 `public-feeds`。
+4. `mailbuild.py`（`inbox_sync.sh` / `mail_sync.sh`）只重建期刊来源页，首页等保持上次完整构建的快照。
+5. 本机 `tg.db` 不提交。
+
+## 添加来源
+
+- **TG 频道**：加一项 `type: "telegram"`，填 `id`、`channel`、`name`、`visibility`。
+- **期刊**：加一项 `type: "inbox"`、`adapter: "native"`，按 `INGEST.md` 原子写入 feed.json 和图片。本机先跑 `python3 validate_feed.py <id>`，public 内容经 `publish_public.py` 进入仓库后，Actions 才能读到。
+
+不需要改代码：有数据就自动进入首页、日报、栏目和菜单；没有数据不生成入口。
+
+## 本地运行
+
+- `NO_FETCH=1 python3 pipeline.py`：用现有 `tg.db` 构建公开版到 `site/`，不抓取。
+- `SITE_MODE=private NO_FETCH=1 python3 pipeline.py`：内网版。
+- `python3 tools/screenshot.py index.html`：手机整页截图到 `shots/`；`--desktop`、`--dark`、`--build` 见 `--help`。
+- `python3 -m unittest discover tests`：测试。
 
 ## 视觉规范
 
-本站遵循「光」视觉规范：https://claude.ai/artifact/R2fskGqeaA8ozH9e7BHfNE 。颜色、字号、间距、圆角、阴影、时长都取自规范的 tokens（`style.css` 第 1 节），组件沿用规范的类名（`g-light`、`g-lead`、`g-card`、`g-sheet`、`g-wash`、`g-pill`、`g-btn`、`g-round`、`g-topbar`、`g-tabbar`、`g-seg`、`g-panel`）。和规范的对应：
+本站遵循「光」视觉规范：https://claude.ai/artifact/R2fskGqeaA8ozH9e7BHfNE 。颜色、字号、间距、圆角、阴影、时长都取自规范的 tokens（`web/style.css` 第 1 节），组件沿用规范的类名（`g-light`、`g-lead`、`g-card`、`g-sheet`、`g-wash`、`g-pill`、`g-btn`、`g-round`、`g-topbar`、`g-tabbar`、`g-seg`、`g-panel`）。和规范的对应：
 
-- **光**：`light.py` 是规范 `Guang` 取色的 Python 移植（主图缩到 16×24，取横 4 纵 6 余弦分量，在 OKLab 里按浅/深两套参数调色，还原成 30×40 的小图），逐格结果与规范的 bundle.js 完全一致。每页在构建时算好浅色、深色两张，铺满并四周放大 14%，上面盖薄纱和右上角暖光；没有图或读不了图时是清晨的天色。有照片的分组另带一组光（`data-light`），列表滚进哪一组，光就换成那一组的颜色，回到顶部换回本页的光。换页和换组时光都用 900 毫秒叠化。
+- **光**：`shiguang/site/light.py` 是规范 `Guang` 取色的 Python 移植（主图缩到 16×24，取横 4 纵 6 余弦分量，在 OKLab 里按浅/深两套参数调色，还原成 30×40 的小图），逐格结果与规范的 bundle.js 完全一致。每页在构建时算好浅色、深色两张，铺满并四周放大 14%，上面盖薄纱和右上角暖光；没有图或读不了图时是清晨的天色。有照片的分组另带一组光（`data-light`），列表滚进哪一组，光就换成那一组的颜色，回到顶部换回本页的光。换页和换组时光都用 900 毫秒叠化。
 - **表面**：信息卡是玻璃卡（不做背景模糊）；邮件正文进纸（`g-sheet`，`reading` 字号）；邮件页顶部有阅读字号切换（16.5/31、18/33、19.5/36，记在本机）；卡里再分层用冲淡块；多图是照片条（高 232，宽按比例夹在 0.56–1.78、最多 59vw，下面圆点跟随滑动）；一句话速览、市场看板等编辑/AI 的内容加金色一抹（`g-card--sun`）。毛玻璃只给浮动控件：顶栏圆按钮、底栏、提示条、下拉刷新。会盖住整页的导航面板用不透明的 `page`。
 - **打头块**：每页开头是 58 的立体状态图标 + 一句 `lead`（28/32·700）+ 一行 `note`，直接放在光上。
-- **图标**：`icons.py` 两套，每页输出一次 sprite。功能图标是 Tabler Icons 3.48.0 线性图标（线宽 1.75，路径原样取自官方包，许可证见 `LICENSES/tabler-icons.txt`）；状态图标是本站原有的立体插画（打头 58、栏目卡 22），渐变只定义一次。
-- **顶栏**：本身没有底色；滚过 30 后顶边（`edge`）淡入、中间出现当前页名。分类胶囊吸顶时接上同样的顶边。
+- **图标**：`shiguang/site/icons.py` 两套，每页输出一次 sprite。功能图标是 Tabler Icons 3.48.0 线性图标（线宽 1.75，路径原样取自官方包，许可证见 `LICENSES/tabler-icons.txt`）；状态图标是本站原有的立体插画（打头 58、栏目卡 22），渐变只定义一次。
+- **顶栏**：本身没有底色；滚过 30 后顶边（`edge`）淡入、中间出现当前页名。话题胶囊吸顶时接上同样的顶边。
 - **底栏**：居中的胶囊，只有字，不放图标，每格 72×46、字 15/20，当前项亮玻璃；换页时亮玻璃用不回弹的弹簧滑到新位置，文字始终在它上面。电脑上改为顶栏里的玻璃切换（`g-seg`）。
 - **金色**只表示「新」「今天」「进行中」：一小时内的条目带「新」，今天的日报日期带「今天」，下拉刷新时的转圈是金色。不当字色、不做装饰。
 - **品牌**：顶栏只放产品名文字，不放 logo；来源不再各配一种颜色。
 - **字**：只用系统字体；字重只用 400/500/600/700；只有卡片小标题（`section`）和顶栏产品名（`brand`）有字距。`ink-3` 只给序号、箭头、占位。
 - **动效**：叠化和滑动按规范时长（光 900、顶边 250、照片 240），切换类用不回弹的弹簧；系统开启「减弱动态效果」时全部直接到位，「减弱透明度」时毛玻璃换成不透明的 `page`。网页不做振动；底栏不随滚动隐藏。
 
-`test_render.py` 会检查：金色只作填充、字重与字距范围、玻璃卡不做背景模糊、光的明度范围与清晨天色、每个引用的图标都在 sprite 里。
-
-## 首页与跨来源日报
-
-渲染层将 TG 消息和 inbox sections 归一化为带 source_id、日期、正文、图片的卡片；每张卡片标明注册来源。仅有 blocks 的期刊也生成首页候选。首页候选取每个 inbox 最新一期以及 TG 消息，与 nav.enabled 无关；visibility 在加载前过滤，邮件只进入内网构建。
-`home_weight` 默认 1，排名为 weight / (1 + 消息年龄小时数 / 24)，未来时间按年龄 0 处理。每个来源按排名取 `home_cap` 条（TG 默认 4，inbox 默认 8）；按轮次混排，每轮每来源最多一条。此刻要闻为首条，剩余为首页信息流，头条也计入限额。五个 TG 频道合计默认最多 20 条，避免单一频道占满首页。
-日报入口 archive/index.html 展示最新有数据日期的跨来源摘要，并链接各日 archive/<date>.html。日期取 TG 和所有可见 inbox 的并集，不受首页限额影响。inbox 按 `daily_order` 升序（默认 45），再按 nav.order、id 排序；当前配置为今日重点 0、邮件精华 10、环球要闻 20、推特爆款 30、GitHub 热门 40。每个来源保留 blocks 和全部条目，最后 TG 资讯按话题分组，频道按 daily_order（默认 50）排序。无数据的来源不显示。
-
-## 两种模式与数据流
-
-默认公开模式：
-
-1. Actions 每小时运行 pipeline.py，从配置中的 public Telegram 频道抓取。
-2. 消息按 `(channel,id)` 写入 tg.db，配图进入 media/，Actions cache 保存图片。
-3. public inbox 仅从仓库 public-feeds/<id>/<date>/feed.json 读取。
-4. 生成 site/ 后进行 private 目录、栏目名与路由检查，再由现有 Actions 部署 Pages。
-5. all.html、hot.html、archive/index.html 和每日 archive/<date>.html 保留。
-
-内网模式由 `SITE_MODE=private` 开启，兼容 `MAIL_DIGEST=1`：
-
-1. /workspace/tg-local/sync.sh 获取共用 flock。
-2. 工作区有 tg.db、public-feeds/ 以外的改动则记录并跳过 pull，仍可继续本地构建。
-3. 否则还原 tg.db、移除 journal，执行 pull --rebase --autostash。
-4. publish_public.py 仅处理配置中 public inbox，适配、压图、原子写 JSON，保留最近 14 天。
-5. public-feeds 有变化才暂存、提交和推送；暂存前后检查路径仅在 public-feeds/ 下，并再次检查 visibility。
-6. pipeline.py 内网构建包含 public 与 private，原始目录优先；本机原始数据缺失才回退原生投递与 public-feeds。
-7. 每期输出 <id>/<date>.html，最新输出 <id>/index.html，页面内含往期列表；图片位于 <id>/img/。
-8. 还原本机 tg.db，不提交本机数据库；确认只绑定 127.0.0.1:8766 的 serve.sh 在服务。
-
-`inbox_sync.sh` 与 sync.sh 共用锁，仅更新 inbox 栏目页；`mail_sync.sh` 是其别名。
-只更新栏目时首页和 TG 页面保持上次完整构建的快照；新来源进入全站导航、首页混流需完整 sync。
-本机脚本在 /workspace/tg-local，不在本仓库内。
-
-## 添加来源
-
-新增 Telegram：只增加一个 type=telegram 配置，填写 channel、唯一 id、名称、配色及可见范围。
-新增原生栏目：只增加 type=inbox、adapter=native 配置；将合法 feed.json 和图片原子写入约定目录。
-原生 public 栏目包括 `github`（GitHub 热门）和 `hot-daily`（今日重点，导航 order 26）。`hot-daily` 仅取自 5 个公开 TG 频道，由「热点日报」bot 每晚北京时间 22:00 生成，写入 `/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json`，沿用通用 public inbox 发布流程。
-无需修改渲染代码。有数据即自动加入首页和对应日期日报；用 home_weight、home_cap 控制首页，用 daily_order 控制日报顺序。来源 nav.enabled/order 控制栏目与菜单；底栏需显式修改顶层 nav.tabs，新增来源不会挤走固定槽位。图标 key 支持 home/hot/all/archive/mail/world/x/code，未知 key 回退 all。
-需要导航的 inbox 设置 nav.enabled=true 和 order。无有效数据时隐藏入口，不生成空栏目。
-本机执行 validate_feed.py <id>，再运行 sync.sh。public 内容经 publish_public.py 进入仓库后，Actions 才能获得。
-可用 publish_public.py --no-push 仅准备文件，不执行 git 操作。
+`tests/test_render.py` 会检查：金色只作填充、字重与字距范围、玻璃卡不做背景模糊、光的明度范围与清晨天色、每个引用的图标都在 sprite 里。
 
 ## 安全边界
 

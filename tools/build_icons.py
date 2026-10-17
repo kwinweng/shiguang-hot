@@ -3,7 +3,7 @@
 from pathlib import Path
 import json
 from PIL import Image, ImageDraw
-ASSETS=Path(__file__).parent/'assets'
+ASSETS=Path(__file__).resolve().parent.parent/'web'/'assets'
 
 def background(size):
     im=Image.new('RGBA',(size,size))

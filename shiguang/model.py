@@ -9,6 +9,7 @@ from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 BEIJING = ZoneInfo('Asia/Shanghai')
+OTHER = '其他'   # topic of items no configured topic matches; never shown on a card
 
 
 def safe_link(url):
@@ -31,8 +32,8 @@ def parse_moment(ts, day):
 @dataclass
 class Item:
     source_id: str          # registered source (sources.json id)
-    filter_key: str         # value matched by the 来源 select: Telegram channel or inbox id
-    category: str           # value matched by the category tabs (TG topic, or the inbox name)
+    filter_key: str         # value matched by the 来源 select and ?source=: Telegram channel or inbox id
+    category: str           # topic, matched by the topic pills ('' until enrich.topics assigns one)
     title: str
     body: str
     day: str                # YYYY-MM-DD the item belongs to
@@ -61,7 +62,7 @@ def from_telegram(row, source, public):
         # Public copy says 电邮 so the private column's name never appears in public pages.
         title, body = (text.replace('电子邮件', '电邮').replace('邮件', '电邮') for text in (title, body))
     return Item(source_id=source['id'], filter_key=row['ch'], category=row['cat'], title=title, body=body,
-                topic='' if row['cat'] == '综合' else row['cat'],
+                topic='' if row['cat'] == OTHER else row['cat'],
                 day=row['day'], ts=row['ts'], url=safe_link(row.get('url')), images=list(row.get('images', [])),
                 native_id=row.get('id'))
 
@@ -75,7 +76,8 @@ def _via(entry, source):
 
 def section_items(section, issue, source):
     """Cards for one inbox section."""
-    return [Item(source_id=source['id'], filter_key=source['id'], category=source['name'],
+    return [Item(source_id=source['id'], filter_key=source['id'],
+                 category=entry['topic'] if isinstance(entry.get('topic'), str) else '',
                  title=entry.get('title') or '未命名条目', body=entry.get('body') or '',
                  day=issue['date'], ts=entry.get('date') or issue['date'], url=safe_link(entry.get('link')),
                  via=_via(entry, source),
@@ -93,7 +95,7 @@ def home_candidates(issue, source):
     items = issue_items(issue, source)
     if items:
         return items
-    simple = dict(source_id=source['id'], filter_key=source['id'], category=source['name'], day=issue['date'], ts=issue['date'])
+    simple = dict(source_id=source['id'], filter_key=source['id'], category='', day=issue['date'], ts=issue['date'])
     for block in issue.get('blocks', []):
         if block.get('type') not in ('oneliner', 'tomorrow'):
             continue
