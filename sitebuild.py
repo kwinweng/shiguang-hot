@@ -137,8 +137,8 @@ def build(rows, hot, now, inbox_only=False):
             lead=f'今天邮箱里 {count} 封值得看' if s.get('adapter')=='mail' else '看看今天世界发生了什么' if s.get('adapter')=='world' else s['name']
             note=d['date']+' · '+s['name']+' · '+('仅内网可见' if s['visibility']=='private' else '每日精选')
             if s.get('adapter')=='x':
-                count=sum(len(section['items']) for section in d.get('sections',[]) if section['title']=='大V爆款')
-                lead=f'今天 X 上 {count} 条大V爆款'; note=d['date']+' · 来自 X 公开帖'
+                count=sum(len(section['items']) for section in d.get('sections',[]) if section['title']=='推特爆款')
+                lead=f'今天推特上 {count} 条爆款'; note=d['date']+' · 来自 X 公开帖'
             content=heading(lead,note)+archives+blocks(d)
             for section in d.get('sections',[]):
                 section_title=''.join('<span class="g-wash">'+E(part.strip())+'</span>' for part in re.split(r'[|｜]',section.get('title') or '') if part.strip())

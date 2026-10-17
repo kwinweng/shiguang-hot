@@ -6,6 +6,14 @@ from PIL import Image
 import feeds
 
 class FeedTests(unittest.TestCase):
+    def test_hot_daily_registration(self):
+        cfg=json.loads((Path(__file__).parent/'sources.json').read_text())
+        source=next(s for s in cfg['sources'] if s['id']=='hot-daily')
+        self.assertEqual(source['type'],'inbox')
+        self.assertEqual(source['visibility'],'public')
+        self.assertEqual(source['nav'],dict(enabled=True,order=26))
+        self.assertEqual(source['adapter'],'native')
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
         self.root=Path(self.temp.name)
@@ -55,7 +63,7 @@ class FeedTests(unittest.TestCase):
                  overseas=[dict(title='忽略')],markets=[dict(title='忽略')])
         feed=feeds.normalize(raw,source)
         self.assertFalse(feeds.validate(feed,self.root,'x')[0])
-        self.assertEqual([s['title'] for s in feed['sections']],['大V爆款','X 今日吵什么','值得一读'])
+        self.assertEqual([s['title'] for s in feed['sections']],['推特爆款','推特今日吵什么','值得一读'])
         post=feed['sections'][0]['items'][0]
         self.assertEqual(post['title'],'作者（@writer）')
         self.assertEqual(post['body'],'摘要\n原因\n♥ 181,543 · ↻ 11,978')

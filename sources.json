@@ -105,7 +105,7 @@
     {
       "id": "x",
       "type": "inbox",
-      "name": "X 大V爆款",
+      "name": "推特爆款",
       "icon": "x",
       "color": "#3a3f47",
       "visibility": "public",
@@ -127,6 +127,21 @@
         "order": 25
       },
       "directory": "/workspace/feeds-inbox/github",
+      "filename": "feed.json",
+      "adapter": "native"
+    },
+    {
+      "id": "hot-daily",
+      "type": "inbox",
+      "name": "今日重点",
+      "icon": "all",
+      "color": "#4f5b66",
+      "visibility": "public",
+      "nav": {
+        "enabled": true,
+        "order": 26
+      },
+      "directory": "/workspace/feeds-inbox/hot-daily",
       "filename": "feed.json",
       "adapter": "native"
     }

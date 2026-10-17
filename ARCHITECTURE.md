@@ -42,6 +42,7 @@ Telegram 使用 channel；inbox 使用 directory、filename、adapter（native/m
 
 新增 Telegram：只增加一个 type=telegram 配置，填写 channel、唯一 id、名称、配色及可见范围。
 新增原生栏目：只增加 type=inbox、adapter=native 配置；将合法 feed.json 和图片原子写入约定目录。
+原生 public 栏目包括 `github`（GitHub 热门）和 `hot-daily`（今日重点，导航 order 26）。`hot-daily` 仅取自 5 个公开 TG 频道，由「热点日报」bot 每晚北京时间 22:00 生成，写入 `/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json`，沿用通用 public inbox 发布流程。
 无需修改渲染代码。图标 key 支持 home/hot/all/archive/mail/world/x/code，未知 key 回退 all。
 需要导航的 inbox 设置 nav.enabled=true 和 order。无有效数据时隐藏入口，不生成空栏目。
 本机执行 validate_feed.py <id>，再运行 sync.sh。public 内容经 publish_public.py 进入仓库后，Actions 才能获得。

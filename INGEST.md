@@ -85,5 +85,6 @@ visibility 以 `sources.json` 为唯一依据，投递文件无法自行修改�
 `mail` 读取 `/workspace/mail-digest/YYYY-MM-DD/digest.json` 的 date、sections，映射为统一 schema，固定来源 mail，private。
 `world` 读取 `/workspace/world-brief/YYYY-MM-DD/brief.json`，将 oneliner、markets、chart、tomorrow 映射到 blocks，保留 sections，固定来源 world，public。
 `native` 直接读取 feed.json；配置 directory、filename、adapter，默认目录 `/workspace/feeds-inbox/<id>`。
+已注册原生 public 栏目：`github`（GitHub 热门）和 `hot-daily`（今日重点）。`hot-daily` 仅使用配置中的 5 个公开 TG 频道内容，由「热点日报」bot 每晚北京时间 22:00 生成，投递至 `/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json`，导航 order 为 26。
 `MAIL_FEED_DIR`、`WORLD_FEED_DIR` 可覆盖兼容目录；其他来源可在配置 env 指定变量。
 `SOURCES_OVERRIDE` 可指定完整替代配置文件，仅用于隔离验证；不要改变 private 的真实可见范围。

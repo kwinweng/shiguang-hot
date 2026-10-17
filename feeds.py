@@ -31,7 +31,7 @@ def normalize(data, source):
     if source.get('adapter') == 'x':
         d = dict(schema='shiguang.feed/1', source=source['id'], date=data.get('date'),
                  generated_at=data.get('generated_at'), sections=[], blocks=[])
-        for kind, title in [('kol_posts', '大V爆款'), ('debates', 'X 今日吵什么'), ('threads', '值得一读')]:
+        for kind, title in [('kol_posts', '推特爆款'), ('debates', '推特今日吵什么'), ('threads', '值得一读')]:
             items = []
             for post in data.get(kind, []) or []:
                 summary = post.get('zh_summary') or ''
