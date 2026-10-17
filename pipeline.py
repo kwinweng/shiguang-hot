@@ -10,14 +10,16 @@ BJ=timezone(timedelta(hours=8)); D=os.path.dirname(os.path.abspath(__file__))
 from feeds import config, private_mode
 CONFIG=config()
 CH={s['channel']:s['name'] for s in CONFIG['sources'] if s['type']=='telegram' and (private_mode() or s['visibility']=='public')}
-db=sqlite3.connect(os.path.join(D,"tg.db"))
+NO_FETCH=os.getenv('NO_FETCH')=='1'
+db=sqlite3.connect('file:'+os.path.join(D,'tg.db')+'?mode=ro&immutable=1',uri=True) if NO_FETCH else sqlite3.connect(os.path.join(D,"tg.db"))
+if NO_FETCH: db.execute('pragma query_only=on')
 cols=[r[1] for r in db.execute("pragma table_info(msg)")]
-if cols and "html" not in cols: db.execute("alter table msg add column html text")  # 保留旧库消息，兼容缺少 HTML 的历史结构
-db.execute("create table if not exists msg(ch text,id int,ts text,text text,links text,html text,primary key(ch,id))")
+if not NO_FETCH and cols and "html" not in cols: db.execute("alter table msg add column html text")  # 保留旧库消息，兼容缺少 HTML 的历史结构
+if not NO_FETCH: db.execute("create table if not exists msg(ch text,id int,ts text,text text,links text,html text,primary key(ch,id))")
 images_migrated="images" not in [r[1] for r in db.execute("pragma table_info(msg)")]
-if images_migrated:
+if images_migrated and not NO_FETCH:
   db.execute("alter table msg add column images text not null default '[]'")
-db.execute("create table if not exists status(ch text primary key,ok int,err text,at text)")
+if not NO_FETCH: db.execute("create table if not exists status(ch text primary key,ok int,err text,at text)")
 now=datetime.now(BJ)
 def extract(tx):
   """根因修复：旧版 get_text("\\n") 会在每个内联元素(#话题链接/加粗/emoji)两侧插换行。
@@ -65,7 +67,7 @@ def channel_text(c,t):
   if re.match(r'^\s*(?:【(?:广告|推广|赞助)】|\[(?:广告|推广|赞助)\])',t): return None
   # A terminal channel handle is attribution/traffic text, never remove inline quotations.
   return re.sub(r'(?:\n[ \t]*)+@(?:freechinese|onelovecn)\s*$', '', t, flags=re.I).strip()
-for c in CH:
+for c in ([] if NO_FETCH else CH):
   last=db.execute("select max(id) from msg where ch=?",(c,)).fetchone()[0]
   floor=now-timedelta(hours=72) if last is None else None
   # Revisit two weeks once after schema migration to populate images on existing messages.
@@ -108,11 +110,11 @@ for c in CH:
   db.execute("insert or replace into status values(?,?,?,?)",(c,0 if err else 1,err,now.isoformat()))
   print(c,"new",n,err or "",file=sys.stderr)
 # Expire by message timestamp, not cache-restored filesystem modification time.
-for c,i,ts,images in db.execute("select ch,id,ts,images from msg where images!='[]'").fetchall():
+for c,i,ts,images in ([] if NO_FETCH else db.execute("select ch,id,ts,images from msg where images!='[]'").fetchall()):
   if datetime.fromisoformat(ts)<media_floor:
     db.execute("update msg set images='[]' where ch=? and id=?",(c,i))
 retained={path for (images,) in db.execute("select images from msg") for path in json.loads(images)}
-for path in Path(MEDIA).rglob('*'):
+for path in ([] if NO_FETCH else Path(MEDIA).rglob('*')):
   if path.is_file() and path.relative_to(D).as_posix() not in retained: path.unlink()
 db.commit()
 # ---------- build ----------

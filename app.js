@@ -34,6 +34,7 @@ search?.addEventListener('input', filterNews);
 channel?.addEventListener('change', filterNews);
 articles.forEach(article => {
   const button = article.querySelector('.expand');
+  if (!button) return;
   button.addEventListener('click', () => {
     const expanded = article.classList.toggle('expanded');
     button.setAttribute('aria-expanded', expanded);
@@ -71,4 +72,64 @@ document.querySelector('#more-toggle')?.addEventListener('click', event => {
   const panel = document.querySelector('#more-nav');
   panel.hidden = !panel.hidden;
   event.currentTarget.setAttribute('aria-expanded', String(!panel.hidden));
+});
+document.querySelector('#search-toggle')?.addEventListener('click', () => {
+  if (search) { search.scrollIntoView({block: 'center'}); search.focus({preventScroll: true}); }
+  else location.href = document.querySelector('.brand').getAttribute('href').replace('index.html', 'all.html') + '#q';
+});
+
+// One physical selection surface per control; native anchors keep navigation.
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+if (/Chrome|Chromium/.test(navigator.userAgent) && CSS.supports('backdrop-filter', 'url(#lg) blur(16px)')) document.documentElement.dataset.glassLens = '';
+const selections = [...document.querySelectorAll('.bottom,.desktop-nav.g-seg,.filters')].map(control => {
+  const indicator = document.createElement('span');
+  indicator.className = 'selection-pill';
+  indicator.setAttribute('aria-hidden', 'true');
+  control.prepend(indicator);
+  const items = [...control.querySelectorAll('a,.pill')];
+  let selected = control.querySelector('.active,.selected');
+  function position() {
+    indicator.hidden = !selected;
+    if (!selected) return;
+    indicator.style.setProperty('--pill-x', `${selected.offsetLeft}px`);
+    indicator.style.setProperty('--pill-y', `${selected.offsetTop}px`);
+    indicator.style.setProperty('--pill-width', `${selected.offsetWidth}px`);
+    indicator.style.setProperty('--pill-height', `${selected.offsetHeight}px`);
+  }
+  items.forEach(item => {
+    if (item.matches('button')) item.setAttribute('aria-pressed', String(item === selected));
+    item.addEventListener('click', event => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      selected = item;
+      items.forEach(other => {
+        other.classList.toggle(other.matches('button') ? 'selected' : 'active', other === item);
+        if (other.matches('button')) other.setAttribute('aria-pressed', String(other === item));
+      });
+      position();
+    });
+  });
+  position();
+  requestAnimationFrame(() => control.classList.add('glass-ready'));
+  new ResizeObserver(position).observe(control);
+  return position;
+});
+addEventListener('pageshow', () => selections.forEach(position => position()));
+let sheenFrame = 0, pointerX = .24, pointerY = 0;
+function updateSheen() {
+  sheenFrame = 0;
+  const root = document.documentElement;
+  root.style.setProperty('--sheen-x', `${(18 + pointerX * 42).toFixed(1)}%`);
+  root.style.setProperty('--sheen-y', `${(pointerY * 24 + Math.min(scrollY / Math.max(1, root.scrollHeight - innerHeight), 1) * 28).toFixed(1)}%`);
+}
+function scheduleSheen() {
+  if (!reducedMotion.matches && !sheenFrame) sheenFrame = requestAnimationFrame(updateSheen);
+}
+addEventListener('pointermove', event => { pointerX = event.clientX / innerWidth; pointerY = event.clientY / innerHeight; scheduleSheen(); }, {passive:true});
+addEventListener('scroll', scheduleSheen, {passive:true});
+reducedMotion.addEventListener('change', () => {
+  if (reducedMotion.matches) {
+    cancelAnimationFrame(sheenFrame); sheenFrame = 0;
+    document.documentElement.style.removeProperty('--sheen-x');
+    document.documentElement.style.removeProperty('--sheen-y');
+  } else scheduleSheen();
 });

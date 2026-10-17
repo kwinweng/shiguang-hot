@@ -11,17 +11,16 @@ def background(size):
     for y in range(size):
         for x in range(size):
             t=(x+y)/(2*max(1,size-1))
-            pixels[x,y]=tuple(round(a+(b-a)*t) for a,b in zip((140,200,255),(59,142,240)))+(255,)
+            pixels[x,y]=tuple(round(a+(b-a)*t) for a,b in zip((250,246,239),(238,232,223)))+(255,)
     return im
 
 def generate(size):
     scale=4; n=size*scale; im=background(n); draw=ImageDraw.Draw(im)
     def box(values): return tuple(round(v*n/64) for v in values)
     # Keep every mark within the central 80% safe area.
-    draw.arc(box((15,15,49,49)),8,300,fill='white',width=max(1,round(n*3/64)))
-    draw.line(box((32,22,32,33,24,39)),fill='white',width=max(1,round(n*3/64)),joint='curve')
-    draw.ellipse(box((29.5,30.5,34.5,35.5)),fill='#ffdc9b')
-    draw.ellipse(box((42,16,50,24)),fill='#ffdc9b')
+    draw.ellipse(box((20,20,44,44)),fill='#e3a01e')
+    for ray in ((32,12,32,16),(32,48,32,52),(12,32,16,32),(48,32,52,32),(18,18,21,21),(43,43,46,46),(18,46,21,43),(43,21,46,18)):
+        draw.line(box(ray),fill='#2b2100',width=max(1,round(n*1.75/64)))
     return im.resize((size,size),Image.Resampling.LANCZOS)
 
 def verify(im,label):
@@ -39,8 +38,8 @@ def main():
     generate(64).save(ASSETS/'favicon.ico',sizes=[(16,16),(32,32),(64,64)])
     with Image.open(ASSETS/'favicon.ico') as ico:
         for size in ico.ico.sizes():verify(ico.ico.getimage(size),f'ico {size}')
-    (ASSETS/'favicon.svg').write_text('''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="sky" x2="1" y2="1"><stop stop-color="#8cc8ff"/><stop offset="1" stop-color="#3b8ef0"/></linearGradient></defs><path fill="url(#sky)" d="M0 0h64v64H0z"/><path d="M48.8 34.7A17 17 0 1 1 40.5 17.3M32 22v11l-8 6" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="33" r="2.5" fill="#ffdc9b"/><circle cx="46" cy="20" r="4" fill="#ffdc9b"/></svg>''')
-    manifest={'name':'拾光热点','short_name':'拾光','start_url':'./','display':'standalone','background_color':'#f4f8fc','theme_color':'#3b8ef0','icons':[{'src':f'icon-{s}.png?v=20261017-2','sizes':f'{s}x{s}','type':'image/png','purpose':'any maskable'} for s in (192,512)]}
+    (ASSETS/'favicon.svg').write_text((ASSETS/'sun.svg').read_text())
+    manifest={'name':'拾光热点','short_name':'拾光','start_url':'./','display':'standalone','background_color':'#eee8df','theme_color':'#eee8df','icons':[{'src':f'icon-{s}.png?v=20261017-3','sizes':f'{s}x{s}','type':'image/png','purpose':'any maskable'} for s in (192,512)]}
     (ASSETS/'manifest.webmanifest').write_text(json.dumps(manifest,ensure_ascii=False,indent=2))
     board=Image.new('RGB',(1200,760),'white');d=ImageDraw.Draw(board)
     for j,bg in enumerate(('#f4f8fc','#0f1216')):
@@ -50,5 +49,5 @@ def main():
             x=j*600+40+i*280;y=130;board.paste(pic,(x,y),mask)
             d.text((x,440),f'{size}px / iOS radius 22.37%',fill='#6b7785')
         d.text((j*600+40,520),'Outer 10%: alpha=255; max |delta L| <= 1; PASS',fill='#6b7785')
-    path=Path('/workspace/news-site-shots/final-icon.png');path.parent.mkdir(parents=True,exist_ok=True);board.save(path)
+    path=ASSETS/'icon-preview.png';board.save(path)
 if __name__=='__main__':main()
