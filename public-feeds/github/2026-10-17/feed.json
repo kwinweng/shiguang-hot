@@ -1,0 +1,157 @@
+{
+  "schema": "shiguang.feed/1",
+  "source": "github",
+  "date": "2026-10-17",
+  "title": "GitHub 热门 · 2026-10-17",
+  "blocks": [
+    {
+      "type": "oneliner",
+      "title": "速览",
+      "items": [
+        "HeyPuter/everything：Puter 团队发起的“万物重写”计划：从零重建并以 MIT 协议开源 Office、Slack、Photoshop、AutoCAD 等专有软件的替代品",
+        "feder-cr/git-ai：按 Anthropic 公开的内部系统 Scion 的设计",
+        "datalab-to/indra：只有 100 万参数的 CPU OCR 模型",
+        "cursor/plugins：Cursor 官方插件规范与插件合集",
+        "Saffsanity/sill：把 Mac 上任意窗口或整个桌面实时投到 iPhone/iPad 上操作",
+        "Tencent-Hunyuan/Hy-Memory：腾讯混元开源的 LLM Agent 记忆引擎与 Python SDK",
+        "LosaLosSantos/aurelio-finance：跑在自己电脑上的个人理财应用",
+        "rociiu/talorys：部署在你自己 Cloudflare 账号里的个人 AI 助手",
+        "rdborg/Mediarium：自托管影音管家"
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "title": "新秀榜 · 近 7 天新建",
+      "items": [
+        {
+          "title": "HeyPuter/everything",
+          "body": "Puter 团队发起的“万物重写”计划：从零重建并以 MIT 协议开源 Office、Slack、Photoshop、AutoCAD 等专有软件的替代品，全部放在一个 monorepo 里。\n\n⭐ 1,856 · JavaScript · 创建于 2026-10-13",
+          "link": "https://github.com/HeyPuter/everything",
+          "source": "GitHub",
+          "date": "2026-10-17",
+          "images": [
+            {
+              "file": "4fcbf39b5b1252b5e52acfe8.webp",
+              "alt": "HeyPuter/everything 的 GitHub 仓库预览卡片"
+            }
+          ]
+        },
+        {
+          "title": "feder-cr/git-ai",
+          "body": "按 Anthropic 公开的内部系统 Scion 的设计，独立实现的开源版“为 AI Agent 设计的 Git”，面向成百上千个 Agent 同时读写、合并代码，服务端不调用任何大模型。\n\n⭐ 1,084 · Go · 创建于 2026-10-15",
+          "link": "https://github.com/feder-cr/git-ai",
+          "source": "GitHub",
+          "date": "2026-10-17",
+          "images": [
+            {
+              "file": "a0b4aef00c10c93e75c0e8f0.webp",
+              "alt": "feder-cr/git-ai 的 GitHub 仓库预览卡片"
+            }
+          ]
+        },
+        {
+          "title": "datalab-to/indra",
+          "body": "只有 100 万参数的 CPU OCR 模型，每秒最多读 49 页，比 Tesseract 和 PaddleOCR 快 11–17 倍，能把 PDF 和图片转成带版面和阅读顺序的 Markdown。\n\n⭐ 498 · Python · 创建于 2026-10-13",
+          "link": "https://github.com/datalab-to/indra",
+          "source": "GitHub",
+          "date": "2026-10-17",
+          "images": [
+            {
+              "file": "9bd4a19778c7ad657adad4fa.webp",
+              "alt": "datalab-to/indra 的 GitHub 仓库预览卡片"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "飙升榜 · 今日增长",
+      "items": [
+        {
+          "title": "cursor/plugins",
+          "body": "Cursor 官方插件规范与插件合集，涵盖常用开发工具、框架和 SaaS，每个插件一个目录、一个 manifest，用 Cursor 的人可以直接挑来装。\n\n⭐ 12,116（+278 今日） · TypeScript · 创建于 2026-01-23",
+          "link": "https://github.com/cursor/plugins",
+          "source": "GitHub",
+          "date": "2026-10-17",
+          "images": [
+            {
+              "file": "27544601c7d743d8f9cd1eb0.webp",
+              "alt": "cursor/plugins 的 GitHub 仓库预览卡片"
+            }
+          ]
+        },
+        {
+          "title": "Saffsanity/sill",
+          "body": "把 Mac 上任意窗口或整个桌面实时投到 iPhone/iPad 上操作，支持触控、Apple Pencil、触控板和键盘，免费开源，不需要账号和中转服务器。\n\n⭐ 2,934 · Swift · 创建于 2026-09-22",
+          "link": "https://github.com/Saffsanity/sill",
+          "source": "GitHub",
+          "date": "2026-10-17",
+          "images": [
+            {
+              "file": "f0dbb8818eb9dd6ece37d210.webp",
+              "alt": "Saffsanity/sill 的 GitHub 仓库预览卡片"
+            }
+          ]
+        },
+        {
+          "title": "Tencent-Hunyuan/Hy-Memory",
+          "body": "腾讯混元开源的 LLM Agent 记忆引擎与 Python SDK，针对聊天、工作、编程三种场景分别设计记忆管线，配套的 MemHub 能把 Claude Code、Cursor、Codex 等的对话记录统一管理在本地。\n\n⭐ 459 · Python · 创建于 2026-10-15",
+          "link": "https://github.com/Tencent-Hunyuan/Hy-Memory",
+          "source": "GitHub",
+          "date": "2026-10-17",
+          "images": [
+            {
+              "file": "91efe1ae56c9f048651c1b94.webp",
+              "alt": "Tencent-Hunyuan/Hy-Memory 的 GitHub 仓库预览卡片"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "领域榜 · 自托管",
+      "items": [
+        {
+          "title": "LosaLosSantos/aurelio-finance",
+          "body": "跑在自己电脑上的个人理财应用，可以记录净资产、投资、ETF、现金和负债，数据只存本机；AI 理财顾问是可选功能，用你自己的 OpenRouter key。\n\n⭐ 3,947 · Python · 创建于 2026-10-06",
+          "link": "https://github.com/LosaLosSantos/aurelio-finance",
+          "source": "GitHub",
+          "date": "2026-10-17",
+          "images": [
+            {
+              "file": "b681259f0b3201a66b99dcb3.webp",
+              "alt": "LosaLosSantos/aurelio-finance 的 GitHub 仓库预览卡片"
+            }
+          ]
+        },
+        {
+          "title": "rociiu/talorys",
+          "body": "部署在你自己 Cloudflare 账号里的个人 AI 助手，支持聊天、记忆、任务、笔记和定时提醒，一条 npx 命令就能部署，免费额度友好，无遥测。\n\n⭐ 1,270 · TypeScript · 创建于 2026-10-10",
+          "link": "https://github.com/rociiu/talorys",
+          "source": "GitHub",
+          "date": "2026-10-17",
+          "images": [
+            {
+              "file": "de0fdb3deea2e9bb9aa812a6.webp",
+              "alt": "rociiu/talorys 的 GitHub 仓库预览卡片"
+            }
+          ]
+        },
+        {
+          "title": "rdborg/Mediarium",
+          "body": "自托管影音管家，一个 Docker 容器就能替代 Radarr、Sonarr、Prowlarr、SABnzbd、下载器和 Bazarr，自动搜索、下载、整理电影、剧集、音乐和电子书，对接 Plex/Jellyfin/Emby。\n\n⭐ 227 · Go · 创建于 2026-09-28",
+          "link": "https://github.com/rdborg/Mediarium",
+          "source": "GitHub",
+          "date": "2026-10-17",
+          "images": [
+            {
+              "file": "7a2fa7e9b95864c2076babee.webp",
+              "alt": "rdborg/Mediarium 的 GitHub 仓库预览卡片"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
