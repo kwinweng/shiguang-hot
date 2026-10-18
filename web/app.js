@@ -1,4 +1,4 @@
-// 拾光热点 — interactions. One plain script, no dependencies.
+// 拾光热榜 — interactions. One plain script, no dependencies.
 // Modules: motion helpers · toast · bookmarks · filters · expanding cards · times · photo viewer ·
 // navigation sheet · scroll chrome · pull to refresh. Every animation checks reduced motion first.
 (() => {
