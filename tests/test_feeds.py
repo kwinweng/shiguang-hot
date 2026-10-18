@@ -203,6 +203,13 @@ class PrivacyBuildTests(unittest.TestCase):
                     self.assertEqual([h.get_text() for h in channel.select('.section-label h2')],['每日简报','Telegram'])
                     self.assertEqual([a['href'] for a in columns.select('[data-panel="tag"] a.column-entry')],['tag/other.html'])
                     self.assertIn('TG 0',(target/'tag/other.html').read_text())
+                    # Tag pages have no password, so private mail never lands on them, in either mode;
+                    # nor on the tag panel of 栏目, which quotes each tag's newest title.
+                    for page in [*(target/'tag').glob('*.html'), target/'columns.html']:
+                        text=page.read_text(); soup=BeautifulSoup(text,'html.parser')
+                        if page.parent.name=='tag': self.assertTrue(soup.select('article [data-source]'),page.name)
+                        self.assertFalse(soup.select('[data-source="mail"]'),page.name)
+                        self.assertFalse([n for n in range(5) if f'mail{n}' in text],page.name)
                     hot=BeautifulSoup((target/'hot.html').read_text(),'html.parser')
                     self.assertIsNotNone(hot.select_one('[data-timeline] .tl-track'))
                     self.assertEqual(len(hot.select('.tl-day')),3)
