@@ -1,0 +1,150 @@
+{
+  "schema": "shiguang.feed/1",
+  "source": "github",
+  "date": "2026-10-18",
+  "title": "GitHub 热门早报",
+  "blocks": [
+    {
+      "type": "oneliner",
+      "title": "速览",
+      "items": [
+        "编程 Agent 周边依旧最热：谷歌官方的安卓 Skills 合集和跨 Agent 共享记忆的 ai-memory 都在快速涨星。",
+        "纯 Rust 写的参数化 CAD SolidCraft 十天出头就冲到 4.3k 星，今天的领域榜也给了 Rust 命令行工具。"
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "title": "新秀榜 · 近 7 天新建",
+      "items": [
+        {
+          "title": "deeplethe/solid-glass",
+          "body": "一套基于 shadcn/ui 的「实心玻璃」界面风格，介于扁平与液态玻璃之间：只透出轮廓、不让背景抢字，专为信息不断流动的 AI 应用设计，还有整屏示例块可直接抄。\n★ 1.7k · TypeScript · 创建于 2026-10-12",
+          "link": "https://github.com/deeplethe/solid-glass",
+          "source": "GitHub",
+          "date": "2026-10-18",
+          "images": [
+            {
+              "file": "331c7483b589e17d5a22db2b.webp",
+              "alt": "deeplethe/solid-glass 预览图"
+            }
+          ]
+        },
+        {
+          "title": "zhuyansen/new-term-radar",
+          "body": "每天帮你抓 AI 里刚冒头的新名字：X 首发、HF 趋势、GitHub 爆红仓库、新站点与站内地图，再补一份关键词表并事后回测，让做站写简报的人早几天知道。\n★ 1.1k · Python · 创建于 2026-10-12",
+          "link": "https://github.com/zhuyansen/new-term-radar",
+          "source": "GitHub",
+          "date": "2026-10-18",
+          "images": [
+            {
+              "file": "52b8e316ccc678c6673a89a6.webp",
+              "alt": "zhuyansen/new-term-radar 预览图"
+            }
+          ]
+        },
+        {
+          "title": "rohit267/net-merge",
+          "body": "把 Wi-Fi、有线网和手机热点同时用起来，新连接分到不同链路，下载和游戏更新就能叠加带宽。无需账号、服务器或 VPN，三平台可用，崩溃也不影响上网。\n★ 799 · Go · 创建于 2026-10-12",
+          "link": "https://github.com/rohit267/net-merge",
+          "source": "GitHub",
+          "date": "2026-10-18",
+          "images": [
+            {
+              "file": "33984b6c3ed4f6444f608048.webp",
+              "alt": "rohit267/net-merge 预览图"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "飙升榜 · 今日增长",
+      "items": [
+        {
+          "title": "android/skills",
+          "body": "谷歌官方的安卓开发 Agent Skills 合集，用 SKILL.md 把最佳实践喂给大模型，专挑模型平时容易做砸的流程下手，能直接装进 Gemini 或 Claude Code，写安卓的朋友值得收一下。\n★ 8.4k（今日 +355） · Kotlin · 创建于 2026-03-16",
+          "link": "https://github.com/android/skills",
+          "source": "GitHub",
+          "date": "2026-10-18",
+          "images": [
+            {
+              "file": "8b1cf7a78b03aa2523869933.webp",
+              "alt": "android/skills 预览图"
+            }
+          ]
+        },
+        {
+          "title": "akitaonrails/ai-memory",
+          "body": "给编程 Agent 一份共享记忆：Claude Code 干到一半切 Codex 也能接着来，跨项目、跨机器、全队可用；记忆就是 git 里的 Markdown。\n★ 9.9k（今日 +178） · Rust · 创建于 2026-05-21",
+          "link": "https://github.com/akitaonrails/ai-memory",
+          "source": "GitHub",
+          "date": "2026-10-18",
+          "images": [
+            {
+              "file": "750796ea25138739b49c56eb.webp",
+              "alt": "akitaonrails/ai-memory 预览图"
+            }
+          ]
+        },
+        {
+          "title": "tangency-labs/solidcraft",
+          "body": "纯 Rust 写的开源参数化三维 CAD，画草图、加约束、按特征时间线建模，改一个尺寸整个模型自动重建。桌面和浏览器都能跑，还能让 AI 通过内置 MCP 服务器建模。\n★ 4.3k · Rust · 创建于 2026-10-07",
+          "link": "https://github.com/tangency-labs/solidcraft",
+          "source": "GitHub",
+          "date": "2026-10-18",
+          "images": [
+            {
+              "file": "73d3ed45ea4f8ae3e652d507.webp",
+              "alt": "tangency-labs/solidcraft 预览图"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "领域榜 · Rust 命令行工具",
+      "items": [
+        {
+          "title": "Orange-OpenSource/hurl",
+          "body": "用纯文本写 HTTP 请求的命令行工具，能把请求串起来、提取变量并校验响应。抓数据和做接口测试都行，REST、GraphQL 通吃，文件读起来像文档。\n★ 19.3k · Rust · 创建于 2020-08-25",
+          "link": "https://github.com/Orange-OpenSource/hurl",
+          "source": "GitHub",
+          "date": "2026-10-18",
+          "images": [
+            {
+              "file": "bfb3e4bea956111a287af4d8.webp",
+              "alt": "Orange-OpenSource/hurl 预览图"
+            }
+          ]
+        },
+        {
+          "title": "denisidoro/navi",
+          "body": "命令行交互式速查表：自己写或下载别人维护的 cheatsheet，用 fzf 浏览、挑好参数再执行，免去背参数和复制粘贴，还能当 shell 小部件用。\n★ 17.8k · Rust · 创建于 2019-09-20",
+          "link": "https://github.com/denisidoro/navi",
+          "source": "GitHub",
+          "date": "2026-10-18",
+          "images": [
+            {
+              "file": "f00a2f1c9661cf2d9a76d139.webp",
+              "alt": "denisidoro/navi 预览图"
+            }
+          ]
+        },
+        {
+          "title": "hatoo/oha",
+          "body": "Rust 写的 HTTP 压测小工具，灵感来自 hey，持续给 Web 服务打请求，同时在终端里用实时 TUI 动画展示进度和延迟，比干等一堆数字直观多了。\n★ 10.6k · Rust · 创建于 2020-03-02",
+          "link": "https://github.com/hatoo/oha",
+          "source": "GitHub",
+          "date": "2026-10-18",
+          "images": [
+            {
+              "file": "dec77d62107adcde91c5529e.webp",
+              "alt": "hatoo/oha 预览图"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
