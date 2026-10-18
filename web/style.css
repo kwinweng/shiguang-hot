@@ -11,12 +11,16 @@
   color-scheme:light;
   --ground:#EEE8DF;--page:#F8F4EE;--ink:#1D1B18;--ink-2:rgba(29,27,24,.64);--ink-3:rgba(29,27,24,.38);
   --line:rgba(29,27,24,.10);--wash:rgba(29,27,24,.055);
-  --glass:rgba(255,255,255,.40);--glass-strong:rgba(255,255,255,.70);--glass-line:rgba(255,255,255,.74);
+  --glass:rgba(255,255,255,.40);--glass-strong:rgba(255,255,255,.70);
   --sheet:rgba(255,254,251,.86);--sheet-line:rgba(255,255,255,.96);
   --sun:#E3A01E;--on-sun:#2B2100;--sun-wash:rgba(255,199,84,.22);
   --edge:#FAF6EF;--veil:rgba(255,252,246,.42);--beam:rgba(255,247,226,.90);
   --scrim:rgba(0,0,0,.62);--photo-ink:#FFFFFF;--info:#3F74AD;--warn:#D98A1E;
   --shadow-card:0 18px 44px -20px rgba(72,52,22,.36);
+  --glass-rim:rgba(255,255,255,.90);--glass-inner:rgba(255,255,255,.35);--glass-edge:rgba(60,52,40,.10);--glass-contact:rgba(40,32,20,.06);--glass-shade:rgba(72,52,22,.28);
+  /* Glass edge (after Solid Glass, MIT): a lit top rim, an inner line, an outer hairline,
+     a contact shadow and a soft shade. Glass surfaces draw their edge with this, not a border. */
+  --shadow-glass:inset 0 1px 0 var(--glass-rim),inset 0 0 0 1px var(--glass-inner),0 0 0 1px var(--glass-edge),0 1px 2px var(--glass-contact),0 12px 32px -14px var(--glass-shade);
   --shadow-photo:0 26px 48px -24px rgba(62,42,12,.5),0 2px 8px 0 rgba(62,42,12,.10);
   /* paint of the 3D status icons (not part of the colour tokens) */
   --icon-light:#FFFEFB;--icon-shade:#D5C7AE;
@@ -40,11 +44,12 @@
   color-scheme:dark;
   --ground:#0F0E12;--page:#18171C;--ink:#F6F3EC;--ink-2:rgba(246,243,236,.66);--ink-3:rgba(246,243,236,.40);
   --line:rgba(255,255,255,.11);--wash:rgba(255,255,255,.07);
-  --glass:rgba(255,255,255,.10);--glass-strong:rgba(255,255,255,.20);--glass-line:rgba(255,255,255,.17);
+  --glass:rgba(255,255,255,.10);--glass-strong:rgba(255,255,255,.20);
   --sheet:rgba(21,20,25,.66);--sheet-line:rgba(255,255,255,.13);
   --sun:#F5B63A;--sun-wash:rgba(245,182,58,.15);
   --edge:#0C0B0F;--veil:rgba(8,8,12,.50);--beam:rgba(255,212,150,.20);
   --shadow-card:0 18px 44px -18px rgba(0,0,0,.62);
+  --glass-rim:rgba(255,255,255,.16);--glass-inner:rgba(255,255,255,.04);--glass-edge:rgba(255,255,255,.06);--glass-contact:rgba(0,0,0,.10);--glass-shade:rgba(0,0,0,.60);
   --shadow-photo:0 26px 50px -22px rgba(0,0,0,.72),0 2px 8px 0 rgba(0,0,0,.3);
   --icon-light:#57524B;--icon-shade:#29272B;
 }}
@@ -52,11 +57,12 @@ html[data-theme=dark]{
   color-scheme:dark;
   --ground:#0F0E12;--page:#18171C;--ink:#F6F3EC;--ink-2:rgba(246,243,236,.66);--ink-3:rgba(246,243,236,.40);
   --line:rgba(255,255,255,.11);--wash:rgba(255,255,255,.07);
-  --glass:rgba(255,255,255,.10);--glass-strong:rgba(255,255,255,.20);--glass-line:rgba(255,255,255,.17);
+  --glass:rgba(255,255,255,.10);--glass-strong:rgba(255,255,255,.20);
   --sheet:rgba(21,20,25,.66);--sheet-line:rgba(255,255,255,.13);
   --sun:#F5B63A;--sun-wash:rgba(245,182,58,.15);
   --edge:#0C0B0F;--veil:rgba(8,8,12,.50);--beam:rgba(255,212,150,.20);
   --shadow-card:0 18px 44px -18px rgba(0,0,0,.62);
+  --glass-rim:rgba(255,255,255,.16);--glass-inner:rgba(255,255,255,.04);--glass-edge:rgba(255,255,255,.06);--glass-contact:rgba(0,0,0,.10);--glass-shade:rgba(0,0,0,.60);
   --shadow-photo:0 26px 50px -22px rgba(0,0,0,.72),0 2px 8px 0 rgba(0,0,0,.3);
   --icon-light:#57524B;--icon-shade:#29272B;
 }
@@ -98,7 +104,7 @@ html[data-theme=dark] .g-light__field{background-image:var(--dark-image)}
 
 /* ============ 4. Surfaces ============ */
 /* Glass card: floats on the light; never blurs what is behind it. */
-.g-card{background:var(--glass);border:1px solid var(--glass-line);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:0 var(--space-6) var(--space-6)}
+.g-card{background:var(--glass);border:0;border-radius:var(--radius-card);box-shadow:var(--shadow-glass);padding:0 var(--space-6) var(--space-6)}
 .g-card--sun{background-image:radial-gradient(120% 90% at 0% 0%,var(--sun-wash) 0%,transparent 60%)}
 .g-card__label{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);min-height:var(--space-8);margin:0;
   font-size:13px;line-height:18px;font-weight:500;letter-spacing:1.3px;color:var(--ink-2)}
@@ -125,7 +131,7 @@ html[data-scrolled] .g-topbar::before,html[data-scrolled] .g-topbar__where{opaci
 .g-topbar__actions{margin-left:auto;display:flex;gap:6px}
 /* Round button: the frosted glass that only floating controls get. */
 .g-round{position:relative;display:inline-grid;place-items:center;width:var(--space-8);height:var(--space-8);padding:0;border-radius:var(--radius-pill);
-  border:1px solid var(--glass-line);background:var(--glass);box-shadow:var(--shadow-card);color:var(--ink);
+  border:0;background:var(--glass);box-shadow:var(--shadow-glass);color:var(--ink);
   -webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4)}
 
 /* Slots: shared by the tab bar and the desktop switch. The bright-glass block is its own element. */
@@ -139,16 +145,16 @@ html[data-scrolled] .g-topbar::before,html[data-scrolled] .g-topbar__where{opaci
 /* Tab bar: a centred capsule of words, 8 above the safe area. */
 .g-tabbar{position:fixed;z-index:30;left:50%;bottom:calc(var(--space-2) + env(safe-area-inset-bottom,0px));translate:-50% 0;
   display:grid;grid-template-columns:repeat(4,min(72px,calc((100vw - 34px) / 4)));height:56px;padding:5px;border-radius:var(--radius-pill);
-  background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow-card);
+  background:var(--glass);border:0;box-shadow:var(--shadow-glass);
   -webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5)}
 .g-tabbar .tab,.g-tabbar .tab__pill{height:46px}
 .g-tabbar .tab{font-size:15px;line-height:20px}
 
 /* Switch: a glass capsule sized to its content; the chosen item is bright glass. */
-.g-seg{display:inline-flex;padding:var(--space-1);border-radius:var(--radius-pill);background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow-card)}
+.g-seg{display:inline-flex;padding:var(--space-1);border-radius:var(--radius-pill);background:var(--glass);border:0;box-shadow:var(--shadow-glass)}
 .g-seg__item{height:36px;padding:0 17px;border:0;border-radius:var(--radius-pill);background:transparent;font-size:14.5px;line-height:20px;font-weight:500;color:var(--ink-2);cursor:pointer}
 .g-seg__item[aria-pressed=true]{background:var(--glass-strong);color:var(--ink);font-weight:600}
-.g-seg--ink{background:var(--wash);border-color:transparent;box-shadow:none}
+.g-seg--ink{background:var(--wash);box-shadow:none}
 .g-seg--ink .g-seg__item[aria-pressed=true]{background:var(--ink);color:var(--page)}
 /* The desktop navigation is a switch in the top bar (hidden on phones, where the tab bar does the job). */
 .desktop-nav{display:none}
@@ -312,7 +318,7 @@ dialog::backdrop{background:var(--scrim)}
 .sheet::before{content:"";display:block;width:36px;height:5px;margin:-6px auto var(--space-2);border-radius:3px;background:var(--line)}
 .sheet__head{display:flex;align-items:center;justify-content:space-between;cursor:grab;touch-action:none}
 .sheet__head h2{margin:0;font-size:17px;line-height:24px;font-weight:600}
-.sheet__head .g-round{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--wash);border-color:transparent;box-shadow:none}
+.sheet__head .g-round{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--wash);box-shadow:none}
 .sheet__group{display:flex;align-items:center;min-height:var(--space-8);margin:0;font-size:13px;line-height:18px;font-weight:500;letter-spacing:1.3px;color:var(--ink-2)}
 .sheet__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-2)}
 .sheet__link{display:flex;align-items:center;gap:var(--space-3);min-height:52px;padding:0 var(--space-5);font-size:14px;line-height:20px;font-weight:500;overflow:hidden}
@@ -330,7 +336,7 @@ dialog::backdrop{background:var(--scrim)}
 /* Toast: a floating control, so frosted glass. */
 .toast{position:fixed;z-index:40;left:50%;bottom:calc(var(--tab-bar-height) + var(--space-4) + env(safe-area-inset-bottom,0px));translate:-50% 16px;
   display:flex;align-items:center;gap:var(--space-2);max-width:calc(100% - 2 * var(--space-5));min-height:52px;padding:4px 4px 4px var(--space-6);
-  border-radius:var(--radius-pill);border:1px solid var(--glass-line);background:var(--glass);box-shadow:var(--shadow-card);
+  border-radius:var(--radius-pill);border:0;background:var(--glass);box-shadow:var(--shadow-glass);
   -webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);
   font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none}
 .toast__text{overflow:hidden;text-overflow:ellipsis}
@@ -338,7 +344,7 @@ dialog::backdrop{background:var(--scrim)}
 .toast.is-shown{translate:-50% 0;opacity:1;visibility:visible;pointer-events:auto}
 
 .pull-refresh{position:fixed;top:calc(env(safe-area-inset-top,0px) + var(--space-2));left:50%;z-index:25;display:flex;align-items:center;gap:var(--space-2);
-  height:var(--space-8);padding:0 var(--space-5) 0 6px;border-radius:var(--radius-pill);border:1px solid var(--glass-line);background:var(--glass);box-shadow:var(--shadow-card);
+  height:var(--space-8);padding:0 var(--space-5) 0 6px;border-radius:var(--radius-pill);border:0;background:var(--glass);box-shadow:var(--shadow-glass);
   -webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);font-size:13px;line-height:18px;pointer-events:none;translate:-50% calc(var(--pull,0px) - 60px)}
 /* Refreshing is "in progress", the one job of the sun. */
 .pull-refresh .sun{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--sun);color:var(--on-sun);rotate:calc(var(--pull,0px) * 3deg)}
