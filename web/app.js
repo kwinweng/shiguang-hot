@@ -1,4 +1,4 @@
-// 拾光热点 — interactions. One plain script, no dependencies.
+// 拾光热榜 — interactions. One plain script, no dependencies.
 // Modules: motion helpers · toast · bookmarks · filters · expanding cards · times · photo viewer ·
 // navigation sheet · scroll chrome · pull to refresh. Every animation checks reduced motion first.
 (() => {
@@ -311,21 +311,64 @@
   const lightbox = $('.lightbox');
   const big = lightbox && $('img', lightbox);
   let trigger = null;
+  let group = [];
+  let index = 0;
   function inView(element) {
     const box = element.getBoundingClientRect();
     return box.bottom > 0 && box.top < innerHeight;
   }
+  // Count pill and desktop arrows exist only when the open post has several photos.
+  const count = document.createElement('span');
+  count.className = 'lightbox__count';
+  count.hidden = true;
+  const arrows = [-1, 1].map(delta => {
+    const label = delta < 0 ? '上一张' : '下一张';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `g-round lightbox__nav lightbox__nav--${delta < 0 ? 'prev' : 'next'}`;
+    button.dataset.step = String(delta);
+    button.setAttribute('aria-label', label);
+    button.hidden = true;
+    return button;
+  });
+  if (lightbox && big) {
+    lightbox.append(...arrows, count);
+    for (const arrow of arrows) arrow.addEventListener('click', event => { event.stopPropagation(); step(Number(arrow.dataset.step)); });
+  }
+  function showPhoto(next) {
+    index = next;
+    big.src = group[index].dataset.image;
+    big.alt = group[index].querySelector('img').alt;
+    trigger = group[index];
+    count.textContent = `${index + 1}/${group.length}`;
+    arrows[0].disabled = index <= 0;
+    arrows[1].disabled = index >= group.length - 1;
+  }
+  function step(delta) {
+    if (!lightbox.open) return;
+    const next = Math.min(group.length - 1, Math.max(0, index + delta));
+    if (next !== index) showPhoto(next);
+  }
   async function openPhoto(button) {
+    const media = button.closest('.card__media');
+    group = media ? $$('.photo', media) : [button];
+    if (!group.includes(button)) group = [button];
+    index = group.indexOf(button);
     trigger = button;
-    const thumb = $('img', button);
     big.src = button.dataset.image;
-    big.alt = thumb.alt;
+    big.alt = $('img', button).alt;
+    count.textContent = `${index + 1}/${group.length}`;
+    const many = group.length > 1;
+    count.hidden = !many;
+    for (const arrow of arrows) arrow.hidden = !many;
+    arrows[0].disabled = index <= 0;
+    arrows[1].disabled = index >= group.length - 1;
     if (!canTransition()) { lightbox.showModal(); return; }
     await big.decode().catch(() => {});
     lightbox.classList.add('is-morph');
-    thumb.style.viewTransitionName = 'lightbox-image';
+    button.querySelector('img').style.viewTransitionName = 'lightbox-image';
     await localTransition(() => {
-      thumb.style.viewTransitionName = '';
+      button.querySelector('img').style.viewTransitionName = '';
       big.style.viewTransitionName = 'lightbox-image';
       lightbox.showModal();
     }).finished.catch(() => {});
@@ -346,7 +389,10 @@
       thumb.style.viewTransitionName = '';
       lightbox.classList.remove('is-morph');
     } else lightbox.close();
-    lightbox.style.removeProperty('--drag');
+    for (const prop of ['--drag', '--swipe-x']) {
+      big.style.removeProperty(prop);
+      lightbox.style.removeProperty(prop);
+    }
     trigger?.focus({preventScroll: true});
   }
 
@@ -377,16 +423,72 @@
     handle.addEventListener('pointercancel', end);
   }
 
+  // Lightbox gesture: the axis locks after ~10px — horizontal swipes step, vertical drags dismiss.
+  if (lightbox && big) {
+    let start = null;
+    big.addEventListener('pointerdown', event => {
+      if (event.button !== 0) return;
+      start = {x: event.clientX, y: event.clientY, t: performance.now(), axis: null, dx: 0, dy: 0};
+      big.setPointerCapture(event.pointerId);
+    });
+    big.addEventListener('pointermove', event => {
+      if (!start) return;
+      const dx = event.clientX - start.x;
+      const dy = event.clientY - start.y;
+      if (!start.axis) {
+        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+        start.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+        lightbox.classList.add('is-dragging');
+      }
+      if (start.axis === 'x') {
+        start.dx = dx;
+        if (group.length < 2) return;
+        const limit = Math.max(80, (innerWidth - big.offsetWidth) / 2);
+        big.style.setProperty('--swipe-x', `${Math.max(-limit, Math.min(limit, dx))}px`);
+      } else {
+        start.dy = Math.max(0, dy);
+        big.style.setProperty('--drag', `${start.dy}px`);
+      }
+    });
+    const end = () => {
+      if (!start) return;
+      const {axis, dx, dy, t} = start;
+      const elapsed = Math.max(1, performance.now() - t);
+      start = null;
+      const dismiss = axis === 'y' && (dy > 110 || (dy > 24 && dy / elapsed > 0.6));
+      if (!dismiss) lightbox.classList.remove('is-dragging');
+      big.style.removeProperty('--swipe-x');
+      if (!dismiss) big.style.removeProperty('--drag');
+      if (!axis) return;
+      if (axis === 'x') {
+        if (group.length < 2) return;
+        if (Math.abs(dx) > 60 || (Math.abs(dx) > 20 && Math.abs(dx) / elapsed > 0.5)) step(dx < 0 ? 1 : -1);
+      } else if (dismiss) closePhoto();
+    };
+    big.addEventListener('pointerup', end);
+    big.addEventListener('pointercancel', end);
+    big.addEventListener('lostpointercapture', end);
+    lightbox.addEventListener('close', () => {
+      lightbox.classList.remove('is-dragging');
+      big.style.removeProperty('--swipe-x');
+      big.style.removeProperty('--drag');
+    });
+    lightbox.addEventListener('keydown', event => {
+      if (event.key === 'ArrowLeft') { event.preventDefault(); step(-1); }
+      else if (event.key === 'ArrowRight') { event.preventDefault(); step(1); }
+    });
+  }
+
   if (lightbox) {
     document.addEventListener('click', event => {
       const button = event.target.closest('.photo');
       if (button) openPhoto(button);
     });
     lightbox.addEventListener('click', event => {
+      if (event.target.closest('.lightbox__nav')) return;
       if (event.target === lightbox || event.target.closest('[data-close]')) closePhoto();
     });
     lightbox.addEventListener('cancel', event => { event.preventDefault(); closePhoto(); });
-    dragToDismiss(big, lightbox, closePhoto, 110);
   }
 
   // ---------- Navigation sheet ----------

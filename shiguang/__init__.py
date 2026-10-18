@@ -1,4 +1,4 @@
-"""拾光热点: every channel becomes one kind of item, and five pages take what they need.
+"""拾光热榜: every channel becomes one kind of item, and five pages take what they need.
 
 Layers, in the order a build runs them:
   ingest/  collect content: Telegram into tg.db, inbox feeds from disk

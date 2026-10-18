@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""拾光热点：收内容 → 统一 → 加工 → 出页。每 30 分钟由 GitHub Actions 运行，本机 run.sh 也调用它。
+"""拾光热榜：收内容 → 统一 → 加工 → 出页。每 30 分钟由 GitHub Actions 运行，本机 run.sh 也调用它。
 
 NO_FETCH=1 跳过 Telegram 抓取（只读 tg.db）；SITE_MODE=private 构建含邮件的内网版。
 """

@@ -1,4 +1,4 @@
-"""HTML components of the 「光」 design system, applied to 拾光热点.
+"""HTML components of the 「光」 design system, applied to 拾光热榜.
 
 Class names follow the spec's components (g-light, g-lead, g-card, g-sheet, g-wash, g-pill, g-btn,
 g-round, g-topbar, g-tabbar, g-seg, g-panel); style.css implements them from the spec's tokens.
@@ -361,7 +361,7 @@ def document(page, title, body, illumination, light_source):
         '<meta name="color-scheme" content="light dark">'
         '<meta name="theme-color" content="#FAF6EF" media="(prefers-color-scheme: light)">'
         '<meta name="theme-color" content="#0C0B0F" media="(prefers-color-scheme: dark)">'
-        f'<title>{E(title)} · 拾光热点</title>'
+        f'<title>{E(title)} · 拾光热榜</title>'
         f'<link rel="icon" href="{page.url("favicon.ico")}?v={version}">'
         f'<link rel="icon" type="image/svg+xml" href="{page.url("favicon.svg")}?v={version}">'
         f'<link rel="apple-touch-icon" href="{page.url("apple-touch-icon.png")}?v={version}">'
@@ -375,7 +375,7 @@ def document(page, title, body, illumination, light_source):
         f'{sprite()}'
         '<div class="g-light" aria-hidden="true"><i class="g-light__field"></i></div>'
         '<header class="g-topbar"><div class="g-topbar__inner g-column">'
-        f'<a class="g-topbar__brand" href="{page.url("index.html")}">拾光热点</a>'
+        f'<a class="g-topbar__brand" href="{page.url("index.html")}">拾光热榜</a>'
         f'<span class="g-topbar__where" aria-hidden="true">{E(title)}</span>'
         f'<nav class="g-seg desktop-nav" aria-label="主导航">{slots}</nav>'
         f'<div class="g-topbar__actions"><button class="g-round" type="button" id="search-toggle" aria-label="搜索">{icon("search")}</button>'
@@ -397,7 +397,7 @@ def redirect(target, title):
     """A page that moved: send the reader on, keeping any #fragment. Works without JavaScript too."""
     return ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
             f'<meta http-equiv="refresh" content="0;url={E(target)}"><link rel="canonical" href="{E(target)}">'
-            f'<title>{E(title)} · 拾光热点</title>'
+            f'<title>{E(title)} · 拾光热榜</title>'
             f'<script>location.replace({json.dumps(target)}+location.hash)</script></head>'
             f'<body><p>这个页面已合并，<a href="{E(target)}">前往{E(title)}</a>。</p></body></html>')
 

@@ -39,7 +39,7 @@ def main():
     with Image.open(ASSETS/'favicon.ico') as ico:
         for size in ico.ico.sizes():verify(ico.ico.getimage(size),f'ico {size}')
     (ASSETS/'favicon.svg').write_text((ASSETS/'sun.svg').read_text())
-    manifest={'name':'拾光热点','short_name':'拾光','start_url':'./','display':'standalone','background_color':'#eee8df','theme_color':'#eee8df','icons':[{'src':f'icon-{s}.png?v=20261017-4','sizes':f'{s}x{s}','type':'image/png','purpose':'any maskable'} for s in (192,512)]}
+    manifest={'name':'拾光热榜','short_name':'拾光热榜','start_url':'./','display':'standalone','background_color':'#eee8df','theme_color':'#eee8df','icons':[{'src':f'icon-{s}.png?v=20261017-4','sizes':f'{s}x{s}','type':'image/png','purpose':'any maskable'} for s in (192,512)]}
     (ASSETS/'manifest.webmanifest').write_text(json.dumps(manifest,ensure_ascii=False,indent=2))
     board=Image.new('RGB',(1200,760),'white');d=ImageDraw.Draw(board)
     for j,bg in enumerate(('#f4f8fc','#0f1216')):

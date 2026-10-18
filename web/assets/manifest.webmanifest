@@ -1,6 +1,6 @@
 {
-  "name": "拾光热点",
-  "short_name": "拾光",
+  "name": "拾光热榜",
+  "short_name": "拾光热榜",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#eee8df",
