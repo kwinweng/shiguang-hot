@@ -173,6 +173,21 @@ class DesignSystemTests(unittest.TestCase):
             if 'backdrop-filter:blur' in body:
                 self.assertFalse(re.search(r'\.(g-card|g-sheet|card)\b', selector), selector)
 
+    def test_glass_draws_its_edge_with_light_not_a_border(self):
+        import re
+        css = re.sub(r'/\*.*?\*/', '', self.css, flags=re.S)
+        rules = {}
+        for sel, body in re.findall(r'([^{}]+)\{([^}]*)\}', css):
+            rules.setdefault(sel.strip(), body)  # the base rule, not a later media override
+        for selector in ('.g-card', '.g-round', '.g-tabbar', '.g-seg', '.toast', '.pull-refresh'):
+            body = rules[selector]
+            self.assertIn('border:0', body, selector)
+            self.assertIn('box-shadow:var(--shadow-glass)', body, selector)
+        # Each theme sets every edge colour.
+        for name in ('rim', 'inner', 'edge', 'contact', 'shade'):
+            self.assertEqual(self.css.count(f'--glass-{name}:'), 3, name)
+        self.assertNotIn('--glass-line', self.css)
+
     def test_light_follows_the_spec(self):
         from shiguang.site import light
         dawn = light.ambient_pixels(None, 'light')
