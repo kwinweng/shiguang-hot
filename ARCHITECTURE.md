@@ -21,6 +21,8 @@
 | `tools/` | `validate_feed.py` 投递校验、`screenshot.py` 截图、`build_icons.py` 生成图标 |
 | `tests/` | `python3 -m unittest discover tests` |
 
+内网版的登录（登录页 + 180 天 Cookie，代替 Basic Auth）由 `tools/login_gate.py` 提供，接入 nginx/Caddy 的方法见 `PRIVATE_LOGIN.md`。
+
 根目录另有几个兼容入口，给本机脚本用：`run.sh`、`mailbuild.py`（本机定时任务调用）、`validate_feed.py`（投递 bot 调用）、`feeds.py`（`publish_public.py` 可能 `import feeds`，其 `config()` 仍返回旧字段）。本机脚本收进仓库后删除后两个。
 
 ## 页面
