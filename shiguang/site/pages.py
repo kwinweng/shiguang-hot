@@ -147,11 +147,13 @@ class Content:
         return items
 
     def recent(self, days):
-        """Stream items and issue cards of the last `days` days, newest first."""
+        """Stream items and issue cards of the last `days` days, newest first. Private sources (邮件精华)
+        are left out: tag pages have no password, so this holds in the private build too."""
         floor = (date.fromisoformat(self.today) - timedelta(days=days - 1)).isoformat()
-        items = [i for i in self.stream if i.day >= floor]
+        public = lambda sid: self.sources[sid]['visibility'] != 'private'
+        items = [i for i in self.stream if i.day >= floor and public(i.source_id)]
         for sid, loaded in self.issues.items():
-            if sid == self.hot_source: continue
+            if sid == self.hot_source or not public(sid): continue
             items += [i for issue in loaded if issue['date'] >= floor for i in self.issue_cards(sid, issue)]
         return sorted(items, key=lambda i: i.moment or end_of(i.day), reverse=True)
 
