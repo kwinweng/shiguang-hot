@@ -22,3 +22,8 @@ feeds-inbox/
 tg.db-journal
 private-feeds/
 web/assets/icon-preview.png
+
+# Agent scratch
+.codex-out/
+.claude/settings.local.json
+.claude/.cc-writes/
