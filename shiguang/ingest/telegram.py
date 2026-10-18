@@ -15,6 +15,7 @@ from shiguang.model import BEIJING
 D = str(ROOT)
 MEDIA = os.path.join(D, 'media')
 MEDIA_DAYS = 14
+GAP_PAGES = 20
 
 
 def open_db(fetch):
@@ -29,6 +30,7 @@ def open_db(fetch):
     if images_migrated and fetch:
         db.execute("alter table msg add column images text not null default '[]'")
     if fetch: db.execute("create table if not exists status(ch text primary key,ok int,err text,at text)")
+    if fetch: db.execute("create table if not exists gap(ch text,before int,newest int,at text,primary key(ch,before))")
     return db, images_migrated
 
 
@@ -41,8 +43,17 @@ def extract(tx):
     return t.strip()
 
 
+class FetchError(Exception):
+    pass
+
+
 def get(u):
-    return subprocess.run(["curl", "-sL", "-m", "25", "-A", "Mozilla/5.0", u], capture_output=True, text=True).stdout
+    result = subprocess.run(["curl", "-sL", "-m", "25", "-A", "Mozilla/5.0", u], capture_output=True, text=True)
+    if result.returncode:
+        raise FetchError(f"curl exit {result.returncode}: {result.stderr.strip()[:150]}")
+    if not result.stdout.strip(): raise FetchError("页面为空")
+    if not re.search(r'tgme_(?:channel|widget)', result.stdout): raise FetchError("非 Telegram 频道页面")
+    return result.stdout
 
 
 def image_urls(m):
@@ -97,37 +108,70 @@ def fetch(db, channels, now, images_migrated):
             for (stored,) in db.execute("select images from msg where ch=? and ts>=?", (c, media_floor.isoformat()))
             for path in json.loads(stored))
         before = None; n = 0; err = None; seen = set()
+        # Only retry gaps from prior runs. newest is the stored id bound before the failed run;
+        # at preserves that run's 72-hour floor when no stored id existed.
+        gaps = db.execute("select before,newest,at from gap where ch=? order by before desc", (c,)).fetchall()
+
+        def store_page(ms, last, floor, backfill, seen):
+            nonlocal n
+            ids = []; stop = False
+            for m in ms:
+                i = int(m["data-post"].split("/")[1]); ids.append(i)
+                if i in seen: continue
+                seen.add(i)
+                tm = m.select_one("time[datetime]")
+                if not tm: continue
+                dt = datetime.fromisoformat(tm["datetime"]).astimezone(BEIJING)
+                if (floor and dt < floor) or (not floor and backfill and dt < media_floor): stop = True; continue
+                if last is not None and i <= last and not backfill: stop = True; continue
+                tx = m.select_one(".tgme_widget_message_text")
+                t = channel_text(c, extract(tx) if tx else '')
+                if t is None: continue
+                urls = image_urls(m)
+                if not t and not urls: continue
+                images = download_images(c, i, urls) if dt >= media_floor else []
+                links = [a["href"] for a in tx.select("a[href]")] if tx else []
+                cur = db.execute("insert or ignore into msg(ch,id,ts,text,links,html,images) values(?,?,?,?,?,?,?)", (c, i, dt.isoformat(), t or '[图片]', json.dumps(links), str(tx) if tx else '', json.dumps(images)))
+                n += cur.rowcount
+                if images: db.execute("update msg set images=? where ch=? and id=?", (json.dumps(images), c, i))
+            return ids, stop
+
         try:
             for _ in range(200):
                 s = BeautifulSoup(get(f"https://t.me/s/{c}" + (f"?before={before}" if before else "")), "html.parser")
                 ms = s.select("div.tgme_widget_message[data-post]")
                 if not ms: err = "页面无消息/打不开" if n == 0 and before is None else None; break
-                ids = []; stop = False
-                for m in ms:
-                    i = int(m["data-post"].split("/")[1]); ids.append(i)
-                    if i in seen: continue
-                    seen.add(i)
-                    tm = m.select_one("time[datetime]")
-                    if not tm: continue
-                    dt = datetime.fromisoformat(tm["datetime"]).astimezone(BEIJING)
-                    if (floor and dt < floor) or (not floor and backfill and dt < media_floor): stop = True; continue
-                    if last is not None and i <= last and not backfill: stop = True; continue
-                    tx = m.select_one(".tgme_widget_message_text")
-                    t = channel_text(c, extract(tx) if tx else '')
-                    if t is None: continue
-                    urls = image_urls(m)
-                    if not t and not urls: continue
-                    images = download_images(c, i, urls) if dt >= media_floor else []
-                    links = [a["href"] for a in tx.select("a[href]")] if tx else []
-                    cur = db.execute("insert or ignore into msg(ch,id,ts,text,links,html,images) values(?,?,?,?,?,?,?)", (c, i, dt.isoformat(), t or '[图片]', json.dumps(links), str(tx) if tx else '', json.dumps(images)))
-                    n += cur.rowcount
-                    if images: db.execute("update msg set images=? where ch=? and id=?", (json.dumps(images), c, i))
+                ids, stop = store_page(ms, last, floor, backfill, seen)
                 if stop or not ids: break
                 next_before = min(ids)
                 if before is not None and next_before >= before: break
                 before = next_before
             else: err = "达到翻页上限，历史回填未完成"
-        except Exception as ex: err = str(ex)[:200]
+        except Exception as ex:
+            err = "页面无消息/打不开" if before is None else (str(ex)[:200] or type(ex).__name__)
+            if before is not None:
+                db.execute("insert or ignore into gap values(?,?,?,?)", (c, before, last, now.isoformat()))
+                print(c, "gap", before, "bound", last, err, file=sys.stderr)
+        for gap_before, gap_last, gap_at in gaps:
+            cursor = gap_before; filled = False; gap_seen = set()
+            gap_floor = datetime.fromisoformat(gap_at) - timedelta(hours=72) if gap_last is None else None
+            try:
+                for _ in range(GAP_PAGES):
+                    s = BeautifulSoup(get(f"https://t.me/s/{c}?before={cursor}"), "html.parser")
+                    ms = s.select("div.tgme_widget_message[data-post]")
+                    if not ms: filled = True; break
+                    ids, stop = store_page(ms, gap_last, gap_floor, False, gap_seen)
+                    if stop or not ids: filled = True; break
+                    next_before = min(ids)
+                    if next_before >= cursor: raise FetchError("缺口翻页未前进")
+                    cursor = next_before
+                if not filled: err = err or "达到缺口回填上限，历史回填未完成"
+            except Exception as ex: err = err or str(ex)[:200] or type(ex).__name__
+            if filled:
+                db.execute("delete from gap where ch=? and before=?", (c, gap_before))
+            else:
+                db.execute("update or ignore gap set before=? where ch=? and before=?", (cursor, c, gap_before))
+                print(c, "gap", cursor, "bound", gap_last, err, file=sys.stderr)
         db.execute("insert or replace into status values(?,?,?,?)", (c, 0 if err else 1, err, now.isoformat()))
         print(c, "new", n, err or "", file=sys.stderr)
 
