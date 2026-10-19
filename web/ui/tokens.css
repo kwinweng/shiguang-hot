@@ -1,0 +1,113 @@
+/* Basic → semantic → component. This is the sole design-token source. */
+:root {
+  --palette-light-page: #f4f8fd;
+  --palette-light-text: #18283b;
+  --palette-dark-page: #0d1725;
+  --palette-dark-text: #eef4ff;
+  --blue-100: #e6f1ff;
+  --blue-300: #82c4ff;
+  --blue-500: #438fe8;
+  --blue-700: #1e5fa8;
+  --gold-200: #ffdfa0;
+  --font-ui:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Noto Sans CJK SC", sans-serif;
+  --font-xs: 12px;
+  --font-sm: 13px;
+  --font-body: 16px;
+  --font-label: 14px;
+  --font-lg: 18px;
+  --font-xl: 22px;
+  --font-2xl: 28px;
+  --font-3xl: 34px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius-control: 10px;
+  --radius-card: 16px;
+  --radius-panel: 24px;
+  --radius-pill: 999px;
+  --duration-press: 100ms;
+  --duration-state: 160ms;
+  --duration-panel: 220ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --touch: 44px;
+  --shell-max: 1200px;
+  --reading-max: 760px;
+  --page-padding: 24px;
+  --grid-gap: 16px;
+  --page: #f4f8fd;
+  --surface: #fff;
+  --surface-quiet: #eaf1f9;
+  --text: #18283b;
+  --muted: #526477;
+  --border: #d9e4f0;
+  --action: var(--blue-700);
+  --on-action: #fff;
+  --selected: #e6f1ff;
+  --focus: #1e5fa8;
+  --accent: var(--gold-200);
+  --accent-text: #765006;
+  --success: #176247;
+  --success-bg: #e6f4ec;
+  --warning: #835500;
+  --warning-bg: #fff1d5;
+  --danger: #a52d3b;
+  --danger-bg: #ffeaed;
+  --shadow: 0 4px 18px rgb(24 40 59 / 0.045);
+  --shadow-panel: 0 18px 70px rgb(10 28 52 / 0.2);
+  --scrim: rgb(9 19 34 / 0.58);
+  --photo-label: rgb(15 27 40 / 0.78);
+  --photo-ink: #fff;
+  --brand-gradient: linear-gradient(140deg, var(--blue-300), var(--blue-500));
+  --news-bg: var(--surface);
+  --price-color: var(--text);
+  --nav-bg: var(--surface);
+  --filter-bg: var(--surface);
+  --card-padding: 20px;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --page: #0d1725;
+  --surface: #162335;
+  --surface-quiet: #1d3048;
+  --text: #eef4ff;
+  --muted: #afbed1;
+  --border: #33455d;
+  --action: #91c5ff;
+  --on-action: #0d2747;
+  --selected: #223d5c;
+  --focus: #91c5ff;
+  --accent-text: #ffdfa0;
+  --success: #9bddba;
+  --success-bg: #183a30;
+  --warning: #ffdfa0;
+  --warning-bg: #3d321d;
+  --danger: #ffb0bc;
+  --danger-bg: #402431;
+  --shadow: 0 4px 18px rgb(0 0 0 / 0.1);
+  --shadow-panel: 0 18px 70px rgb(0 0 0 / 0.4);
+  color-scheme: dark;
+}
+:root[data-density="compact"] {
+  --card-padding: 14px;
+  --page-padding: 16px;
+  --grid-gap: 12px;
+}
+@media (max-width: 767px) {
+  :root {
+    --page-padding: 16px;
+    --grid-gap: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-press: 0ms;
+    --duration-state: 0ms;
+    --duration-panel: 0ms;
+  }
+}

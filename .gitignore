@@ -22,3 +22,6 @@ feeds-inbox/
 tg.db-journal
 private-feeds/
 web/assets/icon-preview.png
+
+# Local-only design review build
+.design-preview/
