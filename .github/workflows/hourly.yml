@@ -1,21 +1,56 @@
 name: hourly
-on: {schedule: [{cron: "7,37 * * * *"}], workflow_dispatch: {}}
+run-name: hourly / ${{ github.event_name }} / ${{ inputs.dispatch_id || github.run_id }}
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public-feeds/**'
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+    inputs:
+      dispatch_id:
+        description: Optional identifier for the external trigger
+        required: false
+        type: string
+        default: ''
+concurrency:
+  group: shiguang-public
+  cancel-in-progress: false
 permissions: {contents: write, pages: write, id-token: write}
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install beautifulsoup4 pillow
+      - name: Run tests
+        run: python -m unittest discover tests
       - uses: actions/cache@v4
         with:
           path: media/
           key: telegram-media-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             telegram-media-${{ runner.os }}-
-      - run: pip install beautifulsoup4 pillow && SITE_MODE=public MAIL_DIGEST=0 TZ=Asia/Shanghai python3 pipeline.py
-      - run: |
-          git config user.name bot; git config user.email bot@users.noreply.github.com
-          git add tg.db && git commit -m "data $(date -u +%FT%H)" && git push || true
+      - name: Build public site
+        env:
+          SITE_MODE: public
+          MAIL_DIGEST: '0'
+          TZ: Asia/Shanghai
+          NO_FETCH: ${{ github.event_name == 'push' && '1' || '0' }}
+        run: |
+          python pipeline.py
+          python tools/write_build_info.py
+      - name: Persist collected data
+        if: github.event_name != 'push'
+        run: sh tools/persist_action_data.sh
       - uses: actions/upload-pages-artifact@v3
         with: {path: site}
       - uses: actions/deploy-pages@v4
