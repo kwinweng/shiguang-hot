@@ -6,7 +6,7 @@ on:
     paths:
       - 'public-feeds/**'
   schedule:
-    - cron: '7,37 * * * *'
+    - cron: '7 * * * *'
   workflow_dispatch:
     inputs:
       dispatch_id:
