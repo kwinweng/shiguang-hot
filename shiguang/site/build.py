@@ -12,6 +12,7 @@ from shiguang.ingest.feeds import load_issues
 from shiguang.model import BEIJING
 from shiguang.site.pages import write_pages
 from shiguang.site.render import E
+from shiguang.site.privacy import verify_source_markers
 
 
 @contextmanager
@@ -99,8 +100,7 @@ def verify_public(out, cfg):
     for p in out.rglob('*'):
         if p.suffix in ('.html', '.json', '.webmanifest', '.svg', '.css', '.js'):
             text = p.read_text()
-            if any(s['name'] in text or f'{s["id"]}/' in text for s in forbidden): raise RuntimeError('公开产物存在 private 标记: ' + str(p))
-            if '邮件' in text: raise RuntimeError('公开产物存在私有栏目字样')
+            verify_source_markers(p.relative_to(out), text, forbidden)
             if any(value in text for value in private_text): raise RuntimeError('公开产物存在 private 内容: ' + str(p))
 
 
