@@ -3,7 +3,7 @@
 Images are cached as webp under media/<channel>/ for 14 days (by message time); tg.db keeps the
 text for good. With fetch=False (NO_FETCH=1) the database is opened read-only and nothing is fetched.
 """
-import io, json, os, re, sqlite3, subprocess, sys
+import io, json, os, re, shutil, sqlite3, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -86,22 +86,33 @@ def save_image(c, i, j, url, batch=None):
             except (OSError, ValueError):
                 pass
         if not valid:
-            data = batch.get('image', url).body if batch else subprocess.run(
-                ['curl', '--fail', '-sL', '--max-time', '25', '-A', 'Mozilla/5.0', url], capture_output=True, check=True).stdout
-            with Image.open(io.BytesIO(data)) as source:
-                image = ImageOps.exif_transpose(source).convert('RGB')
-                image.thumbnail((1200, 1200))
-                os.makedirs(os.path.dirname(path), exist_ok=True)
-                image.save(path + '.tmp', format='WEBP', quality=78)
-                os.replace(path + '.tmp', path)
+            cached = batch.image_cache.get(batch.key('image', url)) if batch else None
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            if cached and os.path.isfile(cached):
+                shutil.copyfile(cached, path + '.tmp')
+                batch.cached += 1
+            else:
+                data = batch.get('image', url).body if batch else subprocess.run(
+                    ['curl', '--fail', '-sL', '--max-time', '25', '-A', 'Mozilla/5.0', url], capture_output=True, check=True).stdout
+                with Image.open(io.BytesIO(data)) as source:
+                    image = ImageOps.exif_transpose(source).convert('RGB')
+                    image.thumbnail((1200, 1200))
+                    image.save(path + '.tmp', format='WEBP', quality=78)
+            os.replace(path + '.tmp', path)
         elif batch:
             batch.cached += 1
-        if batch: batch.clear_error('image', url)
+        if batch:
+            batch.image_cache[batch.key('image', url)] = path
+            batch.release_image_response(url)
+            batch.clear_error('image', url)
         return rel
     except sqlite3.Error:
         raise
     except Exception as ex:
-        if batch: batch.resource_error('image', url, ex if isinstance(ex, http.FetchFailure) else http.FetchFailure('image_invalid'))
+        if batch:
+            error = ex if isinstance(ex, http.FetchFailure) else http.FetchFailure('image_invalid')
+            batch.release_image_response(url, error)
+            batch.resource_error('image', url, error)
         print(f'image {c}/{i}/{j}: ' + (ex.code if isinstance(ex, http.FetchFailure) else 'image_failed'), file=sys.stderr)
         return None
 
@@ -109,9 +120,11 @@ def save_image(c, i, j, url, batch=None):
 def download_images(c, i, urls, batch=None, owner=None, image_at=None):
     if batch:
         # SQLite state stays on the collection thread; concurrency never exceeds the old cap (6).
-        paths = []
+        # Register the full response's image work before an early blocked/429 stops downloads.
         for j, url in enumerate(urls, 1):
             batch.image_task(url, [*owner, c, i, j, url, (image_at or batch.now).isoformat()])
+        paths = []
+        for j, url in enumerate(urls, 1):
             path = save_image(c, i, j, url, batch)
             if path: paths.append(path)
             if batch.halted: break

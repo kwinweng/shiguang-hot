@@ -6,9 +6,11 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import patch
 
 from PIL import Image
@@ -238,6 +240,44 @@ class SchedulerTests(unittest.TestCase):
         self.assertEqual(self.network.call_count, 1)
         for path in paths:
             with Image.open(self.root / path) as image: image.verify()
+        self.assertEqual(sum(len(r.body) for r in batch.responses.values() if isinstance(r, http.Response)), 0)
+
+    def test_blocked_first_image_keeps_later_image_work_for_manual_recovery(self):
+        # Both photo nodes belong to the same message.
+        two_images = page(104, at=NOW, photo=True).replace('</a></div>',
+            '</a><a class="tgme_widget_message_photo_wrap" style="background-image:url(https://example.com/second.jpg)"></a></div>')
+        self.network.side_effect = [response(two_images.encode()), response(status=403)]
+        self.run_sources(sources=[TG])
+        refs = self.db.execute("select image_refs from fetch_resource_state where resource_key like 'image:%'").fetchall()
+        self.assertEqual(sum(len(json.loads(r[0])) for r in refs), 2)
+        # Simulate a separately approved manual recovery ONLY in this temporary fixture DB.
+        self.db.execute("update source_fetch_state set status='interrupted',error_code=null,next_eligible_at=?", (scheduler.stamp(scheduler.next_hour(NOW)),))
+        self.db.commit()
+        self.network.side_effect = [response(page(104, at=NOW).encode()), response(page(at=NOW).encode()), response(png()), response(png())]
+        self.run_sources(NOW + timedelta(hours=1), [TG])
+        images = json.loads(self.db.execute('select images from msg where id=104').fetchone()[0])
+        self.assertEqual(images, ['media/chan/104_1.webp', 'media/chan/104_2.webp'])
+        self.assertEqual(self.state(), 'ok')
+
+    def test_image_retry_restores_original_image_order(self):
+        scheduler.ensure_schema(self.db); self.db.commit()
+        batch, _ = scheduler.claim(self.db, 'test', NOW)
+        self.network.side_effect = [http.FetchFailure('network'), response(png())]
+        images = telegram.download_images('c', 1, ['https://example.com/first', 'https://example.com/second'], batch=batch, owner=('msg', 'c', 1))
+        self.db.execute('insert into msg values(?,?,?,?,?,?,?)', ('c', 1, NOW.isoformat(), 'text', '[]', '', json.dumps(images)))
+        batch.finish()
+        next_batch, _ = scheduler.claim(self.db, 'test', NOW + timedelta(hours=1))
+        self.network.side_effect = [response(png())]
+        next_batch.retry_images(); next_batch.finish()
+        self.assertEqual(json.loads(self.db.execute('select images from msg where id=1').fetchone()[0]),
+                         ['media/c/1_1.webp', 'media/c/1_2.webp'])
+
+    def test_expired_image_resource_metadata_is_pruned_without_dropping_feed_validator(self):
+        self.network.side_effect = [response(rss(True), {'etag': '"one"'}), response(png()), response(status=304)]
+        self.run_sources(); self.run_sources(NOW + timedelta(days=15))
+        self.assertEqual(self.db.execute("select count(*) from fetch_resource_state where resource_key like 'image:%'").fetchone()[0], 0)
+        self.assertEqual(self.db.execute("select etag from fetch_resource_state where resource_key like 'feed:%'").fetchone()[0], '"one"')
+        self.assertEqual(len(web.entries(self.db)), 1)
 
     def test_no_fetch_old_database_is_byte_and_mtime_unchanged_and_hides_private(self):
         database = self.root / 'tg.db'
@@ -367,6 +407,28 @@ with collection_lock(Path(sys.argv[1])) as held:
 
 
 class HttpTests(unittest.TestCase):
+    def test_real_curl_transport_reads_redirect_headers_and_conditional_304(self):
+        requests = []
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                requests.append((self.path, self.headers.get('If-None-Match')))
+                if self.path == '/start':
+                    self.send_response(302); self.send_header('Location', '/feed'); self.end_headers()
+                elif self.headers.get('If-None-Match') == '"fixture"':
+                    self.send_response(304); self.send_header('ETag', '"fixture"'); self.end_headers()
+                else:
+                    self.send_response(200); self.send_header('ETag', '"fixture"'); self.end_headers(); self.wfile.write(b'<rss><channel/></rss>')
+            def log_message(self, *args): pass
+        server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+        self.addCleanup(server.server_close); self.addCleanup(server.shutdown)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        origin = 'http://127.0.0.1:' + str(server.server_port)
+        first = http.request(origin + '/start')
+        self.assertEqual((first.status, first.headers['etag'], first.body), (200, '"fixture"', b'<rss><channel/></rss>'))
+        second = http.request(origin + '/feed', {'If-None-Match': first.headers['etag']})
+        self.assertEqual((second.status, second.body), (304, b''))
+        self.assertEqual(requests, [('/start', None), ('/feed', None), ('/feed', '"fixture"')])
+
     def test_challenge_and_login_are_blocked_but_feed_news_is_not(self):
         for body in (b'<html><title>Captcha</title></html>', b'<html><title>Sign in</title></html>'):
             with self.assertRaises(http.FetchFailure) as caught:

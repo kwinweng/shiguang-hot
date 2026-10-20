@@ -180,6 +180,7 @@ class Batch:
         self.failures = failures
         self.clock = lambda: self.now
         self.responses = {}
+        self.image_cache = {}
         self.errors = []
         self.requests = self.cached = self.new = self.progress = 0
         self.halted = False
@@ -208,6 +209,14 @@ class Batch:
     def clear_error(self, kind, url):
         self.db.execute('update fetch_resource_state set error_code=null where source_id=? and resource_key=?',
                         (self.source_id, self.key(kind, url)))
+
+    def release_image_response(self, url, error=None):
+        key = self.key('image', url)
+        response = self.responses.get(key)
+        if isinstance(response, http.Response):
+            response.body = b''  # Reuse the converted file, not every original image body in RAM.
+        if error is not None and key in self.responses:
+            self.responses[key] = error
 
     def get(self, kind, url, signature=None):
         key = self.key(kind, url)
@@ -291,7 +300,12 @@ class Batch:
                     continue
                 images = json.loads(row[0])
                 if path not in images:
-                    self.db.execute(f'update {table} set images=? where {column}=? and id=?', (json.dumps(images + [path]), owner, item))
+                    prefix = f'media/{c}/{image_id}_'
+                    def position(image):
+                        match = re.fullmatch(re.escape(prefix) + r'(\d+)\.webp', image)
+                        return int(match[1]) if match else 0
+                    images = sorted(images + [path], key=position)
+                    self.db.execute(f'update {table} set images=? where {column}=? and id=?', (json.dumps(images), owner, item))
             self.db.execute('update fetch_resource_state set image_refs=? where source_id=? and resource_key=?', (json.dumps(remaining), self.source_id, key))
         self.db.commit()
 
@@ -311,6 +325,9 @@ class Batch:
             (status, code, stamp(eligible), failures, status, stamp(finished), self.source_id))
         self.db.execute('update source_fetch_batch set status=?,finished_at=? where attempt_id=?', (status, stamp(finished), self.attempt))
         self.db.execute("delete from source_fetch_batch where started_at<? and status in ('ok','partial','error')", (stamp(self.now - timedelta(days=7)),))
+        self.db.execute('''delete from fetch_resource_state where image_refs='[]'
+            and (resource_key like 'image:%' or resource_key like 'telegram:%')
+            and coalesce(last_attempt_at,'') < ?''', (stamp(self.now - timedelta(days=14)),))
         self.db.commit()
         success = self.db.execute('select last_success_at from source_fetch_state where source_id=?', (self.source_id,)).fetchone()[0]
         return dict(result=status, error_code=code, next_eligible_at=stamp(eligible),
