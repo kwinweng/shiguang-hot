@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from PIL import Image, ImageOps
 from shiguang.config import ROOT
 from shiguang.model import BEIJING
+from shiguang.ingest import http
 
 D = str(ROOT)
 MEDIA = os.path.join(D, 'media')
@@ -20,8 +21,8 @@ GAP_PAGES = 20
 
 def open_db(fetch):
     """tg.db, migrated to the current schema when writable. Returns (db, images_migrated)."""
-    os.makedirs(MEDIA, exist_ok=True)
-    db = sqlite3.connect(os.path.join(D, 'tg.db')) if fetch else sqlite3.connect('file:' + os.path.join(D, 'tg.db') + '?mode=ro&immutable=1', uri=True)
+    if fetch: os.makedirs(MEDIA, exist_ok=True)
+    db = sqlite3.connect(os.path.join(D, 'tg.db')) if fetch else sqlite3.connect('file:' + os.path.join(D, 'tg.db') + '?mode=ro', uri=True)
     if not fetch: db.execute('pragma query_only=on')
     cols = [r[1] for r in db.execute("pragma table_info(msg)")]
     if fetch and cols and "html" not in cols: db.execute("alter table msg add column html text")  # 保留旧库消息，兼容缺少 HTML 的历史结构
@@ -47,7 +48,14 @@ class FetchError(Exception):
     pass
 
 
-def get(u):
+def get(u, batch=None):
+    if batch:
+        body = batch.get('telegram', u).body.decode('utf-8', errors='replace')
+        if not re.search(r'tgme_(?:channel|widget)', body):
+            error = http.FetchFailure('invalid_content')
+            batch.resource_error('telegram', u, error)
+            raise error
+        return body
     result = subprocess.run(["curl", "-sL", "-m", "25", "-A", "Mozilla/5.0", u], capture_output=True, text=True)
     if result.returncode:
         raise FetchError(f"curl exit {result.returncode}: {result.stderr.strip()[:150]}")
@@ -67,24 +75,49 @@ def image_urls(m):
     return urls
 
 
-def download_images(c, i, urls):
-    def save(item):
-        j, url = item; rel = f"media/{c}/{i}_{j}.webp"; path = os.path.join(D, rel)
-        try:
-            if not os.path.isfile(path):
-                data = subprocess.run(['curl', '--fail', '-sL', '--max-time', '25', '-A', 'Mozilla/5.0', url], capture_output=True, check=True).stdout
-                with Image.open(io.BytesIO(data)) as source:
-                    image = ImageOps.exif_transpose(source).convert('RGB')
-                    image.thumbnail((1200, 1200))
-                    os.makedirs(os.path.dirname(path), exist_ok=True)
-                    image.save(path + '.tmp', format='WEBP', quality=78)
-                    os.replace(path + '.tmp', path)
-            return rel
-        except Exception as ex:
-            print(f'image {c}/{i}/{j}: {ex}', file=sys.stderr)
-            return None
+def save_image(c, i, j, url, batch=None):
+    rel = f"media/{c}/{i}_{j}.webp"; path = os.path.join(D, rel)
+    try:
+        valid = False
+        if os.path.isfile(path):
+            try:
+                with Image.open(path) as image: image.verify()
+                valid = True
+            except (OSError, ValueError):
+                pass
+        if not valid:
+            data = batch.get('image', url).body if batch else subprocess.run(
+                ['curl', '--fail', '-sL', '--max-time', '25', '-A', 'Mozilla/5.0', url], capture_output=True, check=True).stdout
+            with Image.open(io.BytesIO(data)) as source:
+                image = ImageOps.exif_transpose(source).convert('RGB')
+                image.thumbnail((1200, 1200))
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                image.save(path + '.tmp', format='WEBP', quality=78)
+                os.replace(path + '.tmp', path)
+        elif batch:
+            batch.cached += 1
+        if batch: batch.clear_error('image', url)
+        return rel
+    except sqlite3.Error:
+        raise
+    except Exception as ex:
+        if batch: batch.resource_error('image', url, ex if isinstance(ex, http.FetchFailure) else http.FetchFailure('image_invalid'))
+        print(f'image {c}/{i}/{j}: ' + (ex.code if isinstance(ex, http.FetchFailure) else 'image_failed'), file=sys.stderr)
+        return None
+
+
+def download_images(c, i, urls, batch=None, owner=None, image_at=None):
+    if batch:
+        # SQLite state stays on the collection thread; concurrency never exceeds the old cap (6).
+        paths = []
+        for j, url in enumerate(urls, 1):
+            batch.image_task(url, [*owner, c, i, j, url, (image_at or batch.now).isoformat()])
+            path = save_image(c, i, j, url, batch)
+            if path: paths.append(path)
+            if batch.halted: break
+        return paths
     with ThreadPoolExecutor(max_workers=6) as pool:
-        return [path for path in pool.map(save, enumerate(urls, 1)) if path]
+        return [path for path in pool.map(lambda item: save_image(c, i, *item), enumerate(urls, 1)) if path]
 
 
 def channel_text(c, t):
@@ -96,7 +129,7 @@ def channel_text(c, t):
     return re.sub(r'(?:\n[ \t]*)+@(?:freechinese|onelovecn)\s*$', '', t, flags=re.I).strip()
 
 
-def fetch(db, channels, now, images_migrated):
+def fetch(db, channels, now, images_migrated, batch=None):
     """Page back through each channel until the newest stored message (or 72 hours on first run)."""
     media_floor = now - timedelta(days=MEDIA_DAYS)
     for c in channels:
@@ -129,50 +162,75 @@ def fetch(db, channels, now, images_migrated):
                 if t is None: continue
                 urls = image_urls(m)
                 if not t and not urls: continue
-                images = download_images(c, i, urls) if dt >= media_floor else []
+                image_args = dict(batch=batch, owner=('msg', c, i), image_at=dt) if batch else {}
+                images = download_images(c, i, urls, **image_args) if dt >= media_floor else []
                 links = [a["href"] for a in tx.select("a[href]")] if tx else []
                 cur = db.execute("insert or ignore into msg(ch,id,ts,text,links,html,images) values(?,?,?,?,?,?,?)", (c, i, dt.isoformat(), t or '[图片]', json.dumps(links), str(tx) if tx else '', json.dumps(images)))
                 n += cur.rowcount
                 if images: db.execute("update msg set images=? where ch=? and id=?", (json.dumps(images), c, i))
             return ids, stop
 
+        def read_page(url):
+            return BeautifulSoup(get(url, batch=batch) if batch else get(url), 'html.parser')
+
         try:
             for _ in range(200):
-                s = BeautifulSoup(get(f"https://t.me/s/{c}" + (f"?before={before}" if before else "")), "html.parser")
+                s = read_page(f"https://t.me/s/{c}" + (f"?before={before}" if before else ""))
                 ms = s.select("div.tgme_widget_message[data-post]")
                 if not ms: err = "页面无消息/打不开" if n == 0 and before is None else None; break
                 ids, stop = store_page(ms, last, floor, backfill, seen)
+                if batch:
+                    batch.progress += 1
+                    if batch.halted:
+                        if ids and not stop:
+                            db.execute('insert or ignore into gap values(?,?,?,?)', (c, min(ids), last, now.isoformat()))
+                        raise batch.errors[-1]
                 if stop or not ids: break
                 next_before = min(ids)
                 if before is not None and next_before >= before: break
                 before = next_before
-            else: err = "达到翻页上限，历史回填未完成"
+            else:
+                err = "达到翻页上限，历史回填未完成"
+                if batch and before is not None:
+                    db.execute('insert or ignore into gap values(?,?,?,?)', (c, before, last, now.isoformat()))
         except Exception as ex:
-            err = "页面无消息/打不开" if before is None else (str(ex)[:200] or type(ex).__name__)
+            if isinstance(ex, sqlite3.Error): raise
+            if batch: batch.note(ex)
+            err = (ex.code if isinstance(ex, http.FetchFailure) else 'invalid_content') if batch else (
+                "页面无消息/打不开" if before is None else (str(ex)[:200] or type(ex).__name__))
             if before is not None:
                 db.execute("insert or ignore into gap values(?,?,?,?)", (c, before, last, now.isoformat()))
                 print(c, "gap", before, "bound", last, err, file=sys.stderr)
-        for gap_before, gap_last, gap_at in gaps:
+        for gap_before, gap_last, gap_at in ([] if batch and batch.halted else gaps):
             cursor = gap_before; filled = False; gap_seen = set()
             gap_floor = datetime.fromisoformat(gap_at) - timedelta(hours=72) if gap_last is None else None
             try:
                 for _ in range(GAP_PAGES):
-                    s = BeautifulSoup(get(f"https://t.me/s/{c}?before={cursor}"), "html.parser")
+                    s = read_page(f"https://t.me/s/{c}?before={cursor}")
                     ms = s.select("div.tgme_widget_message[data-post]")
                     if not ms: filled = True; break
                     ids, stop = store_page(ms, gap_last, gap_floor, False, gap_seen)
+                    if batch:
+                        batch.progress += 1
+                        if batch.halted: raise batch.errors[-1]
                     if stop or not ids: filled = True; break
                     next_before = min(ids)
                     if next_before >= cursor: raise FetchError("缺口翻页未前进")
                     cursor = next_before
                 if not filled: err = err or "达到缺口回填上限，历史回填未完成"
-            except Exception as ex: err = err or str(ex)[:200] or type(ex).__name__
+            except Exception as ex:
+                if isinstance(ex, sqlite3.Error): raise
+                if batch: batch.note(ex)
+                err = err or ((ex.code if isinstance(ex, http.FetchFailure) else 'invalid_content') if batch else (str(ex)[:200] or type(ex).__name__))
             if filled:
                 db.execute("delete from gap where ch=? and before=?", (c, gap_before))
             else:
                 db.execute("update or ignore gap set before=? where ch=? and before=?", (cursor, c, gap_before))
                 print(c, "gap", cursor, "bound", gap_last, err, file=sys.stderr)
         db.execute("insert or replace into status values(?,?,?,?)", (c, 0 if err else 1, err, now.isoformat()))
+        if batch:
+            batch.new += n
+            if err and not batch.errors: batch.note(http.FetchFailure('incomplete_pages'))
         print(c, "new", n, err or "", file=sys.stderr)
 
 
