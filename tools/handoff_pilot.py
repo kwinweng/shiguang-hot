@@ -55,6 +55,13 @@ class Pilot:
         self.root = Path(directory).resolve()
         self.config = self.root / 'pilot.json'
 
+    def snapshot(self):
+        # Writers replace the whole JSON atomically. Observers need no lock file
+        # and must not rewrite, migrate, or refresh a running pilot's state.
+        if not self.config.is_file():
+            raise Blocked('Initialize the private state directory first')
+        return json.loads(self.config.read_text())
+
     @contextmanager
     def state(self):
         if not self.config.is_file():
@@ -106,10 +113,10 @@ class Pilot:
             raise Blocked('Provide a nonempty MRD, at most 64 KiB')
         if event.get('document_sha256') != digest(document):
             raise Blocked('Document hash does not match exact UTF-8 bytes')
-        with self.state() as data:
-            if event.get('conversation_id') != data['conversation_id']:
-                raise Blocked('Conversation is outside the pilot whitelist')
-            repo = Path(data['repo'])
+        data = self.snapshot()
+        if event.get('conversation_id') != data['conversation_id']:
+            raise Blocked('Conversation is outside the pilot whitelist')
+        repo = Path(data['repo'])
         decisions = event.get('settled_decisions', [])
         if not isinstance(decisions, list) or len(decisions) > 64 or any(
                 not isinstance(item, str) or not item.strip() for item in decisions):
@@ -214,7 +221,7 @@ class Pilot:
                           task_id=event['task_id'], revision=event['revision'],
                           document_sha256=event['document_sha256'],
                           context_sha256=self.context_digest(event), spec_mode='incremental', status='claimed',
-                          received_at=time.time(), usage=None, result_receipt=None)
+                          received_at=time.time(), usage=None, result_receipt=None, receipt_schema=2)
             records[key] = record
         job = self.root / 'runs' / key
         job.mkdir(mode=0o700)
@@ -333,8 +340,9 @@ class Pilot:
                 if process is not None and process.poll() is None:
                     self.terminate(process)
             usage = self.usage(job / 'events.jsonl')
+            spec_hash = self.spec_snapshot(key)[1] if status == 'spec_ready' else None
             return self.update(key, status=status, exit_code=code, ended_at=time.time(), usage=usage,
-                               spec_path=str(job / 'spec.md'), notification_verified=False)
+                               spec_path=str(job / 'spec.md'), spec_sha256=spec_hash, notification_verified=False)
 
     @staticmethod
     def terminate(process):
@@ -352,18 +360,52 @@ class Pilot:
             data['paused'] = True
         return {'status': 'paused', 'new_tasks_enabled': False}
 
-    def acknowledge(self, key, *, receipt_kind, ack_by, ack_at):
-        if receipt_kind != 'human_ack' or ack_by != '阿欢':
-            raise Blocked('Only an operator transcription of 阿欢 saying 已收到首轮 is accepted')
-        if not isinstance(ack_at, str) or not re.fullmatch(
-                r'\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:\+08:00)?', ack_at):
+    @staticmethod
+    def beijing_time(value):
+        if not isinstance(value, str) or not re.fullmatch(
+                r'\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:\+08:00)?', value):
             raise Blocked('Provide ack-at as Beijing YYYY-MM-DDTHH:MM:SS+08:00')
         try:
-            acknowledged = datetime.fromisoformat(ack_at)
+            acknowledged = datetime.fromisoformat(value)
         except ValueError as exc:
             raise Blocked('Invalid Beijing acknowledgment time') from exc
         if acknowledged.tzinfo is None:
             acknowledged = acknowledged.replace(tzinfo=BEIJING)
+        return acknowledged
+
+    @staticmethod
+    def acknowledgment_phrase(record):
+        if record.get('receipt_schema') != 2:
+            return '已收到首轮'
+        spec_hash = record.get('spec_sha256')
+        if not isinstance(spec_hash, str) or not re.fullmatch(r'[0-9a-f]{64}', spec_hash):
+            raise Blocked('The completed Spec hash is missing; inspect the original run')
+        return f"已收到 {record['task_id']} r{record['revision']} {spec_hash[:12]}"
+
+    def spec_snapshot(self, key):
+        raw = (self.root / 'runs' / key / 'spec.md').read_bytes()
+        return raw.decode('utf-8'), hashlib.sha256(raw).hexdigest()
+
+    def handoff(self, key):
+        record = self.snapshot()['records'].get(key)
+        if not record or record['status'] != 'spec_ready' or record.get('usage') is None:
+            raise Blocked('A successful Spec result with known usage is required')
+        spec_text, spec_hash = self.spec_snapshot(key)
+        if record.get('spec_sha256') not in (None, spec_hash):
+            raise Blocked('Spec content changed after completion; do not relay or acknowledge it')
+        return dict(task_id=record['task_id'], revision=record['revision'], key=key,
+                    delivery_id=digest(key + ':' + spec_hash), spec_sha256=spec_hash,
+                    spec=spec_text, usage=record['usage'],
+                    required_ack=self.acknowledgment_phrase(record),
+                    already_acknowledged=record.get('result_receipt') is not None,
+                    source='local_result_snapshot', platform_delivery_receipt=False,
+                    identity_independently_verified=False, development_enabled=False,
+                    models_called=0, state_changed=False)
+
+    def acknowledge(self, key, *, receipt_kind, ack_by, ack_at, ack_text=None):
+        if receipt_kind != 'human_ack' or ack_by != '阿欢':
+            raise Blocked('Only an operator transcription of 阿欢 is accepted')
+        acknowledged = self.beijing_time(ack_at)
         acknowledged_at = acknowledged.timestamp()
         recorded_at = time.time()
         if acknowledged_at > recorded_at:
@@ -381,6 +423,17 @@ class Pilot:
                 raise Blocked('A successful Spec result with known usage is required')
             if acknowledged_at < int(record['ended_at']):
                 raise Blocked('The human acknowledgment must follow completion of this Spec')
+            required = self.acknowledgment_phrase(record)
+            if record.get('receipt_schema') == 2:
+                if ack_text != required:
+                    raise Blocked('Copy the exact task/revision/hash acknowledgment phrase from handoff')
+                if self.spec_snapshot(key)[1] != record['spec_sha256']:
+                    raise Blocked('Spec content changed after completion; do not acknowledge it')
+                receipt.update(task_id=record['task_id'], revision=record['revision'],
+                               spec_sha256=record['spec_sha256'], observed_text=ack_text,
+                               required_phrase=required)
+            elif ack_text not in (None, required):
+                raise Blocked('The original first-run acknowledgment phrase is 已收到首轮')
             previous = record.get('result_receipt')
             if previous is not None:
                 fields = ('kind', 'ack_by', 'ack_at')
@@ -401,16 +454,47 @@ class Pilot:
         return result
 
     def report(self):
-        with self.state() as data:
-            records = list(data['records'].values())
-            known = [r['usage'] for r in records if r.get('usage') is not None]
-            return dict(paused=data['paused'], activated_at=data['activated_at'], expires_at=data['expires_at'],
-                        runs=len(records), checks=data['checks'], duplicates=data['duplicates'], known_usage_runs=len(known), unknown_usage_runs=len(records)-len(known),
-                        input_tokens=sum(r['input_tokens'] for r in known),
-                        cached_input_tokens=sum(r['cached_input_tokens'] or 0 for r in known),
-                        cached_unknown_runs=sum(r['cached_input_tokens'] is None for r in known),
-                        output_tokens=sum(r['output_tokens'] for r in known),
-                        development_enabled=False, records=records)
+        data = self.snapshot()
+        records = list(data['records'].values())
+        known = [r['usage'] for r in records if r.get('usage') is not None]
+        return dict(paused=data['paused'], activated_at=data['activated_at'], expires_at=data['expires_at'],
+                    runs=len(records), checks=data['checks'], duplicates=data['duplicates'], known_usage_runs=len(known), unknown_usage_runs=len(records)-len(known),
+                    input_tokens=sum(r['input_tokens'] for r in known),
+                    cached_input_tokens=sum(r['cached_input_tokens'] or 0 for r in known),
+                    cached_unknown_runs=sum(r['cached_input_tokens'] is None for r in known),
+                    output_tokens=sum(r['output_tokens'] for r in known),
+                    development_enabled=False, records=records)
+
+    def audit_receipt(self, key, observed_ack_at):
+        observed = self.beijing_time(observed_ack_at)
+        data = self.snapshot()
+        record = data['records'].get(key)
+        if record is None:
+            raise Blocked('Unknown result key')
+        receipt = record.get('result_receipt')
+        result = dict(key=key, task_id=record['task_id'], revision=record['revision'],
+                      observed_ack_at=observed.isoformat(), models_called=0, state_changed=False,
+                      development_enabled=False, identity_independently_verified=False,
+                      activated_at=data['activated_at'], expires_at=data['expires_at'])
+        if not isinstance(receipt, dict) or not receipt.get('ack_at'):
+            return dict(result, status='receipt_missing' if receipt is None else 'legacy_receipt_unverifiable',
+                        needs_owner_review=True)
+        stored = self.beijing_time(receipt['ack_at'])
+        delta = stored.timestamp() - observed.timestamp()
+        times = [self.beijing_time(r['result_receipt']['ack_at']).timestamp()
+                 for r in data['records'].values()
+                 if isinstance(r.get('result_receipt'), dict) and r['result_receipt'].get('ack_at')]
+        activation_matches = bool(times) and data['activated_at'] == min(times)
+        duration_matches = (data['activated_at'] is not None and
+                            data['expires_at'] == data['activated_at'] + 72 * 3600)
+        follows_completion = record.get('ended_at') is not None and stored.timestamp() >= int(record['ended_at'])
+        matches = delta == 0 and activation_matches and duration_matches and follows_completion
+        return dict(result, status='receipt_matches_observation' if matches else 'receipt_mismatch',
+                    stored_ack_at=stored.isoformat(), recorded_at=receipt.get('recorded_at'),
+                    stored_minus_observed_seconds=delta,
+                    activation_matches_first_ack=activation_matches,
+                    window_is_72_hours=duration_matches, ack_follows_completion=follows_completion,
+                    needs_owner_review=not matches)
 
 
 def main():
@@ -431,6 +515,11 @@ def main():
             command.add_argument('--codex', default='codex')
     sub.add_parser('pause')
     sub.add_parser('report')
+    handoff = sub.add_parser('handoff')
+    handoff.add_argument('--key', required=True)
+    audit = sub.add_parser('audit-receipt')
+    audit.add_argument('--key', required=True)
+    audit.add_argument('--observed-ack-at', required=True)
     doctor = sub.add_parser('doctor')
     doctor.add_argument('--codex', default='codex')
     ack = sub.add_parser('ack-result', allow_abbrev=False)
@@ -438,6 +527,7 @@ def main():
     ack.add_argument('--receipt-kind', choices=['human_ack'], required=True)
     ack.add_argument('--ack-by', choices=['阿欢'], required=True)
     ack.add_argument('--ack-at', required=True)
+    ack.add_argument('--ack-text')
     args = parser.parse_args()
     pilot = Pilot(args.state)
     try:
@@ -452,7 +542,11 @@ def main():
             result = pilot.pause()
         elif args.action == 'ack-result':
             result = pilot.acknowledge(args.key, receipt_kind=args.receipt_kind,
-                                       ack_by=args.ack_by, ack_at=args.ack_at)
+                                       ack_by=args.ack_by, ack_at=args.ack_at, ack_text=args.ack_text)
+        elif args.action == 'handoff':
+            result = pilot.handoff(args.key)
+        elif args.action == 'audit-receipt':
+            result = pilot.audit_receipt(args.key, args.observed_ack_at)
         else:
             result = pilot.report()
         print(json.dumps(result, ensure_ascii=False))
