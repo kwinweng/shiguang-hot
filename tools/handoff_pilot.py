@@ -240,8 +240,8 @@ class Pilot:
                                                cwd=repo, start_new_session=True)
                     end = time.monotonic() + timeout
                     while process.poll() is None:
-                        with self.state() as data:
-                            paused = data['paused']
+                        # Atomic replacement makes polling read-only; no fsync on every tick.
+                        paused = json.loads(self.config.read_text())['paused']
                         if paused or time.monotonic() >= end:
                             status = 'cancelled' if paused else 'timed_out'
                             self.terminate(process)
