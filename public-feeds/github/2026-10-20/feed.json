@@ -1,0 +1,119 @@
+{
+  "schema": "shiguang.feed/1",
+  "source": "github",
+  "date": "2026-10-20",
+  "title": "GitHub 热门早报",
+  "blocks": [
+    {
+      "type": "oneliner",
+      "items": [
+        "今日看点：OpenMOSS 开源了 5B 的 MOSS-Image 出图模型，Google Research 的 agent 自我调优框架 harness2 也冲上了热榜。",
+        "领域榜·AI 代理：今天看给 agent 用的工具——Rust 写的无头浏览器、图片转 Three.js 代码模型，还有用三省六部制编排的多 agent 系统。"
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "title": "新秀榜",
+      "items": [
+        {
+          "title": "OpenMOSS/MOSS-Image",
+          "body": "开源图像生成模型，支持布局控制、清晰文字渲染和最长 4K token 的提示词，动漫与写实风格都能出图，5B 主干效率不错，还能自己微调，适合想动手玩可控出图的朋友。\n★ 953 · Python · 创建于 2026-10-16",
+          "link": "https://github.com/OpenMOSS/MOSS-Image",
+          "source": "GitHub",
+          "date": "2026-10-20"
+        },
+        {
+          "title": "xiaoyang111222/cn-math-taxonomy",
+          "body": "把一到九年级数学知识点整理成带先修关系的图谱，附诊断和题库，答错会一路回溯到真正卡住的小学知识点，并给出按年级排的学习路径。作者坦白是 AI 初稿、未经教师审核，当参考很合适。\n★ 956 · Python · 创建于 2026-10-18",
+          "link": "https://github.com/xiaoyang111222/cn-math-taxonomy",
+          "source": "GitHub",
+          "date": "2026-10-20"
+        },
+        {
+          "title": "Noniv/web-ocean",
+          "body": "不用任何引擎、纯 WebGPU 手写的一片实时海洋：FFT 波浪、白浪、太阳反光和浪花碎沫都有，还能自由视角飞着看。打开一个 HTML 就能跑，想学渲染细节的话，光读代码就很过瘾。\n★ 769 · HTML · 创建于 2026-10-16",
+          "link": "https://github.com/Noniv/web-ocean",
+          "source": "GitHub",
+          "date": "2026-10-20"
+        }
+      ]
+    },
+    {
+      "title": "飙升榜",
+      "items": [
+        {
+          "title": "Kruk2/jasna",
+          "body": "免费的视频和马赛克修复工具，跑在自己的 GPU 上，带简单图形界面和命令行。能自动找到马赛克区域只修那一块，还能在播放器里直接看实时效果，不用先导出文件，折腾起来挺方便。\n★ 2.9k（今日 +498） · Python · 创建于 2026-01-18",
+          "link": "https://github.com/Kruk2/jasna",
+          "source": "GitHub",
+          "date": "2026-10-20",
+          "images": [
+            {
+              "file": "6e213422e9a5a2c21faf1831.webp",
+              "alt": "Kruk2/jasna 预览图"
+            }
+          ]
+        },
+        {
+          "title": "google-research/harness2",
+          "body": "Google Research 的 agent harness 框架，在不改模型权重的前提下，让 agent 针对当前任务自己改提示、工具、记忆等组件，并把经验沉淀到下一次。论文、基准和本地 demo 都在，适合研究 agent 调优的人。\n★ 12.0k · Python · 创建于 2026-10-06",
+          "link": "https://github.com/google-research/harness2",
+          "source": "GitHub",
+          "date": "2026-10-20",
+          "images": [
+            {
+              "file": "e28ce58ca10dfc74164d952b.webp",
+              "alt": "google-research/harness2 预览图"
+            }
+          ]
+        },
+        {
+          "title": "kuafuai/andee",
+          "body": "一个装在安卓手机里的常驻 AI：模型就在设备上跑，记忆只留在本地，能读屏操作各类应用，还守住付款密码这类边界。作者把整个 agent 循环和权限说明都公开了，可以自己核，不用盲信。\n★ 1.1k · Kotlin · 创建于 2026-09-17",
+          "link": "https://github.com/kuafuai/andee",
+          "source": "GitHub",
+          "date": "2026-10-20"
+        }
+      ]
+    },
+    {
+      "title": "领域榜·AI 代理",
+      "items": [
+        {
+          "title": "lexmount/moli",
+          "body": "给 AI agent 用的开源无头浏览器，按需排版渲染、占用轻，能抓取和提取网页、搜索、做浏览器自动化。可用 CLI、CDP 或 WebDriver 调用，三大平台都支持，适合给 agent 装上一双上网的手。\n★ 19.7k · Rust · 创建于 2026-08-10",
+          "link": "https://github.com/lexmount/moli",
+          "source": "GitHub",
+          "date": "2026-10-20",
+          "images": [
+            {
+              "file": "5816780ebc1b77a8d433d732.webp",
+              "alt": "lexmount/moli 预览图"
+            }
+          ]
+        },
+        {
+          "title": "img2threejs/img2threejs",
+          "body": "给它一张参考图，它生成一段纯代码的 Three.js 模型，靠基础几何体和程序化着色器重建，带骨骼和动画层级，不是抠网格。在线画廊里的模型全都是生成的代码，浏览器里直接跑，挺有意思。\n★ 18.5k · Python · 创建于 2026-07-15",
+          "link": "https://github.com/img2threejs/img2threejs",
+          "source": "GitHub",
+          "date": "2026-10-20",
+          "images": [
+            {
+              "file": "7fb977629d673baae45b47e2.webp",
+              "alt": "img2threejs/img2threejs 预览图"
+            }
+          ]
+        },
+        {
+          "title": "cft0808/edict",
+          "body": "脑洞很大的项目：用唐代三省六部制重写多 Agent 协作，12 个角色分工，规划后要过门下省审核，还有实时看板能叫停和看完整流转记录。想做可审计的多 agent 流程，可以拿来参考。\n★ 17.0k · Python · 创建于 2026-02-23",
+          "link": "https://github.com/cft0808/edict",
+          "source": "GitHub",
+          "date": "2026-10-20"
+        }
+      ]
+    }
+  ]
+}
