@@ -69,7 +69,10 @@ class PilotTests(unittest.TestCase):
 
     def ack_args(self, record):
         stamp = self.ack_times.setdefault(record['key'], datetime.now(bridge.BEIJING).isoformat())
-        return dict(receipt_kind='human_ack', ack_by='阿欢', ack_at=stamp)
+        args = dict(receipt_kind='human_ack', ack_by='阿欢', ack_at=stamp)
+        if record.get('receipt_schema') == 2:
+            args['ack_text'] = bridge.Pilot.acknowledgment_phrase(record)
+        return args
 
     def activate(self, record):
         return self.pilot.acknowledge(record['key'], **self.ack_args(record))
@@ -261,6 +264,7 @@ class PilotTests(unittest.TestCase):
         with self.pilot.state() as state:
             state['records'][record['key']].pop('context_sha256', None)
             state['records'][record['key']].pop('spec_mode', None)
+            state['records'][record['key']].pop('receipt_schema', None)
         job = self.pilot.root/'runs'/record['key']
         (job/'request.json').write_text(json.dumps(event))
         (job/'spec.md').write_text('# Existing Spec, do not regenerate')
@@ -417,6 +421,130 @@ class PilotTests(unittest.TestCase):
             with self.subTest(fields=list(changes)),self.assertRaises(bridge.Blocked):
                 self.pilot.check(dict(self.event(),**changes))
         self.assertEqual(self.pilot.report()['runs'],0)
+
+    def disk_snapshot(self):
+        return {str(p.relative_to(self.pilot.root)):(p.read_bytes(),p.stat().st_mtime_ns)
+                for p in self.pilot.root.rglob('*') if p.is_file()}
+
+    def test_report_is_read_only_even_before_any_lock_exists(self):
+        before = self.disk_snapshot()
+        self.assertFalse((self.pilot.root/'state.lock').exists())
+        with patch.object(bridge,'atomic_json',side_effect=AssertionError('observer must not write')):
+            self.assertEqual(self.pilot.report()['runs'],0)
+        self.assertEqual(self.disk_snapshot(),before)
+        base = [sys.executable,'-B',str(MODULE),'--state',str(self.pilot.root),'report']
+        done = subprocess.run(base,capture_output=True,text=True)
+        self.assertEqual(done.returncode,0,done.stderr+done.stdout)
+        self.assertEqual(json.loads(done.stdout)['runs'],0)
+        self.assertEqual(self.disk_snapshot(),before)
+
+    def test_handoff_exports_one_stable_version_without_state_changes_or_models(self):
+        record = self.run_event()
+        before = self.disk_snapshot()
+        with patch.object(bridge.subprocess,'Popen',side_effect=AssertionError('no new execution')):
+            with patch.object(bridge,'atomic_json',side_effect=AssertionError('no state writes')):
+                first = self.pilot.handoff(record['key'])
+                self.assertEqual(first,self.pilot.handoff(record['key']))
+        self.assertEqual(self.disk_snapshot(),before)
+        self.assertEqual(first['spec_sha256'],bridge.digest(first['spec']))
+        self.assertIn('task-a r1 '+first['spec_sha256'][:12],first['required_ack'])
+        self.assertFalse(first['already_acknowledged'])
+        self.assertFalse(first['development_enabled'])
+        self.assertFalse(first['state_changed'])
+        self.assertFalse(first['platform_delivery_receipt'])
+        self.activate(record)
+        after = self.pilot.handoff(record['key'])
+        self.assertTrue(after['already_acknowledged'])
+        self.assertEqual(after['delivery_id'],first['delivery_id'])
+
+    def test_new_receipts_require_the_exact_task_revision_and_content_phrase(self):
+        record = self.run_event()
+        args = self.ack_args(record)
+        for phrase in ['已收到首轮','好','确认 Spec v2',
+                       args['ack_text'].replace('task-a','task-b'),
+                       args['ack_text'].replace(' r1 ',' r2 '),args['ack_text'][:-1]+'x',None]:
+            with self.subTest(phrase=phrase),self.assertRaises(bridge.Blocked):
+                self.pilot.acknowledge(record['key'],**dict(args,ack_text=phrase))
+        self.assertIsNone(self.pilot.report()['activated_at'])
+        self.pilot.acknowledge(record['key'],**args)
+        receipt = self.pilot.report()['records'][0]['result_receipt']
+        self.assertEqual(receipt['task_id'],'task-a')
+        self.assertEqual(receipt['revision'],1)
+        self.assertEqual(receipt['spec_sha256'],record['spec_sha256'])
+        self.assertEqual(receipt['observed_text'],args['ack_text'])
+        self.assertFalse(receipt['development_approval'])
+        with self.assertRaises(bridge.Blocked):
+            self.pilot.claim(dict(self.event(task='task-b',event_id='approve'),event_type='spec_approved'))
+
+    def test_changed_spec_cannot_be_relayed_or_acknowledged(self):
+        record = self.run_event()
+        args = self.ack_args(record)
+        spec_path = self.pilot.root/'runs'/record['key']/'spec.md'
+        original = spec_path.read_bytes()
+        for changed in [b'Different Spec',original.replace(b'\n',b'\r\n')]:
+            spec_path.write_bytes(changed)
+            before = self.disk_snapshot()
+            with self.assertRaisesRegex(bridge.Blocked,'content changed'):
+                self.pilot.handoff(record['key'])
+            with self.assertRaisesRegex(bridge.Blocked,'content changed'):
+                self.pilot.acknowledge(record['key'],**args)
+            self.assertEqual(self.disk_snapshot(),before)
+
+    def test_legacy_handoff_retains_original_phrase_and_original_record(self):
+        _, key, _, stamp = self.legacy_ready()
+        before = self.disk_snapshot()
+        packet = self.pilot.handoff(key)
+        self.assertEqual(packet['required_ack'],'已收到首轮')
+        self.assertEqual(self.disk_snapshot(),before)
+        self.pilot.acknowledge(key,receipt_kind='human_ack',ack_by='阿欢',ack_at=stamp)
+        self.assertTrue(self.pilot.handoff(key)['already_acknowledged'])
+
+    def test_receipt_time_discrepancy_is_reported_without_overwriting_evidence(self):
+        _, key, _, stamp = self.legacy_ready()
+        self.pilot.acknowledge(key,receipt_kind='human_ack',ack_by='阿欢',ack_at=stamp)
+        observed = (datetime.fromisoformat(stamp)-timedelta(seconds=16)).isoformat()
+        before = self.disk_snapshot()
+        with patch.object(bridge,'atomic_json',side_effect=AssertionError('audit must not write')):
+            result = self.pilot.audit_receipt(key,observed)
+        self.assertEqual(result['status'],'receipt_mismatch')
+        self.assertEqual(result['stored_minus_observed_seconds'],16)
+        self.assertTrue(result['needs_owner_review'])
+        self.assertTrue(result['window_is_72_hours'])
+        self.assertTrue(result['activation_matches_first_ack'])
+        self.assertEqual(self.disk_snapshot(),before)
+        correct = self.pilot.audit_receipt(key,stamp)
+        self.assertEqual(correct['status'],'receipt_matches_observation')
+        self.assertFalse(correct['needs_owner_review'])
+
+    def test_audit_of_missing_and_legacy_receipts_never_activates_or_migrates(self):
+        _, key, _, stamp = self.legacy_ready()
+        before = self.disk_snapshot()
+        self.assertEqual(self.pilot.audit_receipt(key,stamp)['status'],'receipt_missing')
+        self.assertEqual(self.disk_snapshot(),before)
+        with self.pilot.state() as data:
+            data['records'][key]['result_receipt']='old-platform-receipt'
+        before = self.disk_snapshot()
+        self.assertEqual(self.pilot.audit_receipt(key,stamp)['status'],'legacy_receipt_unverifiable')
+        self.assertEqual(self.disk_snapshot(),before)
+
+    def test_cli_handoff_and_audit_complete_fake_loop_without_more_execution(self):
+        record = self.run_event()
+        base = [sys.executable,'-B',str(MODULE),'--state',str(self.pilot.root)]
+        before = self.disk_snapshot()
+        packet = json.loads(subprocess.check_output(base+['handoff','--key',record['key']],text=True))
+        self.assertEqual(self.disk_snapshot(),before)
+        stamp = self.ack_args(record)['ack_at']
+        done = subprocess.run(base+['ack-result','--key',record['key'],'--receipt-kind','human_ack',
+                                   '--ack-by','阿欢','--ack-at',stamp,'--ack-text',packet['required_ack']],
+                              capture_output=True,text=True)
+        self.assertEqual(done.returncode,0,done.stderr+done.stdout)
+        before = self.disk_snapshot()
+        audited = json.loads(subprocess.check_output(base+['audit-receipt','--key',record['key'],
+                                                           '--observed-ack-at',stamp],text=True))
+        self.assertEqual(audited['status'],'receipt_matches_observation')
+        self.assertEqual(self.disk_snapshot(),before)
+        self.assertEqual(self.pilot.report()['runs'],1)
+        self.assertFalse(self.pilot.report()['development_enabled'])
 
 
 if __name__ == '__main__':
