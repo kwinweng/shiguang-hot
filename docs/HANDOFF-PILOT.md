@@ -1,6 +1,6 @@
 # Grok → Codex 首轮交接工具（Spec-only）
 
-状态：阿欢已确认三天单项目试运行方案。按操作方回报，2026-10-20 18:41–18:44（北京时间）box 首轮已产出 `spec_ready`、退出0、relay 通知送达，Spec 已人工回原群；**尚未补记人工回执，72小时未开始**。这是 box 实测回报，不是本地测试结论。本工具不处理自动开发，不改变正式站、workflow、凭证、部署、域名或 main 保护。
+状态：阿欢已确认三天单项目试运行方案。按操作方回报，2026-10-20 18:41–18:44（北京时间）box 首轮已产出 `spec_ready`、退出0、relay 通知送达，Spec 已人工回原群。该回报不等于当前原状态已被核实；回执、窗口起止和是否暂停，须以原私有文件及人工回复逐项核对，不能用本文或 bot 的转述代替。本工具不处理自动开发，不改变正式站、workflow、凭证、部署、域名或 main 保护。
 
 ## 范围和边界
 
@@ -9,6 +9,28 @@
 这是一条“指定 bot 主动投递 → 本地执行 → 现有 relay 通知 → bot 回群”的入口，不是群消息爬取器。工具没有 Grok API，不向任何群发送消息，不读取 relay 凭证。它也不会自动把当前云会话历史带到 box；所需 MRD 和约束要写入交接正文。
 
 原 bot SOP 若限制调用 Codex，由总控将阿欢本次确认记录为限于该项目、该阶段、三天试运行的例外；不能扩大为任意模型或任意任务调度。项目内具体 Spec 的批准、合并与部署权限仍按原规则。
+
+## 流程验收 v1.1：先完成流程，再恢复产品开发
+
+对外只由**总控**汇总、投递和回传；其他 bot 仅在阿欢点名时对外回复。MRD、原型、事实核查仍可由对应角色准备，但不能各自再发一份“最终交接”、认领执行或另起状态。
+
+本轮固定 box 为 Spec-only 执行机，继续使用首轮的原私有状态；Mac 当前会话负责按需读取、核对和准备 PR，不同时启动同一任务。更换执行机或状态目录必须先明确交接，不能用新目录绕过重复任务、未知用量或回执问题。现有锁只约束**同一状态目录**，不是跨主机或多套状态的全局互斥，也不提供 Grok 身份认证。
+
+总控每次只提交一份版本化交接：项目、任务号、revision、本轮变化、已确认基线、已定事项、必要材料和明确缺口。基线不因流程测试重新生成；已确认的产品决定不再送回待定项。任何正文或材料变化都升 revision。缺视觉材料时不能宣称视觉方案已核实；本工具的 `materials` 只接受受限大小的 UTF-8 文本，不能把截图路径字符串当成已经向模型传入截图，也不能截断大 HTML 冒充全文。
+
+流程完成须分别记录以下事实，不将一项替代另一项：
+
+| 关口 | 可核对证据 | 仍不代表什么 |
+| --- | --- | --- |
+| 任务就绪 | 唯一执行方、原状态、完整交接快照及哈希 | 群消息订阅已接通 |
+| Spec 完成 | 原 `result.json` 的 `spec_ready`、`spec.md` 和真实 usage | relay 已通知或用户已看到 |
+| 结果回群 | 总控核对结果后，在原群回传同一任务/版本/内容 | 阿欢已批准开发 |
+| 人工收到 | 阿欢实际回复、北京时间与原 `result_receipt` 对得上 | 平台身份认证或开发批准 |
+| 流程验收 | 不重复执行、暂停/失败路径有测试；原窗口无未裁决差异；阿欢确认流程可用 | 72小时观察已完成、任何产品 Spec 已批准 |
+
+72小时观察与本轮流程功能验收分开记录。原窗口一经激活不能因空闲、手动交接或一次核对而自动顺延、清空或重建。若原回执时间与人工消息时间不同，只报告差异，交阿欢裁决，不能覆盖第一次回执。流程验收未通过时，产品开发保持暂停；验收通过后仍须确认对应的产品增量 Spec，再按 PR 开发。`spec_approved` 等事件继续拒绝，不新增无人值守开发入口。
+
+Mac 电脑操作工具可以按需读取应用界面；这是本地操作能力，不是稳定的群消息 API、增量订阅、后台监控或可机器认证的批准来源。本工具也不代替这项能力，不自动发送群消息。
 
 ## 操作流程（由 box 维护者执行）
 
@@ -45,7 +67,7 @@ python3 "$PILOT_TOOL" --state "$PILOT_STATE" init \
   "document_sha256": "document 字符串精确 UTF-8 字节的 SHA-256",
   "settled_decisions": ["五格底栏名称和顺序已定", "自动开发保持关闭"],
   "materials": [
-    {"name": "基线 Spec", "path": "docs/APP-UPGRADE-SPEC.md"},
+    {"name": "基线 Spec", "path": "/absolute/private-dir/rebang-pilot/materials/baseline-spec.md"},
     {"name": "本轮反馈", "content": "筛选行保持单行，内容超宽时横向滚动"}
   ]
 }
@@ -65,7 +87,7 @@ runner 在领取任务时保存材料正文和 SHA-256 快照，用该快照生�
 python3 "$PILOT_TOOL" --state "$PILOT_STATE" check --event /absolute/private-dir/event.json
 ```
 
-再通过已经安装的完成通知工具启动首轮。`--owner` 使用发起交接的热榜 bot 的真实 ID。此处示范使用 Linux box 的既有机制；不是让 Codex 在云端启动或部署服务。
+再通过已经安装的完成通知工具启动已获准的一轮。`--owner` 使用本轮唯一对接人总控的真实 bot ID，不能照抄其他 bot 的 ID。此处示范使用 Linux box 的既有机制；不是让 Codex 在云端启动或部署服务。已有首轮不可按此示例重跑。
 
 ```sh
 NOTIFY_TAIL_CHARS=0 nohup "$HOME/.local/bin/notify-run" \
@@ -82,7 +104,7 @@ NOTIFY_TAIL_CHARS=0 nohup "$HOME/.local/bin/notify-run" \
 
 1. 读取 `report` 与对应 `runs/<key>/result.json`，确认 `status=spec_ready`；不能只看 wrapper 的 succeeded。
 2. 读取 `spec.md`、真实 `events.jsonl` 用量与错误日志，回原群发送 Spec、任务/版本、用量和待确认项。失败就回失败原因，不自动重启模型。
-3. 等待**阿欢本人在原群回复「已收到首轮」**。不能把 bot 自填的「群 ID + 时间 + 发送方」、relay 成功或 Spec 已发出当作回执。操作方看到该人工回复后，转录阿欢的实际回复时间并执行：
+3. 等待**阿欢本人在原群回复该结果所要求的收到口令**。旧首轮继续使用「已收到首轮」；新领取的任务使用下面的任务/版本/内容口令。不能把 bot 自填的「群 ID + 时间 + 发送方」、relay 成功或 Spec 已发出当作回执。操作方看到该人工回复后，转录阿欢的实际回复时间。下例仅用于已有旧首轮：
 
 ```sh
 python3 "$PILOT_TOOL" --state "$PILOT_STATE" report
@@ -93,13 +115,45 @@ python3 "$PILOT_TOOL" --state "$PILOT_STATE" ack-result \
 
 时间必须精确到秒，可以带小数秒；须明确使用 `+08:00`，或省略时区但仍按北京时间解释。不接受其他时区、未来时间或早于该 Spec 完成的时间。占位时间不能直接运行。
 
-回执记录为 `source=operator_transcription`：**操作方转录的人工确认，不是平台投递凭证，不是开发批准**，也没有独立核验阿欢身份。记录包含确认人、所需原话、北京时间、转录时间，以及 `platform_delivery_receipt=false`、`development_approval=false` 等标记。工具只允许 `--receipt-kind human_ack --ack-by 阿欢`，不能据此声称已接通平台身份认证。
+回执记录为 `source=operator_transcription`：**操作方转录的人工确认，不是平台投递凭证，不是开发批准**，也没有独立核验阿欢身份。记录包含确认人、所需原话、北京时间、转录时间，以及 `platform_delivery_receipt=false`、`development_approval=false` 等标记。工具只允许 `--receipt-kind human_ack --ack-by 阿欢`，不能据此声称已接通平台身份认证。新任务另外校验明确传入的 `--ack-text`，而不是把接收到任意文字当成收到确认。
 
 只有此时才激活窗口：起点使用阿欢实际回复的 `ack_at`，而非晚些时候操作方录入的时间，终点为其后72小时。首次回执不可覆盖；相同人、相同时间的重复 ack 保留首次转录记录，不延长窗口。重复通知先检查 `result_receipt`，已回传的结果不重复发群、不重复调模型。首轮失败、通知丢失或用量未知时，先检查现有记录，不重建状态来绕过限制。
 
 ### 已有首轮记录直接补记
 
 对 box 已有的 `rebang-task-001`、`revision=1`、`result_receipt=null`：只更新本 PR 的工具代码，继续用**原 `PILOT_STATE`**。运行 `report`，从对应记录取出原 `key`，待上述人工回复后直接运行 `ack-result`。**不要再次 `init`，不要再次 `run-spec`，不需要迁移或重建状态，也不调用模型**。补记会保留原任务、Spec、用量和请求快照，只在原状态及结果文件中记录回执与窗口；已有非空旧式回执同样不可覆盖。
+
+### 只读查询、统一结果和时间对账
+
+本版本的 `report`、`handoff` 和 `audit-receipt` 都只读取原文件，不创建锁文件、不重写或迁移状态、不调用模型。旧版本 `report` 会重写状态 JSON，核查原文件前应使用本版本或直接读取 JSON。`check` 会增加检查计数，`ack-result` 会写回执，不属于只读查询。
+
+对新完成的一轮，总控先读取同一个结果包：
+
+```sh
+python3 "$PILOT_TOOL" --state "$PILOT_STATE" handoff --key key-from-result
+```
+
+结果含完整 Spec、任务号、revision、完整 `spec_sha256`、稳定 `delivery_id`、真实用量、`already_acknowledged` 和 `required_ack`。此输出含任务正文，仅存私有位置，不进入公开仓库或 relay 日志尾部。它是回传准备材料，不是已发送证明。已有收到回执时不重复回群。
+
+升级后新领取的任务记录 `receipt_schema=2`，完成时固定 Spec 内容哈希；如文件随后改变，`handoff` 和收到确认都会拒绝。新口令形如 `已收到 task-example r2 0123456789ab`，最后一段为内容哈希前12位；必须使用实际结果给出的原句，不能直接使用本例：
+
+```sh
+python3 "$PILOT_TOOL" --state "$PILOT_STATE" ack-result \
+  --key key-from-result --receipt-kind human_ack --ack-by 阿欢 \
+  --ack-at 'YYYY-MM-DDTHH:MM:SS+08:00' \
+  --ack-text 'exact-required_ack-from-handoff-and-human-reply'
+```
+
+该口令仅表示收到这份结果，不是「确认 Spec vN」。收到确认不会触发开发。旧任务不补 schema、不重算原结果、不强迫阿欢重新回复新口令；其原回执及窗口保持原样。
+
+对已记录的回执，用实际看到的人工回复时间做只读对账：
+
+```sh
+python3 "$PILOT_TOOL" --state "$PILOT_STATE" audit-receipt \
+  --key key-from-result --observed-ack-at 'YYYY-MM-DDTHH:MM:SS+08:00'
+```
+
+输出区分 `receipt_matches_observation`、`receipt_mismatch`、`receipt_missing` 与 `legacy_receipt_unverifiable`，给出存储时间与观察时间之差、首次回执起点和72小时长度是否一致，以及是否需阿欢裁决。`recorded_at` 是录入时间，不可冒充人工回复时间。对账只比较操作方提供的观察与原文件，不独立核验身份，也不修改差异。
 
 ## 去重、失败与停止
 
@@ -121,8 +175,10 @@ python3 "$PILOT_TOOL" --state "$PILOT_STATE" pause
 
 `report` 给出已知 input、cached input、output、未知次数、任务记录和窗口时间。模型未报告时不能凭 CLI 默认值猜模型名称，不能直接估金额。relay bot、热榜 bot 和上游 MRD 整理的用量不在 Codex usage 内，要由对应平台另记。
 
-本 PR 的测试全用假的 CLI，无真实模型调用；不将测试的模拟数字作为试运行统计。操作方回报的 box 首轮真实用量为 input 36089 / cached 12288 / output 6621 / reasoning 33；cached 包含在 input 中，reasoning 不再叠加到 output。relay 与人工回群已由操作方报告成功，仍须阿欢本人回原群后补记人工回执。
+本 PR 的测试全用假的 CLI，无真实模型调用；不将测试的模拟数字作为试运行统计。操作方回报的 box 首轮真实用量为 input 36089 / cached 12288 / output 6621 / reasoning 33；cached 包含在 input 中，reasoning 不再叠加到 output。relay 与人工回群已由操作方报告成功；人工回执及窗口应按上节对账，不以转述代替原文件核实。
 
 ## 本地验证
 
 2026-10-20：全项目111项测试通过（原83项 + 交接工具28项）。交接测试使用假的 CLI，覆盖项目/群白名单、哈希、批准事件拒绝、跨重启去重、版本冲突、旧状态直接补记、人工回执不可覆盖、重复确认不延长窗口、无效时间/代填回执拒绝、增量提示词、材料快照与越界限制、运行中暂停、到期/预算停止、失败与未知用量、缓存计数、API计费阻断及 CLI 入口 JSON 输出。Python 编译、`git diff --check` 和新增文案检查通过。无真实模型调用、真实群消息或 box 配置变更。
+
+流程 v1.1 本地补充验证：交接工具36项测试通过（新增8项），仍全部使用假的 CLI 和临时状态。新增验证涵盖查询前后所有文件的字节及修改时间不变、不创建查询锁、稳定结果包、任务/版本/哈希口令、Spec 被改后的拒绝、旧首轮不迁移、时间差异不覆盖和 CLI 完整模拟闭环。该结果只证明本地工具行为，不证明 box 已更新、真实新任务已回群或三天观察完成。
