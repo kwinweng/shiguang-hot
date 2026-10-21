@@ -86,6 +86,14 @@
   document.addEventListener(
     "error",
     (event) => {
+      if (event.target instanceof HTMLImageElement) {
+        const thumbnail = event.target.closest(".news-thumbnail");
+        if (thumbnail) {
+          thumbnail.closest(".news-row")?.classList.remove("has-thumbnail");
+          thumbnail.remove();
+          return;
+        }
+      }
       if (
         !(event.target instanceof HTMLImageElement) ||
         !event.target.closest(".media-wrap")

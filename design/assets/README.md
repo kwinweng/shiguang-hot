@@ -17,6 +17,8 @@ Retrieved repository commit: `93d7d40c7b14dc0dd208d4967905606339e1f0e6`.
 
 Unmodified files, acquired 2026-10-20 Beijing time. Repository license: CC0 1.0 Universal, included as `MDN-LICENSE.txt`. These scenes do not substantiate any example event, destination, book or product.
 
+The news-list layout review also reuses these photographs as local thumbnail fixtures. Every news thumbnail is labelled “排版样例”, with alt text explaining that it is not a news-scene image. They do not illustrate or substantiate the fictional news titles. Missing-image examples remain text-only. The reference screenshot supplies layout proportions, not its publisher logo, article photos, readership counts or content.
+
 ## Previously verified project media
 
 Unmodified images already obtained for the earlier local prototype, reused as historical source-media examples:

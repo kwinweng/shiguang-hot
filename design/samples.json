@@ -14,7 +14,12 @@
       "heat": 18,
       "url": "https://example.org/",
       "group": "资讯",
-      "fixture": true
+      "fixture": true,
+      "image": "/design/assets/view-from-the-sky.jpg",
+      "alt": "MDN 图像排版样例，非新闻现场图",
+      "image_label": "图像排版样例",
+      "width": 1024,
+      "height": 768
     },
     {
       "id": "look-1",
@@ -28,7 +33,12 @@
       "heat": 11,
       "url": "https://example.org/",
       "group": "资讯",
-      "fixture": true
+      "fixture": true,
+      "image": "/design/assets/tree-bird.jpg",
+      "alt": "MDN 图像排版样例，非新闻现场图",
+      "image_label": "图像排版样例",
+      "width": 1024,
+      "height": 768
     },
     {
       "id": "look-2",
@@ -42,7 +52,12 @@
       "heat": 7,
       "url": "https://example.org/",
       "group": "资讯",
-      "fixture": true
+      "fixture": true,
+      "image": "/design/assets/watery-view.jpg",
+      "alt": "MDN 图像排版样例，非新闻现场图",
+      "image_label": "图像排版样例",
+      "width": 1024,
+      "height": 768
     },
     {
       "id": "look-3",
@@ -56,7 +71,12 @@
       "heat": 6,
       "url": "https://example.org/",
       "group": "资讯",
-      "fixture": true
+      "fixture": true,
+      "image": "/design/assets/jungle-coast.jpg",
+      "alt": "MDN 图像排版样例，非新闻现场图",
+      "image_label": "图像排版样例",
+      "width": 1024,
+      "height": 768
     },
     {
       "id": "look-4",
@@ -84,7 +104,12 @@
       "heat": 6,
       "url": "https://example.org/",
       "group": "资讯",
-      "fixture": true
+      "fixture": true,
+      "image": "/design/assets/view-from-the-sky.jpg",
+      "alt": "MDN 图像排版样例，非新闻现场图",
+      "image_label": "图像排版样例",
+      "width": 1024,
+      "height": 768
     },
     {
       "id": "look-6",
@@ -112,7 +137,12 @@
       "heat": 9,
       "url": "https://example.org/",
       "group": "资讯",
-      "fixture": true
+      "fixture": true,
+      "image": "/design/assets/tree-bird.jpg",
+      "alt": "MDN 图像排版样例，非新闻现场图",
+      "image_label": "图像排版样例",
+      "width": 1024,
+      "height": 768
     },
     {
       "id": "look-8",

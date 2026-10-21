@@ -46,14 +46,14 @@ def app_header(title, subtitle, mark, *, discovery=False):
 def screen_pages(data):
     items=data['items']; look=[x for x in items if x['kind']=='look']; play=[x for x in items if x['kind']=='play']; buy=[x for x in items if x['kind']=='buy']
     today = app_header('给今天，一点新鲜。','','今日')
-    today += section_heading('资讯','01','把世界慢慢读完')+'<div class="horizontal-cards news-carousel" data-carousel="look" tabindex="0" role="region" aria-label="今日资讯，左右滑动">'+news_card(look[0],hero=True)+''.join(news_card(i) for i in look[1:4])+'</div>'
+    today += section_heading('资讯','01','把世界慢慢读完')+'<div class="horizontal-cards news-carousel" data-carousel="look" tabindex="0" role="region" aria-label="今日资讯，左右滑动">'+news_card(look[0],hero=True,layout='feature')+''.join(news_card(i,layout='feature') for i in look[1:4])+'</div>'
     today += f'<button class="button quiet see-all" data-page="look">看全部 {len(look)} 条{icon("arrow")}</button>'
     for kind,label,seq,index in [('play','好玩',play,'02'),('buy','好买',buy,'03')]:
         today+=section_heading(label,index,'值得花一点时间')+f'<div class="horizontal-cards" data-carousel="{kind}" tabindex="0" role="region" aria-label="今日{label}，左右滑动">'+''.join(media_card(i) for i in seq[:4])+'</div>'
         today+=f'<button class="button quiet see-all" data-page="{kind}">看全部 {len(seq)} 条{icon("arrow")}</button>'
-    lookbody = app_header('资讯','顺着时间，读今天的世界。','READ')
+    lookbody = app_header('资讯','顺着时间，读今天的世界。','READ',discovery=True)
     lookbody += '<div class="mode-tabs" role="tablist" aria-label="资讯视角">'+''.join(f'<button role="tab" id="tab-{key}" aria-controls="mode-{key}" class="mode-tab" data-mode="{key}" aria-selected="{"true" if key=="brief" else "false"}" tabindex="{0 if key=="brief" else -1}">{label}</button>' for key,label in [('brief','速览'),('hot','热点'),('columns','栏目')])+'</div>'
-    lookbody += '<div class="sticky-filters">'+search('look')+filters('look',['全部','科技','社会','环球','开发者','数码'])+'<label class="small muted">来源 <select aria-label="筛选资讯来源" data-source><option value="全部">全部来源</option>'+''.join(f'<option>{e(s)}</option>' for s in dict.fromkeys(i['source'] for i in look))+'</select></label></div>'
+    lookbody += '<div class="sticky-filters"><div class="news-search-tools">'+search('look','搜索资讯')+'<select aria-label="筛选资讯来源" data-source><option value="全部">全部来源</option>'+''.join(f'<option>{e(s)}</option>' for s in dict.fromkeys(i['source'] for i in look))+'</select></div>'+filters('look',['全部','科技','社会','环球','开发者','数码'])+'</div>'
     lookbody += '<div id="mode-brief" role="tabpanel" aria-labelledby="tab-brief" data-look-view="brief">'+news_card(look[0],hero=True)+news_card(look[1])+fold_run(look[2:7])+''.join(news_card(i) for i in look[7:])+'</div>'
     hot = '<p class="sample-note">示例时间轴 · 每小时刷新 · 按首次报道小时分段，小时内按热度排序。</p><div class="hour-map" aria-label="24 小时示例时间轴">'
     for h in range(24):

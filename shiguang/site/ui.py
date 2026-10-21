@@ -27,12 +27,25 @@ def bookmark(item):
 
 
 def source_link(item):
-    return f'<a class="source-link" href="{safe_url(item.get("url"))}" target="_blank" rel="noopener noreferrer">{e(item.get("source", "格式样例"))}{icon("external-link")}</a>'
+    return f'<a class="source-link" href="{safe_url(item.get("url"))}" target="_blank" rel="noopener noreferrer"><span class="source-name">{e(item.get("source", "格式样例"))}</span>{icon("external-link")}</a>'
 
 
-def news_card(item, *, hero=False):
+def news_card(item, *, hero=False, layout='row'):
     badge = '<span class="eyebrow warm">此刻要闻</span>' if hero else ''
     cls = 'news-card hero-card' if hero else 'news-card'
+    if layout == 'row':
+        image = safe_url(item.get('image'))
+        thumbnail = ''
+        if image != '#':
+            thumbnail = f'<button class="news-thumbnail" data-detail="{e(item["id"])}" aria-label="查看：{e(item["title"])}"><img src="{image}" alt="{e(item.get("alt", item["title"]))}" loading="lazy" width="{int(item.get("width", 320))}" height="{int(item.get("height", 240))}">'
+            if item.get('fixture'):
+                thumbnail += '<span class="news-image-label">排版样例</span>'
+            thumbnail += '</button>'
+        headline = '<span class="news-row-badge" aria-hidden="true">要闻</span>' if hero else ''
+        return f'''<article class="{cls} news-row{' has-thumbnail' if thumbnail else ''}" data-item="{e(item['id'])}">
+          <div class="news-row-copy"><button class="title-button" data-detail="{e(item['id'])}" aria-label="{e(item['title'])}"><h3>{headline}{e(item['title'])}</h3></button>
+          <div class="news-meta">{source_link(item)}<span>{e(item.get('time', '仅日期'))}</span>{bookmark(item)}</div></div>{thumbnail}
+        </article>'''
     return f'''<article class="{cls}" data-item="{e(item['id'])}">
       <div class="news-meta">{badge}<span>{e(item.get('topic','资讯'))}</span><span>{e(item.get('time','仅日期'))}</span></div>
       <button class="title-button" data-detail="{e(item['id'])}"><h3>{e(item['title'])}</h3></button>

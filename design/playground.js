@@ -361,6 +361,12 @@
     const p = document.createElement("p");
     p.textContent = item.reason;
     fragment.append(p);
+    if (item.kind === "look") {
+      const context = document.createElement("p");
+      context.className = "small muted";
+      context.textContent = `${item.topic || "资讯"} · ${item.time || "仅日期"} · ${item.reach ?? 1} 个频道`;
+      fragment.append(context);
+    }
     if (item.kind === "play") {
       const p = document.createElement("p");
       p.className = "small muted";

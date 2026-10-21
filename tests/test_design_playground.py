@@ -31,6 +31,22 @@ class PlaygroundTests(unittest.TestCase):
         self.assertIsNone(tree.select_one('.price'))
         self.assertIsNone(tree.select_one('.fixture-label'))
 
+    def test_news_rows_keep_full_title_and_reject_unsafe_or_missing_thumbnails(self):
+        item = dict(id='look-x', kind='look', title='完整标题不会因两行预览丢失', reason='详情保留摘要', source='示例来源', time='仅日期', url='https://example.org/', fixture=True)
+        for image in [None, 'javascript:alert(1)', '/design/assets/../private.png']:
+            with self.subTest(image=image):
+                tree = BeautifulSoup(news_card(dict(item, image=image)), 'html.parser')
+                self.assertIsNone(tree.select_one('.news-thumbnail'))
+                self.assertIsNone(tree.find('img'))
+                self.assertEqual(tree.select_one('.title-button')['aria-label'], item['title'])
+                self.assertEqual(tree.select_one('.title-button')['data-detail'], item['id'])
+                self.assertIn('仅日期', tree.select_one('.news-meta').get_text())
+                self.assertIsNotNone(tree.select_one('[data-save="look-x"]'))
+        tree = BeautifulSoup(news_card(dict(item, image='/design/assets/tree-bird.jpg', alt='排版样例')), 'html.parser')
+        self.assertEqual(tree.select_one('.news-thumbnail')['data-detail'], item['id'])
+        self.assertEqual(tree.select_one('.news-thumbnail img')['alt'], '排版样例')
+        self.assertEqual(tree.select_one('.news-image-label').get_text(), '排版样例')
+
     def test_build_is_example_only_and_fixed_preview_counts(self):
         with tempfile.TemporaryDirectory() as directory:
             target = preview.build(directory)
