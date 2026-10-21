@@ -78,6 +78,10 @@ img {
   height: 21px;
   flex-shrink: 0;
   vertical-align: middle;
+  stroke: none;
+}
+.icon-fill {
+  display: none;
 }
 small,
 .small {
@@ -141,9 +145,11 @@ small,
   color: var(--action);
   background: var(--selected);
 }
-.save[aria-pressed="true"] svg {
-  fill: currentColor;
-  stroke: var(--selected);
+.save[aria-pressed="true"] .icon-regular {
+  display: none;
+}
+.save[aria-pressed="true"] .icon-fill {
+  display: inline;
 }
 .title-button {
   padding: 0;
@@ -498,8 +504,8 @@ small,
   outline-offset: 2px;
 }
 .search-field .icon-button {
-  width: 36px;
-  height: 36px;
+  width: var(--touch);
+  height: var(--touch);
 }
 .chip,
 .mode-tab {
@@ -532,6 +538,22 @@ small,
 }
 .filter-row::-webkit-scrollbar {
   display: none;
+}
+.discovery-filter-options {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.discovery-filter-options .filter-row {
+  flex: 1;
+  min-width: 0;
+}
+.dog-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  padding-inline: var(--space-2);
 }
 .sticky-filters {
   position: sticky;
@@ -583,7 +605,7 @@ small,
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-2);
 }
 .app-topbar img {
   width: 36px;
@@ -627,6 +649,23 @@ small,
   color: var(--action);
   font-size: var(--font-xs);
   letter-spacing: 0.1em;
+}
+.discovery-heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+.discovery-heading .subtitle {
+  margin: 0;
+}
+.discovery-heading + .sample-note {
+  margin: var(--space-2) 0 var(--space-3);
+}
+.app-panel[data-panel="play"] .section-heading,
+.app-panel[data-panel="buy"] .section-heading {
+  margin: var(--space-3) 0 var(--space-2);
 }
 .sample-note {
   font-size: var(--font-xs);
@@ -808,8 +847,13 @@ dialog::backdrop {
   display: flex;
   align-items: center;
   gap: 16px;
-  max-width: calc(100vw - 32px);
+  width: max-content;
+  max-width: min(420px, calc(100vw - 32px));
   font-size: var(--font-label);
+}
+.toast > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .toast button {
   border: 0;
@@ -817,6 +861,9 @@ dialog::backdrop {
   color: inherit;
   text-decoration: underline;
   min-height: var(--touch);
+  min-width: var(--touch);
+  flex-shrink: 0;
+  white-space: nowrap;
   font-weight: 600;
 }
 .motion-demo {

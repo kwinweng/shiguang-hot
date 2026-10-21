@@ -2,6 +2,39 @@
 (() => {
   const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
   let toastTimer;
+  let toastFrame;
+  function positionToast() {
+    const el = document.querySelector(".toast");
+    if (!el || el.hidden) return;
+    const device = [...document.querySelectorAll(".device")].find(
+      (node) => node.getClientRects().length,
+    );
+    const bounds = device?.getBoundingClientRect();
+    const left = Math.max(16, bounds?.left + 16 || 16);
+    const right = Math.min(innerWidth - 16, bounds?.right - 16 || innerWidth - 16);
+    el.style.left = `${(left + right) / 2}px`;
+    el.style.maxWidth = `${Math.min(420, Math.max(0, right - left))}px`;
+    const viewport = window.visualViewport;
+    const top = viewport?.offsetTop || 0;
+    const bottom = viewport ? Math.min(innerHeight, top + viewport.height) : innerHeight;
+    const nav = device?.querySelector(".bottom-nav")?.getBoundingClientRect();
+    // Use the actual bar height, including safe-area/font changes, in both
+    // the embedded device and full-screen preview. Never cover its buttons.
+    const aboveNav = nav && nav.top < bottom && nav.top >= top + el.offsetHeight + 12;
+    el.style.bottom = `${Math.max(24, innerHeight - bottom + 12, aboveNav ? innerHeight - nav.top + 12 : 0)}px`;
+  }
+  function scheduleToastPosition() {
+    cancelAnimationFrame(toastFrame);
+    toastFrame = requestAnimationFrame(positionToast);
+  }
+  const toastResize = new ResizeObserver(scheduleToastPosition);
+  document.querySelectorAll(".device, .device .bottom-nav").forEach(
+    (node) => toastResize.observe(node),
+  );
+  window.addEventListener("resize", scheduleToastPosition);
+  window.visualViewport?.addEventListener("resize", scheduleToastPosition);
+  window.visualViewport?.addEventListener("scroll", scheduleToastPosition);
+  document.addEventListener("scroll", scheduleToastPosition, true);
   function toast(message, undo) {
     const el = document.querySelector(".toast");
     if (!el) return;
@@ -14,6 +47,7 @@
       el.hidden = true;
     };
     el.hidden = false;
+    positionToast();
     toastTimer = setTimeout(
       () => {
         el.hidden = true;

@@ -68,6 +68,27 @@ class PlaygroundTests(unittest.TestCase):
             self.assertFalse((out / 'ui').exists())
             self.assertFalse((out / 'samples.json').exists())
 
+    def test_all_shared_ui_icons_are_local_phosphor_with_a_saved_bookmark_glyph(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = preview.build(directory)
+            tree = BeautifulSoup((target / 'index.html').read_text(), 'html.parser')
+            self.assertIn('Copyright (c) 2023 Phosphor Icons', str(tree))
+            self.assertIn('MIT License', preview.standalone(target).read_text())
+            icons = tree.select('svg.icon')
+            self.assertGreater(len(icons), 20)
+            for icon in icons:
+                self.assertEqual(icon.get('data-icon-family'), 'phosphor')
+                self.assertEqual(icon.get('viewbox'), '0 0 256 256')
+                self.assertEqual(icon.get('aria-hidden'), 'true')
+                self.assertIsNone(icon.find('use'))
+                self.assertIsNotNone(icon.find('path'))
+            bookmarks = tree.select('[data-save] svg')
+            self.assertTrue(bookmarks)
+            for bookmark in bookmarks:
+                self.assertEqual(bookmark.get('data-icon'), 'bookmark-simple')
+                self.assertIsNotNone(bookmark.select_one('.icon-regular path'))
+                self.assertIsNotNone(bookmark.select_one('.icon-fill path'))
+
     def test_builder_refuses_production_or_source_output(self):
         for output in [ROOT, ROOT / 'site', ROOT / 'site/private', ROOT / 'web/tmp', ROOT / 'design/output']:
             with self.subTest(output=output):

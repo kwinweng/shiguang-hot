@@ -1,7 +1,7 @@
 """Pure presentation components, initially exercised only by the design playground."""
 from html import escape
 from urllib.parse import urlsplit
-from .icons import TABLER
+from .phosphor import icon
 
 KINDS = {'look': '好看', 'play': '好玩', 'buy': '好买'}
 
@@ -20,20 +20,6 @@ def safe_url(value):
         return e(value)
     return '#'
 
-
-def icon(name):
-    extra = {
-        'compass': ['M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18', 'm16 8-2 6-6 2 2-6Z'],
-        'spark': ['m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z'],
-        'arrow': ['M5 12h14m-5-5 5 5-5 5'],
-        'moon': ['M20 14a8 8 0 0 1-10-10 8.5 8.5 0 1 0 10 10'],
-        'check': ['m5 12 4 4L19 6'],
-        'image': ['M4 4h16v16H4Z', 'm4 16 5-5 5 5 3-3 3 3', 'M15 8h.01'],
-        'paw': ['M8 17c0-5 8-5 8 0s-3 1-4 1-4 4-4-1', 'M7 8v2m5-5v3m5 0v2m-15 2v2m20-2v2'],
-        'sliders': ['M4 7h16M4 17h16M8 4v6m8 4v6'],
-    }
-    paths = TABLER.get(name) or extra.get(name) or extra['spark']
-    return '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ''.join(f'<path d="{p}"/>' for p in paths) + '</svg>'
 
 
 def bookmark(item):
