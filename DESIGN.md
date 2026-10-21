@@ -112,4 +112,4 @@ python3 tools/design_preview.py --build-only --standalone --output /tmp/shiguang
 - macOS 沙箱首轮89项中79项通过，10项环境错误：8项回环服务监听被沙箱阻止、2项缺 Linux renameat2；未为此修改原测试或业务代码。
 - 本次改动不包含正式 `web/style.css` / `web/app.js` / `shiguang/site/icons.py`、业务入口、采集、workflow、token、生产配置或另一个会话的自动化；公开资产隔离回归保留。
 
-最终测试源码归档 SHA-256：`9956c670e802381ca289b9f78d0da8fe7e7e8a355ebbbdd1fd493748db8e9ba5`。归档共173个受控源文件，不含 `.git`、凭据或原 box 状态。测试后仅补写本段及测试结果，逐文件核对最终代码与归档一致；原始 Linux 日志及浏览器几何/交互记录随交付保留。临时 VM 在测试后关闭；JavaScript 语法及 `git diff --check` 通过。
+最终测试源码归档 SHA-256：`9956c670e802381ca289b9f78d0da8fe7e7e8a355ebbbdd1fd493748db8e9ba5`。归档共173个受控源文件，不含 `.git`、凭据或原 box 状态。测试后补写本段及测试结果，并规范图标模块和许可文件的末尾换行；这两文件去除末尾空白后与归档一致，其余行为文件逐字节一致，6项 Playground 复测通过；原始 Linux 日志及浏览器几何/交互记录随交付保留。临时 VM 在测试后关闭；JavaScript 语法及 `git diff --check` 通过。

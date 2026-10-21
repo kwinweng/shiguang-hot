@@ -68,4 +68,3 @@ def icon(name):
     return (f'<svg class="icon" viewBox="0 0 256 256" fill="currentColor" '
             f'data-icon-family="phosphor" data-icon="{key}" '
             f'aria-hidden="true" focusable="false">{body}</svg>')
-
