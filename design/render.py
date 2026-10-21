@@ -32,8 +32,11 @@ def search(scope, placeholder='搜索标题、来源或关键词'):
     return f'<label class="search-field">{icon("search")}<input type="search" data-search="{scope}" aria-label="{placeholder}" placeholder="{placeholder}"><button class="icon-button" type="button" data-clear-search="{scope}" aria-label="清空搜索">{icon("x")}</button></label>'
 
 
-def filters(scope, labels):
-    return '<div class="filter-row" aria-label="分类筛选">' + ''.join(f'<button class="chip" data-filter-scope="{scope}" data-filter="{e(label)}" aria-pressed="{"true" if label == "全部" else "false"}">{icon(CATEGORY_ICONS[label])}<span>{e(label)}</span></button>' for label in labels) + '</div>'
+def filters(scope, labels, *, dog=False):
+    buttons = ''.join(f'<button class="chip" data-filter-scope="{scope}" data-filter="{e(label)}" aria-pressed="{"true" if label == "全部" else "false"}">{icon(CATEGORY_ICONS[label])}<span>{e(label)}</span></button>' for label in labels)
+    if dog:
+        buttons += f'<button class="chip dog-filter" data-dog="{scope}" aria-pressed="false">{icon("paw")}<span>带狗</span></button>'
+    return '<div class="filter-row" aria-label="分类筛选">' + buttons + '</div>'
 
 
 def app_header(title, subtitle, mark, *, discovery=False):
@@ -71,9 +74,10 @@ def screen_pages(data):
     for kind,title,desc,seq,groups in [('play','好玩','好奇心，总要有个去处。',play,PLAY_GROUPS),('buy','好买','一些值得了解的新东西。',buy,BUY_GROUPS)]:
         body=app_header(title,desc,'DISCOVER' if kind=='play' else 'CURATED',discovery=True)
         body+='<p class="sample-note">示例数据 · '+('图像用于排版，不代表真实活动或作品。' if kind=='play' else '无品牌虚构物件与价格格式，不是真实商品报价。')+'</p>'
-        body+='<div class="sticky-filters">'+search(kind,'搜索感兴趣的发现')+'<div class="discovery-filter-options">'+filters(kind,['全部']+groups)+f'<button class="chip dog-filter" data-dog="{kind}" aria-pressed="false">{icon("paw")} 带狗</button></div></div>'
+        body+='<div class="sticky-filters">'+search(kind,'搜索感兴趣的发现')+filters(kind,['全部']+groups,dog=True)+'</div>'
         for n,group in enumerate(groups):
-            body+=f'<section class="group-section" data-group-section="{kind}" data-group="{group}">'+section_heading(group,f'{n+1:02d}')+'<div class="masonry">'+''.join(media_card(i) for i in seq if i['group']==group)+'</div></section>'
+            grid = 'equal-cards' if kind == 'buy' else 'masonry'
+            body+=f'<section class="group-section" data-group-section="{kind}" data-group="{group}">'+section_heading(group,f'{n+1:02d}')+f'<div class="{grid}">'+''.join(media_card(i) for i in seq if i['group']==group)+'</div></section>'
         if kind=='buy': body+='<p class="reference-note">只做参考。来源页含购买链接，我们不下单、不进购物车。</p>'
         body+=f'<div class="empty-state" data-no-results="{kind}" hidden><h3>换个方向，继续发现</h3><p>清除筛选，看看其他示例。</p><button class="button" data-reset="{kind}">清除筛选</button></div>'
         pages[kind]=body

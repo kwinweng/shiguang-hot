@@ -392,11 +392,15 @@ small,
 .art-book {
   aspect-ratio: 3/4;
 }
-.masonry {
+.masonry,
+.equal-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--grid-gap);
   align-items: start;
+}
+.equal-cards {
+  align-items: stretch;
 }
 .masonry.is-measured {
   grid-auto-rows: 1px;
@@ -437,33 +441,41 @@ small,
   padding-bottom: var(--space-4);
   scroll-snap-type: x proximity;
 }
-.horizontal-cards > article {
+.horizontal-cards > article,
+.equal-cards > .media-card {
   scroll-snap-align: start;
   height: auto;
   margin-bottom: 0;
   display: flex;
   flex-direction: column;
 }
-.horizontal-cards .media-wrap {
+.horizontal-cards .media-wrap,
+.equal-cards .media-wrap {
   aspect-ratio: 4 / 5;
   overflow: hidden;
   flex-shrink: 0;
 }
 .horizontal-cards .media-open,
 .horizontal-cards .media-open img,
-.horizontal-cards .object-art {
+.horizontal-cards .object-art,
+.equal-cards .media-open,
+.equal-cards .media-open img,
+.equal-cards .object-art {
   height: 100%;
   aspect-ratio: auto;
 }
-.horizontal-cards .media-open img {
+.horizontal-cards .media-open img,
+.equal-cards .media-open img {
   object-fit: cover;
 }
-.horizontal-cards .media-body {
+.horizontal-cards .media-body,
+.equal-cards .media-body {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
-.horizontal-cards .media-card footer {
+.horizontal-cards .media-card footer,
+.equal-cards .media-card footer {
   margin-top: auto;
   padding-top: var(--space-1);
 }
@@ -706,22 +718,6 @@ small,
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-}
-.discovery-filter-options {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-.discovery-filter-options .filter-row {
-  flex: 1;
-  min-width: 0;
-}
-.dog-filter {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex-shrink: 0;
-  padding-inline: var(--space-2);
 }
 .sticky-filters {
   position: sticky;
@@ -1260,7 +1256,8 @@ dialog::backdrop {
   max-width: 393px;
   flex-shrink: 0;
 }
-.device[data-viewport="phone"] .masonry {
+.device[data-viewport="phone"] .masonry,
+.device[data-viewport="phone"] .equal-cards {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .device[data-viewport="phone"] .app-content {
@@ -1573,12 +1570,14 @@ dialog::backdrop {
   top: 8px;
 }
 @container (min-width:720px) {
-  .masonry {
+  .masonry,
+  .equal-cards {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 @container (min-width:1100px) {
-  .masonry {
+  .masonry,
+  .equal-cards {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
