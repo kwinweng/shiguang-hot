@@ -19,7 +19,9 @@
       "alt": "MDN 图像排版样例，非新闻现场图",
       "image_label": "图像排版样例",
       "width": 1024,
-      "height": 768
+      "height": 768,
+      "date": "2026-10-20",
+      "source_id": "wire"
     },
     {
       "id": "look-1",
@@ -38,7 +40,9 @@
       "alt": "MDN 图像排版样例，非新闻现场图",
       "image_label": "图像排版样例",
       "width": 1024,
-      "height": 768
+      "height": 768,
+      "date": "2026-10-20",
+      "source_id": "research"
     },
     {
       "id": "look-2",
@@ -57,7 +61,9 @@
       "alt": "MDN 图像排版样例，非新闻现场图",
       "image_label": "图像排版样例",
       "width": 1024,
-      "height": 768
+      "height": 768,
+      "date": "2026-10-20",
+      "source_id": "tech"
     },
     {
       "id": "look-3",
@@ -76,7 +82,9 @@
       "alt": "MDN 图像排版样例，非新闻现场图",
       "image_label": "图像排版样例",
       "width": 1024,
-      "height": 768
+      "height": 768,
+      "date": "2026-10-20",
+      "source_id": "tech"
     },
     {
       "id": "look-4",
@@ -90,7 +98,9 @@
       "heat": 10,
       "url": "https://example.org/",
       "group": "资讯",
-      "fixture": true
+      "fixture": true,
+      "date": "2026-10-20",
+      "source_id": "tech"
     },
     {
       "id": "look-5",
@@ -109,7 +119,9 @@
       "alt": "MDN 图像排版样例，非新闻现场图",
       "image_label": "图像排版样例",
       "width": 1024,
-      "height": 768
+      "height": 768,
+      "date": "2026-10-20",
+      "source_id": "tech"
     },
     {
       "id": "look-6",
@@ -123,7 +135,9 @@
       "heat": 6,
       "url": "https://example.org/",
       "group": "资讯",
-      "fixture": true
+      "fixture": true,
+      "date": "2026-10-20",
+      "source_id": "tech"
     },
     {
       "id": "look-7",
@@ -142,7 +156,9 @@
       "alt": "MDN 图像排版样例，非新闻现场图",
       "image_label": "图像排版样例",
       "width": 1024,
-      "height": 768
+      "height": 768,
+      "date": "2026-10-20",
+      "source_id": "observer"
     },
     {
       "id": "look-8",
@@ -156,7 +172,9 @@
       "heat": 6,
       "url": "https://example.org/",
       "group": "资讯",
-      "fixture": true
+      "fixture": true,
+      "date": "2026-10-20",
+      "source_id": "observer"
     },
     {
       "id": "play-0",
@@ -469,6 +487,454 @@
       "url": "https://example.org/",
       "fixture": true,
       "status": "众筹有风险"
+    },
+    {
+      "id": "look-world-member-0",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "同一条置顶示例要闻：第2份来源报道",
+      "reason": "与置顶示例属于同一事件；用于检验成员标题搜索与规范来源计数。成员检索样例：蓝色书签。",
+      "topic": "全球",
+      "source_id": "research",
+      "source": "示例研究所",
+      "date": "2026-10-20",
+      "time": "10:25",
+      "url": "https://example.org/fixture/articles/look-world-member-0"
+    },
+    {
+      "id": "look-world-member-1",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "同一条置顶示例要闻：第3份来源报道",
+      "reason": "与置顶示例属于同一事件；用于检验成员标题搜索与规范来源计数。",
+      "topic": "全球",
+      "source_id": "tech",
+      "source": "示例科技",
+      "date": "2026-10-20",
+      "time": "10:26",
+      "url": "https://example.org/fixture/articles/look-world-member-1"
+    },
+    {
+      "id": "look-world-member-2",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "同一条置顶示例要闻：第4份来源报道",
+      "reason": "与置顶示例属于同一事件；用于检验成员标题搜索与规范来源计数。",
+      "topic": "全球",
+      "source_id": "observer",
+      "source": "示例观察",
+      "date": "2026-10-20",
+      "time": "10:27",
+      "url": "https://example.org/fixture/articles/look-world-member-2"
+    },
+    {
+      "id": "look-research-member",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "城市夜晚研究：另一份示例报道",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "科技",
+      "source_id": "wire",
+      "source": "示例通讯社",
+      "date": "2026-10-20",
+      "time": "10:19",
+      "url": "https://example.org/fixture/articles/look-research-member"
+    },
+    {
+      "id": "look-column-world",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "环球要闻的财经条目，仍按原发表时间排序",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "财经",
+      "source_id": "world",
+      "source": "环球要闻",
+      "date": "2026-10-20",
+      "time": "08:50",
+      "url": "https://example.org/fixture/articles/look-column-world"
+    },
+    {
+      "id": "look-column-github",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "GitHub热门：一个开发者工具的样例",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "开发者",
+      "source_id": "github",
+      "source": "GitHub热门",
+      "date": "2026-10-20",
+      "time": "08:40",
+      "url": "https://example.org/fixture/articles/look-column-github"
+    },
+    {
+      "id": "look-column-x",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "推特爆款：一则轻松的示例讨论",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "娱乐",
+      "source_id": "x",
+      "source": "推特爆款",
+      "date": "2026-10-20",
+      "time": "08:30",
+      "url": "https://example.org/fixture/articles/look-column-x"
+    },
+    {
+      "id": "look-ai",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "AI研究的边界，也值得慢慢了解",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "AI",
+      "source_id": "research",
+      "source": "示例研究所",
+      "date": "2026-10-20",
+      "time": "08:20",
+      "url": "https://example.org/fixture/articles/look-ai"
+    },
+    {
+      "id": "look-car",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "一段城市出行的观察",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "汽车",
+      "source_id": "observer",
+      "source": "示例观察",
+      "date": "2026-10-20",
+      "time": "08:10",
+      "url": "https://example.org/fixture/articles/look-car"
+    },
+    {
+      "id": "look-unknown",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "尚未归类的记录，仍能在全部找到",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "待分类",
+      "source_id": "wire",
+      "source": "示例通讯社",
+      "date": "2026-10-20",
+      "time": "仅日期",
+      "url": "https://example.org/fixture/articles/look-unknown"
+    },
+    {
+      "id": "look-history-19",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "昨天的城市观察：一个公共空间的样例",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "社会",
+      "source_id": "observer",
+      "source": "示例观察",
+      "date": "2026-10-19",
+      "time": "16:40",
+      "url": "https://example.org/fixture/articles/look-history-19"
+    },
+    {
+      "id": "look-history-19-member",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "城市观察的第二份报道：老街步行",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "社会",
+      "source_id": "wire",
+      "source": "示例通讯社",
+      "date": "2026-10-19",
+      "time": "16:50",
+      "url": "https://example.org/fixture/articles/look-history-19-member"
+    },
+    {
+      "id": "look-history-19-ai",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "昨天的AI研究样例",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "AI",
+      "source_id": "research",
+      "source": "示例研究所",
+      "date": "2026-10-19",
+      "time": "09:20",
+      "url": "https://example.org/fixture/articles/look-history-19-ai"
+    },
+    {
+      "id": "look-history-19-world",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "环球要闻里的昨日财经记录",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "财经",
+      "source_id": "world",
+      "source": "环球要闻",
+      "date": "2026-10-19",
+      "time": "仅日期",
+      "url": "https://example.org/fixture/articles/look-history-19-world"
+    },
+    {
+      "id": "look-history-18",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "前天的一条技术笔记，没有示例热点",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "科技",
+      "source_id": "tech",
+      "source": "示例科技",
+      "date": "2026-10-18",
+      "time": "11:10",
+      "url": "https://example.org/fixture/articles/look-history-18"
+    },
+    {
+      "id": "look-history-16",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "更早的历史资讯，仍可从速览回看",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "全球",
+      "source_id": "world",
+      "source": "环球要闻",
+      "date": "2026-10-16",
+      "time": "仅日期",
+      "url": "https://example.org/fixture/articles/look-history-16"
+    },
+    {
+      "id": "look-history-sep",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "九月的阅读记录，用于演示跨月查找",
+      "reason": "虚构资讯样例，用于检验主题、来源与日期组合。",
+      "topic": "数码",
+      "source_id": "tech",
+      "source": "示例科技",
+      "date": "2026-09-30",
+      "time": "18:20",
+      "url": "https://example.org/fixture/articles/look-history-sep"
+    },
+    {
+      "id": "look-history-nextday-member",
+      "kind": "look",
+      "group": "资讯",
+      "fixture": true,
+      "title": "跨日更新：老街步行示例的后续报道",
+      "reason": "预计算样例事件首次报道在10月19日；本条自身发表于20日00:10，速览仍归20日，不改变原发表日期。",
+      "topic": "社会",
+      "source_id": "wire",
+      "source": "示例通讯社",
+      "date": "2026-10-20",
+      "time": "00:10",
+      "url": "https://example.org/fixture/articles/look-history-nextday-member"
     }
-  ]
+  ],
+  "news": {
+    "dates": [
+      "2026-09-30",
+      "2026-10-15",
+      "2026-10-16",
+      "2026-10-18",
+      "2026-10-19",
+      "2026-10-20"
+    ],
+    "hot_dates": [
+      "2026-10-18",
+      "2026-10-19",
+      "2026-10-20"
+    ],
+    "sources": [
+      {
+        "id": "wire",
+        "name": "示例通讯社",
+        "aliases": [
+          "示例通讯社"
+        ],
+        "kind": "news",
+        "hot_eligible": true
+      },
+      {
+        "id": "research",
+        "name": "示例研究所",
+        "aliases": [
+          "示例研究所"
+        ],
+        "kind": "news",
+        "hot_eligible": true
+      },
+      {
+        "id": "tech",
+        "name": "示例科技",
+        "aliases": [
+          "示例科技"
+        ],
+        "kind": "news",
+        "hot_eligible": true
+      },
+      {
+        "id": "observer",
+        "name": "示例观察",
+        "aliases": [
+          "示例观察"
+        ],
+        "kind": "news",
+        "hot_eligible": true
+      },
+      {
+        "id": "world",
+        "name": "环球要闻",
+        "aliases": [
+          "world-news"
+        ],
+        "kind": "column",
+        "hot_eligible": true,
+        "issues": {
+          "2026-10-20": "https://example.org/fixture/issues/world/2026-10-20",
+          "2026-10-19": "https://example.org/fixture/issues/world/2026-10-19",
+          "2026-10-16": "https://example.org/fixture/issues/world/2026-10-16"
+        }
+      },
+      {
+        "id": "github",
+        "name": "GitHub热门",
+        "aliases": [
+          "GitHub 热门",
+          "github-trending"
+        ],
+        "kind": "column",
+        "hot_eligible": false,
+        "issues": {
+          "2026-10-20": "https://example.org/fixture/issues/github/2026-10-20",
+          "2026-10-19": "https://example.org/fixture/issues/github/2026-10-19",
+          "2026-10-16": "https://example.org/fixture/issues/github/2026-10-16"
+        }
+      },
+      {
+        "id": "x",
+        "name": "推特爆款",
+        "aliases": [
+          "X",
+          "twitter",
+          "twitter-viral"
+        ],
+        "kind": "column",
+        "hot_eligible": false,
+        "issues": {
+          "2026-10-20": "https://example.org/fixture/issues/x/2026-10-20",
+          "2026-10-19": "https://example.org/fixture/issues/x/2026-10-19",
+          "2026-10-16": "https://example.org/fixture/issues/x/2026-10-16"
+        }
+      }
+    ],
+    "events": [
+      {
+        "id": "event-look-0",
+        "date": "2026-10-20",
+        "representative": "look-0",
+        "members": [
+          "look-0",
+          "look-world-member-0",
+          "look-world-member-1",
+          "look-world-member-2"
+        ],
+        "score": 18,
+        "hour": "10"
+      },
+      {
+        "id": "event-look-1",
+        "date": "2026-10-20",
+        "representative": "look-1",
+        "members": [
+          "look-1",
+          "look-research-member"
+        ],
+        "score": 11,
+        "hour": "10"
+      },
+      {
+        "id": "event-look-2",
+        "date": "2026-10-20",
+        "representative": "look-2",
+        "members": [
+          "look-2"
+        ],
+        "score": 7,
+        "hour": "10"
+      },
+      {
+        "id": "event-look-3",
+        "date": "2026-10-20",
+        "representative": "look-3",
+        "members": [
+          "look-3"
+        ],
+        "score": 6,
+        "hour": "10"
+      },
+      {
+        "id": "event-look-4",
+        "date": "2026-10-20",
+        "representative": "look-4",
+        "members": [
+          "look-4"
+        ],
+        "score": 10,
+        "hour": "10"
+      },
+      {
+        "id": "event-look-5",
+        "date": "2026-10-20",
+        "representative": "look-5",
+        "members": [
+          "look-5"
+        ],
+        "score": 6,
+        "hour": "09"
+      },
+      {
+        "id": "event-look-6",
+        "date": "2026-10-20",
+        "representative": "look-6",
+        "members": [
+          "look-6"
+        ],
+        "score": 6,
+        "hour": "09"
+      },
+      {
+        "id": "event-look-7",
+        "date": "2026-10-20",
+        "representative": "look-7",
+        "members": [
+          "look-7"
+        ],
+        "score": 9,
+        "hour": "09"
+      },
+      {
+        "id": "event-history-19",
+        "date": "2026-10-19",
+        "representative": "look-history-19",
+        "members": [
+          "look-history-19",
+          "look-history-19-member",
+          "look-history-nextday-member"
+        ],
+        "score": 8,
+        "hour": "16"
+      }
+    ]
+  }
 }

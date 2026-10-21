@@ -58,9 +58,10 @@ class PlaygroundTests(unittest.TestCase):
             self.assertEqual([len(row.select('article')) for row in today.select('[data-carousel]')], [4, 4, 4])
             self.assertEqual([card['data-item'] for card in today.select('[data-carousel=look] article')], ['look-0', 'look-1', 'look-2', 'look-3'])
             self.assertEqual(len(tree.select('.app-panel')), 5)
-            hot_cards = tree.select('[data-look-view=hot] [data-item]')
-            hour_nine = [c['data-item'] for c in hot_cards if c.select_one('.news-meta').get_text().strip().endswith(('09:40', '09:58', '09:55'))]
-            self.assertEqual(hour_nine, ['look-7', 'look-5', 'look-6'])
+            self.assertEqual([b['data-mode'] for b in tree.select('[data-mode]')], ['brief', 'hot'])
+            self.assertIsNotNone(tree.select_one('template[data-news-templates] [data-item="look-0"]'))
+            self.assertIsNotNone(tree.select_one('[data-news-date-dialog]'))
+            self.assertTrue((target / 'news-query.js').is_file())
             data = json.loads((target / 'samples.json').read_text())
             self.assertTrue(data['example'])
             self.assertTrue(all(i['fixture'] for i in data['items']))
@@ -73,6 +74,38 @@ class PlaygroundTests(unittest.TestCase):
             self.assertNotIn('src="/design/', standalone)
             self.assertNotIn('href="/design/', standalone)
             self.assertIn('data:image/', standalone)
+
+    def test_news_archive_fixtures_have_stable_references_and_offline_query_runtime(self):
+        data = json.loads((ROOT / 'design/samples.json').read_text())
+        items = {i['id']: i for i in data['items']}
+        self.assertEqual(len(items), len(data['items']))
+        sources = {s['id']: s for s in data['news']['sources']}
+        dates = set(data['news']['dates'])
+        self.assertIn('2026-10-15', dates)  # archived, intentionally empty
+        self.assertNotIn('2026-10-17', dates)  # missing, not an empty archive
+        self.assertEqual(len(data['news']['hot_dates']), 3)
+        for item in items.values():
+            if item['kind'] == 'look':
+                self.assertIn(item['date'], dates)
+                self.assertIn(item['source_id'], sources)
+                self.assertTrue(item['fixture'])
+        for event in data['news']['events']:
+            representative = items[event['representative']]
+            self.assertIn(event['representative'], event['members'])
+            self.assertEqual(event['date'], representative['date'])
+            for member in event['members']:
+                self.assertIn(member, items)
+                self.assertTrue(sources[items[member]['source_id']]['hot_eligible'])
+        with tempfile.TemporaryDirectory() as directory:
+            target = preview.build(directory)
+            tree = BeautifulSoup((target / 'index.html').read_text(), 'html.parser')
+            self.assertEqual([s['src'] for s in tree.select('script[src]')],
+                             ['/design/ui/interactions.js', '/design/news-query.js', '/design/playground.js'])
+            self.assertEqual({c['data-item'] for c in tree.select('template[data-news-templates] [data-item]')},
+                             {i['id'] for i in items.values() if i['kind'] == 'look'})
+            offline = preview.standalone(target).read_text()
+            self.assertNotIn('src="/design/news-query.js"', offline)
+            self.assertLess(offline.index('root.ShiguangNews = factory()'), offline.index('const ui = window.ShiguangUI'))
 
     def test_public_assets_do_not_include_design_route_or_shared_preview_files(self):
         from shiguang.site.build import publish_assets

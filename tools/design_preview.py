@@ -30,7 +30,8 @@ def build(output):
     shutil.copytree(ROOT / 'design/assets', target / 'assets', dirs_exist_ok=True)
     shutil.copy(ROOT / 'web/assets/icon-512.png', target / 'assets/icon.png')
     shutil.copytree(ROOT / 'web/ui', target / 'ui', dirs_exist_ok=True)
-    shutil.copy(ROOT / 'design/playground.js', target / 'playground.js')
+    for name in ['news-query.js', 'playground.js']:
+        shutil.copy(ROOT / 'design' / name, target / name)
     shutil.copy(ROOT / 'design/samples.json', target / 'samples.json')
     spec = importlib.util.spec_from_file_location('design_render', ROOT / 'design/render.py')
     renderer = importlib.util.module_from_spec(spec)
@@ -53,6 +54,7 @@ def standalone(target):
     for name in ['tokens.css', 'components.css']:
         html = html.replace(f'<link rel="stylesheet" href="/design/ui/{name}">', '<style>' + (target / 'ui' / name).read_text() + '</style>')
     html = html.replace('<script src="/design/ui/interactions.js" defer></script>', '')
+    html = html.replace('<script src="/design/news-query.js" defer></script>', '')
     html = html.replace('<script src="/design/playground.js" defer></script>', '')
     objects = (target / 'assets/objects.svg').read_text()
     objects = objects.replace('<svg xmlns="http://www.w3.org/2000/svg">', '<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" style="position:absolute;overflow:hidden">', 1)
@@ -69,7 +71,8 @@ def standalone(target):
     payload = json.dumps(data, ensure_ascii=False).replace('<', r'\u003c')
     scripts = '<script>window.__SHIGUANG_DESIGN_SAMPLES__=' + payload + ';</script>'
     scripts += '<script>' + (target / 'ui/interactions.js').read_text() + '</script>'
-    scripts += '<script>' + (target / 'playground.js').read_text() + '</script>'
+    for name in ['news-query.js', 'playground.js']:
+        scripts += '<script>' + (target / name).read_text() + '</script>'
     result = target / 'standalone.html'
     result.write_text(html.replace('</body>', scripts + '</body>'))
     return result

@@ -50,7 +50,7 @@ def news_card(item, *, hero=False, layout='row'):
       <div class="news-meta">{badge}<span>{e(item.get('topic','资讯'))}</span><span>{e(item.get('time','仅日期'))}</span></div>
       <button class="title-button" data-detail="{e(item['id'])}"><h3>{e(item['title'])}</h3></button>
       <p class="news-summary">{e(item.get('reason',''))}</p>
-      <footer>{source_link(item)}<span class="reach">{e(item.get('reach',1))} 个频道</span>{bookmark(item)}</footer>
+      <footer>{source_link(item)}<span class="reach">{e(item.get('reach',1))} 个来源报道</span>{bookmark(item)}</footer>
     </article>'''
 
 
