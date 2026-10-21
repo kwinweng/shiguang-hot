@@ -4,10 +4,12 @@
 NO_FETCH=1 跳过 Telegram 抓取（只读 tg.db）；SITE_MODE=private 构建含邮件的内网版。
 """
 import os
+from contextlib import nullcontext
 from datetime import datetime
+from pathlib import Path
 from shiguang.config import config, private_mode
 from shiguang.model import BEIJING
-from shiguang.ingest import telegram, web
+from shiguang.ingest import telegram, web, scheduler
 from shiguang.enrich.clean import clean, headline
 from shiguang.enrich.topics import classify
 from shiguang.enrich.hot import hot_stream
@@ -21,25 +23,32 @@ def collect(cfg, now):
     channels = {s['channel']: s['name'] for s in visible if s['type'] == 'telegram'}
     feeds = [s for s in visible if s['type'] == 'feed']
     fetch = os.getenv('NO_FETCH') != '1'
-    db, images_migrated = telegram.open_db(fetch)
-    try:
-        if fetch:
-            telegram.fetch(db, channels, now, images_migrated)
-            web.fetch(db, feeds, now)
-            telegram.expire_media(db, now)
-            db.commit()
-        rows = []
-        for ch, i, ts, t, raw, images in telegram.messages(db):
-            if ch not in channels: continue
-            t = clean(t)
-            if not t: continue
-            title, body = headline(t, raw)
-            rows.append(dict(images=images, ch=ch, id=i, ts=ts, text=t, title=title, body=body,
-                             cat=classify(t, cfg['topics'], title), day=ts[:10], url=f'https://t.me/{ch}/{i}'))
-        ids = {s['id'] for s in feeds}
-        return rows, [e for e in web.entries(db) if e['source'] in ids]
-    finally:
-        db.close()
+    database = Path(telegram.D) / 'tg.db'
+    if fetch and not database.is_file():
+        raise RuntimeError('tg.db missing; restore known state before collecting')
+    with scheduler.collection_lock(database) if fetch else nullcontext(True) as acquired:
+        if fetch and not acquired:
+            for source in visible:
+                if source['type'] in ('telegram', 'feed'):
+                    scheduler.emit(source, result='skip', skip_reason='busy', requests=0)
+        db, images_migrated = telegram.open_db(fetch and acquired)
+        try:
+            if fetch and acquired:
+                scheduler.run(db, visible, images_migrated=images_migrated)
+                telegram.expire_media(db, now)
+                db.commit()
+            rows = []
+            for ch, i, ts, t, raw, images in telegram.messages(db):
+                if ch not in channels: continue
+                t = clean(t)
+                if not t: continue
+                title, body = headline(t, raw)
+                rows.append(dict(images=images, ch=ch, id=i, ts=ts, text=t, title=title, body=body,
+                                 cat=classify(t, cfg['topics'], title), day=ts[:10], url=f'https://t.me/{ch}/{i}'))
+            ids = {s['id'] for s in feeds}
+            return rows, [e for e in web.entries(db) if e['source'] in ids]
+        finally:
+            db.close()
 
 
 def telegram_rows(cfg, now):

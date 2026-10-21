@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from email.utils import parsedate_to_datetime
 from bs4 import BeautifulSoup
 from shiguang.model import BEIJING
-from shiguang.ingest import telegram
+from shiguang.ingest import telegram, http
 
 NS = {'atom': 'http://www.w3.org/2005/Atom', 'media': 'http://search.yahoo.com/mrss/'}
 KEEP = 50   # newest entries taken from one fetch
@@ -44,6 +44,8 @@ def _first_img(markup):
 def parse(xml):
     """Entries of an RSS or Atom document: dict(id, ts, title, body, url, images), newest first."""
     root = ET.fromstring(xml)
+    if root.tag not in ('rss', '{%s}feed' % NS['atom']) or (root.tag == 'rss' and root.find('channel') is None):
+        raise ET.ParseError('not RSS/Atom')
     entries = []
     if root.tag == '{%s}feed' % NS['atom']:
         for e in root.findall('atom:entry', NS):
@@ -77,26 +79,53 @@ def ensure_table(db):
                " images text not null default '[]', primary key(source, id))")
 
 
-def fetch(db, sources, now):
+def representation(db, source):
+    """Versioned digest proves that the stored projection (including an empty feed) still exists."""
+    rows = db.execute('select id,ts,title,body,url from entry where source=? order by id', (source,)).fetchall()
+    return hashlib.sha256(json.dumps(['feed-v1', source, rows], ensure_ascii=False).encode()).hexdigest()
+
+
+def fetch(db, sources, now, batch=None):
     """Fetch every feed source and store new entries; one broken feed never stops the rest."""
     ensure_table(db)
     floor = now - timedelta(days=telegram.MEDIA_DAYS)
     for s in sources:
         try:
-            xml = subprocess.run(['curl', '--fail', '-sL', '-m', '25', '-A', 'Mozilla/5.0', s['url']],
-                                 capture_output=True, check=True).stdout
-            new = 0
-            for e in parse(xml):
-                key = hashlib.sha1(e['id'].encode()).hexdigest()[:12]
-                if db.execute('select 1 from entry where source=? and id=?', (s['id'], e['id'])).fetchone():
+            if batch:
+                response = batch.get('feed', s['url'], signature=representation(db, s['id']))
+                if response.status == 304:
+                    batch.progress += 1
                     continue
-                images = telegram.download_images(s['id'], key, [u for u in e['images'] if u.startswith('https://')]) if e['ts'] >= floor else []
-                db.execute('insert into entry values(?,?,?,?,?,?,?)',
+                xml = response.body
+            else:
+                xml = subprocess.run(['curl', '--fail', '-sL', '-m', '25', '-A', 'Mozilla/5.0', s['url']],
+                                     capture_output=True, check=True).stdout
+            parsed = parse(xml)  # Complete validation before touching entries or validators.
+            new = 0
+            for e in parsed:
+                key = hashlib.sha1(e['id'].encode()).hexdigest()[:12]
+                stored = db.execute('select images from entry where source=? and id=?', (s['id'], e['id'])).fetchone()
+                if stored and not batch:
+                    continue
+                urls = [u for u in e['images'] if u.startswith('https://')]
+                image_args = dict(batch=batch, owner=('entry', s['id'], e['id']), image_at=e['ts']) if batch else {}
+                images = telegram.download_images(s['id'], key, urls, **image_args) if e['ts'] >= floor else []
+                cur = db.execute('insert or ignore into entry values(?,?,?,?,?,?,?)',
                            (s['id'], e['id'], e['ts'].isoformat(), e['title'], e['body'], e['url'], json.dumps(images)))
-                new += 1
+                new += cur.rowcount
+                if stored and images:
+                    db.execute('update entry set images=? where source=? and id=?', (json.dumps(images), s['id'], e['id']))
+            if batch:
+                batch.new += new
+                batch.progress += 1
+                batch.materialize('feed', s['url'], response, representation(db, s['id']))
             print(s['id'], 'new', new, file=sys.stderr)
-        except (subprocess.CalledProcessError, ET.ParseError) as ex:
-            print(s['id'], 'feed error', str(ex)[:200], file=sys.stderr)
+        except (subprocess.CalledProcessError, ET.ParseError, http.FetchFailure) as ex:
+            if batch:
+                batch.resource_error('feed', s['url'], ex)
+                print(s['id'], 'feed error', ex.code if isinstance(ex, http.FetchFailure) else 'invalid_content', file=sys.stderr)
+            else:
+                print(s['id'], 'feed error', str(ex)[:200], file=sys.stderr)
 
 
 def entries(db):
