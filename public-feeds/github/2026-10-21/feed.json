@@ -1,0 +1,113 @@
+{
+  "schema": "shiguang.feed/1",
+  "source": "github",
+  "date": "2026-10-21",
+  "title": "GitHub 热门早报",
+  "blocks": [
+    {
+      "type": "oneliner",
+      "items": [
+        "今日看点：DeepSeek 开源了自家推理框架 DeepInfer，一周破万星；给电视去广告、换干净桌面的项目也扎堆上榜。",
+        "领域榜·前端：DOM 截图库 snapdom、开源建站平台 Webstudio 和免费 Tailwind 组件 HyperUI。"
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "title": "新秀榜",
+      "items": [
+        {
+          "title": "deepseek-ai/DeepInfer",
+          "body": "DeepSeek 官方开源的推理框架，支撑其大规模线上服务，带优化算子和并行调度，支持结构化输出与确定性采样，研究推理系统值得一读。\n★ 12.7k · Python · 创建于 2026-10-16",
+          "link": "https://github.com/deepseek-ai/DeepInfer",
+          "source": "GitHub",
+          "date": "2026-10-21",
+          "images": [
+            {
+              "file": "5a82526389e35b5c381428c2.webp",
+              "alt": "deepseek-ai/DeepInfer 预览图"
+            }
+          ]
+        },
+        {
+          "title": "Gathin23/cleanyourtv",
+          "body": "家里 Android TV 广告太多可以试试它：通过 ADB 禁掉厂商预装和推广服务，换上仿 Apple TV 的桌面，不用 root、不卸载，随时能还原。\n★ 12.1k · Java · 创建于 2026-10-17",
+          "link": "https://github.com/Gathin23/cleanyourtv",
+          "source": "GitHub",
+          "date": "2026-10-21",
+          "images": [
+            {
+              "file": "2c56d211cfb3248b71c588c1.webp",
+              "alt": "Gathin23/cleanyourtv 预览图"
+            }
+          ]
+        },
+        {
+          "title": "aicodeking/leanrea",
+          "body": "只有 8 KB 的逆向技能文件，代替重量级 MCP 服务，只告诉 Agent 各类目标该用哪条命令、有哪些坑，工具由它自己调用，装完即用。\n★ 1.2k · Python · 创建于 2026-10-17",
+          "link": "https://github.com/aicodeking/leanrea",
+          "source": "GitHub",
+          "date": "2026-10-21"
+        }
+      ]
+    },
+    {
+      "title": "飙升榜",
+      "items": [
+        {
+          "title": "pengchujin/aerial-tv",
+          "body": "为小米、TCL 等国产电视做的 tvOS 风格桌面，没有广告和推荐流，只有应用网格、壁纸和航拍屏保，安装说明也很清楚。\n★ 720 · Kotlin · 创建于 2026-10-20",
+          "link": "https://github.com/pengchujin/aerial-tv",
+          "source": "GitHub",
+          "date": "2026-10-21",
+          "images": [
+            {
+              "file": "a03b0e3dd580b7f74e2f0b07.webp",
+              "alt": "pengchujin/aerial-tv 预览图"
+            }
+          ]
+        },
+        {
+          "title": "UniXNU/UniXNU",
+          "body": "很有野心的实验项目：想通过 UEFI 让 iOS 和 macOS 跑在非苹果的 ARM64 硬件上，文档讲了启动链、驱动和移植，喜欢折腾底层的可以围观。\n★ 360 · Python · 创建于 2026-10-19",
+          "link": "https://github.com/UniXNU/UniXNU",
+          "source": "GitHub",
+          "date": "2026-10-21"
+        },
+        {
+          "title": "Hugo-Dz/spritefusion-sprite-normals",
+          "body": "给像素画和精灵动画生成法线贴图的小工具，Rust 写成，提供 CLI 和 WASM 两种用法，让 2D 素材也能响应动态光照，做游戏很实用。\n★ 346 · Rust · 创建于 2026-10-19",
+          "link": "https://github.com/Hugo-Dz/spritefusion-sprite-normals",
+          "source": "GitHub",
+          "date": "2026-10-21"
+        }
+      ]
+    },
+    {
+      "title": "领域榜·前端",
+      "items": [
+        {
+          "title": "zumerlab/snapdom",
+          "body": "把 DOM 元素导出成图的浏览器库：支持 SVG、PNG、JPG 等格式，插件还能出 HTML、PDF、矢量图，全在页面内完成，没有依赖。\n★ 8.2k · JavaScript · 创建于 2025-04-27",
+          "link": "https://github.com/zumerlab/snapdom",
+          "source": "GitHub",
+          "date": "2026-10-21"
+        },
+        {
+          "title": "webstudio-is/webstudio",
+          "body": "开源的可视化建站平台，面向开发者和设计师，数据、组件和基础设施都归自己，官方托管或自托管皆可，可以当作 Webflow 的替代来了解。\n★ 9.1k · TypeScript · 创建于 2022-03-13",
+          "link": "https://github.com/webstudio-is/webstudio",
+          "source": "GitHub",
+          "date": "2026-10-21"
+        },
+        {
+          "title": "markmead/hyperui",
+          "body": "一批免费的 Tailwind CSS 组件，覆盖营销页、后台和电商场景，不用装包，挑好复制标记粘进项目就能用，写页面缺样式时很省事。\n★ 12.3k · Astro · 创建于 2021-11-12",
+          "link": "https://github.com/markmead/hyperui",
+          "source": "GitHub",
+          "date": "2026-10-21"
+        }
+      ]
+    }
+  ]
+}
