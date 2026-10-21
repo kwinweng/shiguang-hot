@@ -48,7 +48,7 @@
     return;
   }
   const items = new Map(data.items.map((item) => [item.id, item]));
-  const names = { look: "好看", play: "好玩", buy: "好买" };
+  const names = { look: "资讯", play: "好玩", buy: "好买" };
   const templates = new Map();
   for (const [id, item] of items) {
     const panel = $(`[data-panel="${item.kind}"]`);

@@ -3,7 +3,7 @@ from html import escape
 from urllib.parse import urlsplit
 from .phosphor import icon
 
-KINDS = {'look': '好看', 'play': '好玩', 'buy': '好买'}
+KINDS = {'look': '资讯', 'play': '好玩', 'buy': '好买'}
 
 
 def e(value):
@@ -68,7 +68,7 @@ def render_card(item, **kwargs):
 
 
 def bottom_nav():
-    names = [('today','今日','home'), ('look','好看','news'), ('play','好玩','compass'), ('buy','好买','spark'), ('saved','收藏','bookmark')]
+    names = [('today','今日','home'), ('look','资讯','news'), ('play','好玩','compass'), ('buy','好买','spark'), ('saved','收藏','bookmark')]
     return '<nav class="bottom-nav" aria-label="主导航">' + ''.join(f'<button data-page="{key}" aria-current="{"page" if key == "today" else "false"}">{icon(ico)}<span>{label}</span></button>' for key,label,ico in names) + '</nav>'
 
 

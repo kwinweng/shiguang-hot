@@ -39,7 +39,8 @@ class PlaygroundTests(unittest.TestCase):
             today = tree.select_one('[data-panel=today]')
             self.assertEqual(len(today.select('.news-card')), 4)
             self.assertEqual(len(today.select('.hero-card')), 1)
-            self.assertEqual([len(row.select('.media-card')) for row in today.select('.horizontal-cards')], [4, 4])
+            self.assertEqual([len(row.select('article')) for row in today.select('[data-carousel]')], [4, 4, 4])
+            self.assertEqual([card['data-item'] for card in today.select('[data-carousel=look] article')], ['look-0', 'look-1', 'look-2', 'look-3'])
             self.assertEqual(len(tree.select('.app-panel')), 5)
             hot_cards = tree.select('[data-look-view=hot] [data-item]')
             hour_nine = [c['data-item'] for c in hot_cards if c.select_one('.news-meta').get_text().strip().endswith(('09:40', '09:58', '09:55'))]
@@ -67,6 +68,28 @@ class PlaygroundTests(unittest.TestCase):
             self.assertFalse((out / 'design').exists())
             self.assertFalse((out / 'ui').exists())
             self.assertFalse((out / 'samples.json').exists())
+
+    def test_review_annotations_keep_routes_and_fixture_boundaries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = preview.build(directory)
+            tree = BeautifulSoup((target / 'index.html').read_text(), 'html.parser')
+            self.assertIsNone(tree.select_one('.app-content .app-topbar'))
+            today = tree.select_one('[data-panel=today]')
+            self.assertIsNone(today.select_one('.subtitle'))
+            self.assertIsNone(today.select_one('.sample-note'))
+            self.assertEqual(today.select_one('.section-heading h2').get_text(), '资讯')
+            self.assertEqual(tree.select_one('.bottom-nav [data-page=look]').get_text(), '资讯')
+            self.assertEqual(tree.select_one('[data-panel=look] h1').get_text(), '资讯')
+            self.assertNotIn('好看', tree.get_text())
+            self.assertIn('全部为示例', tree.select_one('.screen-notes').get_text())
+            self.assertIn('虚构价格格式示例', today.get_text())
+            for kind, groups in [('play', ['全部', '北京', '全国和世界', '线上', '看·读']), ('buy', ['全部', '数码', '家居户外', '3D 打印', '狗狗', '大促'])]:
+                buttons = tree.select(f'[data-panel={kind}] [data-filter]')
+                self.assertEqual([b['data-filter'] for b in buttons], groups)
+                for button in buttons:
+                    self.assertEqual(button.get_text(), button['data-filter'])
+                    self.assertIsNotNone(button.select_one('svg[data-icon-family=phosphor] path'))
+                self.assertIsNotNone(tree.select_one(f'[data-panel={kind}] [data-dog]'))
 
     def test_all_shared_ui_icons_are_local_phosphor_with_a_saved_bookmark_glyph(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -433,12 +433,63 @@ small,
   grid-auto-flow: column;
   gap: var(--grid-gap);
   overflow-x: auto;
-  align-items: start;
+  align-items: stretch;
   padding-bottom: var(--space-4);
   scroll-snap-type: x proximity;
 }
-.horizontal-cards > .media-card {
+.horizontal-cards > article {
   scroll-snap-align: start;
+  height: auto;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+.horizontal-cards .media-wrap {
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.horizontal-cards .media-open,
+.horizontal-cards .media-open img,
+.horizontal-cards .object-art {
+  height: 100%;
+  aspect-ratio: auto;
+}
+.horizontal-cards .media-open img {
+  object-fit: cover;
+}
+.horizontal-cards .media-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.horizontal-cards .media-card footer {
+  margin-top: auto;
+  padding-top: var(--space-1);
+}
+.news-carousel {
+  grid-auto-columns: max(280px, 46%);
+}
+.news-carousel .news-card {
+  padding: var(--space-4);
+}
+.news-carousel .news-meta {
+  flex-wrap: wrap;
+}
+.news-carousel h3,
+.news-carousel .hero-card h3 {
+  font-size: var(--font-lg);
+  line-height: 1.6;
+}
+.news-carousel .news-summary {
+  font-size: var(--font-label);
+  line-height: 1.8;
+}
+.news-carousel .news-card footer {
+  margin-top: auto;
+  padding-top: var(--space-2);
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 .see-all {
   display: flex;
@@ -538,6 +589,17 @@ small,
 }
 .filter-row::-webkit-scrollbar {
   display: none;
+}
+.filter-row .chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+}
+.filter-row .chip .icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 .discovery-filter-options {
   display: flex;
@@ -1102,11 +1164,17 @@ dialog::backdrop {
 .device[data-viewport="phone"] .horizontal-cards {
   grid-auto-columns: 172px;
 }
+.device[data-viewport="phone"] .news-carousel {
+  grid-auto-columns: 88%;
+}
 .device[data-viewport="phone"] .app-heading h1 {
   font-size: 28px;
 }
 .device[data-viewport="phone"] .hero-card h3 {
   font-size: 24px;
+}
+.device[data-viewport="phone"] .news-carousel .hero-card h3 {
+  font-size: var(--font-lg);
 }
 .device[data-viewport="phone"] .hero-card {
   padding: 20px;
