@@ -202,7 +202,7 @@ html[data-scrolled] .g-topbar::before,html[data-scrolled] .g-topbar__where{opaci
 
 /* Tab bar: a centred capsule of words, 8 above the safe area. */
 .g-tabbar{position:fixed;z-index:30;left:50%;bottom:calc(var(--space-2) + env(safe-area-inset-bottom,0px));translate:-50% 0;
-  display:grid;grid-template-columns:repeat(4,min(72px,calc((100vw - 34px) / 4)));height:56px;padding:5px;border-radius:var(--radius-pill);
+  display:grid;grid-template-columns:repeat(5,min(68px,calc((100vw - 34px) / 5)));height:56px;padding:5px;border-radius:var(--radius-pill);
   background:var(--glass);border:0;box-shadow:var(--shadow-glass);
   -webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5)}
 .g-tabbar .tab,.g-tabbar .tab__pill{height:46px}
@@ -544,3 +544,65 @@ html.vt-local::view-transition-group(lightbox-image){animation-duration:var(--du
 /* ---------- 栏目: channel / tag switch ---------- */
 .view-switch{margin:0 0 var(--space-4)}
 [data-panel][hidden]{display:none}
+/* Approved text-card palette: design/textcard-tokens.md v1. */
+:root{
+  --tc-app-bg:#E9F1F9;  --tc-app-icon:#7EACD9;  /* 好玩·应用 */
+  --tc-show-bg:#F2EBF7;  --tc-show-icon:#BD97D8;  /* 好玩·剧集 */
+  --tc-game-bg:#EBF7F0;  --tc-game-icon:#55BE81;  /* 好玩·游戏 */
+  --tc-expo-bg:#FBF3E7;  --tc-expo-icon:#DAA04E;  /* 好玩·展览演出 */
+  --tc-star-bg:#EBEBF7;  --tc-star-icon:#A0A0D6;  /* 好玩·观星 */
+  --tc-apple-bg:#F0F1F2;  --tc-apple-icon:#A3A9B1;  /* 好买·苹果 */
+  --tc-print-bg:#EBF7F7;  --tc-print-icon:#3FBCB8;  /* 好买·3D 打印 */
+}
+[data-theme="dark"]{
+  --tc-app-bg:#1C2833;  --tc-app-icon:#2B6095;
+  --tc-show-bg:#2A1C33;  --tc-show-icon:#783EA2;
+  --tc-game-bg:#1C3326;  --tc-game-icon:#2B7148;
+  --tc-expo-bg:#332A1C;  --tc-expo-icon:#84591C;
+  --tc-star-bg:#1C1C33;  --tc-star-icon:#4B4BAE;
+  --tc-apple-bg:#25272A;  --tc-apple-icon:#585E67;
+  --tc-print-bg:#1C3333;  --tc-print-icon:#25706D;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --tc-app-bg:#1C2833;  --tc-app-icon:#2B6095;
+  --tc-show-bg:#2A1C33;  --tc-show-icon:#783EA2;
+  --tc-game-bg:#1C3326;  --tc-game-icon:#2B7148;
+  --tc-expo-bg:#332A1C;  --tc-expo-icon:#84591C;
+  --tc-star-bg:#1C1C33;  --tc-star-icon:#4B4BAE;
+  --tc-apple-bg:#25272A;  --tc-apple-icon:#585E67;
+  --tc-print-bg:#1C3333;  --tc-print-icon:#25706D;
+}}
+:root{--brand:#D7282F;--c-bg:#FFFFFF;--c-text:#1A1C20;--c-text-2:#5A5E68;--c-text-4:#8A8F99;--c-bg-subtle:#F0F1F2;--sun:#D7282F;--on-sun:#fff}
+[data-theme="dark"]{--c-bg:#111214;--c-text:#ECEDEF;--c-text-2:#A6AAB2;--c-text-4:#8A8F99;--c-bg-subtle:#25272A}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--c-bg:#111214;--c-text:#ECEDEF;--c-text-2:#A6AAB2;--c-text-4:#8A8F99;--c-bg-subtle:#25272A}}
+html.trial-surface,html.news-surface,:root[data-theme="dark"].news-surface{--ground:var(--c-bg);--page:var(--c-bg);--ink:var(--c-text);--ink-2:var(--c-text-2)}
+.trial-surface .g-light{display:none}
+.trial-page,.trial-home{color:var(--c-text)}
+.trial-page h1{font-size:28px;margin:20px 0}
+.trial-home{margin:24px 0}
+.trial-home h2{font-size:22px}
+.trial-filters{display:flex;gap:12px;margin:20px 0}
+.trial-filters button{width:44px;height:44px;border:0;border-radius:50%;background:var(--wash);color:var(--c-text);cursor:pointer;transition:background .2s,color .2s}
+.trial-filters button[aria-pressed=true]{background:var(--brand);color:#fff}
+.trial-filters button:focus-visible,.trial-card a:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
+.trial-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 12px;align-items:start}
+.trial-grid.trial-masonry{grid-auto-rows:1px}
+.trial-card{min-width:0;overflow:hidden}
+.trial-card[hidden]{display:none}
+.trial-card a{display:block;color:inherit;text-decoration:none}
+.trial-media{position:relative}
+.trial-textcard{position:relative;overflow:hidden;border-radius:12px;aspect-ratio:4/3;padding:10px 12px;background:var(--tc-bg,var(--c-bg-subtle))}
+.trial-textcard span{font-size:11px;line-height:14px;color:var(--c-text-2)}
+.trial-textcard .phosphor{position:absolute;right:-14%;bottom:-18%;width:68%;height:auto;aspect-ratio:1;color:var(--tc-icon,var(--c-text-4))}
+.trial-media>img{position:relative;display:block;width:100%;height:auto;min-height:133px;max-height:320px;object-fit:cover;border-radius:12px}
+.trial-media:has(>img:not([hidden])) .trial-textcard{display:none}
+.trial-media>img[hidden]{display:none}
+.trial-card h3{font-size:14px;line-height:20px;font-weight:600;margin:8px 0 4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.trial-meta{font-size:11px;line-height:16px;color:var(--c-text-2);margin:0}
+.trial-tag{display:inline-block;font-size:10px;color:var(--c-text-2);background:var(--wash);border-radius:5px;padding:2px 4px;margin:4px 4px 0 0}
+.trial-summary{font-size:12px;line-height:18px;color:var(--c-text-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.trial-more{display:block;margin:16px 0;color:var(--brand)}
+.i.phosphor,.s-icon.phosphor{fill:currentColor;stroke:none}
+.s-icon--lead.phosphor{filter:none}
+#news-history{--action:#D7282F;--on-action:#fff;--selected:#fbe9ea}
+:root[data-theme="dark"] #news-history{--action:#D7282F;--on-action:#fff;--selected:#412126}

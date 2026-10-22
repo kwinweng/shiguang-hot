@@ -57,7 +57,7 @@ class Page:
         return path if re.match(r'https?://', path) else self.rel + path
 
 
-SLOT_LABELS = {'today': '今日', 'hot': '资讯', 'columns': '栏目', 'favorites': '收藏'}
+SLOT_LABELS = {'today': '今日', 'hot': '资讯', 'play': '好玩', 'buy': '好买', 'columns': '栏目', 'favorites': '收藏'}
 WEEKDAYS = '一二三四五六日'
 BLOCK_TITLES = {'oneliner': '一句话速览', 'markets': '市场看板', 'chart': '一张图', 'tomorrow': '明日看点'}
 EXTERNAL = 'target="_blank" rel="noopener noreferrer"'
@@ -306,7 +306,7 @@ def nav_slots(page):
     """
     site = page.site
     from shiguang.site.history import icon as news_icon
-    glyphs = {'today': 'house', 'hot': 'newspaper', 'columns': 'compass', 'favorites': 'bookmark-simple'}
+    glyphs = {'today': 'house', 'hot': 'newspaper', 'play': 'game-controller', 'buy': 'apple-logo', 'columns': 'compass', 'favorites': 'bookmark-simple'}
     lookup = {entry[0]: entry for entry in site.entries}
     labels = dict(SLOT_LABELS, favorites=site.favorites.get('label', '收藏'))
     result = ''
@@ -334,7 +334,7 @@ def more_menu(page):
               ('栏目', [e for e in site.entries if e[0] not in site.tabs])]
     body = ''.join(
         f'<h3 class="sheet__group">{E(label)}</h3><div class="sheet__grid">'
-        + ''.join(f'<a class="g-wash sheet__link" href="{page.url(path)}"' + (' aria-current="page"' if key == page.active else '')
+        + ''.join(f'<a class="g-wash sheet__link" href="{page.url(path)}"' + (' aria-current="page"' if key == page.active or key == page.tab else '')
                   + f'>{icon(glyph_key)}<span>{E(name)}</span></a>' for key, path, name, glyph_key in group)
         + '</div>'
         for label, group in groups if group)
@@ -360,7 +360,7 @@ def document(page, title, body, illumination, light_source):
     favorites = site.favorites
     favorites_url = f' data-favorites="{E(page.url(favorites["path"]))}"' if favorites.get('enabled') else ''
     return (
-        '<!doctype html><html lang="zh-CN"><head>'
+        '<!doctype html><html lang="zh-CN"' + (' class="trial-surface"' if page.active in ('play', 'buy') else '') + '><head>'
         '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
         '<meta name="color-scheme" content="light dark">'
         '<meta name="theme-color" content="#FAF6EF" media="(prefers-color-scheme: light)">'

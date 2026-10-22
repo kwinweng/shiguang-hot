@@ -22,7 +22,8 @@ RETIRED = {sid: dict(id=sid, channel=sid, name=name, order=order, type='telegram
 
 
 def icon(name):
-    return PHOSPHOR[name].replace('<svg ', '<svg class="phosphor" aria-hidden="true" ')
+    from shiguang.site.icons import phosphor
+    return phosphor(name)
 
 
 def card(page, item):
@@ -111,7 +112,8 @@ def prepare(c, site, out):
         previous = {}
     # The schema, templates, visible source contract and shared assets are one compatibility key.
     code = ''.join(p.read_text() for p in (Path(__file__), Path(render.__file__),
-                                         Path(__file__).with_name('pages.py'), Path(__file__).with_name('phosphor.json')))
+                                         Path(__file__).with_name('pages.py'), Path(__file__).with_name('phosphor.json'),
+                                         Path(__file__).with_name('icons.py')))
     compatibility = digest([SCHEMA, scope, sources, site.assets, code])
     compatible = previous.get('compatibility') == compatibility
     # Inputs are the complete retained store; a removed last item must clear its owning day.

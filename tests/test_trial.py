@@ -159,7 +159,7 @@ class TrialTests(unittest.TestCase):
                 trial_report.main(['--db', str(database), '--output', str(root / 'reports'), '--days', '2'])
             self.assertEqual(next((root / 'reports').glob('*.md')).read_text(), output.getvalue())
 
-    def test_build_archives_and_trial_privacy_both_modes(self):
+    def test_build_archives_and_public_trials_both_modes(self):
         cfg = config()
         trial_cfg = trial.load()
         with tempfile.TemporaryDirectory() as folder:
@@ -194,6 +194,10 @@ class TrialTests(unittest.TestCase):
                             self.assertNotIn(sid, (out / path).read_text())
                     for path in list(out.rglob('*')) + list((ROOT / 'public-feeds').rglob('*')):
                         if path.is_file() and path.suffix in ('.html', '.json', '.js', '.css', '.md'):
+                            # Approved trials now publish only to catalogue pages and today's summary.
+                            if path.is_relative_to(out) and (path.name in ('play.html', 'buy.html', 'index.html')
+                                    or path.relative_to(out).as_posix() == 'archive/2026-10-22.html'):
+                                continue
                             text = path.read_text()
                             for source in trial_cfg['sources']:
                                 self.assertNotIn(source['id'], path.relative_to(out).as_posix() if path.is_relative_to(out) else path.name)

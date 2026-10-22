@@ -81,7 +81,9 @@ def parse_page(body, source):
         previous = items.get(canonical, {})
         images = ([urljoin(url, image['src'])] if source['parser'] == 'ucca' and image and image.get('src')
                   else previous.get('images', []))
-        items[canonical] = dict(url=canonical, title=title, body='', ts=None, images=images)
+        container = link.find_parent(['li', 'article'])
+        details = container.get_text(' ', strip=True) if container else ''
+        items[canonical] = dict(url=canonical, title=title, body=details[:500], ts=None, images=images)
     if not items:
         raise http.FetchFailure('invalid_content')
     return list(items.values())
@@ -96,6 +98,11 @@ def parse_telegram(body, source):
             continue
         node = message.select_one('.tgme_widget_message_text')
         text = telegram.extract(node) if node else ''
+        if source['id'] == 'Apps_Share' and node:
+            # Download labels and slugs can contain the name missing from the tag-only heading.
+            for anchor in node.select('a[href]'):
+                if (urlsplit(anchor['href']).hostname or '').lower() == 'apps.apple.com':
+                    text += '\n' + anchor['href']
         images = telegram.image_urls(message)
         moment = message.select_one('time[datetime]')
         if not text and not images:
@@ -130,6 +137,9 @@ def fetch(db, source, batch):
                                 (source['id'], source['section'], source['category'], url, item['title'],
                                  item['body'][:500], image, published, scheduler.stamp(batch.now)))
             batch.new += cursor.rowcount
+            if not cursor.rowcount:
+                db.execute('update trial_item set title=?,summary=?,image_url=?,published_at=? where url=?',
+                           (item['title'], item['body'][:500], image, published, url))
         db.commit()
         batch.progress += 1
     except (ET.ParseError, http.FetchFailure, ValueError) as error:

@@ -15,6 +15,7 @@ import re, shutil
 from datetime import date, datetime, time, timedelta
 from shiguang.config import PLATFORMS, ROOT, WEB, config, private_mode
 from shiguang.site import history
+from shiguang.site import trials
 from shiguang.enrich.topics import assign
 from shiguang.ingest.feeds import load_issues, compress_images
 from shiguang.model import BEIJING, OTHER, from_entry, from_telegram, home_candidates, section_items
@@ -22,9 +23,10 @@ from shiguang.site import render
 from shiguang.site.light import ambient_uris, light_css, photo_like
 from shiguang.site.render import Page, Site
 
-TABS = ['today', 'hot', 'columns', 'favorites']
+TABS = ['today', 'hot', 'play', 'buy', 'favorites']
 FAVORITES = {'enabled': True, 'label': '收藏', 'path': 'favorites.html'}
 CORE = [('today', 'index.html', '今日', 'home'), ('hot', 'index.html#screens/look', '资讯', 'hot'),
+        ('play', 'play.html', '好玩', 'game-controller'), ('buy', 'buy.html', '好买', 'apple-logo'),
         ('columns', 'columns.html', '栏目', 'all'), ('favorites', 'favorites.html', '收藏', 'bookmark')]
 DIGEST_ITEMS = 3   # cards per issue in a day's 各栏目 section; the rest is one tap away on the issue page
 EARLY = 6          # before this hour, today's page also shows yesterday
@@ -169,6 +171,7 @@ def write_pages(rows, hot, now, out, assets, entries=(), inbox_only=False):
             if source['visibility'] == 'private' or source['id'] not in history.ALLOWED:
                 shutil.rmtree(out / source['id'], ignore_errors=True)
     c = Content(cfg, private, rows, hot, entries, now, out)
+    c.trials = trials.catalogue(now, ROOT / 'tg.db')
     if not inbox_only:
         for sid in history.RETIRED:
             shutil.rmtree(out / sid, ignore_errors=True)
@@ -186,6 +189,9 @@ def write_pages(rows, hot, now, out, assets, entries=(), inbox_only=False):
 
     if not inbox_only:
         w.write(FAVORITES['path'], 'favorites', FAVORITES['label'], render.favorites_body)
+        for section, path in trials.PATHS.items():
+            w.write(path, 'play' if section == '好玩' else 'buy', section,
+                    lambda page, section=section: trials.body(c.trials, section, page))
         visible_channels = {s['channel'] for s in c.sources.values() if s['type'] == 'telegram'}
         visible_channels.update(i.filter_key for i in c.retired)
         for cached in (out / 'media').iterdir() if (out / 'media').is_dir() else ():
@@ -250,6 +256,7 @@ def news_day_page(w, c, day, members):
         content = render.heading(page, '今日' if day == c.today else render.day_label(day), '北京时间')
         content += '<div class="today-summaries">'
         if day == c.today:
+            content += trials.home(getattr(c, 'trials', []), page)
             for sid in c.issues:
                 issue = c.issue_on(sid, day)
                 if issue:

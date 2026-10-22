@@ -174,7 +174,7 @@ class PrivacyBuildTests(unittest.TestCase):
                     self.assertFalse(past.select('.today-summaries article'))
                     self.assertEqual(past.select_one('nav.bottom a.active').get_text(),'今日')
                     # 「光」: the tab bar holds words only.
-                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['今日','资讯','栏目','收藏'])
+                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['今日','资讯','好玩','好买','收藏'])
                     self.assertIsNotNone(home.select_one('nav.bottom svg.phosphor'))
                     self.assertEqual(home.select_one('nav.bottom a.active')['aria-current'],'page')
                     self.assertTrue(home.select('article button.bookmark[aria-pressed="false"][aria-label="收藏"]'))
@@ -209,8 +209,8 @@ class PrivacyBuildTests(unittest.TestCase):
                     self.assertIn('url=index.html"',(target/'all.html').read_text())
                     channel_page=BeautifulSoup((target/'CE_Observe/index.html').read_text(),'html.parser')
                     self.assertEqual(len(channel_page.select('article')),20)
-                    self.assertEqual(channel_page.select_one('nav.bottom a.active').get_text(),'栏目')
-                    self.assertEqual(BeautifulSoup((target/'x/index.html').read_text(),'html.parser').select_one('nav.bottom a.active').get_text(),'栏目')
+                    self.assertEqual(channel_page.select_one('.more-nav a[aria-current="page"]').get_text(),'栏目')
+                    self.assertEqual(BeautifulSoup((target/'x/index.html').read_text(),'html.parser').select_one('.more-nav a[aria-current="page"]').get_text(),'栏目')
                     if mode=='public': self.assertFalse((target/'mail').exists())
 
     def test_public_rebuild_scrubs_private_tree_and_detects_private_copy(self):

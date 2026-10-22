@@ -11,6 +11,36 @@
   const EASE = 'cubic-bezier(.2,.8,.2,1)';
   root.classList.add('js-ready');
 
+  // Trial lists keep DOM order (newest first) when categories change.
+  document.querySelectorAll('[data-trial-filter]').forEach(button => {
+    button.addEventListener('click', () => {
+      const category = button.dataset.trialFilter;
+      document.querySelectorAll('[data-trial-filter]').forEach(control => {
+        control.setAttribute('aria-pressed', String(control === button));
+      });
+      document.querySelectorAll('[data-trial-category]').forEach(card => {
+        card.hidden = category !== 'all' && card.dataset.trialCategory !== category;
+      });
+    });
+  });
+  document.querySelectorAll('.trial-media > img').forEach(image => {
+    const fallback = () => { image.hidden = true; };
+    image.addEventListener('error', fallback, {once: true});
+    if (image.complete && !image.naturalWidth) fallback();
+  });
+
+  // Grid spans follow measured heights while source order remains chronological.
+  document.querySelectorAll('.trial-grid').forEach(grid => {
+    if (typeof ResizeObserver === 'undefined') return;
+    grid.classList.add('trial-masonry');
+    const observer = new ResizeObserver(entries => {
+      entries.forEach(({target}) => {
+        if (!target.hidden) target.style.gridRowEnd = `span ${Math.ceil((target.getBoundingClientRect().height + 20) / 21)}`;
+      });
+    });
+    [...grid.children].forEach(card => observer.observe(card));
+  });
+
   // ---------- Motion helpers ----------
   const canTransition = () => !reduced.matches && typeof document.startViewTransition === 'function';
   // In-page transitions (filters, photo viewer) are short and leave the light alone; the 900ms
@@ -33,6 +63,8 @@
     const ns = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg');
     svg.setAttribute('class', 'i');
+    svg.classList.add('phosphor');
+    svg.setAttribute('viewBox', '0 0 256 256');
     svg.setAttribute('aria-hidden', 'true');
     const use = document.createElementNS(ns, 'use');
     use.setAttribute('href', `#t-${name}`);
