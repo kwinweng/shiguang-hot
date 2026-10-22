@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Reduced from the supplied offline Steam RSS 1.0 sample. -->
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns="http://purl.org/rss/1.0/"
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel rdf:about="http://www.steampowered.com">
+    <title>Steam RSS News Feed</title>
+    <link>http://www.steampowered.com/</link>
+    <description>All Steam news, all the time!</description>
+    <items><rdf:Seq>
+      <rdf:li rdf:resource="https://store.steampowered.com/news/285796/"/>
+      <rdf:li rdf:resource="https://store.steampowered.com/news/286827/"/>
+    </rdf:Seq></items>
+  </channel>
+  <item rdf:about="https://store.steampowered.com/news/285796/">
+    <title><![CDATA[Team Fortress 2 Update Released]]></title>
+    <link><![CDATA[https://store.steampowered.com/news/285796/]]></link>
+    <description><![CDATA[<p>An update to <b>Team Fortress 2</b> has been released.</p>]]></description>
+    <dc:date>2026-10-12T11:34:00-0700</dc:date>
+  </item>
+  <item rdf:about="https://store.steampowered.com/news/286827/">
+    <title><![CDATA[Team Fortress 2 Update Released]]></title>
+    <link><![CDATA[https://store.steampowered.com/news/286827/]]></link>
+    <dc:date>2026-10-16T12:38:00-0700</dc:date>
+    <content:encoded><![CDATA[An update to Team Fortress 2 has been released.<br/>Fixed some maps not tracking play time correctly]]></content:encoded>
+  </item>
+</rdf:RDF>

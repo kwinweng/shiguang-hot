@@ -50,6 +50,30 @@
 
 ## 验证范围
 
+### 来源试跑 v1（2026-10-22）
+
+13 个试跑源仅由 `trial-sources.json` 注册，每小时在现有构建采集入口执行，
+使用同一锁与调度表，身份加 `trial:` 前缀，与正式来源配额隔离。
+成功仅表示完整解析并保存，不代表可展示；零新增也更新最近成功时间。
+不自动切换 RSSHub、不下载图片、不请求 Steam JSON、豆瓣 JSON 或 Apple 文章页。
+网页无有效条目视为 invalid_content 并退避；401/403 及登录/验证码继续 blocked，须按上文审批恢复。
+试跑跳过状态包含 source_status、最近检查/成功时间及下次可抓时间，完整状态也可通过 `trial:<id>` 数据库记录核对。
+
+待阿欢在合并前再次确认豆瓣平台是否保留；第一版照接、不过滤相声曲艺、酒吧、体育赛事。
+约 10/29 用 `python tools/trial_report.py --days 7` 检查数量、RSSHub 稳定性及跨源重复，
+再决定分类、页面设计和 Steam JSON；本轮不跨源去重（只按条目 URL 唯一约束去重）。
+公开/私有离线构建分别使用：
+
+```sh
+NO_FETCH=1 SITE_OUT=/tmp/shiguang-public python3 pipeline.py
+SITE_MODE=private NO_FETCH=1 SITE_OUT=/tmp/shiguang-private python3 pipeline.py
+```
+
+两条命令只读现有库，输出分别在 `/tmp/shiguang-public/`、`/tmp/shiguang-private/`。
+本轮验收使用临时库和假 HTTP，不在仓库库或生产副本上执行采集。
+隐私检查按完整来源 URL、独立域名和来源标记核对；共享 `t.me` 域名属于现有正式 TG，
+无法要求整个构建对 `t.me` 的字面命中数为零。
+
 `tests/test_source_scheduler.py` 使用临时数据库、假 HTTP 响应和可控时钟。包括实际子进程领取后退出、另一个进程持锁的忙碌只读构建；不访问真实来源或运行生产迁移。另保留原 Telegram gap、feed 解析及公开隐私回归。
 
 2026-10-21 本机 macOS / Python 3.15：新增30项离线验收全部通过，连同原采集相关测试共50项通过。完整套件113项中111项通过，剩余2项均缺少 `renameat2`；未修改的 main `60812bd` 快照同样在原83项中出现相同2项失败。Python 3.12语法解析、Python编译及 `git diff --check` 通过。本轮未修改实际 `tg.db`、workflow、来源配置、正式页面或交接分支。

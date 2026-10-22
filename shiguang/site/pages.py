@@ -114,6 +114,8 @@ class Content:
         self.feed = [self.tagged([from_entry(e, self.sources[e['source']])], self.sources[e['source']])[0]
                      for e in entries if e['source'] in self.sources]
         self.stream = self.telegram + self.feed
+        self.retired = [from_telegram(r, history.RETIRED[r['ch']], not private)
+                        for r in rows if r['ch'] in history.RETIRED and r['day'] < self.today]
         # Inbox issues, newest first; images are recompressed into <id>/img/.
         self.issues = {}
         for s in sorted(self.sources.values(), key=lambda s: (s['order'], s['id'])):
@@ -167,6 +169,9 @@ def write_pages(rows, hot, now, out, assets, entries=(), inbox_only=False):
             if source['visibility'] == 'private' or source['id'] not in history.ALLOWED:
                 shutil.rmtree(out / source['id'], ignore_errors=True)
     c = Content(cfg, private, rows, hot, entries, now, out)
+    if not inbox_only:
+        for sid in history.RETIRED:
+            shutil.rmtree(out / sid, ignore_errors=True)
     columns = [c.sources[sid] for sid in c.issues]
     entries_nav = CORE + [(s['id'], s['id'] + '/index.html', s['name'], s['icon']) for s in columns if s['id'] != c.hot_source]
     site = Site(sources=c.sources, entries=entries_nav, tabs=TABS, favorites=FAVORITES, private=private, now=now,
@@ -182,6 +187,7 @@ def write_pages(rows, hot, now, out, assets, entries=(), inbox_only=False):
     if not inbox_only:
         w.write(FAVORITES['path'], 'favorites', FAVORITES['label'], render.favorites_body)
         visible_channels = {s['channel'] for s in c.sources.values() if s['type'] == 'telegram'}
+        visible_channels.update(i.filter_key for i in c.retired)
         for cached in (out / 'media').iterdir() if (out / 'media').is_dir() else ():
             if not private and cached.name not in visible_channels:
                 if cached.is_dir(): shutil.rmtree(cached)
@@ -193,8 +199,11 @@ def write_pages(rows, hot, now, out, assets, entries=(), inbox_only=False):
         for asset in (WEB / 'assets').iterdir():
             if asset.is_file(): shutil.copyfile(asset, out / asset.name)
         news_days, changed = history.prepare(c, site, out)
+        from dataclasses import replace
+        archive_site = replace(site, sources={**site.sources, **history.RETIRED})
+        archive_writer = Writer(archive_site, out)
         for day in changed | {c.today}:
-            news_day_page(w, c, day, news_days.get(day, []))
+            news_day_page(w if day == c.today else archive_writer, c, day, news_days.get(day, []))
         hot_page(w, c)
         columns_page(w, c)
         tag_pages(w, c)

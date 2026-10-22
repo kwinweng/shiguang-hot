@@ -294,7 +294,8 @@ class SchedulerTests(unittest.TestCase):
     def test_public_fetch_filters_private_before_planning(self):
         self.network.return_value = response(); self.network.side_effect = None
         cfg = dict(topics={}, sources=[FEED, dict(TG, visibility='private')])
-        with patch.dict(os.environ, {'NO_FETCH': '0', 'SITE_MODE': 'public', 'MAIL_DIGEST': '0'}):
+        with patch.dict(os.environ, {'NO_FETCH': '0', 'SITE_MODE': 'public', 'MAIL_DIGEST': '0'}), \
+             patch('shiguang.ingest.trial.run'):
             pipeline.collect(cfg, NOW)
         self.assertEqual(self.network.call_count, 1)
         self.assertNotIn('channel', self.log.getvalue())

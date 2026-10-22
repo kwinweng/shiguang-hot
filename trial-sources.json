@@ -1,0 +1,26 @@
+{
+  "categories": [
+    {"id": "stargazing", "name": "观星", "section": "好玩"},
+    {"id": "shows", "name": "影视", "section": "好玩"},
+    {"id": "games", "name": "游戏", "section": "好玩"},
+    {"id": "exhibitions", "name": "看展活动", "section": "好玩"},
+    {"id": "apps", "name": "软件与 App", "section": "好玩"},
+    {"id": "apple", "name": "苹果数码", "section": "好买"},
+    {"id": "3d-printing", "name": "3D 打印", "section": "好买"}
+  ],
+  "sources": [
+    {"id": "earthsky", "name": "EarthSky", "section": "好玩", "category": "stargazing", "fetch": "rss", "url": "https://earthsky.org/feed/"},
+    {"id": "whats-on-netflix", "name": "What's on Netflix", "section": "好玩", "category": "shows", "fetch": "rss", "url": "https://www.whats-on-netflix.com/feed/"},
+    {"id": "steam", "name": "Steam", "section": "好玩", "category": "games", "fetch": "rss", "url": "https://store.steampowered.com/feeds/news.xml"},
+    {"id": "ucca", "name": "UCCA 北京", "section": "好玩", "category": "exhibitions", "fetch": "page", "parser": "ucca", "url": "https://www.ucca.org.cn/exhibitions/ucca-beijing/"},
+    {"id": "douban-events", "name": "豆瓣同城·北京本周", "section": "好玩", "category": "exhibitions", "fetch": "page", "parser": "douban_events", "url": "https://beijing.douban.com/events/week-all"},
+    {"id": "apple-newsroom", "name": "Apple Newsroom", "section": "好买", "category": "apple", "fetch": "rss", "url": "https://www.apple.com/newsroom/rss-feed.rss"},
+    {"id": "9to5mac", "name": "9to5Mac", "section": "好买", "category": "apple", "fetch": "rss", "url": "https://9to5mac.com/feed/"},
+    {"id": "bambu-lab", "name": "拓竹博客", "section": "好买", "category": "3d-printing", "fetch": "rss", "url": "https://blog.bambulab.com/rss/"},
+    {"id": "sspai-matrix", "name": "少数派 Matrix", "section": "好玩", "category": "apps", "fetch": "rss", "url": "https://rsshub.ktachibana.party/sspai/matrix"},
+    {"id": "sspai", "name": "TG 少数派", "section": "好玩", "category": "apps", "fetch": "telegram", "channel": "sspai", "url": "https://t.me/s/sspai"},
+    {"id": "Apps_Share", "name": "iOS 限免 & 降价", "section": "好玩", "category": "apps", "fetch": "telegram", "channel": "Apps_Share", "url": "https://t.me/s/Apps_Share"},
+    {"id": "gcores", "name": "机核", "section": "好玩", "category": "games", "fetch": "rss", "url": "https://www.gcores.com/rss"},
+    {"id": "appinn", "name": "小众软件", "section": "好玩", "category": "apps", "fetch": "rss", "url": "https://www.appinn.com/feed/"}
+  ]
+}
