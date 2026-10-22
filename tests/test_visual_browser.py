@@ -71,6 +71,18 @@ class VisualBrowserTests(unittest.TestCase):
         self.assertEqual(page.locator('.visual-main .row').count(), 1)
         self.assertEqual(self.errors, [])
 
+    def test_mobile_scroll_survives_render_and_detail_back(self):
+        page = self.page
+        page.locator('.bar [data-go="news"]').click()
+        page.evaluate("document.querySelector('.visual-scroll').scrollTop=400")
+        page.evaluate("document.querySelector('[data-more]').click()")
+        self.assertEqual(page.evaluate("document.querySelector('.visual-scroll').scrollTop"), 400)
+        page.evaluate("document.querySelector('.visual-main [data-open]').click()")
+        self.assertEqual(page.evaluate("document.querySelector('.visual-scroll').scrollTop"), 0)
+        page.locator('[data-back]').click()
+        self.assertEqual(page.evaluate("document.querySelector('.visual-scroll').scrollTop"), 400)
+        self.assertEqual(self.errors, [])
+
     def test_joint_filters_search_and_all_page_states(self):
         page = self.page
         page.locator('.bar [data-go="news"]').click()

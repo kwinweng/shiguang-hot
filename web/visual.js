@@ -88,8 +88,13 @@
     if (page==='first') return `<div class="first"><img class="app-icon" src="${url('icon-192.png')}" alt="拾光热榜"><h1>拾光热榜</h1><p>今日信息，留一份清晰。</p><p>资讯持续更新，好玩、好买每天一份。</p><p>收藏只存在这台设备，无需注册。</p><button class="primary" data-start>开始看今天</button><button data-modal="pwa">加到主屏幕</button></div>`;
     return empty();
   }
+  function scrollContainer() {
+    return matchMedia('(min-width:1000px)').matches ? document.scrollingElement : app.querySelector('.visual-scroll');
+  }
+  function scrollPage(top) { scrollContainer()?.scrollTo(0,top); }
   function render() {
     if (!app) return;
+    const scroll = scrollContainer()?.scrollTop || 0;
     masonryObservers.forEach(observer=>observer.disconnect());masonryObservers=[];
     const current = page==='hot'?'news':page;
     const nav=cls=>`<nav class="${cls}" aria-label="主导航">${tabs.map(([id,label,glyph])=>`<button data-go="${id}" class="${current===id?'on':''}" ${current===id?'aria-current="page"':''}>${icon(glyph,current===id)}<span>${label}</span></button>`).join('')}</nav>`;
@@ -111,15 +116,16 @@
       masonryObservers.push(observer);
       [...grid.children].forEach(card=>observer.observe(card));
     });
+    scrollPage(scroll);
     if (!navigator.onLine) offline();
   }
   function go(target, remember = true) {
-    if (remember) navigation.push({page,source,category,group,selected,scroll:scrollY});
+    if (remember) navigation.push({page,source,category,group,selected,scroll:scrollContainer()?.scrollTop || 0});
     page=target;category='全部';group='全部';limit=20;status='normal';
     if(target==='today'){source='';activeDay='';calendarMonth='';}
     if(remember)history.pushState({visual:true},'',`#screens/${target}`);
     else history.replaceState({visual:true},'',`#screens/${target}`);
-    render(); scrollTo(0,0);
+    render(); scrollPage(0);
   }
   function openItem(id) {
     const item=items.find(x=>x.id===id)||saved().find(x=>x.id===id);if(!item)return;
@@ -152,7 +158,7 @@
   }
   async function refresh() {
     const main=app.querySelector('.visual-main');const indicator=document.createElement('div');indicator.className='ptr';indicator.textContent='正在更新…';main.prepend(indicator);
-    try {const response=await fetch(url('visual-data.json'),{cache:'reload'});if(!response.ok)throw Error();const next=await response.json();accept(next);render();toast('已更新','回到顶部',()=>scrollTo(0,0));}
+    try {const response=await fetch(url('visual-data.json'),{cache:'reload'});if(!response.ok)throw Error();const next=await response.json();accept(next);render();toast('已更新','回到顶部',()=>scrollPage(0));}
     catch {indicator.remove();toast('没更新成功','重试',refresh);}
   }
   function offline() {
@@ -166,7 +172,7 @@
       const t=event.target.closest('button,a');if(!t)return;const d=t.dataset;
       if(d.go){if(modal.open)closeModal();go(d.go);}
       if(d.open)openItem(d.open);
-      if('back'in d){const old=navigation.pop();if(old){({page,source,category,group,selected}=old);history.replaceState({visual:true},'',`#screens/${page}`);render();scrollTo(0,old.scroll);}else go('today',false);}
+      if('back'in d){const old=navigation.pop();if(old){({page,source,category,group,selected}=old);history.replaceState({visual:true},'',`#screens/${page}`);render();scrollPage(old.scroll);}else go('today',false);}
       if(d.modal)showModal(d.modal);
       if('closeModal'in d)closeModal();
       if('source'in d){source=d.source;limit=20;render();}
@@ -187,7 +193,7 @@
     });
     app.addEventListener('input',event=>{if(event.target.id==='visual-query'){query=event.target.value;const start=event.target.selectionStart;render();const input=app.querySelector('#visual-query');input.focus();input.setSelectionRange(start,start);}});
     let startY=null;
-    app.addEventListener('touchstart',event=>{if(scrollY===0&&!modal.open)startY=event.touches[0].clientY;},{passive:true});
+    app.addEventListener('touchstart',event=>{if(scrollContainer()?.scrollTop===0&&!modal.open)startY=event.touches[0].clientY;},{passive:true});
     app.addEventListener('touchmove',event=>{if(startY!==null&&event.touches[0].clientY-startY>56&&!app.querySelector('.ptr')){const hint=document.createElement('div');hint.className='ptr';hint.textContent='松开刷新';app.querySelector('.visual-main').prepend(hint);}},{passive:true});
     app.addEventListener('touchend',()=>{if(app.querySelector('.ptr')){app.querySelector('.ptr').remove();refresh();}startY=null;});
     addEventListener('offline',offline);addEventListener('online',()=>{app.querySelector('#offline-banner').innerHTML='';refresh();});

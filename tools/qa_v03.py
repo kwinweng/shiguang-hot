@@ -1,4 +1,4 @@
-"""Offline v0.3 acceptance: 48 screens, both themes, production renderer.
+"""Offline v0.3 acceptance: 49 screens, both themes, production renderer.
 
 Uses the approved prototype's content/images as deterministic visual fixtures.
 No network requests leave Chromium. Production data is checked separately.
@@ -16,6 +16,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 MOBILE = 'today today-bottom news news-quick news-bottom hot play play-bottom buy buy-bottom fav fav-bottom mag detail-img detail-text search-init search-result search-empty loading empty error cal cal-empty columns columns-tag src-github src-x src-world src-channel drawer capsule history lightbox ptr-pull ptr-loading toast-action toast-error offline offline-none first pwa'.split()
+MOBILE.append('news-quick-mid')
 DESKTOP = 'd-today d-news d-hot d-play d-buy d-fav d-pwa'.split()
 
 
@@ -99,7 +100,7 @@ def run(output, reference):
                         localStorage.setItem('shiguang-favorites-public',JSON.stringify(bookmarks));
                         localStorage.setItem('rebang-history-public',JSON.stringify(bookmarks.map(x=>({...x,viewed:data.updated}))));
                     }""", catalogue)
-                    screen = sid.removeprefix('d-').removesuffix('-bottom')
+                    screen = sid.removeprefix('d-').removesuffix('-bottom').removesuffix('-mid')
                     target = {'news-quick':'news','detail-img':'detail','detail-text':'detail','search-init':'search','search-result':'search','search-empty':'search','loading':'news','empty':'news','error':'news','cal':'today','cal-empty':'today','drawer':'today','capsule':'today','lightbox':'detail','ptr-pull':'today','ptr-loading':'today','toast-action':'today','toast-error':'today','offline':'today','offline-none':'news','pwa':'today'}.get(screen, screen)
                     state = dict(page=target, status=screen if screen in ['loading','empty','error'] else 'normal')
                     if screen.startswith('search-'):
@@ -135,7 +136,7 @@ def run(output, reference):
                     page.wait_for_timeout(80)
                     # Token and geometry assertions run against computed production CSS.
                     values = page.evaluate("""() => {
-                        const root=getComputedStyle(document.documentElement), main=getComputedStyle(document.querySelector('.visual-main'));
+                        const root=getComputedStyle(document.documentElement), main=getComputedStyle(document.querySelector('.visual-scroll'));
                         return {brand:root.getPropertyValue('--c-brand').trim(),bg:getComputedStyle(document.body).backgroundColor,
                           padding:main.paddingBottom,overflow:document.documentElement.scrollWidth>innerWidth,
                           bar:getComputedStyle(document.querySelector('.bar')).height,
@@ -149,21 +150,55 @@ def run(output, reference):
                         assert values['bar'] == '70px', (sid, values)
                     scrollable = screen in ['today','news','news-quick','hot','play','buy','fav','mag','columns','columns-tag','history'] or screen.startswith('src-')
                     if scrollable:
-                        page.evaluate('scrollTo(0,document.documentElement.scrollHeight)')
+                        page.evaluate("""desktop => {const scroller=desktop?document.scrollingElement:document.querySelector('.visual-scroll');scroller.scrollTo(0,scroller.scrollHeight)}""", desktop)
                         page.wait_for_timeout(80)
                         geometry = page.evaluate("""() => {
                           const rows=[...document.querySelectorAll('.visual-main [data-item]')];
-                          return {count:rows.length,bottom:Math.max(...rows.map(x=>x.getBoundingClientRect().bottom)),top:document.querySelector('.bar').getBoundingClientRect().top};
+                          const last=document.querySelector('#visual-content').lastElementChild;
+                          const scroller=document.querySelector('.visual-scroll');
+                          return {count:rows.length,bottom:Math.max(...rows.map(x=>x.getBoundingClientRect().bottom)),top:document.querySelector('.bar').getBoundingClientRect().top,lastBottom:last.getBoundingClientRect().bottom,scrolls:scroller.scrollHeight>scroller.clientHeight};
                         }""")
                         if not desktop and geometry['count']:
                             assert geometry['bottom'] <= geometry['top'] - 16 + 1, (sid, geometry)
+                        if sid.endswith('-bottom'):
+                            gap = geometry['top'] - geometry['lastBottom']
+                            print(f'{sid}-{theme}: last content/tab bar gap = {gap:.2f}px', flush=True)
+                            if geometry['scrolls']:
+                                assert abs(gap - 16) <= 1, (sid, 'last content/tab bar gap', gap)
+                            else:
+                                assert gap >= 15, (sid, 'short content/tab bar gap', gap)
                         if not sid.endswith('-bottom'):
-                            page.evaluate('scrollTo(0,0)')
+                            page.evaluate("""desktop => (desktop?document.scrollingElement:document.querySelector('.visual-scroll')).scrollTo(0,0)""", desktop)
+                    if sid == 'news-quick-mid':
+                        page.evaluate("""() => {const scroller=document.querySelector('.visual-scroll');scroller.scrollTop=(scroller.scrollHeight-scroller.clientHeight)/2}""")
+                        page.wait_for_timeout(80)
+                        overlap = page.evaluate(r"""() => {
+                            const scroller=document.querySelector('.visual-scroll'), box=scroller.getBoundingClientRect();
+                            const clip=getComputedStyle(scroller).clipPath;
+                            if (!clip.startsWith('inset(')) return ['missing scroll clip'];
+                            const insets=clip.slice(6,-1).trim().split(/\s+/).map(parseFloat);
+                            const clipBottom=box.bottom-(insets[2]??insets[0]);
+                            const backing=document.querySelector('.bar-backing').getBoundingClientRect();
+                            // Include the backing's 8px gradient above its border box.
+                            const coveredTop=backing.top-parseFloat(getComputedStyle(document.querySelector('.bar-backing'),'::before').height);
+                            const walker=document.createTreeWalker(document.querySelector('.visual-main'),NodeFilter.SHOW_TEXT);
+                            const hits=[]; let text;
+                            while ((text=walker.nextNode())) {
+                                if (!text.textContent.trim()) continue;
+                                const range=document.createRange();range.selectNodeContents(text);
+                                for (const rect of range.getClientRects()) {
+                                    const top=Math.max(rect.top,box.top,0), bottom=Math.min(rect.bottom,clipBottom,innerHeight);
+                                    if (bottom>top && bottom>coveredTop && rect.right>0 && rect.left<innerWidth) hits.push(text.textContent);
+                                }
+                            }
+                            return hits;
+                        }""")
+                        assert not overlap, (sid, 'visible text under tab bar/backing', overlap)
                     assert not errors, (sid, errors)
                     page.screenshot(path=str(output / f'{sid}-{theme}.png'))
                     checks += 1
                     context.close()
-                print(f'{theme}: 48 screens passed', flush=True)
+                print(f'{theme}: {len(MOBILE + DESKTOP)} screens passed', flush=True)
             browser.close()
     finally:
         server.shutdown()

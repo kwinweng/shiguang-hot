@@ -26,7 +26,7 @@ def test_components_have_no_legacy_variables_or_literal_colors():
 
 def test_clearance_has_no_later_mobile_override():
     css = (ROOT / 'web/visual.css').read_text()
-    assert 'padding:env(safe-area-inset-top) var(--sp-20) calc(var(--s-bar-h) + 16px + env(safe-area-inset-bottom) + 16px)' in css
+    assert 'padding-bottom:calc(var(--s-bar-h) + 16px + env(safe-area-inset-bottom) + 16px)' in css
     assert css.count('.visual-main{') == 2  # mobile rule and desktop-only rule
     assert 'height:calc(var(--s-bar-h) + 16px + env(safe-area-inset-bottom) + 8px);background:var(--c-bg)' in css
     assert 'backdrop-filter:var(--m-blur)' in css
@@ -39,11 +39,12 @@ def test_categories_keep_regular_weight_and_brand_underline():
     assert 'border-bottom-color:var(--c-brand)' in rule
 
 
-def test_acceptance_list_is_exactly_48_unique_screens():
+def test_acceptance_list_is_exactly_49_unique_screens():
     from tools.qa_v03 import MOBILE, DESKTOP
-    assert len(MOBILE) == 41
+    assert len(MOBILE) == 42
     assert len(DESKTOP) == 7
-    assert len(set(MOBILE + DESKTOP)) == 48
+    assert len(set(MOBILE + DESKTOP)) == 49
+    assert 'news-quick-mid' in MOBILE
 
 
 def test_presentation_preserves_bookmark_identity_and_scope(tmp_path):
