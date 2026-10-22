@@ -143,12 +143,12 @@ class PrivacyBuildTests(unittest.TestCase):
             for directory in ('assets','media'): (root/directory).mkdir()
             for file in ('style.css','app.js'): (root/file).write_text('')
             sources=[]; issues={}
-            for order,id in enumerate(('hot-daily','mail','world','x','github','future')):
+            for order,id in enumerate(('hot-daily','mail','world','x','github','NewlearnerChannel')):
                 sources.append(dict(id=id,type='inbox',name='邮件精华' if id=='mail' else id,visibility='private' if id=='mail' else 'public',icon='all',color='#123456',nav=dict(enabled=True,order=order),daily_order=order,home_cap=2,home_weight=100 if id=='future' else 1))
                 issues[id]=[(dict(date='2026-10-17',blocks=[dict(type='oneliner',items=[id+' summary'])],sections=[dict(title='section',items=[dict(title=id+str(n),body='body') for n in range(5)])]),root)]
             # Future sources and dates enter without renderer changes; blocks alone count as data.
-            issues['future'].append((dict(date='2026-10-16',sections=[],blocks=[dict(type='oneliner',items=['older future'])]),root))
-            sources.append(dict(id='tg',channel='tg',type='telegram',name='TG',visibility='public',icon='all',color='#123456',nav=dict(enabled=False),home_cap=2))
+            issues['NewlearnerChannel'].append((dict(date='2026-10-16',sections=[],blocks=[dict(type='oneliner',items=['older future'])]),root))
+            sources.append(dict(id='CE_Observe',channel='tg',type='telegram',name='TG',visibility='public',icon='all',color='#123456',nav=dict(enabled=False),home_cap=2))
             rows=[dict(ch='tg',title='TG '+str(n),body='body',images=[],ts='2026-10-17 10:00',day='2026-10-17',cat='其他',url='') for n in range(20)]
             cfg=prepare(dict(categories={},sources=sources,hot=dict(source='hot-daily')))
             with patch.object(pages,'ROOT',root),patch.object(pages,'WEB',root),patch.object(sitebuild,'WEB',root),patch.object(pages,'config',return_value=cfg),patch.object(pages,'load_issues',side_effect=lambda source,local: issues.get(source['id'],[])),patch.object(sitebuild,'load_issues',side_effect=lambda source,local: issues.get(source['id'],[])):
@@ -157,35 +157,25 @@ class PrivacyBuildTests(unittest.TestCase):
                     with patch.dict(os.environ,dict(SITE_MODE=mode,MAIL_DIGEST='0',SITE_OUT=str(target))):
                         sitebuild.build(rows,[],datetime(2026,10,17,12,tzinfo=ZoneInfo('Asia/Shanghai')))
                     home=BeautifulSoup((target/'index.html').read_text(),'html.parser')
-                    expected=(set(issues)-{'hot-daily'})|{'tg'}
+                    expected=set(issues)|{'CE_Observe'}
                     if mode=='public': expected.remove('mail')
-                    badges=home.select('article:not([data-more]) [data-source]')
-                    # 今日: today's stream, capped per source; the rest stays hidden for filters and 展开全部.
-                    self.assertTrue(all(a.has_attr('hidden') for a in home.select('article[data-more]')))
-                    self.assertEqual(len(home.select('article[data-more][data-ch="tg"]')),18)
-                    self.assertIsNotNone(home.select_one('.show-all'))
-                    self.assertEqual({b['data-source'] for b in badges if not b.find_parent(class_='digest-source')},expected)
-                    stream=[b for b in badges if not b.find_parent(class_='digest-source')]
-                    for source in expected: self.assertEqual(sum(b['data-source']==source for b in stream),2)
-                    self.assertEqual(stream[0]['data-source'],'future')
-                    # The hot-topics issue sits on top of 今日; the other columns follow, short, in order.
-                    top=home.select_one('section.today-top')
-                    self.assertIn('hot-daily summary',top.get_text())
-                    ordered=[s['data-source'] for s in home.select('section.digest-source[data-source]')]
-                    self.assertEqual(ordered,[id for id in issues if id in expected or id=='hot-daily'])
-                    world=home.select_one('section[data-source="world"]')
-                    self.assertEqual(len(world.select('article')),3)
+                    stream=home.select('#news-fallback article [data-source]')
+                    # r3: every story is chronological and reachable, with no global expansion gate.
+                    self.assertFalse(home.select('article[data-more], .show-all'))
+                    self.assertEqual({b['data-source'] for b in stream},expected)
+                    self.assertEqual(len(home.select('#news-fallback article[data-ch="tg"]')),20)
+                    world=home.select_one('.today-summaries section[data-source="world"]')
+                    self.assertEqual(len(world.select('article')),4)
                     self.assertEqual(world.select_one('.more-link a')['href'],'world/2026-10-17.html')
-                    # Time machine: chips for recent days and a calendar of every day with content.
-                    self.assertEqual([a['href'] for a in home.select('.tm-strip a')],['index.html','archive/2026-10-16.html'])
-                    self.assertEqual(len(home.select('#time-machine .tm-grid a')),2)
+                    # The shared calendar gets its joint matching dates from the sidecar manifest.
+                    self.assertIsNotNone(home.select_one('#news-calendar'))
+                    self.assertEqual(set(json.loads((target/'archive/manifest.json').read_text())['days']),{'2026-10-17','2026-10-16'})
                     past=BeautifulSoup((target/'archive/2026-10-16.html').read_text(),'html.parser')
-                    self.assertIn('older future',past.get_text())
-                    self.assertEqual(past.select_one('.tm-strip a[aria-current]')['href'],'../archive/2026-10-16.html')
+                    self.assertFalse(past.select('.today-summaries article'))
                     self.assertEqual(past.select_one('nav.bottom a.active').get_text(),'今日')
                     # 「光」: the tab bar holds words only.
-                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['今日','热点','栏目','收藏'])
-                    self.assertIsNone(home.select_one('nav.bottom svg'))
+                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['今日','资讯','栏目','收藏'])
+                    self.assertIsNotNone(home.select_one('nav.bottom svg.phosphor'))
                     self.assertEqual(home.select_one('nav.bottom a.active')['aria-current'],'page')
                     self.assertTrue(home.select('article button.bookmark[aria-pressed="false"][aria-label="收藏"]'))
                     favorites=BeautifulSoup((target/'favorites.html').read_text(),'html.parser')
@@ -199,7 +189,7 @@ class PrivacyBuildTests(unittest.TestCase):
                     columns=BeautifulSoup((target/'columns.html').read_text(),'html.parser')
                     channel=columns.select_one('[data-panel="channel"]')
                     self.assertEqual([a['href'] for a in channel.select('a.column-entry')],
-                                     ['hot-daily/2026-10-17.html']+[id+'/index.html' for id in issues if id in expected and id!='tg']+['tg/index.html'])
+                                     ['hot-daily/2026-10-17.html']+[id+'/index.html' for id in issues if id in expected and id!='hot-daily']+['CE_Observe/index.html'])
                     self.assertEqual([h.get_text() for h in channel.select('.section-label h2')],['每日简报','Telegram'])
                     self.assertEqual([a['href'] for a in columns.select('[data-panel="tag"] a.column-entry')],['tag/other.html'])
                     self.assertIn('TG 0',(target/'tag/other.html').read_text())
@@ -217,7 +207,7 @@ class PrivacyBuildTests(unittest.TestCase):
                     self.assertIn('url=../index.html"',(target/'hot-daily/index.html').read_text())
                     self.assertIn('url=../index.html"',(target/'archive/index.html').read_text())
                     self.assertIn('url=index.html"',(target/'all.html').read_text())
-                    channel_page=BeautifulSoup((target/'tg/index.html').read_text(),'html.parser')
+                    channel_page=BeautifulSoup((target/'CE_Observe/index.html').read_text(),'html.parser')
                     self.assertEqual(len(channel_page.select('article')),20)
                     self.assertEqual(channel_page.select_one('nav.bottom a.active').get_text(),'栏目')
                     self.assertEqual(BeautifulSoup((target/'x/index.html').read_text(),'html.parser').select_one('nav.bottom a.active').get_text(),'栏目')

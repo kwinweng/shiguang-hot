@@ -13,6 +13,7 @@ from shiguang.model import BEIJING
 from shiguang.site.pages import write_pages
 from shiguang.site.render import E
 from shiguang.site.privacy import verify_source_markers
+from shiguang.site.history import ALLOWED
 
 
 @contextmanager
@@ -69,20 +70,23 @@ def publish_assets(out, full):
     for kind, source in (('css', WEB / 'style.css'), ('js', WEB / 'app.js')):
         data = source.read_bytes()
         names[kind] = f'{source.stem}.{hashlib.sha256(data).hexdigest()[:10]}{source.suffix}'
-        if full:
-            for stale in out.glob(f'{source.stem}.*{source.suffix}'):
-                if stale.name != names[kind]: stale.unlink()
+        # Historical HTML may still reference any earlier content hash.
         (out / names[kind]).write_bytes(data)
     icons = hashlib.sha256()
     for asset in sorted((WEB / 'assets').iterdir()):
         if asset.is_file(): icons.update(asset.read_bytes())
     names['version'] = icons.hexdigest()[:10]
+    history = WEB / 'history.js'
+    if history.is_file():
+        data = history.read_bytes()
+        names['history'] = f'history.{hashlib.sha256(data).hexdigest()[:10]}.js'
+        (out / names['history']).write_bytes(data)
     return names
 
 
 def verify_public(out, cfg):
     """Refuse to publish if anything from a private source leaked into the public tree."""
-    forbidden = [s for s in cfg['sources'] if s['visibility'] == 'private']
+    forbidden = [s for s in cfg['sources'] if s['visibility'] == 'private' or s['id'] not in ALLOWED]
     for s in forbidden:
         if (out / s['id']).exists(): raise RuntimeError('公开产物存在 private 目录')
     private_text = []

@@ -36,6 +36,64 @@
   --bar-height:52px;--header-height:52px;--tab-bar-height:72px;
   --tab-clearance:calc(var(--tab-bar-height) + env(safe-area-inset-bottom,0px) + var(--space-7));
 }
+
+/* Issue #19: news controls and continuous list. Other surfaces retain their design. */
+#news-history{--surface:#fff;--surface-quiet:#e9eee9;--text:#141414;--muted:#636261;--subtle:#a3aaa4;--border:#d9dfd9;--action:#255a41;--on-action:#fff;--selected:#e0ebe0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Noto Sans CJK SC",sans-serif;font-variant-numeric:tabular-nums;padding-right:28px}
+:root[data-theme="dark"] #news-history{--surface:#1d2a22;--surface-quiet:#26362b;--text:#e9eee8;--muted:#bac9bf;--subtle:#7d8a81;--border:#405448;--action:#b4d8b3;--on-action:#142119;--selected:#2b4433}
+html.news-surface{--page:#f2f4f2;--ground:#f2f4f2;--ink:#141414;--ink-2:#636261;--ink-3:#a3aaa4;--line:#d9dfd9}
+:root[data-theme="dark"].news-surface{--page:#141d18;--ground:#141d18;--ink:#e9eee8;--ink-2:#bac9bf;--ink-3:#7d8a81;--line:#405448}
+.news-surface .g-light,.news-view .today-summaries{display:none}
+.news-surface body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Noto Sans CJK SC",sans-serif;font-variant-numeric:tabular-nums}
+.news-surface .g-lead__title{font-size:30px;font-weight:700;letter-spacing:-.03em}
+.news-surface .g-column{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#news-history{--ink:var(--text);--ink-2:var(--muted);--ink-3:var(--subtle)}
+#news-history button,#news-history select,#news-history input{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);min-height:44px;border-radius:999px;padding:4px 10px}
+#news-history a{color:var(--action)}
+.news-controls{display:flex;align-items:center;gap:4px;flex-wrap:wrap;position:sticky;top:52px;z-index:8;background:var(--surface);padding:4px 0}
+#news-current{font-size:12px;color:var(--action)}
+#news-topics,#news-tech{display:flex;gap:4px;overflow:auto}
+#news-topics button,#news-tech button{border:0;background:transparent;font-size:14px;white-space:nowrap;color:var(--muted)}
+#news-topics button[aria-pressed=true],#news-tech button[aria-pressed=true]{color:var(--text);font-weight:600}
+#news-source-toggle[aria-expanded=true]{color:var(--action)}
+#news-source-toggle[aria-expanded=true]::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--action)}
+#news-query{border-radius:12px;max-width:100%}
+#news-source{border-radius:16px;max-width:100%}
+#news-list .card{position:relative;border:0;border-bottom:1px solid var(--border);border-radius:10px;background:var(--surface);box-shadow:none;margin:8px 0;padding:14px;display:block;color:var(--text)}
+#news-list .card:has(.card__media){padding-left:104px;min-height:104px}
+#news-list .card__title{font-size:16px;font-weight:400;line-height:1.5}
+#news-list .card__body{font-size:16px;line-height:1.5}
+#news-list .card__media{position:absolute;left:14px;top:14px;width:76px;height:76px;margin:0}
+#news-list .card__media img{width:76px;height:76px;object-fit:cover;border-radius:8px}
+#news-list .card__media .photo{width:76px;height:76px}
+#news-list time{color:var(--action);font-size:12px;font-weight:500}
+#news-list .g-card__label{font-size:12px;color:var(--muted)}
+#news-list .card__actions{flex-wrap:wrap}
+#news-list details summary{min-height:44px;padding:8px;color:var(--action);cursor:pointer;font-size:14px}
+:root[data-theme="dark"] #news-list img{filter:brightness(.82) saturate(.92)}
+#news-calendar{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:20px;max-width:calc(100vw - 32px);max-height:80vh;overflow:auto}
+#news-dates{display:flex;flex-wrap:wrap;gap:4px}
+#news-sentinel{min-height:44px;margin:22px 0}
+#news-capsule{position:fixed;z-index:12;right:0;top:45vh;width:44px;height:56px;min-height:56px!important;padding:0!important;border:0!important;background:transparent!important;opacity:0;pointer-events:none;touch-action:none;transition:opacity 150ms}
+#news-capsule.is-visible,#news-capsule:focus{opacity:1;pointer-events:auto}
+#news-capsule i{position:absolute;right:5px;top:6px;width:6px;height:44px;border-radius:3px;background:rgba(37,90,65,.55)}
+#news-capsule span{position:absolute;right:18px;top:9px;white-space:nowrap;font-size:12px;font-weight:600;line-height:20px;padding:3px 9px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:999px;color:var(--action);pointer-events:none}
+#news-capsule.is-held i{right:4px;top:0;width:10px;height:56px;background:#255a41;box-shadow:0 0 0 4px rgba(37,90,65,.12)}
+#news-capsule.is-held span{right:24px;top:6px;font-size:17px;padding:6px 14px;background:var(--action);color:var(--on-action)}
+#news-capsule.is-held small{display:block;font-size:11px;font-weight:500;opacity:.8}
+:root[data-theme="dark"] #news-capsule i{background:rgba(180,216,179,.55)}
+:root[data-theme="dark"] #news-capsule.is-held i{background:#b4d8b3;box-shadow:0 0 0 4px rgba(180,216,179,.12)}
+:root[data-theme="dark"] #news-capsule span{background:var(--surface)}
+:root[data-theme="dark"] #news-capsule.is-held span{background:var(--action)}
+@media(prefers-reduced-motion:reduce){#news-capsule{transition:none}}
+#news-history [hidden],#news-list [hidden]{display:none!important}
+.phosphor{width:22px;height:22px;fill:currentColor;flex-shrink:0;vertical-align:middle}
+.bottom .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px}
+.bottom .phosphor{width:22px;height:22px}
+.ph-bookmark .phosphor{width:18px;height:18px}
+.ph-bookmark .phosphor:last-child{display:none}
+[aria-pressed=true] .ph-bookmark .phosphor:first-child{display:none}
+[aria-pressed=true] .ph-bookmark .phosphor:last-child{display:inline}
+#news-calendar-close .phosphor{width:20px;height:20px}
 @supports (transition-timing-function:linear(0,1)){:root{
   --ease-crisp:linear(0,.0497,.1587,.2872,.4139,.5284,.6268,.7084,.7745,.8272,.8685,.9005,.9251,.9439,.9581,.9689,.9769,.983,.9874,.9908,.9932,.995,.9964,.9973,1);
 }}

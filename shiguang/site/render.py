@@ -57,7 +57,7 @@ class Page:
         return path if re.match(r'https?://', path) else self.rel + path
 
 
-SLOT_LABELS = {'today': '今日', 'hot': '热点', 'columns': '栏目', 'favorites': '收藏'}
+SLOT_LABELS = {'today': '今日', 'hot': '资讯', 'columns': '栏目', 'favorites': '收藏'}
 WEEKDAYS = '一二三四五六日'
 BLOCK_TITLES = {'oneliner': '一句话速览', 'markets': '市场看板', 'chart': '一张图', 'tomorrow': '明日看点'}
 EXTERNAL = 'target="_blank" rel="noopener noreferrer"'
@@ -305,6 +305,8 @@ def nav_slots(page):
     can slide between pages.
     """
     site = page.site
+    from shiguang.site.history import icon as news_icon
+    glyphs = {'today': 'house', 'hot': 'newspaper', 'columns': 'compass', 'favorites': 'bookmark-simple'}
     lookup = {entry[0]: entry for entry in site.entries}
     labels = dict(SLOT_LABELS, favorites=site.favorites.get('label', '收藏'))
     result = ''
@@ -318,7 +320,8 @@ def nav_slots(page):
         active = current == key
         classes = ' '.join(c for c in ('tab', f'slot-{n}', 'active' if active else '', 'home-slot' if key == 'home' else '') if c)
         result += (f'<a href="{page.url(path)}" class="{classes}"'
-                   + (' aria-current="page"' if active else '') + f'>{E(name)}</a>')
+                   + (' aria-current="page"' if active else '')
+                   + f'>{news_icon(glyphs[key]) if key in glyphs else ""}<span>{E(name)}</span></a>')
         if active:
             result = f'<span class="tab__pill slot-{n}" aria-hidden="true"></span>' + result
     return result
@@ -345,7 +348,8 @@ def more_menu(page):
 
 THEME_SCRIPT = ("document.documentElement.classList.add('js');"
                 "const t=new URLSearchParams(location.search).get('theme');"
-                "if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;")
+                "document.documentElement.dataset.theme=t==='light'||t==='dark'?t:"
+                "(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');")
 
 
 def document(page, title, body, illumination, light_source):
@@ -370,6 +374,7 @@ def document(page, title, body, illumination, light_source):
         f'<link rel="stylesheet" href="{page.url(assets["css"])}">'
         f'<style>{illumination}</style>'
         f'<script src="{page.url(assets["js"])}" defer></script>'
+        + (f'<script src="{page.url(assets["history"])}" defer></script>' if assets.get('history') else '') +
         '</head>'
         f'<body data-bookmark-scope="{"private" if site.private else "public"}"{favorites_url} data-light-source="{E(light_source or "fallback-sky")}">'
         f'{sprite()}'
