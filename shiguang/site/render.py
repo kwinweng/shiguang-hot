@@ -67,9 +67,8 @@ EXTERNAL = 'target="_blank" rel="noopener noreferrer"'
 
 def heading(page, title, description):
     """Lead block: 58 3D icon, one sentence in `lead`, one line of `note`."""
-    return (f'<div class="g-lead">{status_icon(page.section, "lead")}'
-            f'<div class="g-lead__text"><h1 class="g-lead__title">{E(title)}</h1>'
-            f'<p class="g-lead__note">{E(description)}</p></div></div>')
+    return (f'<div class="ph"><h1>{E(title)}</h1></div>'
+            f'<p class="page-note">{E(description)}</p>')
 
 
 def section_label(title, note=''):
@@ -372,13 +371,15 @@ def document(page, title, body, illumination, light_source):
         f'<link rel="manifest" href="{page.url("manifest.webmanifest")}?v={version}">'
         f'<script>{THEME_SCRIPT}</script>'
         f'<link rel="stylesheet" href="{page.url(assets["css"])}">'
-        f'<style>{illumination}</style>'
+        f'<link rel="stylesheet" href="{page.url("tokens.css")}">'
+        f'<link rel="stylesheet" href="{page.url("visual.css")}">'
         f'<script src="{page.url(assets["js"])}" defer></script>'
+        f'<script src="{page.url("icons.js")}" defer></script>'
+        f'<script src="{page.url("visual.js")}" defer data-root="{E(page.rel or "./")}"></script>'
         + (f'<script src="{page.url(assets["history"])}" defer></script>' if assets.get('history') else '') +
         '</head>'
         f'<body data-bookmark-scope="{"private" if site.private else "public"}"{favorites_url} data-light-source="{E(light_source or "fallback-sky")}">'
         f'{sprite()}'
-        '<div class="g-light" aria-hidden="true"><i class="g-light__field"></i></div>'
         '<header class="g-topbar"><div class="g-topbar__inner g-column">'
         f'<a class="g-topbar__brand" href="{page.url("index.html")}">拾光热榜</a>'
         f'<span class="g-topbar__where" aria-hidden="true">{E(title)}</span>'

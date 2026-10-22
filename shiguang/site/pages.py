@@ -173,6 +173,9 @@ def write_pages(rows, hot, now, out, assets, entries=(), inbox_only=False):
     c = Content(cfg, private, rows, hot, entries, now, out)
     c.trials = trials.catalogue(now, ROOT / 'tg.db')
     if not inbox_only:
+        from shiguang.site import visual
+        visual.write(out, c)
+    if not inbox_only:
         for sid in history.RETIRED:
             shutil.rmtree(out / sid, ignore_errors=True)
     columns = [c.sources[sid] for sid in c.issues]

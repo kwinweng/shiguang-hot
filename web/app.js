@@ -99,7 +99,7 @@
       element.classList.remove('is-shown');
       void element.offsetWidth; // restart the entrance when toasts follow each other
       element.classList.add('is-shown');
-      timer = setTimeout(hide, 3600);
+      timer = setTimeout(hide, 2500);
     };
   })();
 

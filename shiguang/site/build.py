@@ -67,6 +67,10 @@ def publish_assets(out, full):
     Inbox-only builds keep older hashed files: pages from the last full build still point at them.
     """
     names = {}
+    for filename in ('tokens.css', 'tokens.json', 'icons.js', 'visual.js', 'visual.css', 'sw.js'):
+        source = WEB / filename
+        if source.is_file():
+            shutil.copyfile(source, out / filename)
     for kind, source in (('css', WEB / 'style.css'), ('js', WEB / 'app.js')):
         data = source.read_bytes()
         names[kind] = f'{source.stem}.{hashlib.sha256(data).hexdigest()[:10]}{source.suffix}'
