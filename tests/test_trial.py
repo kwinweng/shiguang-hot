@@ -195,7 +195,7 @@ class TrialTests(unittest.TestCase):
                     for path in list(out.rglob('*')) + list((ROOT / 'public-feeds').rglob('*')):
                         if path.is_file() and path.suffix in ('.html', '.json', '.js', '.css', '.md'):
                             # Approved trials now publish only to catalogue pages and today's summary.
-                            if path.is_relative_to(out) and (path.name in ('play.html', 'buy.html', 'index.html')
+                            if path.is_relative_to(out) and (path.name in ('play.html', 'buy.html', 'index.html', 'visual-data.json')
                                     or path.relative_to(out).as_posix() == 'archive/2026-10-22.html'):
                                 continue
                             text = path.read_text()

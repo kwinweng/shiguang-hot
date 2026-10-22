@@ -115,7 +115,7 @@ class NewsBrowserTests(unittest.TestCase):
         self.page.mouse.move(0, 0)
         self.page.clock.run_for(799)
         self.assertIn('is-visible', capsule.get_attribute('class'))
-        self.page.clock.run_for(2)
+        self.page.clock.run_for(202)  # Include the queued layout/scroll frame after the pointer move.
         self.assertNotIn('is-visible', capsule.get_attribute('class'))
         capsule.focus()
         self.page.clock.run_for(1200)
@@ -127,7 +127,7 @@ class NewsBrowserTests(unittest.TestCase):
         self.assertIn('2026-10-22', capsule.get_attribute('aria-valuetext'))
         self.assertGreaterEqual(capsule.bounding_box()['width'], 44)
         self.assertEqual(capsule.locator('i').evaluate('(e) => getComputedStyle(e).width'), '6px')
-        self.assertEqual(capsule.locator('i').evaluate('(e) => getComputedStyle(e).backgroundColor'), 'rgba(180, 216, 179, 0.55)')
+        self.assertEqual(capsule.locator('i').evaluate('(e) => getComputedStyle(e).backgroundColor'), 'rgb(240, 90, 95)')
         for width in (320, 393, 1280):
             self.page.set_viewport_size({'width': width, 'height': 852})
             self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'), width)

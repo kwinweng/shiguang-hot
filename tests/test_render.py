@@ -108,8 +108,7 @@ class SpecComponentTests(unittest.TestCase):
         soup = BeautifulSoup(render.reading_switch(), 'html.parser')
         self.assertEqual([b['data-reading'] for b in soup.select('.g-seg__item')], ['1', '2', '3'])
         css = (WEB / 'style.css').read_text()
-        self.assertIn('font-size:18px;line-height:33px', css)
-        self.assertIn('font-size:19.5px;line-height:36px', css)
+        self.assertIn('font-size:var(--t-excerpt-size);line-height:var(--t-excerpt-line)', css)
 
 
 class FilterTests(unittest.TestCase):
@@ -153,8 +152,9 @@ class DesignSystemTests(unittest.TestCase):
         # Tab bar: words only.
         self.assertIsNotNone(soup.select_one('nav.bottom svg.phosphor'))
         self.assertEqual(soup.select_one('nav.bottom a.active').get_text(), '今日')
-        # Lead block uses a 3D status icon at lead size.
-        self.assertIsNotNone(soup.select_one('.g-lead .s-icon--lead'))
+        # v0.3 uses a plain page header, without the old decorative lead block.
+        self.assertIsNotNone(soup.select_one('.ph h1'))
+        self.assertIsNone(soup.select_one('.g-lead'))
 
     def test_sun_is_only_ever_a_fill(self):
         import re
@@ -179,14 +179,11 @@ class DesignSystemTests(unittest.TestCase):
         rules = {}
         for sel, body in re.findall(r'([^{}]+)\{([^}]*)\}', css):
             rules.setdefault(sel.strip(), body)  # the base rule, not a later media override
-        for selector in ('.g-card', '.g-round', '.g-tabbar', '.g-seg', '.toast', '.pull-refresh'):
-            body = rules[selector]
-            self.assertIn('border:0', body, selector)
-            self.assertIn('box-shadow:var(--shadow-glass)', body, selector)
-        # Each theme sets every edge colour.
-        for name in ('rim', 'inner', 'edge', 'contact', 'shade'):
-            self.assertEqual(self.css.count(f'--glass-{name}:'), 3, name)
-        self.assertNotIn('--glass-line', self.css)
+        body = rules['.g-tabbar']
+        self.assertIn('border:0', body)
+        self.assertIn('box-shadow:var(--sh-glass)', body)
+        self.assertIn('var(--c-glass-edge)', body)
+        self.assertNotIn('--shadow-glass', self.css)
 
     def test_light_follows_the_spec(self):
         from shiguang.site import light

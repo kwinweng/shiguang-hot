@@ -70,6 +70,7 @@
   }
   function content() {
     const news = filteredNews();
+    if(!navigator.onLine&&!items.length)return `<div class="empty"><p>连不上网，这台设备上也还没有缓存。</p><p>连上网后打开一次，之后离线也能看。</p><button class="text-button" data-retry>重试</button></div>`;
     if (status==='loading') return skeleton();
     if (status==='empty') return empty();
     if (status==='error') return `<div class="failure" role="alert"><p>内容加载失败</p><p>无法读取本地缓存，请检查连接。</p><button data-retry>重试</button></div>`;
@@ -115,6 +116,7 @@
   function go(target, remember = true) {
     if (remember) navigation.push({page,source,category,group,selected,scroll:scrollY});
     page=target;category='全部';group='全部';limit=20;status='normal';
+    if(target==='today'){source='';activeDay='';calendarMonth='';}
     if(remember)history.pushState({visual:true},'',`#screens/${target}`);
     else history.replaceState({visual:true},'',`#screens/${target}`);
     render(); scrollTo(0,0);
@@ -155,6 +157,7 @@
   }
   function offline() {
     const element=app.querySelector('#offline-banner');if(!element)return;
+    if(!items.length){element.innerHTML='';return;}
     element.innerHTML=`<div class="offline"><p>离线中，显示 ${time(data.updated)} 的缓存</p><button data-retry>重试</button></div>`;
   }
   function accept(next) {if(next.scope&&next.scope!==scope)throw Error('缓存范围不匹配');data=next;items=[...new Map([...data.news,...data.cards,...data.magazines].map(item=>[item.id,item])).values()];}

@@ -28,6 +28,8 @@ class DatabasePersistenceTests(unittest.TestCase):
         self.run_git(self.base, 'clone', str(self.remote), str(self.repo))
         self.run_git(self.repo, 'config', 'user.name', 'test')
         self.run_git(self.repo, 'config', 'user.email', 'test@local.invalid')
+        # Fixture repositories use only their own hooks; workstation pre-push policy is unrelated.
+        self.run_git(self.repo, 'config', 'core.hooksPath', str(self.repo / '.git/hooks'))
         (self.repo / 'tg.db').write_bytes(b'original')
         (self.repo / 'public-feeds').mkdir()
         (self.repo / 'public-feeds/sample.json').write_text('{}')
@@ -62,6 +64,7 @@ class DatabasePersistenceTests(unittest.TestCase):
         self.run_git(self.base, 'clone', str(self.remote), str(other))
         self.run_git(other, 'config', 'user.name', 'test')
         self.run_git(other, 'config', 'user.email', 'test@local.invalid')
+        self.run_git(other, 'config', 'core.hooksPath', str(other / '.git/hooks'))
         (other / 'public-feeds/sample.json').write_text('{"new":true}')
         self.run_git(other, 'commit', '-am', 'new feed')
         self.run_git(other, 'push', 'origin', 'main')

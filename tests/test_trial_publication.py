@@ -118,7 +118,7 @@ class TrialPublicationTests(unittest.TestCase):
             self.assertIn('target="_blank" rel="noopener noreferrer"', markup)
             self.assertNotIn('<script>', markup)
             self.assertIn('trial-textcard', markup)
-        css = (Path(__file__).parents[1] / 'web/style.css').read_text()
+        css = (Path(__file__).parents[1] / 'web/tokens.css').read_text()
         self.assertIn('--tc-star-bg:#EBEBF7', css)
         self.assertIn('--tc-star-icon:#4B4BAE', css)
         self.assertIn('[data-theme="dark"]', css)
