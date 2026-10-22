@@ -14,7 +14,7 @@ index). Markup lives in render.py; build.py stages and swaps the output.
 import re, shutil
 from datetime import date, datetime, time, timedelta
 from shiguang.config import PLATFORMS, ROOT, WEB, config, private_mode
-from shiguang.enrich.rank import rank_home
+from shiguang.site import history
 from shiguang.enrich.topics import assign
 from shiguang.ingest.feeds import load_issues, compress_images
 from shiguang.model import BEIJING, OTHER, from_entry, from_telegram, home_candidates, section_items
@@ -24,7 +24,7 @@ from shiguang.site.render import Page, Site
 
 TABS = ['today', 'hot', 'columns', 'favorites']
 FAVORITES = {'enabled': True, 'label': '收藏', 'path': 'favorites.html'}
-CORE = [('today', 'index.html', '今日', 'home'), ('hot', 'hot.html', '热点', 'hot'),
+CORE = [('today', 'index.html', '今日', 'home'), ('hot', 'index.html#screens/look', '资讯', 'hot'),
         ('columns', 'columns.html', '栏目', 'all'), ('favorites', 'favorites.html', '收藏', 'bookmark')]
 DIGEST_ITEMS = 3   # cards per issue in a day's 各栏目 section; the rest is one tap away on the issue page
 EARLY = 6          # before this hour, today's page also shows yesterday
@@ -96,7 +96,8 @@ class Content:
         self.cfg, self.private, self.now = cfg, private, now
         self.today = now.astimezone(BEIJING).date().isoformat()
         self.topics = cfg['topics']
-        self.sources = {s['id']: s for s in cfg['sources'] if private or s['visibility'] == 'public'}
+        self.sources = {s['id']: s for s in cfg['sources']
+                        if private or (s['visibility'] == 'public' and s['id'] in history.ALLOWED)}
         self.hot_source = cfg['hot']['source'] if cfg['hot']['source'] in self.sources else None
         by_channel = {s['channel']: s for s in self.sources.values() if s['type'] == 'telegram'}
         self.channels = by_channel
@@ -163,7 +164,8 @@ def write_pages(rows, hot, now, out, assets, entries=(), inbox_only=False):
     cfg = config(); private = private_mode()
     if not private:
         for source in cfg['sources']:
-            if source['visibility'] == 'private': shutil.rmtree(out / source['id'], ignore_errors=True)
+            if source['visibility'] == 'private' or source['id'] not in history.ALLOWED:
+                shutil.rmtree(out / source['id'], ignore_errors=True)
     c = Content(cfg, private, rows, hot, entries, now, out)
     columns = [c.sources[sid] for sid in c.issues]
     entries_nav = CORE + [(s['id'], s['id'] + '/index.html', s['name'], s['icon']) for s in columns if s['id'] != c.hot_source]
@@ -179,13 +181,20 @@ def write_pages(rows, hot, now, out, assets, entries=(), inbox_only=False):
 
     if not inbox_only:
         w.write(FAVORITES['path'], 'favorites', FAVORITES['label'], render.favorites_body)
-        shutil.copytree(ROOT / 'media', out / 'media', dirs_exist_ok=True)
+        visible_channels = {s['channel'] for s in c.sources.values() if s['type'] == 'telegram'}
+        for cached in (out / 'media').iterdir() if (out / 'media').is_dir() else ():
+            if not private and cached.name not in visible_channels:
+                if cached.is_dir(): shutil.rmtree(cached)
+                else: cached.unlink()
+        for channel in visible_channels:
+            source_media = ROOT / 'media' / channel
+            if source_media.is_dir():
+                shutil.copytree(source_media, out / 'media' / channel, dirs_exist_ok=True)
         for asset in (WEB / 'assets').iterdir():
             if asset.is_file(): shutil.copyfile(asset, out / asset.name)
-        for day in c.days:
-            day_page(w, c, day)
-        if c.today not in c.days:
-            day_page(w, c, c.today)
+        news_days, changed = history.prepare(c, site, out)
+        for day in changed | {c.today}:
+            news_day_page(w, c, day, news_days.get(day, []))
         hot_page(w, c)
         columns_page(w, c)
         tag_pages(w, c)
@@ -226,73 +235,28 @@ def issue_pages(w, c, sid, loaded):
             w.write(f'{sid}/index.html', sid, s['name'], body, light, tab)
 
 
-def day_page(w, c, day):
-    """今日 for one day: the hot-topics issue, the day's lead story and stream, then each column's
-    summary. Today is index.html; every day is also archive/<date>.html for the time machine."""
-    is_today = day == c.today
-    pool = c.pool(day)
-    ranked = rank_home(pool, c.sources, c.now if is_today else end_of(day))
-    # The lead story is the day's hottest (today: the newest hot one), not merely the newest post.
-    hot_today = [i for i in pool if (i.source_id, i.native_id) in c.heat]
-    if hot_today:
-        lead = (max(hot_today, key=lambda i: i.ts) if is_today
-                else max(hot_today, key=lambda i: c.heat[(i.source_id, i.native_id)][0]))
-        ranked = [lead] + [i for i in ranked if i is not lead]
-    hero, stream = (ranked[0], ranked[1:]) if ranked else (None, [])
-    shown = {id(i) for i in ranked}
-    more = sorted((i for i in pool if id(i) not in shown), key=lambda i: i.ts, reverse=True)
-    hot_issue = c.issue_on(c.hot_source, day) if c.hot_source else None
-    digests = [(c.sources[sid], c.issue_on(sid, day)) for sid in c.issues if sid != c.hot_source and c.issue_on(sid, day)]
-    yesterday = (date.fromisoformat(day) - timedelta(days=1)).isoformat()
-    early = is_today and c.now.astimezone(BEIJING).hour < EARLY and yesterday in c.days
-    when = render.day_label(day)
-    sources_count = len({i.source_id for i in pool})
-
+def news_day_page(w, c, day, members):
+    """Uncapped chronological news; column summaries belong only to today's surface."""
     def body(page):
-        if is_today:
-            content = render.heading(page, f'今天 {len(pool)} 条要闻',
-                                     f'{when} · 更新于 {c.now.astimezone(BEIJING):%H:%M} · {sources_count} 个来源')
-        else:
-            content = render.heading(page, when, f'{len(pool)} 条 · {sources_count} 个来源')
-        content += render.time_machine(page, c.days if day in c.days else [day] + c.days, day, c.today)
-        if hot_issue:
-            s = c.sources[c.hot_source]
-            members = c.issue_cards(c.hot_source, hot_issue)
-            link = (render.more_link(page, f'{s["id"]}/{day}.html', f'看完整的{s["name"]} · 共 {len(members)} 条')
-                    if len(members) > DIGEST_ITEMS else '')
-            content += render.group([s['name']], render.blocks(page, hot_issue) + render.cards(page, members[:DIGEST_ITEMS]) + link,
-                                    source_id=s['id'], cls='group digest-source today-top', light=w.group_light(all_images(members)))
-        if hero:
-            content += render.section_label('此刻要闻' if is_today else '当日要闻', '精选') + render.card(page, hero, 'hero')
-        if ranked:
-            content += render.filters(page, ranked + more)
-            content += render.section_label('最新动态' if is_today else '当天动态', '实时收录 · 持续更新' if is_today else '')
-            content += render.cards(page, stream) + render.cards(page, more, more=True)
-            if more:
-                content += render.show_all(len(pool))
-        elif not hot_issue:
-            content += render.empty('home', '这一天还没有内容。')
-        if digests:
-            content += render.section_label('各栏目今天' if is_today else '各栏目当天')
-            for s, issue in digests:
-                items = c.issue_cards(s['id'], issue)
-                shown_items = items[:DIGEST_ITEMS]
-                link = (render.more_link(page, f'{s["id"]}/{day}.html', f'看完整一期 · 共 {len(items)} 条')
-                        if len(items) > len(shown_items) else '')
-                content += render.group([s['name']], render.blocks(page, issue) + render.cards(page, shown_items) + link,
-                                        source_id=s['id'], cls='group digest-source',
-                                        light=w.group_light(list(render.chart_images(issue)) + all_images(shown_items)))
-        if early:
-            before = rank_home(c.pool(yesterday), c.sources, end_of(yesterday))[:10]
-            content += render.group(['昨天'], render.cards(page, before)
-                                    + render.more_link(page, f'archive/{yesterday}.html', '看昨天全部'), cls='group yesterday')
+        content = render.heading(page, '今日' if day == c.today else render.day_label(day), '北京时间')
+        content += '<div class="today-summaries">'
+        if day == c.today:
+            for sid in c.issues:
+                issue = c.issue_on(sid, day)
+                if issue:
+                    source = c.sources[sid]
+                    content += render.group([source['name']], render.blocks(page, issue)
+                                            + render.cards(page, c.issue_cards(sid, issue)[:4])
+                                            + render.more_link(page, f'{sid}/{day}.html', '完整期刊'), source_id=sid)
+        content += '</div>' + history.shell(page, day)
+        # Standalone HTML remains readable when sidecars or JavaScript are absent.
+        content += '<div id="news-fallback">' + ''.join(history.card(page, item) for item in members) + '</div>'
         return content
+    if day == c.today:
+        w.write('index.html', 'today', '今日', body)
+    w.write(f'archive/{day}.html', 'today', render.day_label(day), body, tab='today')
 
-    images = (list(render.chart_images(hot_issue)) if hot_issue else []) + all_images([hero] if hero else [])
-    title = '今日' if is_today else when
-    if is_today:
-        w.write('index.html', 'today', title, body, images)
-    w.write(f'archive/{day}.html', 'today', title, body, images, tab='today')
+
 
 
 def hot_page(w, c):

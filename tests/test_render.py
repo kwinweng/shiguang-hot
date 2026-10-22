@@ -151,7 +151,7 @@ class DesignSystemTests(unittest.TestCase):
         self.assertIsNotNone(soup.select_one('nav.bottom a.active.slot-1'))
         self.assertIn('slot-1', soup.select_one('nav.bottom .tab__pill')['class'])
         # Tab bar: words only.
-        self.assertIsNone(soup.select_one('nav.bottom svg'))
+        self.assertIsNotNone(soup.select_one('nav.bottom svg.phosphor'))
         self.assertEqual(soup.select_one('nav.bottom a.active').get_text(), '今日')
         # Lead block uses a 3D status icon at lead size.
         self.assertIsNotNone(soup.select_one('.g-lead .s-icon--lead'))
@@ -215,7 +215,7 @@ class AssetTests(unittest.TestCase):
                 self.assertTrue((out / 'style.0000000000.css').exists())  # inbox-only builds keep old pages working
                 self.assertEqual((out / names['css']).read_text(), 'body{}')
                 sitebuild.publish_assets(out, full=True)
-            self.assertFalse((out / 'style.0000000000.css').exists())
+            self.assertTrue((out / 'style.0000000000.css').exists())  # unchanged historical HTML still references it
             self.assertRegex(names['js'], r'^app\.[0-9a-f]{10}\.js$')
 
 
