@@ -9,10 +9,16 @@ from shiguang.model import BEIJING
 from shiguang.site import render
 
 SCHEMA = 3
+# 已停用来源，只为旧归档保留
 ALLOWED = frozenset(('CE_Observe FinanceNewsDaily HuaErJie1 NewlearnerChannel TimeHorizonX '
                      'freechinese liangjiahepost pelosi3 scitech_fans titan_pain tnews365 '
                      'xhqcankao zaihuapd world x github hot-daily').split())
 PHOSPHOR = json.loads(Path(__file__).with_name('phosphor.json').read_text())
+RETIRED = {sid: dict(id=sid, channel=sid, name=name, order=order, type='telegram',
+                     visibility='public', icon='all', home={'weight': 1, 'cap': 4})
+           for sid, name, order in [('pelosi3', '敏感经济信息分享', 56),
+                                    ('liangjiahepost', '梁家河邮报', 60),
+                                    ('titan_pain', '某科学的一个频道', 61)]}
 
 
 def icon(name):
@@ -82,6 +88,11 @@ def prepare(c, site, out):
     """Build the new sidecar contract from authorized input, without migrating old HTML or DBs."""
     sources = {sid: s for sid, s in c.sources.items() if c.private or sid in ALLOWED}
     items = [i for i in c.stream if i.source_id in sources]
+    retired = getattr(c, 'retired', [])
+    sources.update({i.source_id: RETIRED[i.source_id] for i in retired})
+    items.extend(retired)
+    from dataclasses import replace
+    site = replace(site, sources=sources)
     for sid, issues in c.issues.items():
         if sid in sources:
             items.extend(i for issue in issues for i in c.issue_cards(sid, issue))

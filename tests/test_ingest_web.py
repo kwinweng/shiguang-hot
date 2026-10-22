@@ -1,6 +1,8 @@
 """RSS / YouTube feed parsing, the hot stream and the timeline markup."""
 import unittest
+import xml.etree.ElementTree as ET
 from datetime import datetime
+from pathlib import Path
 
 from shiguang.enrich.hot import hot_stream
 from shiguang.ingest.web import parse
@@ -28,6 +30,23 @@ YOUTUBE = b'''<?xml version="1.0" encoding="UTF-8"?>
 
 
 class FeedParseTests(unittest.TestCase):
+    def test_steam_rss_one_rdf(self):
+        entries = parse((Path(__file__).parent / 'fixtures/trial-steam-rdf.xml').read_bytes())
+        self.assertEqual([e['url'] for e in entries], [
+            'https://store.steampowered.com/news/286827/',
+            'https://store.steampowered.com/news/285796/'])
+        self.assertEqual(entries[0]['id'], entries[0]['url'])
+        self.assertEqual(entries[0]['title'], 'Team Fortress 2 Update Released')
+        self.assertEqual(entries[0]['ts'].isoformat(), '2026-10-17T03:38:00+08:00')
+        self.assertIn('Fixed some maps', entries[0]['body'])
+        self.assertEqual(entries[1]['body'], 'An update to Team Fortress 2 has been released.')
+        self.assertEqual(entries[1]['ts'].isoformat(), '2026-10-13T02:34:00+08:00')
+        self.assertTrue(all(e['images'] == [] for e in entries))
+
+    def test_rdf_without_rss_channel_is_rejected(self):
+        with self.assertRaises(ET.ParseError):
+            parse(b'<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>')
+
     def test_rss(self):
         entries = parse(RSS)
         self.assertEqual([e['title'] for e in entries], ['Second', 'First & best'])   # newest first; empty and undated dropped

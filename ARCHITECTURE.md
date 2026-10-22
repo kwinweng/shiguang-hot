@@ -108,6 +108,25 @@
 
 ## 本地运行
 
+### 试跑来源 v1
+
+`trial-sources.json` 独立于页面来源配置，登记 13 个试跑源及数据驱动分类。
+完整采集在同一数据库锁内调用 `shiguang.ingest.trial`，复用小时配额、HTTP 校验和失败退避。
+试跑身份为 `trial:<id>`，仅写 `trial_item` 及采集状态表；URL 全表唯一，摘要最多 500 字，
+图片只记远端地址。Telegram 复用现有公开页正文与图片地址提取，不写 msg/entry，不下载图片。
+所有试跑结果均不传给页面或公开期刊发布器。`NO_FETCH=1` 同样跳过试跑且不迁移数据库。
+
+已停用的三个频道只从数据库读出旧消息，经独立归档路径生成旧日期 HTML 与 sidecar；
+元数据保存在 `history.RETIRED`，不加入现行来源、热点、标签或按渠道入口。
+
+`python tools/trial_report.py --days 7` 只读数据库，按首次抓取的北京时间日期统计新增，
+终端与 `reports/trial/YYYY-MM-DD.md` 输出一致。可用 `--db /tmp/copy.db --output /tmp/trial-reports`
+检查临时库。报告包含按源、栏目、分类的小计和每源最近完整成功时间（包括零新增成功）。
+`reports/` 已忽略，不提交、不发布。
+
+离线样例放在 `tests/fixtures/trial-*`，为人工构造的代表性 HTML/XML，不代表真实站点快照。
+本轮不真实抓取。页面改版适配需另以合法公开样本核对。
+
 - `NO_FETCH=1 python3 pipeline.py`：用现有 `tg.db` 构建公开版到 `site/`，不抓取。
 - `SITE_MODE=private NO_FETCH=1 python3 pipeline.py`：内网版。
 - `python3 tools/screenshot.py index.html`：手机整页截图到 `shots/`；`--desktop`、`--dark`、`--build` 见 `--help`。

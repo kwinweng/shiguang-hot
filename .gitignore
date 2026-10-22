@@ -1,4 +1,5 @@
 /site/
+/reports/
 /site-private/
 /site-private.tmp-*/
 *.build.lock

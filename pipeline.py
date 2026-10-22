@@ -9,7 +9,8 @@ from datetime import datetime
 from pathlib import Path
 from shiguang.config import config, private_mode
 from shiguang.model import BEIJING
-from shiguang.ingest import telegram, web, scheduler
+from shiguang.ingest import telegram, web, scheduler, trial
+from shiguang.site.history import RETIRED
 from shiguang.enrich.clean import clean, headline
 from shiguang.enrich.topics import classify
 from shiguang.enrich.hot import hot_stream
@@ -34,12 +35,14 @@ def collect(cfg, now):
         db, images_migrated = telegram.open_db(fetch and acquired)
         try:
             if fetch and acquired:
+                trial_sources = trial.load()['sources']
                 scheduler.run(db, visible, images_migrated=images_migrated)
+                trial.run(db, trial_sources)
                 telegram.expire_media(db, now)
                 db.commit()
             rows = []
             for ch, i, ts, t, raw, images in telegram.messages(db):
-                if ch not in channels: continue
+                if ch not in channels and ch not in RETIRED: continue
                 t = clean(t)
                 if not t: continue
                 title, body = headline(t, raw)
@@ -59,7 +62,8 @@ def main(now=None):
     now = now or datetime.now(BEIJING)
     cfg = config()
     rows, entries = collect(cfg, now)
-    build(rows, hot_stream(rows, now, cfg['hot']['keywords']), now, entries)
+    active = [row for row in rows if row['ch'] not in RETIRED]
+    build(rows, hot_stream(active, now, cfg['hot']['keywords']), now, entries)
 
 
 if __name__ == '__main__':

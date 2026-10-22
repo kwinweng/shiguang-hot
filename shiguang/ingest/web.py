@@ -12,7 +12,9 @@ from bs4 import BeautifulSoup
 from shiguang.model import BEIJING
 from shiguang.ingest import telegram, http
 
-NS = {'atom': 'http://www.w3.org/2005/Atom', 'media': 'http://search.yahoo.com/mrss/'}
+NS = {'atom': 'http://www.w3.org/2005/Atom', 'media': 'http://search.yahoo.com/mrss/',
+      'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rss': 'http://purl.org/rss/1.0/',
+      'dc': 'http://purl.org/dc/elements/1.1/', 'content': 'http://purl.org/rss/1.0/modules/content/'}
 KEEP = 50   # newest entries taken from one fetch
 
 
@@ -44,7 +46,10 @@ def _first_img(markup):
 def parse(xml):
     """Entries of an RSS or Atom document: dict(id, ts, title, body, url, images), newest first."""
     root = ET.fromstring(xml)
-    if root.tag not in ('rss', '{%s}feed' % NS['atom']) or (root.tag == 'rss' and root.find('channel') is None):
+    rdf = root.tag == '{%s}RDF' % NS['rdf']
+    if (root.tag not in ('rss', '{%s}feed' % NS['atom'], '{%s}RDF' % NS['rdf'])
+            or (root.tag == 'rss' and root.find('channel') is None)
+            or (rdf and root.find('rss:channel', NS) is None)):
         raise ET.ParseError('not RSS/Atom')
     entries = []
     if root.tag == '{%s}feed' % NS['atom']:
@@ -59,6 +64,15 @@ def parse(xml):
             entries.append(dict(id=e.findtext('atom:id', '', NS) or link, url=link,
                                 ts=_when(e.findtext('atom:published', '', NS) or e.findtext('atom:updated', '', NS)),
                                 title=_text(e.findtext('atom:title', '', NS)), body=_text(summary),
+                                images=[image] if image else []))
+    elif rdf:
+        for e in root.findall('rss:item', NS):
+            link = e.findtext('rss:link', '', NS).strip()
+            description = e.findtext('rss:description', '', NS) or e.findtext('content:encoded', '', NS)
+            image = _first_img(description)
+            entries.append(dict(id=link or e.get('{%s}about' % NS['rdf'], ''), url=link,
+                                ts=_when(e.findtext('dc:date', '', NS)),
+                                title=_text(e.findtext('rss:title', '', NS)), body=_text(description),
                                 images=[image] if image else []))
     else:
         for e in root.iter('item'):
