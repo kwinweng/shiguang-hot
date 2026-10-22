@@ -32,8 +32,9 @@
 - 5 项：今日 house / 资讯 book-open-text / 好玩 compass / 好买 shopping-bag / 收藏 bookmark-simple。单项 71×58，图标 24 + 标签 11/14/400。选中：底 `--c-bg-press`，图标 fill + `--c-brand`，文字保持 `--c-text`。
 - **不挡正文（硬性）**：
   1. 每个滚动容器 `padding-bottom: calc(var(--s-bar-h) + 16px + env(safe-area-inset-bottom) + 16px)`（底栏高 + 底栏距底 + 安全区 + 16）。不得被后续规则覆盖（PR #24 的 `--tab-clearance` 被 `padding-bottom: var(--space-8)` 覆盖的 bug 要删掉）。
-  2. 设计 10/23 补充：从底栏顶边到屏幕底铺一层实底（`--c-bg`），其上一段短渐隐（透明→`--c-bg`），亮暗都有。具体渐隐高度和颜色以 DESIGN.md 更新后的数值为准；DESIGN.md 未更新前实现不得开工这一项（见 §9 Q1）。
-  3. 验收：滚到底时最后一条（含标题、来源行、书签）完全在底栏上沿之上 ≥16px；暗色下底栏后面看不到卡片文字。
+  2. 托底（设计 10/23，已定）：实底用页面底色 `--c-bg`，从底栏顶边上方 8px 开始一直铺到屏幕底（栏区 + 安全区），顶边带一小段短渐隐（透明→`--c-bg`）；内容不得从栏两侧或栏下透出。底栏本身仍是浮动玻璃胶囊（`--c-glass` + `--sh-glass`，`--r-bar` 35px）。亮色、暗色都适用。
+  3. 数值（以 DESIGN.md 为准，source of truth：设计原型仓 `/workspace/proto-bot/rebang-visual/deploy/DESIGN.md` §组件「悬浮底栏」；本仓暂无 DESIGN.md）：内容底部留白 = 栏高 70 + 栏离安全区 16 + `env(safe-area-inset-bottom)` + 16，即 `calc(70px + 16px + env(safe-area-inset-bottom) + 16px)`；无安全区 102px，iPhone 安全区 34 时 136px；402×874 原型框 70+0+34+16 = 120px。所有带底栏的滚动页统一，亮暗相同。如与本 Spec 冲突，以 DESIGN.md 为准。
+  4. 验收：滚到底时最后一条（含标题、来源行、书签）完全在底栏上沿之上 ≥16px；暗色下底栏后面看不到卡片文字。
 ### 2.3 通用组件
 按 DESIGN.md §4：按钮 40/12/15px；分类文字 Tab（15px，选中 text + 2px brand 下划线，底线 1px line，高 40，间距 20）；图标筛选 44×44 圆角 12，图标 22，选中 fill + brand + 7px 点；搜索框高 44 bg-subtle；收藏按钮 32×32 bookmark-simple（未收藏 regular text-3，已收藏 fill brand）；Toast 底部居中 2.5s 不叠加；状态行（danger/warning + 原因 + 文字操作）。禁用：胶囊按钮、渐变卡、图上压字遮罩、左彩条、emoji。
 ### 2.4 列表与卡片
@@ -98,7 +99,7 @@ Playwright Chromium，手机 402×874 DPR 3，桌面 1440×900。文件名 `qa/v
 - #24 的 CSS 覆盖链复杂，先删旧样式再加新样式，避免叠加。
 
 ## 9. 开放问题（附建议）
-- Q1 底栏下方实底 + 渐隐的具体值：等设计更新 DESIGN.md。建议渐隐 24px、`--c-bg` 透明→实色，作为默认。
+- ~~Q1 底栏下方实底 + 渐隐的具体值~~ 已解决（设计 10/23）：按 DESIGN.md，见 §2.2 第 2、3 条；原「24px」默认作废。
 - Q2 分类文字选中字重 400 还是 600（DESIGN.md 标待定）。建议 400 + 红下划线，按视觉系统。
 - Q3 资讯列表图暗色压暗滤镜是否保留。建议去掉，按视觉系统原图。
 - Q4 好玩/好买分组名和「北京」组是否公开显示。建议本轮按设计示例分组做，「北京」先保留，产品后续再定。
