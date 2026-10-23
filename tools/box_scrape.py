@@ -93,7 +93,9 @@ def execute(args):
     subprocess.run(['git', 'fetch', 'origin', 'main'], cwd=root, check=True)
     local_commits = git('rev-list', 'origin/main..HEAD')
     if local_commits:
-        paths = set(git('log', '--format=', '--name-only', 'origin/main..HEAD').splitlines()) - {''}
+        if git('rev-list', '--merges', 'origin/main..HEAD'):
+            raise RuntimeError('unpushed history contains a merge; refusing reset; preserve and resolve manually')
+        paths = set(git('diff', '--name-only', '-z', 'origin/main...HEAD').split('\0')) - {''}
         if paths != {'tg.db'}:
             raise RuntimeError('unpushed commits change files outside tg.db; refusing reset; preserve and resolve manually')
         sha = git('rev-parse', 'HEAD')

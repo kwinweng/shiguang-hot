@@ -228,6 +228,79 @@ exec {shlex.quote(real_git)} "$@"
         (self.repo / 'tg.db').write_bytes(b'collected data')
         self.assertNotEqual(self.persist().returncode, 0)
         self.assertEqual(self.run_git(self.remote, 'show', 'main:tg.db'), 'original')
+        self.assert_backup()
+
+    def snapshot(self):
+        return (self.run_git(self.repo, 'rev-parse', 'HEAD'),
+                (self.repo / '.git/index').read_bytes(),
+                {str(path.relative_to(self.repo)): path.read_bytes()
+                 for path in self.repo.rglob('*')
+                 if path.is_file() and '.git' not in path.relative_to(self.repo).parts})
+
+    def test_dirty_checkout_refused_at_sync_and_persist(self):
+        for stage in ('sync', 'persist'):
+            for dirty in ('unstaged', 'untracked'):
+                for db_changed in (False, True):
+                    with self.subTest(stage=stage, dirty=dirty, db_changed=db_changed):
+                        path = self.repo / ('public-feeds/sample.json' if dirty == 'unstaged' else 'untracked')
+                        path.write_bytes(b'keep this file')
+                        if db_changed:
+                            (self.repo / 'tg.db').write_bytes(b'collected data')
+                        before = self.snapshot()
+                        if stage == 'sync':
+                            with patch.object(box_scrape, 'run_pipeline') as pipeline:
+                                with self.assertRaisesRegex(RuntimeError, 'clean worktree'):
+                                    box_scrape.execute(SimpleNamespace(checkout=self.repo, test_dir=None))
+                            pipeline.assert_not_called()
+                        else:
+                            result = self.persist()
+                            self.assertNotEqual(result.returncode, 0, result.stdout)
+                            self.assertIn('changes outside tg.db', result.stderr)
+                        self.assertEqual(self.snapshot(), before)
+                        if dirty == 'untracked':
+                            path.unlink()
+                        else:
+                            path.write_text('{}')
+                        (self.repo / 'tg.db').write_bytes(b'original')
+
+    def test_initial_sync_refuses_merge_even_when_only_db_differs(self):
+        self.check_local_merge_refused(change_code=False)
+
+    def test_initial_sync_refuses_merge_with_code_change(self):
+        self.check_local_merge_refused(change_code=True)
+
+    def check_local_merge_refused(self, change_code):
+        self.run_git(self.repo, 'checkout', '-b', 'side')
+        (self.repo / 'tg.db').write_bytes(b'side data')
+        self.run_git(self.repo, 'commit', '-am', 'side database')
+        self.run_git(self.repo, 'checkout', 'main')
+        self.run_git(self.repo, 'merge', '--no-ff', '--no-commit', 'side')
+        if change_code:
+            (self.repo / 'pipeline.py').write_text('# merge-only code change\n')
+            self.run_git(self.repo, 'add', 'pipeline.py')
+        self.run_git(self.repo, 'commit', '-m', 'local merge')
+        before = self.snapshot()
+        with patch.object(box_scrape, 'run_pipeline') as pipeline:
+            with self.assertRaisesRegex(RuntimeError, 'refusing reset'):
+                box_scrape.execute(SimpleNamespace(checkout=self.repo, test_dir=None))
+        pipeline.assert_not_called()
+        self.assertEqual(self.snapshot(), before)
+        self.assertEqual(self.run_git(self.repo, 'branch', '--list', 'backup/*'), '')
+
+    def test_initial_sync_backup_collision_does_not_overwrite(self):
+        original = self.run_git(self.repo, 'rev-parse', 'HEAD')
+        (self.repo / 'tg.db').write_bytes(b'leftover')
+        self.run_git(self.repo, 'commit', '-am', 'leftover data')
+        head = self.run_git(self.repo, 'rev-parse', 'HEAD')
+        backup = f'backup/{head}'
+        self.run_git(self.repo, 'branch', backup, original)
+        before = self.snapshot()
+        with patch.object(box_scrape, 'run_pipeline') as pipeline:
+            with self.assertRaisesRegex(RuntimeError, 'already exists at another commit'):
+                box_scrape.execute(SimpleNamespace(checkout=self.repo, test_dir=None))
+        pipeline.assert_not_called()
+        self.assertEqual(self.snapshot(), before)
+        self.assertEqual(self.run_git(self.repo, 'rev-parse', backup), original)
 
     def test_build_info_identifies_real_inputs_before_database_commit(self):
         source = self.run_git(self.repo, 'rev-parse', 'HEAD')

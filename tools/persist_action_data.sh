@@ -2,10 +2,6 @@
 # Persist only the collected database; a rejected push must stop publication.
 set -eu
 
-if git diff HEAD --quiet -- tg.db; then
-    printf '%s\n' 'No database changes to persist.'
-    exit 0
-fi
 if [ "$(git branch --show-current)" != main ]; then
     echo 'Database persistence requires main.' >&2
     exit 1
@@ -17,6 +13,10 @@ check_clean() {
     fi
 }
 check_clean
+if git diff HEAD --quiet -- tg.db; then
+    printf '%s\n' 'No database changes to persist.'
+    exit 0
+fi
 base=$(git rev-parse HEAD)
 backup=$(mktemp -d "$(git rev-parse --absolute-git-dir)/persist-db.XXXXXX")
 cp -- tg.db "$backup/tg.db"
