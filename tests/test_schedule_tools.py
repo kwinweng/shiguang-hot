@@ -26,6 +26,8 @@ class DatabasePersistenceTests(unittest.TestCase):
         self.run_git(self.base, 'init', '--bare', '--initial-branch=main', str(self.remote))
         self.repo = self.base / 'checkout'
         self.run_git(self.base, 'clone', str(self.remote), str(self.repo))
+        # Local fixtures must use their own hooks, independent of host policy hooks.
+        self.run_git(self.repo, 'config', 'core.hooksPath', '.git/hooks')
         self.run_git(self.repo, 'config', 'user.name', 'test')
         self.run_git(self.repo, 'config', 'user.email', 'test@local.invalid')
         (self.repo / 'tg.db').write_bytes(b'original')
@@ -60,6 +62,7 @@ class DatabasePersistenceTests(unittest.TestCase):
     def test_remote_advance_is_reported_without_force_pushing(self):
         other = self.base / 'other'
         self.run_git(self.base, 'clone', str(self.remote), str(other))
+        self.run_git(other, 'config', 'core.hooksPath', '.git/hooks')
         self.run_git(other, 'config', 'user.name', 'test')
         self.run_git(other, 'config', 'user.email', 'test@local.invalid')
         (other / 'public-feeds/sample.json').write_text('{"new":true}')

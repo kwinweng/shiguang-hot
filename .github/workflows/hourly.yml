@@ -5,8 +5,7 @@ on:
     branches: [main]
     paths:
       - 'public-feeds/**'
-  schedule:
-    - cron: '7,37 * * * *'
+      - 'tg.db'
   workflow_dispatch:
     inputs:
       dispatch_id:
@@ -17,7 +16,7 @@ on:
 concurrency:
   group: shiguang-public
   cancel-in-progress: false
-permissions: {contents: write, pages: write, id-token: write}
+permissions: {contents: read, pages: write, id-token: write}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -44,13 +43,10 @@ jobs:
           SITE_MODE: public
           MAIL_DIGEST: '0'
           TZ: Asia/Shanghai
-          NO_FETCH: ${{ github.event_name == 'push' && '1' || '0' }}
+          NO_FETCH: '1'
         run: |
           python pipeline.py
           python tools/write_build_info.py
-      - name: Persist collected data
-        if: github.event_name != 'push'
-        run: sh tools/persist_action_data.sh
       - uses: actions/upload-pages-artifact@v3
         with: {path: site}
       - uses: actions/deploy-pages@v4

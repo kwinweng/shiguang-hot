@@ -83,11 +83,11 @@
 
 ## 两种模式与数据流
 
-公开版（GitHub Actions 每 30 分钟，`.github/workflows/hourly.yml`；定时任务常晚几分钟）：
+公开版（Box cron 每小时 :07/:37 采集，GitHub Actions 只读建站；切换见 `docs/BOX-SCRAPER-CUTOVER.md`）：
 
-1. 抓取配置中 public 的 TG 频道和 RSS/YouTube 来源，写入 `tg.db`，配图进 `media/`（Actions cache 保存）。
+1. Box 抓取配置中 public 的 TG 频道和 RSS/YouTube 来源，写入 `tg.db`，配图进本机 `media/`；仅提交数据库并推送 main。
 2. 期刊只从仓库的 `public-feeds/<id>/<date>/feed.json` 读取。
-3. 建站后检查：不得出现 private 来源的目录、名称或正文，以及「邮件」字样；通过后部署 Pages。
+3. `tg.db`、`public-feeds/**` 推送或手动触发 Actions，以 `NO_FETCH=1` 建站；检查不得出现 private 来源的目录、名称或正文，以及「邮件」字样；通过后部署 Pages。Actions 不再提交数据库；媒体仍依赖已有 Actions cache。
 
 内网版（`SITE_MODE=private`，兼容 `MAIL_DIGEST=1`），在本机 `/workspace/tg-local` 的脚本里运行：
 
