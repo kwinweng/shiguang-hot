@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from pipeline import sample_rows
@@ -12,6 +13,7 @@ from shiguang.config import config
 from shiguang.model import BEIJING, Item
 from shiguang.site.news_data import CATEGORIES, FlashProvider, MockProvider, category, daily_documents, messages, source_stats
 from shiguang.site.build import build
+from shiguang.site.news import publish
 
 
 class NewsModuleTests(unittest.TestCase):
@@ -87,6 +89,25 @@ class NewsModuleTests(unittest.TestCase):
         event = MockProvider().summarize('2026-10-22',rows)['events'][0]
         self.assertEqual(event['source_count'],2)
         self.assertEqual(len(event['original_links']),2)
+
+    def test_blocks_only_daily_reaches_today_and_history(self):
+        source = dict(id='daily', name='日报', visibility='public', type='inbox', order=0)
+        issues = [dict(date=day, blocks=[dict(type='oneliner', items=['日报 ' + day])])
+                  for day in ('2026-10-22', '2026-10-23')]
+        content = SimpleNamespace(sources={'daily': source}, stream=[], issues={'daily': issues},
+                                  now=self.now, today='2026-10-23', tagged=lambda items, source: items)
+        with tempfile.TemporaryDirectory() as folder, patch('shiguang.site.news.ROOT', Path(folder)), \
+                patch.dict(os.environ, {'SAMPLE_DATA': '0'}), \
+                patch('socket.socket', side_effect=AssertionError('network forbidden')):
+            out = Path(folder)
+            publish(content, out)
+            stats = json.loads((out/'data/sources.json').read_text())['sources'][0]
+            self.assertEqual(stats['today_count'], 1)
+            self.assertEqual({r['title'] for r in stats['messages']}, {'日报 2026-10-22', '日报 2026-10-23'})
+            doc = json.loads((out/'history/2026-10-22.json').read_text())
+            self.assertEqual(doc['stats']['sources'], {'daily': 1})
+            self.assertEqual(doc['messages'][0]['title'], '日报 2026-10-22')
+            self.assertEqual(doc['summary'], '日报 2026-10-22')
 
     def test_offline_sample_build_and_immutable_snapshot(self):
         cfg = config()

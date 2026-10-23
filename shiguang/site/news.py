@@ -6,6 +6,7 @@ import shutil
 from pathlib import Path
 
 from shiguang.config import ROOT, WEB
+from shiguang.model import home_candidates
 from shiguang.site.news_data import MockProvider, daily_documents, messages, source_stats, write_json
 
 
@@ -14,7 +15,7 @@ def publish(content, out):
     items = list(content.stream)
     for sid, issues in content.issues.items():
         for issue in issues:
-            items.extend(content.issue_cards(sid, issue))
+            items.extend(content.tagged(home_candidates(issue, sources[sid]), sources[sid]))
     rows = messages(items, sources)
     live = [r for r in rows if r['type'] == 'telegram']
     sample = os.getenv('SAMPLE_DATA') == '1' or bool(live) and all(r['title'].startswith('[示例]') for r in live)

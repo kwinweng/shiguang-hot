@@ -95,7 +95,8 @@ if (typeof document !== 'undefined') {
         const nav = (offset, label, glyph) => index.days[position+offset] ? `<a aria-label="${label}" href="#day/${index.days[position+offset]}">${icon(glyph)}</a>` : `<span class="dis" aria-label="${label}不可用">${icon(glyph)}</span>`;
         const label = new Date(`${day}T12:00:00+08:00`).toLocaleDateString('zh-CN', {timeZone:'Asia/Shanghai', month:'long', day:'numeric', weekday:'short'});
         html = back(`#history/${day.slice(0,7)}`, '日历') + heading(label, nav(-1,'前一天','caret-left') + nav(1,'后一天','caret-right'), true);
-        html += `<p class="sub">${doc.stats.total} 条消息 · ${Object.keys(doc.stats.sources).length} 个来源 · MOCK 样例总结</p>` + controls(cat);
+        html += `<p class="sub">${doc.stats.total} 条消息 · ${Object.keys(doc.stats.sources).length} 个来源 · MOCK 样例总结</p>`;
+        html += `<section class="day-summary"><h2> ${doc.provider === 'mock' ? 'AI 摘要（样例）' : 'AI 摘要'}</h2><p>${e(doc.summary)}</p></section>` + controls(cat);
         const events = filter(doc.events,cat);
         const summaries = (members, title) => members.length ? `<h2 class="sh">${title}</h2>` + members.map(event => {
           const i = doc.events.indexOf(event);
@@ -103,6 +104,11 @@ if (typeof document !== 'undefined') {
         }).join('') : '';
         html += summaries(events.filter(event=>event.source_count > 1), '热点') + summaries(events.filter(event=>event.source_count <= 1), '大事件');
         if (!events.length) html += '<p class="empty">该分类暂无事件。</p>';
+        html += '<h2 class="sh">当天来源</h2>' + Object.entries(doc.stats.sources).map(([sid, count]) => {
+          const name = doc.messages.find(r=>r.source===sid)?.source_name || sid;
+          return `<a class="srow" href="#source/${encodeURIComponent(sid)}?day=${day}"><b>${e(name)}</b><span>${e(count)} 条</span>${icon('caret-right')}</a>`;
+        }).join('');
+        html += `<a class="btn" href="#feed?day=${day}&all=1">看当天全部原始消息</a>`;
         html += '<p class="foot">示例摘录按相同标题合并，可能不准确，请以原消息为准。</p>';
       } else if (parts[0] === 'message' || parts[0] === 'event') {
         let r, returnHash = /^#(feed|source|day)(\/|\?|$)/.test(query.get('from') || '') ? query.get('from') : '#feed';
@@ -124,13 +130,13 @@ if (typeof document !== 'undefined') {
           }
         }
         if (!r) throw new Error('消息不存在');
-        html = back(returnHash,'返回列表') + `<article class="dt"><small>${e(r.source_name)} · ${e(r.time.slice(0,16).replace('T',' '))}</small><h1>${e(r.title)}</h1>${r.image ? `<img src="${e(r.image)}" alt="">` : ''}<h2>AI 摘要</h2><p>${e(r.summary)}</p>${original(r)}<p class="foot">${index.sample ? '示例摘录 · ' : ''}摘要可能不准确，请以原消息为准。</p></article>`;
+        html = back(returnHash,'返回列表') + `<article class="dt"><small>${e(r.source_name)} · ${e(r.time.slice(0,16).replace('T',' '))}</small><h1>${e(r.title)}</h1>${r.image ? `<img src="${e(r.image)}" alt="">` : ''}<h2>AI 摘要（样例）</h2><p>${e(r.summary)}</p>${original(r)}<p class="foot">${index.sample ? '示例摘录 · ' : ''}摘要可能不准确，请以原消息为准。</p></article>`;
       } else {
         let rows = live.messages;
         const day = query.get('day');
         if (day) {
           rows = rows.filter(r=>r.day===day);
-          if (index.days.includes(day)) rows = (await load(`history/${day}.json`)).messages.filter(r=>r.type==='telegram');
+          if (index.days.includes(day)) rows = (await load(`history/${day}.json`)).messages.filter(r=>query.get('all') === '1' || r.type==='telegram');
         }
         html = heading('资讯', `<a href="#history" aria-label="历史回顾">${icon('calendar-dots')}</a><a href="#sources" aria-label="来源">${icon('broadcast')}</a>`);
         html += `<p class="sub">${live.sample ? '示例数据 · ' : ''}${e(live.updated.slice(0,16).replace('T',' '))} 更新</p>` + controls(cat) + list(filter(rows,cat));

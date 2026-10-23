@@ -62,7 +62,7 @@ class NewsModulesBrowserTests(unittest.TestCase):
         self.page.wait_for_function("document.querySelectorAll('.row').length === 16")
         self.page.locator('.row').first.click()
         self.page.wait_for_selector('.dt h2')
-        self.assertEqual(self.page.locator('.dt h2').inner_text(),'AI 摘要')
+        self.assertEqual(self.page.locator('.dt h2').inner_text(),'AI 摘要（样例）')
         self.assertIn('可能不准确', self.page.locator('.dt .foot').inner_text())
         self.assertEqual(self.page.locator('.dt a.btn').inner_text().strip(), '看原文')
         self.assertRegex(self.page.locator('.dt a.btn').get_attribute('href'),r'^https://t.me/.+/\d+$')
@@ -96,7 +96,7 @@ class NewsModulesBrowserTests(unittest.TestCase):
         self.page.wait_for_function("document.querySelectorAll('.sum').length === 1")
         self.page.locator('.event-title').click()
         self.page.wait_for_selector('.dt h2')
-        self.assertEqual(self.page.locator('.dt h2').inner_text(),'AI 摘要')
+        self.assertEqual(self.page.locator('.dt h2').inner_text(),'AI 摘要（样例）')
         self.assertTrue(self.page.locator('.dt .btn').is_visible())
         self.assertEqual(self.errors,[])
 
@@ -111,6 +111,33 @@ class NewsModulesBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.locator('#news-calendar, #news-history, .cal, .flt').count(),0)
         self.assertNotIn('看往日', self.page.locator('#news').inner_text())
         self.assertEqual(self.errors,[])
+
+    def test_review_summary_source_counts_and_all_raw_messages(self):
+        day = '2026-10-22'
+        doc = json.loads((self.out/f'history/{day}.json').read_text())
+        journal = dict(doc['messages'][0], id='journal-only', source='daily', source_name='日报', type='inbox')
+        doc['messages'].append(journal)
+        doc['stats']['sources']['daily'] = 1
+        doc['stats']['total'] += 1
+        self.page.route(f'**/history/{day}.json', lambda route: route.fulfill(json=doc))
+        data = json.loads((self.out/'data/sources.json').read_text())
+        data['sources'].append(dict(id='daily', name='日报', type='inbox', messages=[]))
+        self.page.route('**/data/sources.json', lambda route: route.fulfill(json=data))
+        self.open('day/' + day)
+        self.assertEqual(self.page.locator('.day-summary h2').inner_text().strip(), 'AI 摘要（样例）')
+        self.assertEqual(self.page.locator('.day-summary p').inner_text(), doc['summary'])
+        for sid, count in doc['stats']['sources'].items():
+            link = self.page.locator(f'.srow[href="#source/{sid}?day={day}"]')
+            self.assertIn(f'{count} 条', link.inner_text())
+        self.page.locator(f'.srow[href="#source/daily?day={day}"]').click()
+        self.page.wait_for_selector('.row')
+        self.assertEqual(self.page.locator('.row').count(), 1)
+        self.open('day/' + day)
+        self.page.get_by_role('link', name='看当天全部原始消息', exact=True).click()
+        self.page.wait_for_selector('.row')
+        self.assertEqual(self.page.locator('.row').count(), len(doc['messages']))
+        self.assertIn('日报', self.page.locator('#news').inner_text())
+        self.assertEqual(self.errors, [])
 
     def test_detail_image_order_note_and_original_post(self):
         data = json.loads((self.out/'data/sources.json').read_text())
