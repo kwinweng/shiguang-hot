@@ -46,8 +46,13 @@ flock 覆盖同步、采集、提交和推送；同 checkout 的第二轮直接�
 
    test-dir 必须不存在且位于 checkout 外。它复制允许的公开代码、配置、public-feeds 和数据库快照；tg.db、media、site 全在该目录。
    不复制 .env、Git 元数据或私有 inbox，不执行任何 Git 命令。已有小时配额也会复制，可能零请求；不要清除生产配额。
-   limit 同时限制前 N 个公开采集源和总 N 次 http.request 调用（包含分页、图片），禁用 trial。
-   每次调用底层 curl 仍可跟随最多 5 次重定向；此上限计逻辑请求，不计 HTTP 重定向跳数。
+   limit 按 source id 排序、按采集端点去重后选择前 N 个公开 Telegram/feed 源；每源只读首页，禁用 trial。
+   不翻页、不补 gap、不下载图片（含历史图片重试）；首页消息/条目照常写入隔离 tg.db。
+   因此总计最多 N 次逻辑 HTTP 尝试，每个 fetch_status.requests 计该源实际调用 http.request 的次数，失败尝试也计数。
+   配额/退避跳过和批内缓存命中不计 requests；底层 curl 最多跟随 5 次重定向，重定向跳数不单独计数。
+   limit 不再通过抛出 request_limit 截断采集；未带 limit 的隔离运行仍执行完整采集。
+   检查日志中首源 requests=1、new>0，并在 test-dir/tg.db 的 msg（Telegram）或 entry（feed）核对新记录。
+   首页全为已有或超过保留窗口的消息时 new=0 是正常结果，不能据此认定写入失败。
    --limit 必须搭配 --test-dir，避免把部分采集发布到生产。--dry-run 可搭配其他选项，但只打印计划。
 5. 合并本 PR 的工作流变更，使旧 Actions schedule 停止；等待原采集运行结束，避免两个写库方重叠。
    记录这一短暂采集空窗，随后运行 Box 正常模式一次（不带 test-dir、limit、dry-run）。

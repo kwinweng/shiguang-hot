@@ -3,6 +3,7 @@ import contextlib
 import fcntl
 import io
 import os
+import json
 from pathlib import Path
 import sqlite3
 import subprocess
@@ -100,27 +101,71 @@ class BoxScrapeTests(unittest.TestCase):
                 self.assertEqual(box_scrape.main(['--checkout', str(self.checkout)]), 0)
             execute.assert_not_called()
 
-    def test_limit_caps_sources_and_requests_and_disables_trial_offline(self):
-        package = self.checkout / 'shiguang/ingest'
-        package.mkdir(parents=True)
-        (package / 'http.py').write_text(
-            "class FetchFailure(Exception): pass\n"
-            "def request(*args, **kwargs):\n"
-            "    with open('requests.txt', 'a') as out: out.write('request\\n')\n")
-        (package / 'scheduler.py').write_text(
-            "from . import http\n"
-            "def run(db, sources, **kwargs):\n"
-            "    assert len(sources) == 2\n"
-            "    for i in range(8):\n"
-            "        try: http.request('offline-fixture')\n"
-            "        except http.FetchFailure: pass\n")
-        (package / 'trial.py').write_text("def run(*args, **kwargs): raise AssertionError('trial ran')\n")
-        (self.checkout / 'pipeline.py').write_text(
-            "from shiguang.ingest import scheduler, trial\n"
-            "scheduler.run(None, [{'type':'inbox'}, {'type':'telegram'}, {'type':'feed'}, {'type':'telegram'}])\n"
-            "trial.run(None, [])\n")
-        box_scrape.run_pipeline(self.checkout, 2)
-        self.assertEqual((self.checkout / 'requests.txt').read_text().splitlines(), ['request', 'request'])
+    def test_limit_saves_first_page_and_counts_only_http_attempts_offline(self):
+        # Exercise the real adapters and scheduler inside the runner's fresh interpreter.
+        import shutil
+        shutil.copytree(Path(box_scrape.__file__).resolve().parents[1] / 'shiguang',
+                        self.checkout / 'shiguang')
+        (self.checkout / 'pipeline.py').write_text('''
+import subprocess
+from datetime import datetime, timezone
+from shiguang.ingest import http, scheduler, telegram, trial
+subprocess.run = lambda *a, **k: (_ for _ in ()).throw(AssertionError('network forbidden'))
+now = datetime.now(timezone.utc)
+def request(url, headers=None):
+    with open('requests.txt', 'a') as out: out.write(url + '\\n')
+    if url == 'https://t.me/s/first':
+        body = ('<div class="tgme_widget_message" data-post="first/101">'
+                '<time datetime="' + now.isoformat() + '"></time>'
+                '<div class="tgme_widget_message_text">Fresh message</div>'
+                '<a class="tgme_widget_message_photo_wrap" '
+                'style="background-image:url(https://example.com/image.jpg)"></a></div>')
+        return http.Response(200, {}, body.encode())
+    if url == 'https://example.com/feed':
+        body = ('<rss><channel><item><guid>fresh</guid><title>Fresh entry</title>'
+                '<pubDate>' + now.isoformat() + '</pubDate><description>'
+                '&lt;img src="https://example.com/feed.jpg"/&gt;</description></item></channel></rss>')
+        return http.Response(200, {}, body.encode())
+    raise AssertionError('unexpected request: ' + url)
+http.request = request
+db, migrated = telegram.open_db(True)
+db.execute('insert into gap values(?,?,?,?)', ('first', 90, None, now.isoformat()))
+db.commit()
+sources = [dict(id='z-third', type='telegram', channel='third', visibility='public'),
+           dict(id='a-first', type='telegram', channel='first', visibility='public'),
+           dict(id='b-alias', type='telegram', channel='first', visibility='public'),
+           dict(id='c-feed', type='feed', url='https://example.com/feed', visibility='public'),
+           dict(id='0-private', type='telegram', channel='private', visibility='private')]
+scheduler.run(db, sources, images_migrated=migrated)
+trial.run(db, [])
+assert db.execute('select count(*) from gap').fetchone()[0] == 1
+db.close()
+''')
+        target = self.base / 'trial'
+        # Capture child diagnostics without bypassing run_pipeline's subprocess setup.
+        real_run = subprocess.run
+        def captured_run(*args, **kwargs):
+            kwargs['check'] = False
+            result = real_run(*args, **kwargs, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            statuses.extend(json.loads(line.removeprefix('fetch_status '))
+                            for line in result.stderr.splitlines() if line.startswith('fetch_status '))
+            return result
+        statuses = []
+        with patch.object(box_scrape.subprocess, 'run', side_effect=captured_run):
+            box_scrape.execute(self.args('--test-dir', str(target), '--limit', '2'))
+        self.assertEqual((target / 'requests.txt').read_text().splitlines(),
+                         ['https://t.me/s/first', 'https://example.com/feed'])
+        self.assertEqual([(s['source'], s['requests'], s['result'], s['new'], s['error_code'])
+                          for s in statuses], [('a-first', 1, 'ok', 1, None), ('c-feed', 1, 'ok', 1, None)])
+        with sqlite3.connect(target / 'tg.db') as db:
+            self.assertEqual(db.execute('select ch,id,text,images from msg').fetchall(),
+                             [('first', 101, 'Fresh message', '[]')])
+            self.assertEqual(db.execute('select source,id,images from entry').fetchall(),
+                             [('c-feed', 'fresh', '[]')])
+        self.assertFalse(list((target / 'media').rglob('*.webp')))
+        with sqlite3.connect(self.checkout / 'tg.db') as db:
+            self.assertIsNone(db.execute("select name from sqlite_master where name='msg'").fetchone())
 
 
 if __name__ == '__main__':

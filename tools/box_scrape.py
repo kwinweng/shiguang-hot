@@ -24,7 +24,9 @@ def arguments(argv=None):
     parser.add_argument('--log-dir', type=Path, default=None)
     parser.add_argument('--dry-run', action='store_true', help='validate and print plan; no scrape or git')
     parser.add_argument('--test-dir', type=Path, help='new directory for isolated database, media and site; never git')
-    parser.add_argument('--limit', type=positive, help='cap sources and HTTP calls; requires --test-dir')
+    parser.add_argument('--limit', type=positive,
+                        help='sample up to N public sources, first page only, no media; '
+                             'at most N logical HTTP attempts; requires --test-dir')
     args = parser.parse_args(argv)
     if args.limit and not args.test_dir:
         parser.error('--limit requires --test-dir')
@@ -58,19 +60,14 @@ def run_pipeline(root, limit=None):
 import runpy, sys
 sys.path.insert(0, sys.argv[1])
 if sys.argv[2]:
-    from shiguang.ingest import http, scheduler, trial
+    from shiguang.ingest import scheduler, trial
     limit = int(sys.argv[2])
-    original_request, original_run = http.request, scheduler.run
-    remaining = [limit]
-    def request(*args, **kwargs):
-        if remaining[0] <= 0:
-            raise http.FetchFailure('request_limit')
-        remaining[0] -= 1
-        return original_request(*args, **kwargs)
+    original_run = scheduler.run
     def run(db, sources, **kwargs):
-        sources = [s for s in sources if s['type'] in ('telegram', 'feed')][:limit]
-        return original_run(db, sources, **kwargs)
-    http.request, scheduler.run = request, run
+        sources = [source for _, source in scheduler.plans(
+            [s for s in sources if s.get('visibility') == 'public'])][:limit]
+        return original_run(db, sources, first_page_only=True, **kwargs)
+    scheduler.run = run
     trial.run = lambda *args, **kwargs: None
 runpy.run_path(sys.argv[1] + '/pipeline.py', run_name='__main__')
 '''
