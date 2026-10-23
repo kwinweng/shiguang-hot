@@ -22,5 +22,6 @@ proposal/
 feeds-inbox/
 tg.db-journal
 /tg.db.fetch.lock
+/.box-scrape.lock
 private-feeds/
 web/assets/icon-preview.png

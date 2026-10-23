@@ -142,7 +142,7 @@ def channel_text(c, t):
     return re.sub(r'(?:\n[ \t]*)+@(?:freechinese|onelovecn)\s*$', '', t, flags=re.I).strip()
 
 
-def fetch(db, channels, now, images_migrated, batch=None):
+def fetch(db, channels, now, images_migrated, batch=None, *, first_page_only=False):
     """Page back through each channel until the newest stored message (or 72 hours on first run)."""
     media_floor = now - timedelta(days=MEDIA_DAYS)
     for c in channels:
@@ -176,7 +176,7 @@ def fetch(db, channels, now, images_migrated, batch=None):
                 urls = image_urls(m)
                 if not t and not urls: continue
                 image_args = dict(batch=batch, owner=('msg', c, i), image_at=dt) if batch else {}
-                images = download_images(c, i, urls, **image_args) if dt >= media_floor else []
+                images = download_images(c, i, urls, **image_args) if dt >= media_floor and not first_page_only else []
                 links = [a["href"] for a in tx.select("a[href]")] if tx else []
                 cur = db.execute("insert or ignore into msg(ch,id,ts,text,links,html,images) values(?,?,?,?,?,?,?)", (c, i, dt.isoformat(), t or '[图片]', json.dumps(links), str(tx) if tx else '', json.dumps(images)))
                 n += cur.rowcount
@@ -198,7 +198,7 @@ def fetch(db, channels, now, images_migrated, batch=None):
                         if ids and not stop:
                             db.execute('insert or ignore into gap values(?,?,?,?)', (c, min(ids), last, now.isoformat()))
                         raise batch.errors[-1]
-                if stop or not ids: break
+                if first_page_only or stop or not ids: break
                 next_before = min(ids)
                 if before is not None and next_before >= before: break
                 before = next_before
@@ -214,7 +214,7 @@ def fetch(db, channels, now, images_migrated, batch=None):
             if before is not None:
                 db.execute("insert or ignore into gap values(?,?,?,?)", (c, before, last, now.isoformat()))
                 print(c, "gap", before, "bound", last, err, file=sys.stderr)
-        for gap_before, gap_last, gap_at in ([] if batch and batch.halted else gaps):
+        for gap_before, gap_last, gap_at in ([] if first_page_only or (batch and batch.halted) else gaps):
             cursor = gap_before; filled = False; gap_seen = set()
             gap_floor = datetime.fromisoformat(gap_at) - timedelta(hours=72) if gap_last is None else None
             try:

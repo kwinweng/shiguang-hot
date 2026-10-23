@@ -1,0 +1,4 @@
+# Install with crontab -e as the dedicated scraper user. Replace all example paths.
+# Minute 7/37 works in any host timezone; the runner sets Asia/Shanghai internally.
+# Use an absolute venv interpreter; create /var/log/shiguang before installing.
+7,37 * * * * BOX_PYTHON=/opt/shiguang/.venv/bin/python /opt/shiguang/tools/box_scrape.sh --checkout /opt/shiguang --log-dir /var/log/shiguang >> /var/log/shiguang/cron.log 2>&1

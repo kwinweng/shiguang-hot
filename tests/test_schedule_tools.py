@@ -17,6 +17,32 @@ from tools.write_build_info import write_info
 ROOT = Path(__file__).resolve().parent.parent
 
 
+class PersistenceEnvironmentTests(unittest.TestCase):
+    def test_publish_permission_is_scoped_to_main_push(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            git = base / 'git'
+            git.write_text('''#!/bin/sh
+printf '%s|%s\n' "$*" "${ALLOW_MAIN_PUSH-unset}" >> "$GIT_CALL_LOG"
+if [ "$1" = diff ]; then exit 1; fi
+''')
+            git.chmod(0o755)
+            env = dict(os.environ, PATH=str(base) + os.pathsep + os.environ['PATH'],
+                       GIT_CALL_LOG=str(base / 'calls'))
+            env.pop('ALLOW_MAIN_PUSH', None)
+            result = subprocess.run(
+                ['sh', '-c', '. "$1"; git push origin HEAD:refs/heads/other',
+                 'test', str(ROOT / 'tools/persist_action_data.sh')],
+                cwd=base, env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            calls = [line.rsplit('|', 1) for line in (base / 'calls').read_text().splitlines()]
+            self.assertEqual([args for args, value in calls if value == 'publish'],
+                             ['push origin HEAD:refs/heads/main'])
+            self.assertTrue(all(value == 'unset' for args, value in calls
+                                if args != 'push origin HEAD:refs/heads/main'))
+            self.assertEqual(calls[-1], ['push origin HEAD:refs/heads/other', 'unset'])
+
+
 class DatabasePersistenceTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -26,6 +52,8 @@ class DatabasePersistenceTests(unittest.TestCase):
         self.run_git(self.base, 'init', '--bare', '--initial-branch=main', str(self.remote))
         self.repo = self.base / 'checkout'
         self.run_git(self.base, 'clone', str(self.remote), str(self.repo))
+        # Local fixtures must use their own hooks, independent of host policy hooks.
+        self.run_git(self.repo, 'config', 'core.hooksPath', '.git/hooks')
         self.run_git(self.repo, 'config', 'user.name', 'test')
         self.run_git(self.repo, 'config', 'user.email', 'test@local.invalid')
         (self.repo / 'tg.db').write_bytes(b'original')
@@ -60,6 +88,7 @@ class DatabasePersistenceTests(unittest.TestCase):
     def test_remote_advance_is_reported_without_force_pushing(self):
         other = self.base / 'other'
         self.run_git(self.base, 'clone', str(self.remote), str(other))
+        self.run_git(other, 'config', 'core.hooksPath', '.git/hooks')
         self.run_git(other, 'config', 'user.name', 'test')
         self.run_git(other, 'config', 'user.email', 'test@local.invalid')
         (other / 'public-feeds/sample.json').write_text('{"new":true}')
