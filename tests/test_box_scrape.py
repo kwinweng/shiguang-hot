@@ -80,7 +80,7 @@ class BoxScrapeTests(unittest.TestCase):
         self.assertNotIn('SOURCES_OVERRIDE', env)
 
     def test_pipeline_failure_stops_persistence(self):
-        with patch.object(box_scrape.subprocess, 'check_output', side_effect=['main', '']), \
+        with patch.object(box_scrape.subprocess, 'check_output', side_effect=['main', '', '']), \
              patch.object(box_scrape.subprocess, 'run') as run, \
              patch.object(box_scrape, 'run_pipeline', side_effect=RuntimeError('failed')):
             with self.assertRaises(RuntimeError):
@@ -100,7 +100,7 @@ class BoxScrapeTests(unittest.TestCase):
             calls.append(command)
             if 'tools/publish_pages.sh' in command:
                 raise subprocess.CalledProcessError(1, command)
-        with patch.object(box_scrape.subprocess, 'check_output', side_effect=['main', '']), \
+        with patch.object(box_scrape.subprocess, 'check_output', side_effect=['main', '', '']), \
              patch.object(box_scrape.subprocess, 'run', side_effect=run), \
              patch.object(box_scrape, 'run_pipeline'), \
              contextlib.redirect_stdout(io.StringIO()) as output:
@@ -113,7 +113,7 @@ class BoxScrapeTests(unittest.TestCase):
         def run(command, **kwargs):
             if 'tools/persist_action_data.sh' in command:
                 raise subprocess.CalledProcessError(1, command)
-        with patch.object(box_scrape.subprocess, 'check_output', side_effect=['main', '']), \
+        with patch.object(box_scrape.subprocess, 'check_output', side_effect=['main', '', '']), \
              patch.object(box_scrape.subprocess, 'run', side_effect=run) as runner, \
              patch.object(box_scrape, 'run_pipeline'):
             with self.assertRaises(subprocess.CalledProcessError):
