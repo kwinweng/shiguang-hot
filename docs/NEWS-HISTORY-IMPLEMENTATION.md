@@ -1,5 +1,8 @@
 # News navigation/history r3 implementation record
 
+PR B supersedes this record's homepage navigation. See [live feed and daily review implementation](PR-B-news-modules.md).
+真实 AI 总结未验证，等新 key。
+
 Implementation starts from `b7267d2fb4e2e4c2409fa42f91e12264cec91510` on `codex/news-navigation-history-impl`.
 The user's implementation instruction supplies authorization beyond the Spec's earlier document-only phase.
 The Spec itself remains unchanged.

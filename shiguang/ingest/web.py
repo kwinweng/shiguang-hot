@@ -99,7 +99,7 @@ def representation(db, source):
     return hashlib.sha256(json.dumps(['feed-v1', source, rows], ensure_ascii=False).encode()).hexdigest()
 
 
-def fetch(db, sources, now, batch=None):
+def fetch(db, sources, now, batch=None, *, download_media=True):
     """Fetch every feed source and store new entries; one broken feed never stops the rest."""
     ensure_table(db)
     floor = now - timedelta(days=telegram.MEDIA_DAYS)
@@ -123,7 +123,7 @@ def fetch(db, sources, now, batch=None):
                     continue
                 urls = [u for u in e['images'] if u.startswith('https://')]
                 image_args = dict(batch=batch, owner=('entry', s['id'], e['id']), image_at=e['ts']) if batch else {}
-                images = telegram.download_images(s['id'], key, urls, **image_args) if e['ts'] >= floor else []
+                images = telegram.download_images(s['id'], key, urls, **image_args) if e['ts'] >= floor and download_media else []
                 cur = db.execute('insert or ignore into entry values(?,?,?,?,?,?,?)',
                            (s['id'], e['id'], e['ts'].isoformat(), e['title'], e['body'], e['url'], json.dumps(images)))
                 new += cur.rowcount

@@ -156,7 +156,12 @@ class PrivacyBuildTests(unittest.TestCase):
                     target=root/mode
                     with patch.dict(os.environ,dict(SITE_MODE=mode,MAIL_DIGEST='0',SITE_OUT=str(target))):
                         sitebuild.build(rows,[],datetime(2026,10,17,12,tzinfo=ZoneInfo('Asia/Shanghai')))
-                    home=BeautifulSoup((target/'index.html').read_text(),'html.parser')
+                    # The legacy chronological template remains on standalone archive URLs.
+                    # PR B's homepage now boots the dedicated live/source/review app.
+                    landing=BeautifulSoup((target/'index.html').read_text(),'html.parser')
+                    self.assertIsNotNone(landing.select_one('#news'))
+                    self.assertFalse(landing.select('#news-calendar, #news-history'))
+                    home=BeautifulSoup((target/'archive/2026-10-17.html').read_text(),'html.parser')
                     expected=set(issues)|{'CE_Observe'}
                     if mode=='public': expected.remove('mail')
                     stream=home.select('#news-fallback article [data-source]')
@@ -166,7 +171,7 @@ class PrivacyBuildTests(unittest.TestCase):
                     self.assertEqual(len(home.select('#news-fallback article[data-ch="tg"]')),20)
                     world=home.select_one('.today-summaries section[data-source="world"]')
                     self.assertEqual(len(world.select('article')),4)
-                    self.assertEqual(world.select_one('.more-link a')['href'],'world/2026-10-17.html')
+                    self.assertEqual(world.select_one('.more-link a')['href'],'../world/2026-10-17.html')
                     # The shared calendar gets its joint matching dates from the sidecar manifest.
                     self.assertIsNotNone(home.select_one('#news-calendar'))
                     self.assertEqual(set(json.loads((target/'archive/manifest.json').read_text())['days']),{'2026-10-17','2026-10-16'})
@@ -183,7 +188,7 @@ class PrivacyBuildTests(unittest.TestCase):
                     self.assertFalse(favorites.select('[data-source]'))
                     self.assertEqual(favorites.body['data-bookmark-scope'],mode)
                     self.assertIn('还没有收藏',favorites.get_text())
-                    self.assertIsNotNone(home.select_one('#more-nav a[href="columns.html"]'))
+                    self.assertIsNotNone(home.select_one('#more-nav a[href="../columns.html"]'))
                     self.assertFalse(home.select('#more-nav a[href="tg/index.html"]'))
                     # 栏目: by channel (grouped by platform), and by tag.
                     columns=BeautifulSoup((target/'columns.html').read_text(),'html.parser')

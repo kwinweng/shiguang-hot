@@ -336,7 +336,7 @@ class Batch:
                     requests=self.requests, cache_hits=self.cached, new=self.new)
 
 
-def run(db, sources, images_migrated=False, *, clock=None):
+def run(db, sources, images_migrated=False, *, clock=None, first_page_only=False):
     """Caller holds collection_lock; adapters remain independently usable in offline tests."""
     from shiguang.ingest import telegram, web
     ensure_schema(db)
@@ -357,10 +357,13 @@ def run(db, sources, images_migrated=False, *, clock=None):
         batch.clock = clock
         try:
             if source['type'] == 'telegram':
-                telegram.fetch(db, [source['channel']], batch.now.astimezone(BEIJING), images_migrated, batch=batch)
+                options = dict(first_page_only=True) if first_page_only else {}
+                telegram.fetch(db, [source['channel']], batch.now.astimezone(BEIJING), images_migrated, batch=batch, **options)
             else:
-                web.fetch(db, [source], batch.now.astimezone(BEIJING), batch=batch)
-            batch.retry_images()
+                options = dict(download_media=False) if first_page_only else {}
+                web.fetch(db, [source], batch.now.astimezone(BEIJING), batch=batch, **options)
+            if not first_page_only:
+                batch.retry_images()
         except sqlite3.Error:
             raise  # State corruption/persistence errors must block collection/publication.
         except (http.FetchFailure, ValueError, OSError) as error:

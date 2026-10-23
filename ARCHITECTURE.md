@@ -1,5 +1,9 @@
 # 拾光热榜 · 架构
 
+PR B 覆盖下文旧首页导航说明：首页改为实时流，来源与历史回顾为独立页面视图。
+数据合同、离线预览、MOCK 日总结与北京时间 00:30 调度说明见 [PR B](docs/PR-B-news-modules.md)。
+真实 AI 总结未验证，等新 key。
+
 一条线：**来源 → 条目 → 页面**。每个渠道先变成同一种条目（`Item`），再按时间（今日、热点）或按渠道、标签（栏目）去取；没有为某个来源单独写的页面。接新渠道只动第一层：在 `sources.json` 加一项，按 `INGEST.md` 投递。
 
 ## 代码分层
@@ -83,11 +87,11 @@
 
 ## 两种模式与数据流
 
-公开版（GitHub Actions 每 30 分钟，`.github/workflows/hourly.yml`；定时任务常晚几分钟）：
+公开版（Box bot routine 每小时 :07/:37 采集并发布 gh-pages；切换见 `docs/BOX-SCRAPER-CUTOVER.md`）：
 
-1. 抓取配置中 public 的 TG 频道和 RSS/YouTube 来源，写入 `tg.db`，配图进 `media/`（Actions cache 保存）。
+1. Box 抓取配置中 public 的 TG 频道和 RSS/YouTube 来源，写入 `tg.db`，配图进本机 `media/`；仅提交数据库并推送 main。
 2. 期刊只从仓库的 `public-feeds/<id>/<date>/feed.json` 读取。
-3. 建站后检查：不得出现 private 来源的目录、名称或正文，以及「邮件」字样；通过后部署 Pages。
+3. 数据持久化成功后，Box 将公开 `site/`（含本机配图）发布为 gh-pages 的单个无父提交。Pages 从该分支根目录部署；Actions 仅保留手动测试，不部署。检查不得出现 private 来源的目录、名称或正文，以及「邮件」字样。feed 更新在下一轮 bot routine 发布。
 
 内网版（`SITE_MODE=private`，兼容 `MAIL_DIGEST=1`），在本机 `/workspace/tg-local` 的脚本里运行：
 

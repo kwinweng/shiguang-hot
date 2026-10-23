@@ -159,6 +159,13 @@ class NewsBrowserTests(unittest.TestCase):
         self.assertLessEqual(footer['y'] + footer['height'], bar.bounding_box()['y'])
 
     def test_news_tab_updates_content_titles_navigation_and_history(self):
+        # This fixture exercises the retained legacy archive shell, not the new news app.
+        self.site.entries = [(key, 'index.html#screens/look' if key == 'hot' else
+                              'index.html' if key == 'today' else path, label, glyph)
+                             for key, path, label, glyph in pages.CORE]
+        by_day, _ = history.prepare(self.content, self.site, self.out)
+        pages.news_day_page(pages.Writer(self.site, self.out), self.content,
+                            self.content.today, by_day[self.content.today])
         index = self.out / 'index.html'
         index.write_text(index.read_text().replace('<div class="today-summaries">',
             '<div class="today-summaries"><p>Today-only column summary</p>'))

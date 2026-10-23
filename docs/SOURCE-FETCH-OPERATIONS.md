@@ -30,7 +30,7 @@
 
 通知路径按以下方案落实并验收：
 
-1. 总控在既有运行检查中打开对应 Actions run 的 **Build public site** 日志，筛选 `fetch_status`；不能只看 CI 是否绿色。检查 `result=blocked`，以及 `result=skip` 且 `source_status=blocked`。私有来源只在私有运行日志核对，不复制到公共工单。
+1. 总控打开对应 Box bot routine 的 logs/box-scrape 日志，筛选 `fetch_status`；不能只看退出码。检查 `result=blocked`，以及 `result=skip` 且 `source_status=blocked`，并单独检查 Pages 发布失败。私有来源只在私有运行日志核对，不复制到公共工单。
 2. 首次发现或阻塞原因变化时，在 #16 发布一条 `[总控 状态]` 记录：运行链接、公开 source ID、首次发现北京时间、标准 error_code、最近成功时间、影响、处理负责人。相同源同一未解决阻塞更新同一记录，不每轮刷评论。
 3. 群内通知如获授权，沿既有交接路径回到「🔥热榜开发小组」。Mac 代发以 `[Mac Codex 代发]` 开头，只真正 @总控；不代发阿欢的批准或收到口令。本 PR 不执行群发送，也不赋予采集器 GitHub 凭据或发评论能力。
 4. 若运行没有开始、日志不可读或没有预期状态行，应报告“未取得源级健康证据”，不能记为健康。总控无法履责时，替补仍由阿欢指定；未指定时暂停该来源恢复操作。

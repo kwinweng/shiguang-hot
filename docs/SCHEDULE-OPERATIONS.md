@@ -1,5 +1,7 @@
 # 公开更新与外部定时接入
 
+> PR A / step 0 已将采集和站点发布迁往 Box，Pages 从 gh-pages 根目录部署。当前操作以 [BOX-SCRAPER-CUTOVER.md](BOX-SCRAPER-CUTOVER.md) 为准；以下保留为旧方案及回滚参考。workflow_dispatch 现仅运行测试，不部署。
+
 2026-10-19。用户已确认同时推进 feed 推送发布与外部定时触发。代码基于 main 的 `e86567413295a61872c2b3971cadff4467dc8f61`，在独立 `codex/schedule-reliability` 分支实现，与设计原型、时间流排序分开。推送、合并与正式部署仍按此前约定另获批准。
 
 ## 发布行为

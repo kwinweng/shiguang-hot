@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""拾光热榜：收内容 → 统一 → 加工 → 出页。每 30 分钟由 GitHub Actions 运行，本机 run.sh 也调用它。
+"""拾光热榜：收内容 → 统一 → 加工 → 出页。Box bot routine 负责采集并发布 gh-pages；本机 run.sh 也调用它。
 
 NO_FETCH=1 跳过 Telegram 抓取（只读 tg.db）；SITE_MODE=private 构建含邮件的内网版。
 """
@@ -25,6 +25,8 @@ def collect(cfg, now):
     feeds = [s for s in visible if s['type'] == 'feed']
     fetch = os.getenv('NO_FETCH') != '1'
     database = Path(telegram.D) / 'tg.db'
+    if not fetch and (os.getenv('SAMPLE_DATA') == '1' or not database.is_file()):
+        return sample_rows(cfg, now), []
     if fetch and not database.is_file():
         raise RuntimeError('tg.db missing; restore known state before collecting')
     with scheduler.collection_lock(database) if fetch else nullcontext(True) as acquired:
@@ -56,6 +58,25 @@ def collect(cfg, now):
 
 def telegram_rows(cfg, now):
     return collect(cfg, now)[0]
+
+
+def sample_rows(cfg, now):
+    """Synthetic offline preview; never accesses the database or remote services."""
+    import json
+    from datetime import timedelta
+    from shiguang.config import ROOT
+    fixture = json.loads((ROOT / 'tests/fixtures/news-sample.json').read_text())
+    sources = [s for s in cfg['sources'] if s['type'] == 'telegram' and s['visibility'] == 'public']
+    rows = []
+    for offset in range(8):
+        for index, (cat, title, text) in enumerate(fixture['headlines']):
+            source = sources[index % len(sources)]
+            moment = (now.astimezone(BEIJING) - timedelta(days=offset)).replace(hour=index + 1, minute=0, second=0, microsecond=0)
+            native_id = 100000 + offset * 10 + index
+            rows.append(dict(ch=source['channel'], id=native_id, ts=moment.isoformat(), text=text,
+                             title='[示例] ' + title, body=text, cat=cat, day=moment.date().isoformat(),
+                             images=[], url=f'https://t.me/{source["channel"]}/{native_id}'))
+    return rows
 
 
 def main(now=None):
