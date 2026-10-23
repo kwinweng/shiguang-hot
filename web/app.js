@@ -679,8 +679,11 @@
   }
   addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(onScroll); }, {passive: true});
   onScroll();
-  $$('.tab.active').forEach(tab => tab.addEventListener('click', event => {
-    if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+  $$('.tab[href]').forEach(tab => tab.addEventListener('click', event => {
+    if (!tab.classList.contains('active')) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    const target = new URL(tab.href);
+    if (target.origin !== location.origin || target.pathname !== location.pathname || target.hash !== location.hash) return;
     event.preventDefault();
     scrollTo({top: 0, behavior: reduced.matches ? 'auto' : 'smooth'});
   }));

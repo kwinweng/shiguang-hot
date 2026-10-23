@@ -52,8 +52,14 @@
     if (url.hash !== '#screens/look') return;
     try {
       const saved = sessionStorage.getItem(`news-return-${document.body.dataset.bookmarkScope}`);
-      const url = saved && JSON.parse(saved).url;
-      if (url && new URL(url).origin === location.origin) link.href = url;
+      const savedURL = saved && JSON.parse(saved).url;
+      if (savedURL) {
+        const target = new URL(savedURL);
+        if (target.origin === location.origin) {
+          target.hash = '#screens/look';
+          link.href = target.href;
+        }
+      }
     } catch { /* Storage may be unavailable; the normal navigation link remains usable. */ }
   });
   if (!shell) return;
@@ -263,8 +269,29 @@
     cancel();
     if (day) jump(day);
   }
+  const originalTitle = document.title;
+  const originalHeading = document.querySelector('.g-lead__title')?.textContent;
+  const originalWhere = document.querySelector('.g-topbar__where')?.textContent;
   function route() {
-    document.documentElement.classList.toggle('news-view', location.hash.startsWith('#screens/') || location.pathname.includes('/archive/'));
+    const news = location.hash.startsWith('#screens/');
+    document.documentElement.classList.toggle('news-view', news || location.pathname.includes('/archive/'));
+    document.title = news ? '资讯 · 拾光热榜' : originalTitle;
+    const heading = document.querySelector('.g-lead__title');
+    const where = document.querySelector('.g-topbar__where');
+    if (heading) heading.textContent = news ? '资讯' : originalHeading;
+    if (where) where.textContent = news ? '资讯' : originalWhere;
+    document.querySelectorAll('nav .tab[href]').forEach(tab => {
+      const url = new URL(tab.href);
+      const key = url.hash === '#screens/look' ? 'hot' : url.pathname.endsWith('/index.html') && !url.hash ? 'today' : null;
+      if (!key) return;
+      const active = key === (news ? 'hot' : 'today');
+      tab.classList.toggle('active', active);
+      if (active) {
+        tab.setAttribute('aria-current', 'page');
+        const pill = tab.parentElement.querySelector('.tab__pill');
+        if (pill) pill.className = `tab__pill ${[...tab.classList].find(name => name.startsWith('slot-'))}`;
+      } else tab.removeAttribute('aria-current');
+    });
     if (location.hash === '#screens/focus') location.href = new URL('hot.html', base).href;
   }
   async function init() {
@@ -374,6 +401,7 @@
       });
     }, {passive: true});
     addEventListener('popstate', async event => {
+      route();
       store.invalidate(); epoch++; busy = false; state = event.state?.news || parseState(); selection();
       const target = {...state}; const restore = event.state;
       const daysToLoad = restore?.loaded?.length ? restore.loaded : [target.day];
@@ -382,10 +410,12 @@
     });
     addEventListener('pagehide', () => {
       save();
-      try { sessionStorage.setItem(`news-return-${manifest.scope}`, JSON.stringify({url: location.href, snapshot: snapshot()})); } catch {}
+      const url = new URL(location.href);
+      url.hash = '#screens/look';
+      try { sessionStorage.setItem(`news-return-${manifest.scope}`, JSON.stringify({url: url.href, snapshot: snapshot()})); } catch {}
     });
-    addEventListener('hashchange', route);
     if (reduced) capsule.classList.add('reduced-motion');
   }
+  addEventListener('hashchange', route);
   init().catch(error => { status.textContent = `${error.message}。可阅读本页离线内容，请刷新重试。`; });
 })(typeof window === 'undefined' ? globalThis : window);

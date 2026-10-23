@@ -111,7 +111,7 @@ class NewsBrowserTests(unittest.TestCase):
                     self.assertLessEqual(metrics['right'], width - 16)
                     self.assertEqual(metrics['height'], 70)
                     self.assertEqual(metrics['radius'], '35px')
-                    self.assertEqual(metrics['color'], 'rgb(215, 40, 47)')
+                    self.assertEqual(metrics['color'], 'rgb(240, 90, 95)' if theme == 'dark' else 'rgb(215, 40, 47)')
                     self.assertIn('30, 32, 36' if theme == 'dark' else '255, 255, 255', metrics['background'])
                     self.assertGreaterEqual(metrics['padding'], metrics['height'] + metrics['bottom'] + 22)
                     self.page.evaluate('scrollTo(0, document.documentElement.scrollHeight)')
@@ -129,6 +129,76 @@ class NewsBrowserTests(unittest.TestCase):
         self.page.set_viewport_size({'width': 1280, 'height': 900})
         self.assertFalse(self.page.locator('nav.bottom').is_visible())
         self.assertTrue(self.page.locator('.desktop-nav').is_visible())
+        self.assertEqual(self.errors, [])
+
+    def test_system_dark_active_color_and_explicit_theme_overrides(self):
+        self.page.emulate_media(color_scheme='dark')
+        for query, expected in (('', 'rgb(240, 90, 95)'), ('?theme=light', 'rgb(215, 40, 47)'),
+                                ('?theme=dark', 'rgb(240, 90, 95)')):
+            self.open(query)
+            active = self.page.locator('nav.bottom .tab.active')
+            self.assertEqual(active.evaluate('(el) => getComputedStyle(el).color'), expected)
+        # Exercise the CSS media branch independently of the inline theme script.
+        self.page.evaluate('delete document.documentElement.dataset.theme')
+        self.assertEqual(active.evaluate('(el) => getComputedStyle(el).color'), 'rgb(240, 90, 95)')
+        self.page.emulate_media(color_scheme='light')
+        self.assertEqual(active.evaluate('(el) => getComputedStyle(el).color'), 'rgb(215, 40, 47)')
+        self.page.evaluate("document.documentElement.dataset.theme = 'dark'")
+        self.assertEqual(active.evaluate('(el) => getComputedStyle(el).color'), 'rgb(240, 90, 95)')
+
+    def test_nonzero_safe_area_preserves_bottom_content_clearance(self):
+        self.open()
+        self.page.evaluate("document.documentElement.style.setProperty('--safe-bottom', '34px')")
+        self.page.evaluate("scrollTo({top: document.documentElement.scrollHeight, behavior: 'instant'})")
+        bar = self.page.locator('nav.bottom')
+        self.assertEqual(bar.evaluate('(el) => getComputedStyle(el).bottom'), '50px')
+        self.assertGreaterEqual(self.page.locator('.layout').evaluate(
+            '(el) => parseFloat(getComputedStyle(el).paddingBottom)'),
+            bar.bounding_box()['height'] + 34 + 16 + 22)
+        footer = self.page.locator('.footer').bounding_box()
+        self.assertLessEqual(footer['y'] + footer['height'], bar.bounding_box()['y'])
+
+    def test_news_tab_updates_content_titles_navigation_and_history(self):
+        index = self.out / 'index.html'
+        index.write_text(index.read_text().replace('<div class="today-summaries">',
+            '<div class="today-summaries"><p>Today-only column summary</p>'))
+        for key in ('columns', 'favorites'):
+            (self.out / f'{key}.html').write_text(render.document(
+                render.Page(self.site, '', key), key, '<p>Other tab</p>', '', ''))
+        self.page.goto('https://offline.test/index.html')
+        self.page.wait_for_selector('.news-ready')
+        nav = self.page.locator('nav.bottom')
+        self.assertTrue(self.page.locator('.today-summaries').is_visible())
+        nav.get_by_text('资讯', exact=True).click()
+        self.page.wait_for_function("document.title === '资讯 · 拾光热榜'")
+        self.assertEqual(self.page.locator('.g-lead__title').inner_text(), '资讯')
+        self.assertEqual(self.page.locator('.g-topbar__where').inner_text(), '资讯')
+        self.assertFalse(self.page.locator('.today-summaries').is_visible())
+        self.assertTrue(self.page.locator('#news-list article').first.is_visible())
+        for selector in ('nav.bottom', '.desktop-nav'):
+            self.assertEqual(self.page.locator(selector + ' [aria-current="page"]').inner_text(), '资讯')
+            self.assertIn('slot-2', self.page.locator(selector + ' .tab__pill').get_attribute('class'))
+        self.page.go_back()
+        self.page.wait_for_function("document.title === '今日 · 拾光热榜'")
+        self.assertEqual(nav.locator('.active').inner_text(), '今日')
+        self.assertTrue(self.page.locator('.today-summaries').is_visible())
+        self.page.go_forward()
+        self.page.wait_for_function("document.title === '资讯 · 拾光热榜'")
+        nav.get_by_text('今日', exact=True).click()
+        self.page.wait_for_function("document.title === '今日 · 拾光热榜'")
+        for label, key in (('栏目', 'columns'), ('收藏', 'favorites')):
+            nav.get_by_text(label, exact=True).click()
+            self.page.wait_for_url(f'**/{key}.html')
+            nav.get_by_text('资讯', exact=True).click()
+            self.page.wait_for_function("document.title === '资讯 · 拾光热榜'")
+            self.assertEqual(nav.locator('.active').inner_text(), '资讯')
+        self.page.reload()
+        self.page.wait_for_selector('.news-ready')
+        self.assertEqual(self.page.title(), '资讯 · 拾光热榜')
+        self.assertEqual(nav.locator('.active').inner_text(), '资讯')
+        card = self.page.locator('#news-list article').first.bounding_box()
+        self.assertAlmostEqual(card['x'], 393 - card['x'] - card['width'])
+        self.page.screenshot(path='/tmp/floatbar-news-round1.png')
         self.assertEqual(self.errors, [])
 
     def test_initial_target_only_direct_jump_and_failed_jump_preserves_cards(self):

@@ -209,8 +209,18 @@ class DesignSystemTests(unittest.TestCase):
 
     def test_floating_tabbar_reserves_height_gap_and_safe_area_without_script(self):
         self.assertIn('--tab-bar-height:70px;--tab-bar-gap:16px', self.css)
-        self.assertIn('--tab-clearance:calc(var(--tab-bar-height) + var(--tab-bar-gap) + env(safe-area-inset-bottom,0px) + var(--space-7))', self.css)
+        self.assertIn('--safe-bottom:env(safe-area-inset-bottom,0px)', self.css)
+        self.assertIn('--tab-clearance:calc(var(--tab-bar-height) + var(--tab-bar-gap) + var(--safe-bottom) + var(--space-7))', self.css)
+        self.assertIn('bottom:calc(var(--tab-bar-gap) + var(--safe-bottom))', self.css)
         self.assertIn('padding-bottom:var(--tab-clearance)', self.css)
+
+    def test_floating_tabbar_active_color_uses_both_dark_theme_tokens(self):
+        import re
+        self.assertIn('.g-tabbar .tab.active{color:var(--tab-active)}', self.css)
+        for selector, color in ((r':root', '#D7282F'),
+                                (r'@media\(prefers-color-scheme:dark\)\{html:not\(\[data-theme=light\]\)', '#F05A5F'),
+                                (r'html\[data-theme=dark\]', '#F05A5F')):
+            self.assertRegex(self.css, selector + r'\{[^}]*--tab-active:' + color)
 
     def test_light_follows_the_spec(self):
         from shiguang.site import light
