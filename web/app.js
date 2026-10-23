@@ -664,7 +664,7 @@
   const header = $('.g-topbar');
   const filterbar = $('.filterbar');
   function measure() {
-    if (tabbar) root.style.setProperty('--tab-bar-height', `${tabbar.offsetHeight + 8}px`);
+    if (tabbar) root.style.setProperty('--tab-bar-height', `${tabbar.offsetHeight}px`);
   }
   if ('ResizeObserver' in window && tabbar) new ResizeObserver(measure).observe(tabbar);
   measure();

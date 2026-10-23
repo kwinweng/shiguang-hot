@@ -10,7 +10,7 @@ from pathlib import Path
 from urllib.parse import urlsplit, unquote
 
 from shiguang.model import BEIJING
-from shiguang.site import history, pages
+from shiguang.site import history, pages, render
 from shiguang.site.build import publish_assets
 from tests.test_news_history import context, item
 
@@ -82,6 +82,54 @@ class NewsBrowserTests(unittest.TestCase):
         self.page.wait_for_selector('.news-ready')
         if cards:
             self.page.wait_for_selector('#news-list article')
+
+    def test_floating_bottom_bar_mobile_themes_and_content_clearance(self):
+        for key, path in (('columns', 'columns.html'), ('favorites', 'favorites.html')):
+            document = render.document(render.Page(self.site, '', key), key,
+                                       '<p style="min-height:1600px">Navigation fixture</p>', '', '')
+            (self.out / path).write_text(document)
+        self.page.emulate_media(reduced_motion='reduce')
+        for width in (320, 393, 844):
+            self.page.set_viewport_size({'width': width, 'height': 852})
+            for theme in ('light', 'dark'):
+                with self.subTest(width=width, theme=theme):
+                    self.page.goto('https://offline.test/columns.html?theme=' + theme)
+                    bar = self.page.locator('nav.bottom')
+                    self.assertTrue(bar.is_visible())
+                    self.assertEqual(bar.locator('a').count(), 4)
+                    self.assertEqual(bar.locator('svg.phosphor').count(), 4)
+                    metrics = bar.evaluate('''bar => {
+                        const box = bar.getBoundingClientRect(), style = getComputedStyle(bar);
+                        const active = bar.querySelector('a.active');
+                        return {left: box.left, right: box.right, height: box.height,
+                            radius: style.borderRadius, background: style.backgroundColor,
+                            color: getComputedStyle(active).color,
+                            padding: parseFloat(getComputedStyle(document.querySelector('.layout')).paddingBottom),
+                            bottom: parseFloat(style.bottom)};
+                    }''')
+                    self.assertGreaterEqual(metrics['left'], 16)
+                    self.assertLessEqual(metrics['right'], width - 16)
+                    self.assertEqual(metrics['height'], 70)
+                    self.assertEqual(metrics['radius'], '35px')
+                    self.assertEqual(metrics['color'], 'rgb(215, 40, 47)')
+                    self.assertIn('30, 32, 36' if theme == 'dark' else '255, 255, 255', metrics['background'])
+                    self.assertGreaterEqual(metrics['padding'], metrics['height'] + metrics['bottom'] + 22)
+                    self.page.evaluate('scrollTo(0, document.documentElement.scrollHeight)')
+                    footer = self.page.locator('.footer').bounding_box()
+                    self.assertLessEqual(footer['y'] + footer['height'], bar.bounding_box()['y'])
+                    link = bar.locator('a').last
+                    link.focus()
+                    self.assertTrue(link.evaluate('link => link === document.activeElement'))
+                    self.assertEqual(link.get_attribute('href'), 'favorites.html')
+                    bar.locator('a.active').click()
+                    self.page.wait_for_function('scrollY === 0')
+                    link.click()
+                    self.page.wait_for_url('**/favorites.html')
+                    self.assertEqual(self.page.locator('nav.bottom a[aria-current="page"]').inner_text(), '收藏')
+        self.page.set_viewport_size({'width': 1280, 'height': 900})
+        self.assertFalse(self.page.locator('nav.bottom').is_visible())
+        self.assertTrue(self.page.locator('.desktop-nav').is_visible())
+        self.assertEqual(self.errors, [])
 
     def test_initial_target_only_direct_jump_and_failed_jump_preserves_cards(self):
         self.open()

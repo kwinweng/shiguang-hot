@@ -129,6 +129,25 @@ class DesignSystemTests(unittest.TestCase):
     """Rules of the 「光」 spec that the stylesheet and templates must keep."""
     css = (WEB / 'style.css').read_text()
 
+    def test_bottom_navigation_preserves_links_and_section_selection(self):
+        from shiguang.site.pages import CORE, TABS
+        site = page().site
+        site.entries, site.tabs = CORE, TABS
+        site.assets = {'css': 'style.css', 'js': 'app.js', 'version': '1'}
+        for active, tab in [(key, '') for key in TABS] + [('tg', 'columns')]:
+            with self.subTest(active=active, tab=tab):
+                p = render.Page(site, '../', active, tab)
+                soup = BeautifulSoup(render.document(p, 'Title', '<p>Content</p>', '', ''), 'html.parser')
+                links = soup.select('nav.bottom a')
+                self.assertEqual([link['href'] for link in links], ['../' + entry[1] for entry in CORE])
+                self.assertEqual(len(soup.select('nav.bottom [aria-current="page"]')), 1)
+                selected = soup.select_one('nav.bottom [aria-current="page"]')
+                self.assertEqual(selected.get_text(), render.SLOT_LABELS[tab or active])
+                self.assertEqual(len(soup.select('nav.bottom svg.phosphor[aria-hidden="true"]')), 4)
+                self.assertIn('fill="currentColor"', str(selected.svg))
+                self.assertEqual(soup.select_one('meta[name="viewport"]')['content'],
+                                 'width=device-width,initial-scale=1,viewport-fit=cover')
+
     def test_every_icon_reference_has_a_symbol(self):
         import re
         from shiguang.site.icons import sprite
@@ -179,7 +198,7 @@ class DesignSystemTests(unittest.TestCase):
         rules = {}
         for sel, body in re.findall(r'([^{}]+)\{([^}]*)\}', css):
             rules.setdefault(sel.strip(), body)  # the base rule, not a later media override
-        for selector in ('.g-card', '.g-round', '.g-tabbar', '.g-seg', '.toast', '.pull-refresh'):
+        for selector in ('.g-card', '.g-round', '.g-seg', '.toast', '.pull-refresh'):
             body = rules[selector]
             self.assertIn('border:0', body, selector)
             self.assertIn('box-shadow:var(--shadow-glass)', body, selector)
@@ -187,6 +206,11 @@ class DesignSystemTests(unittest.TestCase):
         for name in ('rim', 'inner', 'edge', 'contact', 'shade'):
             self.assertEqual(self.css.count(f'--glass-{name}:'), 3, name)
         self.assertNotIn('--glass-line', self.css)
+
+    def test_floating_tabbar_reserves_height_gap_and_safe_area_without_script(self):
+        self.assertIn('--tab-bar-height:70px;--tab-bar-gap:16px', self.css)
+        self.assertIn('--tab-clearance:calc(var(--tab-bar-height) + var(--tab-bar-gap) + env(safe-area-inset-bottom,0px) + var(--space-7))', self.css)
+        self.assertIn('padding-bottom:var(--tab-clearance)', self.css)
 
     def test_light_follows_the_spec(self):
         from shiguang.site import light

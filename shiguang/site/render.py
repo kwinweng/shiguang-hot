@@ -298,7 +298,7 @@ def favorites_body(page):
 
 # ---------- Navigation ----------
 
-def nav_slots(page):
+def nav_slots(page, floating=False):
     """The five fixed slots, shared by the mobile tab bar and the desktop switch.
 
     Words only, as the spec asks. The selected slot's bright-glass block is its own element so it
@@ -307,6 +307,13 @@ def nav_slots(page):
     site = page.site
     from shiguang.site.history import icon as news_icon
     glyphs = {'today': 'house', 'hot': 'newspaper', 'columns': 'compass', 'favorites': 'bookmark-simple'}
+    # Phosphor filled paths from the floating-bar prototype; outlines reuse the shipped icons.
+    filled = {
+        'today': 'M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z',
+        'hot': 'M216,48H56A16,16,0,0,0,40,64V184a8,8,0,0,1-16,0V88A8,8,0,0,0,8,88v96.11A24,24,0,0,0,32,208H208a24,24,0,0,0,24-24V64A16,16,0,0,0,216,48ZM176,152H96a8,8,0,0,1,0-16h80a8,8,0,0,1,0,16Zm0-32H96a8,8,0,0,1,0-16h80a8,8,0,0,1,0,16Z',
+        'columns': 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm51.58,57.79-32,64a4.08,4.08,0,0,1-1.79,1.79l-64,32a4,4,0,0,1-5.37-5.37l32-64a4.08,4.08,0,0,1,1.79-1.79l64-32A4,4,0,0,1,179.58,81.79Z',
+        'favorites': 'M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Z',
+    }
     lookup = {entry[0]: entry for entry in site.entries}
     labels = dict(SLOT_LABELS, favorites=site.favorites.get('label', '收藏'))
     result = ''
@@ -318,10 +325,12 @@ def nav_slots(page):
             continue
         _, path, _, _ = lookup[key]
         active = current == key
+        glyph = (f'<svg class="phosphor" aria-hidden="true" viewBox="0 0 256 256" fill="currentColor"><path d="{filled[key]}"/></svg>'
+                 if floating and active and key in filled else news_icon(glyphs[key]) if key in glyphs else '')
         classes = ' '.join(c for c in ('tab', f'slot-{n}', 'active' if active else '', 'home-slot' if key == 'home' else '') if c)
         result += (f'<a href="{page.url(path)}" class="{classes}"'
                    + (' aria-current="page"' if active else '')
-                   + f'>{news_icon(glyphs[key]) if key in glyphs else ""}<span>{E(name)}</span></a>')
+                   + f'>{glyph}<span>{E(name)}</span></a>')
         if active:
             result = f'<span class="tab__pill slot-{n}" aria-hidden="true"></span>' + result
     return result
@@ -391,7 +400,7 @@ def document(page, title, body, illumination, light_source):
         f'{empty("all", "换个词，再找找。", "none", hidden=True)}'
         f'<footer class="footer"><span>今日信息，留一份清晰。</span><span>更新于 {site.now.strftime("%m-%d %H:%M")} 北京时间</span></footer>'
         '</main></div>'
-        f'<nav class="g-tabbar bottom" aria-label="主导航">{slots}</nav>'
+        f'<nav class="g-tabbar bottom" aria-label="主导航">{nav_slots(page, floating=True)}</nav>'
         f'{more_menu(page)}'
         f'<dialog class="lightbox" aria-label="图片查看器"><button class="g-round lightbox__close" type="button" data-close aria-label="关闭">{icon("close")}</button><img alt=""></dialog>'
         '<div class="toast" id="toast" role="status" aria-live="polite"><span class="toast__text"></span><a class="g-btn g-btn--primary toast__action" hidden></a><button class="g-btn g-btn--primary toast__action" type="button" hidden></button></div>'

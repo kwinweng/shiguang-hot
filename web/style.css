@@ -33,8 +33,9 @@
   /* "crisp" spring: critically damped, settles without overshoot (switches, the tab highlight, sheets) */
   --ease-crisp:cubic-bezier(.2,.75,.25,1);
   --duration-slide:360ms;
-  --bar-height:52px;--header-height:52px;--tab-bar-height:72px;
-  --tab-clearance:calc(var(--tab-bar-height) + env(safe-area-inset-bottom,0px) + var(--space-7));
+  --bar-height:52px;--header-height:52px;--tab-bar-height:70px;--tab-bar-gap:16px;
+  --tab-glass:rgba(255,255,255,.72);--tab-selected:#EEF0F3;--tab-ink:#1A1C20;
+  --tab-clearance:calc(var(--tab-bar-height) + var(--tab-bar-gap) + env(safe-area-inset-bottom,0px) + var(--space-7));
 }
 
 /* Issue #19: news controls and continuous list. Other surfaces retain their design. */
@@ -110,6 +111,7 @@ html.news-surface{--page:#f2f4f2;--ground:#f2f4f2;--ink:#141414;--ink-2:#636261;
   --glass-rim:rgba(255,255,255,.16);--glass-inner:rgba(255,255,255,.04);--glass-edge:rgba(255,255,255,.06);--glass-contact:rgba(0,0,0,.10);--glass-shade:rgba(0,0,0,.60);
   --shadow-photo:0 26px 50px -22px rgba(0,0,0,.72),0 2px 8px 0 rgba(0,0,0,.3);
   --icon-light:#57524B;--icon-shade:#29272B;
+  --tab-glass:rgba(30,32,36,.72);--tab-selected:#24272C;--tab-ink:#ECEDEF;
 }}
 html[data-theme=dark]{
   color-scheme:dark;
@@ -123,6 +125,7 @@ html[data-theme=dark]{
   --glass-rim:rgba(255,255,255,.16);--glass-inner:rgba(255,255,255,.04);--glass-edge:rgba(255,255,255,.06);--glass-contact:rgba(0,0,0,.10);--glass-shade:rgba(0,0,0,.60);
   --shadow-photo:0 26px 50px -22px rgba(0,0,0,.72),0 2px 8px 0 rgba(0,0,0,.3);
   --icon-light:#57524B;--icon-shade:#29272B;
+  --tab-glass:rgba(30,32,36,.72);--tab-selected:#24272C;--tab-ink:#ECEDEF;
 }
 
 /* ============ 2. Base ============ */
@@ -201,12 +204,17 @@ html[data-scrolled] .g-topbar::before,html[data-scrolled] .g-topbar__where{opaci
 .nav-unavailable{color:var(--ink-3);cursor:default}
 
 /* Tab bar: a centred capsule of words, 8 above the safe area. */
-.g-tabbar{position:fixed;z-index:30;left:50%;bottom:calc(var(--space-2) + env(safe-area-inset-bottom,0px));translate:-50% 0;
-  display:grid;grid-template-columns:repeat(4,min(72px,calc((100vw - 34px) / 4)));height:56px;padding:5px;border-radius:var(--radius-pill);
-  background:var(--glass);border:0;box-shadow:var(--shadow-glass);
-  -webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5)}
-.g-tabbar .tab,.g-tabbar .tab__pill{height:46px}
-.g-tabbar .tab{font-size:15px;line-height:20px}
+/* Prototype floating bar: icon over label, with room for the device safe area. */
+.g-tabbar{position:fixed;z-index:30;left:50%;bottom:calc(var(--tab-bar-gap) + env(safe-area-inset-bottom,0px));translate:-50% 0;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:calc(100% - 32px);max-width:402px;height:70px;padding:6px;border-radius:35px;
+  background:var(--tab-glass);border:0;box-shadow:inset 0 0 0 .5px var(--line),0 8px 24px rgba(16,24,40,.08);
+  -webkit-backdrop-filter:blur(20px) saturate(1.7);backdrop-filter:blur(20px) saturate(1.7)}
+.g-tabbar .tab,.g-tabbar .tab__pill{height:58px;border-radius:29px}
+.g-tabbar .tab{gap:2px;font-size:11px;line-height:14px;font-weight:400;color:var(--tab-ink)}
+.g-tabbar .phosphor{width:24px;height:24px}
+.g-tabbar .tab.active{color:#D7282F}
+.g-tabbar .tab.active>span{color:var(--tab-ink)}
+.g-tabbar .tab__pill{background:var(--tab-selected)}
 
 /* Switch: a glass capsule sized to its content; the chosen item is bright glass. */
 .g-seg{display:inline-flex;padding:var(--space-1);border-radius:var(--radius-pill);background:var(--glass);border:0;box-shadow:var(--shadow-glass)}
@@ -403,7 +411,7 @@ dialog::backdrop{background:var(--scrim)}
 @media(hover:hover) and (pointer:fine){.lightbox__nav{display:inline-grid}}
 
 /* Toast: a floating control, so frosted glass. */
-.toast{position:fixed;z-index:40;left:50%;bottom:calc(var(--tab-bar-height) + var(--space-4) + env(safe-area-inset-bottom,0px));translate:-50% 16px;
+.toast{position:fixed;z-index:40;left:50%;bottom:calc(var(--tab-bar-height) + var(--tab-bar-gap) + var(--space-4) + env(safe-area-inset-bottom,0px));translate:-50% 16px;
   display:flex;align-items:center;gap:var(--space-2);max-width:calc(100% - 2 * var(--space-5));min-height:52px;padding:4px 4px 4px var(--space-6);
   border-radius:var(--radius-pill);border:0;background:var(--glass);box-shadow:var(--shadow-glass);
   -webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);
