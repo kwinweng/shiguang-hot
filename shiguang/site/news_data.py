@@ -8,12 +8,14 @@ from datetime import date, datetime, timedelta
 
 from shiguang.model import BEIJING, safe_link
 
-CATEGORIES = ('全球', '财经', '科技AI', '社会', '其他')
+CATEGORIES = ('科技', '财经', '国际', '数码', '其他')
 
 
 def category(value):
-    if value in ('AI', '科技', '数码', '开发者', '科技 AI', '科技AI'):
-        return '科技AI'
+    if value in ('AI', '科技', '开发者', '科技 AI', '科技AI'):
+        return '科技'
+    if value in ('全球', '环球'):
+        return '国际'
     return value if value in CATEGORIES else '其他'
 
 
@@ -32,7 +34,7 @@ def messages(items, sources):
         rows.append(dict(id=hashlib.sha256((item.source_id + str(item.native_id) + item.ts + item.title).encode()).hexdigest()[:20],
                          source=item.source_id, source_name=source['name'], type=source['type'],
                          time=moment.isoformat(), day=moment.date().isoformat(), hour=moment.strftime('%Y-%m-%d %H:00'),
-                         title=item.title, text=text, summary=text[:500], category=category(item.category),
+                         title=item.title, text=text, summary=text[:500], category=category(item.category), hot=item.reach > 1,
                          link=safe_link(item.url), image=next((p for p in item.images if safe_link(p) or
                          (re.fullmatch(r'[a-zA-Z0-9_/-]+\.(webp|png|jpg|jpeg|gif|avif)', p) and '..' not in p.split('/'))), '')))
     rows.sort(key=lambda r: (r['time'], r['id']), reverse=True)

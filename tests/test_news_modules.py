@@ -10,7 +10,7 @@ from unittest.mock import patch
 from pipeline import sample_rows
 from shiguang.config import config
 from shiguang.model import BEIJING, Item
-from shiguang.site.news_data import CATEGORIES, FlashProvider, MockProvider, daily_documents, messages, source_stats
+from shiguang.site.news_data import CATEGORIES, FlashProvider, MockProvider, category, daily_documents, messages, source_stats
 from shiguang.site.build import build
 
 
@@ -34,7 +34,7 @@ class NewsModuleTests(unittest.TestCase):
         self.assertEqual(len(rows),2)
         self.assertEqual([r['day'] for r in rows],['2026-10-23','2026-10-22'])
         self.assertEqual(rows[0]['hour'],'2026-10-23 00:00')
-        self.assertEqual(rows[0]['category'],'科技AI')
+        self.assertEqual(rows[0]['category'],'科技')
         self.assertEqual(list(daily_documents(rows,self.now)),['2026-10-22'])
         self.assertNotIn('邮件精华',json.dumps(rows,ensure_ascii=False))
 
@@ -42,6 +42,16 @@ class NewsModuleTests(unittest.TestCase):
         rows = messages([self.item(1,body='x'*50+'a'), self.item(2,body='x'*50+'b'),
                          self.item(3,body='x'*49+'y'),self.item(4,url='https://t.me/test/4',body='x'*50)],self.sources)
         self.assertEqual(len(rows),3)
+
+    def test_filter_categories_preserve_digital_and_normalize_aliases(self):
+        for value in ('AI', '科技AI', '科技 AI', '开发者', '科技'):
+            self.assertEqual(category(value), '科技')
+        for value in ('全球', '环球', '国际'):
+            self.assertEqual(category(value), '国际')
+        self.assertEqual(category('数码'), '数码')
+        self.assertEqual(category('社会'), '其他')
+        self.assertTrue(messages([self.item(reach=2)], self.sources)[0]['hot'])
+        self.assertFalse(messages([self.item()], self.sources)[0]['hot'])
 
     def test_stats_stale_threshold_and_week(self):
         rows = messages([self.item(1,ts='2026-10-23T11:00:00+08:00'),
@@ -97,6 +107,10 @@ class NewsModuleTests(unittest.TestCase):
             self.assertEqual(before,day.read_bytes())
             self.assertNotIn('news-calendar',(root/'today.html').read_text())
             self.assertNotIn('screens/look',(root/'index.html').read_text())
+            for path in root.rglob('*.html'):
+                text = path.read_text()
+                self.assertNotIn('screens/look', text, str(path))
+                self.assertNotIn('看往日', text, str(path))
 
 
 if __name__ == '__main__':

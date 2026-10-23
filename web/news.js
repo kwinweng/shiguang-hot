@@ -1,12 +1,14 @@
 /* Live feed and completed-day reviews. All inputs are build-time public JSON. */
 'use strict';
 const News = (() => {
-  const categories = ['全部', '全球', '财经', '科技AI', '社会', '其他'];
-  const icons = ['squares-four', 'globe', 'chart-line-up', 'cpu', 'broadcast', 'newspaper'];
+  const categories = ['全部', '热门', '科技', '财经', '国际', '数码'];
+  const icons = ['squares-four', 'fire', 'cpu', 'chart-line-up', 'globe', 'device-mobile'];
+  const category = value => ({全球:'国际', 环球:'国际', AI:'科技', 科技AI:'科技', '科技 AI':'科技', 开发者:'科技'})[value] || value;
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const safe = value => /^https?:\/\//i.test(value || '') ? escape(value) : '';
   const icon = (name, fill = false) => `<span class="ic">${window.ICONS[name + (fill ? '_fill' : '_line')] || ''}</span>`;
-  const filter = (rows, cat) => !cat || cat === '全部' ? rows : rows.filter(row => row.category === cat);
+  const filter = (rows, cat) => !cat || cat === '全部' ? rows : rows.filter(row =>
+    cat === '热门' ? row.hot || row.source_count > 1 || row.category === '热门' : category(row.category) === category(cat));
   const monthDays = (month, available) => {
     const [year, m] = month.split('-').map(Number);
     return Array.from({length:new Date(Date.UTC(year, m, 0)).getUTCDate()}, (_, i) => {
@@ -31,14 +33,14 @@ if (typeof document !== 'undefined') {
     return value;
   };
   const back = (hash, label) => `<a class="back" href="${hash}">${icon('arrow-left')}${e(label)}</a>`;
-  const heading = (title, right = '') => `<div class="ph"><h1>${e(title)}</h1><div class="acts">${right}</div></div>`;
+  const heading = (title, right = '', compact = false) => `<div class="ph"><h1${compact ? ' class="h2"' : ''}>${e(title)}</h1><div class="acts">${right}</div></div>`;
   const controls = cat => `<div class="flt" aria-label="按分类筛选">${categories.map((name, i) => `<button data-category="${name}" aria-label="${name}" aria-pressed="${name === cat}" class="${name === cat ? 'on' : ''}">${icon(icons[i], name === cat)}<span>${name}</span></button>`).join('')}</div>`;
-  const original = row => safe(row.link) ? `<a class="btn pri" href="${safe(row.link)}" target="_blank" rel="noopener noreferrer">${row.type === 'telegram' ? '看 Telegram 原文' : '看原文'} ${icon('arrow-square-out')}</a>` : '';
+  const original = row => safe(row.link) ? `<a class="btn pri" href="${safe(row.link)}" target="_blank" rel="noopener noreferrer">看原文 ${icon('arrow-square-out')}</a>` : '';
   const row = r => `<a class="row" href="#message/${e(r.id)}?from=${encodeURIComponent(location.hash || '#feed')}">${r.image ? `<img loading="lazy" src="${e(r.image)}" alt="">` : ''}<div class="tx"><b>${e(r.title)}</b><p>${e(r.summary)}</p><small>${e(r.source_name)} · ${e(r.category)} · ${e(r.time.slice(11,16))}</small></div></a>`;
   const list = rows => {
     let hour = '';
     return rows.map(r => {
-      const h = r.hour !== hour ? `<h2 class="hh">${e(r.hour)}–${e(String((Number(r.hour.slice(11,13)) + 1) % 24).padStart(2, '0'))}:00</h2>` : '';
+      const h = r.hour !== hour ? `<h2 class="hh">${e(r.hour.slice(11))}</h2>` : '';
       hour = r.hour;
       return h + row(r);
     }).join('') || '<p class="empty">暂无消息。</p>';
@@ -91,14 +93,17 @@ if (typeof document !== 'undefined') {
         const doc = await load(`history/${day}.json`);
         const position = index.days.indexOf(day);
         const nav = (offset, label, glyph) => index.days[position+offset] ? `<a aria-label="${label}" href="#day/${index.days[position+offset]}">${icon(glyph)}</a>` : `<span class="dis" aria-label="${label}不可用">${icon(glyph)}</span>`;
-        html = back(`#history/${day.slice(0,7)}`, '日历') + heading(day, nav(-1,'前一天','caret-left') + nav(1,'后一天','caret-right'));
-        html += `<p class="sub">${doc.stats.total} 条消息 · ${Object.keys(doc.stats.sources).length} 个来源 · MOCK 样例总结</p><p class="day-summary">${e(doc.summary)}</p>` + controls(cat);
-        html += filter(doc.events,cat).map(event => {
+        const label = new Date(`${day}T12:00:00+08:00`).toLocaleDateString('zh-CN', {timeZone:'Asia/Shanghai', month:'long', day:'numeric', weekday:'short'});
+        html = back(`#history/${day.slice(0,7)}`, '日历') + heading(label, nav(-1,'前一天','caret-left') + nav(1,'后一天','caret-right'), true);
+        html += `<p class="sub">${doc.stats.total} 条消息 · ${Object.keys(doc.stats.sources).length} 个来源 · MOCK 样例总结</p>` + controls(cat);
+        const events = filter(doc.events,cat);
+        const summaries = (members, title) => members.length ? `<h2 class="sh">${title}</h2>` + members.map(event => {
           const i = doc.events.indexOf(event);
           return `<article class="sum"><span class="no">${i+1}</span><div><a class="event-title" href="#event/${day}/${i}"><b>${e(event.title)}</b></a><p>${e(event.summary)}</p><small>${e(event.category)} · ${event.source_count} 个来源</small><details><summary>${event.messages.length} 条原消息 ${icon('caret-down')}</summary><ul>${event.messages.map(r=>`<li>${row(r)}</li>`).join('')}</ul></details></div></article>`;
-        }).join('') || '<p class="empty">该分类暂无事件。</p>';
-        html += '<h2 class="sh">当天数据</h2>' + Object.entries(doc.stats.sources).map(([sid,count])=>`<a class="stat" href="#source/${e(sid)}?day=${day}">${e(sources.sources.find(s=>s.id===sid)?.name || sid)} · ${count} 条</a>`).join('');
-        html += `<a class="btn" href="#feed?day=${day}">看当天全部原始消息</a>`;
+        }).join('') : '';
+        html += summaries(events.filter(event=>event.source_count > 1), '热点') + summaries(events.filter(event=>event.source_count <= 1), '大事件');
+        if (!events.length) html += '<p class="empty">该分类暂无事件。</p>';
+        html += '<p class="foot">示例摘录按相同标题合并，可能不准确，请以原消息为准。</p>';
       } else if (parts[0] === 'message' || parts[0] === 'event') {
         let r, returnHash = /^#(feed|source|day)(\/|\?|$)/.test(query.get('from') || '') ? query.get('from') : '#feed';
         if (parts[0] === 'event') {
@@ -106,7 +111,7 @@ if (typeof document !== 'undefined') {
           const doc = await load(`history/${parts[1]}.json`);
           const event = doc.events[Number(parts[2])];
           if (!event) throw new Error('事件不存在');
-          r = {...event, source_name:`${event.source_count} 个来源`, time:doc.date, link:event.original_links[0], type:event.messages[0]?.type};
+          r = {...event.messages[0], ...event, source_name:event.messages[0]?.source_name || `${event.source_count} 个来源`, time:event.messages[0]?.time || doc.date, link:event.original_links[0]};
           returnHash = `#day/${doc.date}`;
         } else {
           r = sources.sources.flatMap(s=>s.messages).find(r=>r.id===parts[1]);
@@ -119,7 +124,7 @@ if (typeof document !== 'undefined') {
           }
         }
         if (!r) throw new Error('消息不存在');
-        html = back(returnHash,'返回列表') + `<article class="dt"><small>${e(r.source_name)} · ${e(r.time)}</small><h1>${e(r.title)}</h1><h2>摘要</h2><p>${e(r.summary)}</p>${original(r)}${r.image ? `<img src="${e(r.image)}" alt="">` : ''}<p class="foot">离线摘录示例，请以原文为准。</p></article>`;
+        html = back(returnHash,'返回列表') + `<article class="dt"><small>${e(r.source_name)} · ${e(r.time.slice(0,16).replace('T',' '))}</small><h1>${e(r.title)}</h1>${r.image ? `<img src="${e(r.image)}" alt="">` : ''}<h2>AI 摘要</h2><p>${e(r.summary)}</p>${original(r)}<p class="foot">${index.sample ? '示例摘录 · ' : ''}摘要可能不准确，请以原消息为准。</p></article>`;
       } else {
         let rows = live.messages;
         const day = query.get('day');
@@ -127,7 +132,7 @@ if (typeof document !== 'undefined') {
           rows = rows.filter(r=>r.day===day);
           if (index.days.includes(day)) rows = (await load(`history/${day}.json`)).messages.filter(r=>r.type==='telegram');
         }
-        html = heading('实时流', `<a href="#history" aria-label="历史回顾">${icon('calendar-dots')}</a><a href="#sources">${icon('broadcast')}<span>来源</span></a>`);
+        html = heading('资讯', `<a href="#history" aria-label="历史回顾">${icon('calendar-dots')}</a><a href="#sources" aria-label="来源">${icon('broadcast')}</a>`);
         html += `<p class="sub">${live.sample ? '示例数据 · ' : ''}${e(live.updated.slice(0,16).replace('T',' '))} 更新</p>` + controls(cat) + list(filter(rows,cat));
       }
       if (current !== generation) return;

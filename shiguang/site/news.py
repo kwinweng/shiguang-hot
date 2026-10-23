@@ -66,7 +66,7 @@ def publish(content, out):
 <button id="theme" aria-label="切换明暗模式">明暗</button></header><main class="pg" id="news" aria-live="polite">
 <p>正在加载消息…</p></main><noscript>请启用 JavaScript 查看实时流。
 <a href="archive/''' + content.today + '''.html">查看静态文字页</a></noscript>
-<nav class="news-nav" aria-label="主导航"><a href="#feed">实时流</a><a href="#history">历史回顾</a><a href="#sources">来源</a></nav>'''
+<nav class="news-nav" aria-label="主导航"><a href="today.html#today">今日</a><a href="index.html#feed">资讯</a><a href="columns.html">栏目</a><a href="favorites.html">收藏</a></nav>'''
     html += ''.join(f'<script src="{names[name]}"></script>' for name in ('news-icons.js', 'news.js'))
     for name in ('index.html', 'today.html'):
         (out / name).write_text(html + '</body></html>')

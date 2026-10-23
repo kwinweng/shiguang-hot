@@ -24,7 +24,7 @@ from shiguang.site.render import Page, Site
 
 TABS = ['today', 'hot', 'columns', 'favorites']
 FAVORITES = {'enabled': True, 'label': '收藏', 'path': 'favorites.html'}
-CORE = [('today', 'index.html', '今日', 'home'), ('hot', 'index.html#screens/look', '资讯', 'hot'),
+CORE = [('today', 'today.html', '今日', 'home'), ('hot', 'index.html#feed', '资讯', 'hot'),
         ('columns', 'columns.html', '栏目', 'all'), ('favorites', 'favorites.html', '收藏', 'bookmark')]
 DIGEST_ITEMS = 3   # cards per issue in a day's 各栏目 section; the rest is one tap away on the issue page
 EARLY = 6          # before this hour, today's page also shows yesterday
