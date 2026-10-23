@@ -17,6 +17,32 @@ from tools.write_build_info import write_info
 ROOT = Path(__file__).resolve().parent.parent
 
 
+class PersistenceEnvironmentTests(unittest.TestCase):
+    def test_publish_permission_is_scoped_to_main_push(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            git = base / 'git'
+            git.write_text('''#!/bin/sh
+printf '%s|%s\n' "$*" "${ALLOW_MAIN_PUSH-unset}" >> "$GIT_CALL_LOG"
+if [ "$1" = diff ]; then exit 1; fi
+''')
+            git.chmod(0o755)
+            env = dict(os.environ, PATH=str(base) + os.pathsep + os.environ['PATH'],
+                       GIT_CALL_LOG=str(base / 'calls'))
+            env.pop('ALLOW_MAIN_PUSH', None)
+            result = subprocess.run(
+                ['sh', '-c', '. "$1"; git push origin HEAD:refs/heads/other',
+                 'test', str(ROOT / 'tools/persist_action_data.sh')],
+                cwd=base, env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            calls = [line.rsplit('|', 1) for line in (base / 'calls').read_text().splitlines()]
+            self.assertEqual([args for args, value in calls if value == 'publish'],
+                             ['push origin HEAD:refs/heads/main'])
+            self.assertTrue(all(value == 'unset' for args, value in calls
+                                if args != 'push origin HEAD:refs/heads/main'))
+            self.assertEqual(calls[-1], ['push origin HEAD:refs/heads/other', 'unset'])
+
+
 class DatabasePersistenceTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()

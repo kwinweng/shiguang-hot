@@ -9,4 +9,4 @@ if git diff --cached --quiet -- tg.db; then
 fi
 git -c user.name=bot -c user.email=bot@users.noreply.github.com \
     commit --only -m "data $(date -u +%FT%H)" -- tg.db
-git push origin HEAD:refs/heads/main
+ALLOW_MAIN_PUSH=publish git push origin HEAD:refs/heads/main
