@@ -4,7 +4,9 @@ import hashlib
 import io
 import json
 import os
+import shlex
 import subprocess
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,6 +14,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from tools import dispatch_hourly
+from tools import box_scrape
 from tools.write_build_info import write_info
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -19,28 +22,12 @@ ROOT = Path(__file__).resolve().parent.parent
 
 class PersistenceEnvironmentTests(unittest.TestCase):
     def test_publish_permission_is_scoped_to_main_push(self):
-        with tempfile.TemporaryDirectory() as directory:
-            base = Path(directory)
-            git = base / 'git'
-            git.write_text('''#!/bin/sh
-printf '%s|%s\n' "$*" "${ALLOW_MAIN_PUSH-unset}" >> "$GIT_CALL_LOG"
-if [ "$1" = diff ]; then exit 1; fi
-''')
-            git.chmod(0o755)
-            env = dict(os.environ, PATH=str(base) + os.pathsep + os.environ['PATH'],
-                       GIT_CALL_LOG=str(base / 'calls'))
-            env.pop('ALLOW_MAIN_PUSH', None)
-            result = subprocess.run(
-                ['sh', '-c', '. "$1"; git push origin HEAD:refs/heads/other',
-                 'test', str(ROOT / 'tools/persist_action_data.sh')],
-                cwd=base, env=env, capture_output=True, text=True)
-            self.assertEqual(result.returncode, 0, result.stderr)
-            calls = [line.rsplit('|', 1) for line in (base / 'calls').read_text().splitlines()]
-            self.assertEqual([args for args, value in calls if value == 'publish'],
-                             ['push origin HEAD:refs/heads/main'])
-            self.assertTrue(all(value == 'unset' for args, value in calls
-                                if args != 'push origin HEAD:refs/heads/main'))
-            self.assertEqual(calls[-1], ['push origin HEAD:refs/heads/other', 'unset'])
+        script = (ROOT / 'tools/persist_action_data.sh').read_text()
+        lines = [line.strip() for line in script.splitlines() if 'ALLOW_MAIN_PUSH' in line]
+        self.assertEqual(len(lines), 2)
+        for line in lines:
+            self.assertIn('ALLOW_MAIN_PUSH=publish git push origin HEAD:refs/heads/main', line)
+            self.assertNotIn('export', line)
 
 
 class DatabasePersistenceTests(unittest.TestCase):
@@ -56,6 +43,7 @@ class DatabasePersistenceTests(unittest.TestCase):
         self.run_git(self.repo, 'config', 'core.hooksPath', '.git/hooks')
         self.run_git(self.repo, 'config', 'user.name', 'test')
         self.run_git(self.repo, 'config', 'user.email', 'test@local.invalid')
+        (self.repo / '.git/info/exclude').write_text('/site/\n')
         (self.repo / 'tg.db').write_bytes(b'original')
         (self.repo / 'public-feeds').mkdir()
         (self.repo / 'public-feeds/sample.json').write_text('{}')
@@ -76,30 +64,162 @@ class DatabasePersistenceTests(unittest.TestCase):
         self.assertEqual(self.persist().returncode, 0)
         self.assertEqual(self.run_git(self.repo, 'rev-parse', 'HEAD'), before)
 
-    def test_changed_database_is_pushed_without_unrelated_staged_files(self):
+    def test_unrelated_staged_files_prevent_reset(self):
         (self.repo / 'tg.db').write_bytes(b'new data')
         (self.repo / 'unrelated').write_text('do not publish')
         self.run_git(self.repo, 'add', 'unrelated')
-        self.assertEqual(self.persist().returncode, 0)
-        self.assertEqual(self.run_git(self.remote, 'show', 'main:tg.db'), 'new data')
+        self.assertNotEqual(self.persist().returncode, 0)
+        self.assertEqual(self.run_git(self.remote, 'show', 'main:tg.db'), 'original')
         self.assertNotIn('unrelated', self.run_git(self.remote, 'ls-tree', '--name-only', 'main'))
         self.assertEqual(self.run_git(self.repo, 'diff', '--cached', '--name-only'), 'unrelated')
 
-    def test_remote_advance_is_reported_without_force_pushing(self):
+    def other_writer(self):
         other = self.base / 'other'
         self.run_git(self.base, 'clone', str(self.remote), str(other))
         self.run_git(other, 'config', 'core.hooksPath', '.git/hooks')
         self.run_git(other, 'config', 'user.name', 'test')
         self.run_git(other, 'config', 'user.email', 'test@local.invalid')
+        return other
+
+    def test_remote_feed_advance_is_preserved(self):
+        other = self.other_writer()
         (other / 'public-feeds/sample.json').write_text('{"new":true}')
         self.run_git(other, 'commit', '-am', 'new feed')
         self.run_git(other, 'push', 'origin', 'main')
         remote_head = self.run_git(self.remote, 'rev-parse', 'main')
         (self.repo / 'tg.db').write_bytes(b'collected data')
         result = self.persist()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(self.run_git(self.remote, 'rev-parse', 'main'), remote_head)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.run_git(self.remote, 'rev-parse', 'main^'), remote_head)
+        self.assertEqual(self.run_git(self.remote, 'show', 'main:tg.db'), 'collected data')
+
+    def race_hook(self, db=False, twice=False):
+        other = self.other_writer()
+        # A local pre-push hook advances the bare remote before send-pack runs.
+        hook = self.repo / '.git/hooks/pre-push'
+        target = 'tg.db' if db else 'public-feeds/sample.json'
+        hook.write_text(f'''#!/bin/sh
+set -eu
+if [ -f .git/raced ] && [ "{int(twice)}" = 0 ]; then exit 0; fi
+touch .git/raced
+printf x >> '{other / target}'
+git -C '{other}' commit -am race >/dev/null
+git -C '{other}' push origin main >/dev/null
+''')
+        hook.chmod(0o755)
+        return other
+
+    def test_concurrent_feed_push_retries_once_with_linear_history(self):
+        self.race_hook()
+        (self.repo / 'tg.db').write_bytes(b'collected data')
+        result = self.persist()
+        self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('rejected', result.stderr)
+        self.assertEqual(self.run_git(self.remote, 'rev-list', '--count', 'main'), '3')
+        self.assertEqual(self.run_git(self.remote, 'rev-list', '--merges', 'main'), '')
+        self.assertEqual(self.run_git(self.remote, 'show', 'main:public-feeds/sample.json'), '{}x')
+        self.assertEqual(self.run_git(self.remote, 'show', 'main:tg.db'), 'collected data')
+
+    def test_both_push_attempts_scope_publish_permission_at_runtime(self):
+        import shutil
+        real_git = shutil.which('git')
+        self.race_hook()
+        (self.repo / 'tg.db').write_bytes(b'collected data')
+        commands = self.base / 'commands'
+        commands.mkdir()
+        calls = self.base / 'calls'
+        wrapper = commands / 'git'
+        # Ignore the concurrent writer's explicit -C calls inside the test hook.
+        wrapper.write_text(f'''#!/bin/sh
+if [ "$1" != -C ]; then
+    printf '%s|%s\\n' "$*" "${{ALLOW_MAIN_PUSH-unset}}" >> {shlex.quote(str(calls))}
+fi
+exec {shlex.quote(real_git)} "$@"
+''')
+        wrapper.chmod(0o755)
+        env = dict(os.environ, PATH=str(commands) + os.pathsep + os.environ['PATH'])
+        env.pop('ALLOW_MAIN_PUSH', None)
+        result = subprocess.run(
+            ['sh', '-c', '. "$1"; git status --short', 'test', str(ROOT / 'tools/persist_action_data.sh')],
+            cwd=self.repo, env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        recorded = [line.rsplit('|', 1) for line in calls.read_text().splitlines()]
+        pushes = [args for args, value in recorded if value == 'publish']
+        self.assertEqual(pushes, ['push origin HEAD:refs/heads/main'] * 2)
+        self.assertTrue(all(value == 'unset' for args, value in recorded
+                            if args != 'push origin HEAD:refs/heads/main'))
+        self.assertEqual(recorded[-1], ['status --short', 'unset'])
+
+    def test_second_rejection_stops_without_force(self):
+        self.race_hook(twice=True)
+        (self.repo / 'tg.db').write_bytes(b'collected data')
+        self.assertNotEqual(self.persist().returncode, 0)
+        self.assertEqual(self.run_git(self.remote, 'show', 'main:tg.db'), 'original')
+        self.assertEqual(self.run_git(self.remote, 'rev-list', '--count', 'main'), '3')
+        self.assert_backup()
+
+    def assert_backup(self):
+        backups = list((self.repo / '.git').glob('persist-db.*/tg.db'))
+        self.assertEqual(len(backups), 1)
+        self.assertEqual(backups[0].read_bytes(), b'collected data')
+
+    def test_remote_db_writer_aborts_and_keeps_backup(self):
+        self.race_hook(db=True)
+        (self.repo / 'tg.db').write_bytes(b'collected data')
+        result = self.persist()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Remote changed tg.db', result.stderr)
+        self.assertEqual(self.run_git(self.remote, 'show', 'main:tg.db'), 'originalx')
+        self.assert_backup()
+
+    def test_remote_sqlite_change_before_fetch_keeps_binary_backup(self):
+        (self.repo / 'tg.db').unlink()
+        with contextlib.closing(sqlite3.connect(self.repo / 'tg.db')) as db, db:
+            db.execute('create table sample(value text)')
+        self.run_git(self.repo, 'commit', '-am', 'sqlite seed')
+        self.run_git(self.repo, 'push', 'origin', 'main')
+        other = self.other_writer()
+        with contextlib.closing(sqlite3.connect(other / 'tg.db')) as db, db:
+            db.execute("insert into sample values ('remote')")
+        self.run_git(other, 'commit', '-am', 'remote database')
+        self.run_git(other, 'push', 'origin', 'main')
+        remote_head = self.run_git(self.remote, 'rev-parse', 'main')
+        with contextlib.closing(sqlite3.connect(self.repo / 'tg.db')) as db, db:
+            db.execute("insert into sample values ('local')")
+        snapshot = (self.repo / 'tg.db').read_bytes()
+        result = self.persist()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Remote changed tg.db', result.stderr)
+        backups = list((self.repo / '.git').glob('persist-db.*/tg.db'))
+        self.assertEqual(len(backups), 1)
+        self.assertEqual(backups[0].read_bytes(), snapshot)
+        self.assertEqual(self.run_git(self.remote, 'rev-parse', 'main'), remote_head)
+
+    def test_initial_sync_recovers_data_commit_with_backup_branch(self):
+        other = self.other_writer()
+        (other / 'public-feeds/sample.json').write_text('new feed')
+        self.run_git(other, 'commit', '-am', 'feed')
+        self.run_git(other, 'push', 'origin', 'main')
+        (self.repo / 'tg.db').write_bytes(b'leftover')
+        self.run_git(self.repo, 'commit', '-am', 'leftover data')
+        old = self.run_git(self.repo, 'rev-parse', 'HEAD')
+        with patch.object(box_scrape, 'run_pipeline', side_effect=RuntimeError('stop before scrape')):
+            with self.assertRaisesRegex(RuntimeError, 'stop before scrape'):
+                box_scrape.execute(SimpleNamespace(checkout=self.repo, test_dir=None))
+        self.assertEqual(self.run_git(self.repo, 'rev-parse', f'backup/{old}'), old)
+        self.assertEqual(self.run_git(self.repo, 'show', f'backup/{old}:tg.db'), 'leftover')
+        self.assertEqual(self.run_git(self.repo, 'rev-parse', 'HEAD'),
+                         self.run_git(self.remote, 'rev-parse', 'main'))
+
+    def test_initial_sync_refuses_unpushed_non_db_commit(self):
+        (self.repo / 'public-feeds/sample.json').write_text('local feed')
+        self.run_git(self.repo, 'commit', '-am', 'local feed')
+        old = self.run_git(self.repo, 'rev-parse', 'HEAD')
+        with patch.object(box_scrape, 'run_pipeline') as pipeline:
+            with self.assertRaisesRegex(RuntimeError, 'outside tg.db'):
+                box_scrape.execute(SimpleNamespace(checkout=self.repo, test_dir=None))
+        pipeline.assert_not_called()
+        self.assertEqual(self.run_git(self.repo, 'rev-parse', 'HEAD'), old)
 
     def test_commit_hook_failure_is_not_ignored(self):
         hook = self.repo / '.git/hooks/pre-commit'

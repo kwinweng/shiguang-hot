@@ -88,10 +88,26 @@ def execute(args):
         return subprocess.check_output(['git', *values], cwd=root, text=True).strip()
     if git('branch', '--show-current') != 'main':
         raise RuntimeError('normal mode requires main')
-    if git('status', '--porcelain', '--untracked-files=no'):
-        raise RuntimeError('normal mode requires clean tracked files; preserve and resolve pending data first')
+    if git('status', '--porcelain', '--untracked-files=normal'):
+        raise RuntimeError('normal mode requires a clean worktree; preserve and resolve pending data first')
     subprocess.run(['git', 'fetch', 'origin', 'main'], cwd=root, check=True)
-    subprocess.run(['git', 'merge', '--ff-only', 'origin/main'], cwd=root, check=True)
+    local_commits = git('rev-list', 'origin/main..HEAD')
+    if local_commits:
+        paths = set(git('log', '--format=', '--name-only', 'origin/main..HEAD').splitlines()) - {''}
+        if paths != {'tg.db'}:
+            raise RuntimeError('unpushed commits change files outside tg.db; refusing reset; preserve and resolve manually')
+        sha = git('rev-parse', 'HEAD')
+        backup = f'backup/{sha}'
+        # An existing backup is acceptable only if it preserves this exact commit.
+        if git('branch', '--list', backup):
+            if git('rev-parse', backup) != sha:
+                raise RuntimeError(f'{backup} already exists at another commit; refusing reset')
+        else:
+            subprocess.run(['git', 'branch', backup, sha], cwd=root, check=True)
+        print(f'Preserved unpushed database commits in {backup}; resetting to origin/main', flush=True)
+        subprocess.run(['git', 'reset', '--hard', 'origin/main'], cwd=root, check=True)
+    else:
+        subprocess.run(['git', 'merge', '--ff-only', 'origin/main'], cwd=root, check=True)
     run_pipeline(root)
     subprocess.run(['sh', 'tools/persist_action_data.sh'], cwd=root, check=True)
     try:

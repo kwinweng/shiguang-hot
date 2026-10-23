@@ -6,7 +6,9 @@
 ## 新数据流与边界
 
 Box 每小时 :07/:37 运行 pipeline（Telegram、RSS/YouTube 及既有 trial 采集），公开模式构建通过后，仅提交 tg.db 并普通推送 main。
-复用 tools/persist_action_data.sh：无变化不提交；提交失败或推送被拒绝即失败，不强推、不自动 rebase。
+复用 tools/persist_action_data.sh：无变化不提交；先备份采集库、fetch，在无其他工作区改动时 reset 到 origin/main，再将 tg.db 单独提交。
+并发非数据库提交导致推送拒绝时，在最新 origin/main 上重建数据提交并仅重试一次；再次失败即非零退出，不强推、不 merge/rebase 数据库。
+远端自采集基线以来修改过 tg.db 时停止覆盖，日志给出 .git/persist-db.*/tg.db 备份路径，由运维处理；其他持久化失败也保留备份。
 主机 push hook 要求 ALLOW_MAIN_PUSH=publish；仅 tools/persist_action_data.sh 为该次 main 推送设置此变量，不 export，也不在 bot routine 中设置。
 数据持久化成功后，runner 在同一锁和日志中更新 build-info.json，调用 tools/publish_pages.sh --already-built。
 发布失败会明确记录 Pages publish failed，但不改变采集/持久化成功的退出状态，也不撤销数据提交。
@@ -14,7 +16,8 @@ Actions 仅保留 workflow_dispatch 手动测试，contents: read；无构建、
 公开 feed 推送由下一轮 bot routine 发布。取消既有 :11 外部 dispatch 的部署调用；保留内网 sync.sh。
 
 使用专用公开 checkout 和专用用户，禁止复用含私有数据的内网 tg.db。正常模式要求 main 分支、受跟踪文件干净。
-每轮先 fetch origin main，再 merge --ff-only；存在分叉即停止，运维先保留本地数据库和提交再处理。
+每轮先 fetch origin main，再 merge --ff-only；若有未推送提交且这些提交仅修改 tg.db，先建 backup/<完整 SHA> 分支，再 reset 到 origin/main。
+备份保留旧数据库供运维恢复；本轮从远端库重新采集。未推送提交涉及其他文件时明确报错并停止，不丢弃提交。
 flock 覆盖同步、采集、提交和推送；同 checkout 的第二轮直接跳过。不同 checkout 不共享锁，必须只启用一个生产 bot routine。
 既有数据库自然小时配额与失败退避保持不变，:37 可能记录 hour_used；两次调度不保证两次实际抓取。
 
@@ -101,7 +104,7 @@ flock 覆盖同步、采集、提交和推送；同 checkout 的第二轮直接�
   将该版本 tg.db 恢复为新的工作区内容，仅提交 tg.db 并普通推送；也可对仅修改 tg.db 的坏提交执行 git revert。
   不重置远端历史，不回退 public-feeds。恢复 PR A 工作流时，该新数据提交会触发 Pages；旧工作流则手动 dispatch 重建。
   数据恢复也恢复配额/退避状态；核验库完整性和公开内容，再恢复唯一采集调度。
-- **推送拒绝或中断**：保留当前 tg.db 和本地 data 提交，查看 main 分叉原因。不要自动丢弃、强推或 rebase 数据。
+- **推送拒绝或中断**：查看日志中的数据库备份路径及 backup/<SHA> 分支，确认是否存在另一个数据库写入者；不要强推或 rebase 数据。
   未提交数据会使下一轮因工作区不干净而停止，必须由运维备份后解决；重新运行成功才恢复唯一 bot routine。
 
 本 PR 只准备代码、示例和本地测试；不创建 bot routine、不读取密钥、不真实采集、不向远端推送。
