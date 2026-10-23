@@ -45,17 +45,6 @@
   if (!host.document) return;
   const document = host.document;
   const shell = document.querySelector('#news-history');
-  document.addEventListener('click', event => {
-    const link = event.target.closest('a[href]');
-    if (!link || shell) return;
-    const url = new URL(link.href);
-    if (url.hash !== '#screens/look') return;
-    try {
-      const saved = sessionStorage.getItem(`news-return-${document.body.dataset.bookmarkScope}`);
-      const url = saved && JSON.parse(saved).url;
-      if (url && new URL(url).origin === location.origin) link.href = url;
-    } catch { /* Storage may be unavailable; the normal navigation link remains usable. */ }
-  });
   if (!shell) return;
   const $ = id => document.getElementById(id);
   const list = $('news-list'), status = $('news-status'), capsule = $('news-capsule');
