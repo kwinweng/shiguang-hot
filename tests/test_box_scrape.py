@@ -23,7 +23,7 @@ class BoxScrapeTests(unittest.TestCase):
         self.checkout = self.base / 'checkout'
         self.checkout.mkdir()
         (self.checkout / 'pipeline.py').write_text('# fixture')
-        with sqlite3.connect(self.checkout / 'tg.db') as db:
+        with contextlib.closing(sqlite3.connect(self.checkout / 'tg.db')) as db, db:
             db.execute('create table fixture(value text)')
             db.execute("insert into fixture values ('original')")
 
@@ -55,7 +55,7 @@ class BoxScrapeTests(unittest.TestCase):
             self.assertEqual(root, target)
             self.assertEqual(limit, 2)
             self.assertFalse((root / '.env').exists())
-            with sqlite3.connect(root / 'tg.db') as db:
+            with contextlib.closing(sqlite3.connect(root / 'tg.db')) as db, db:
                 db.execute("update fixture set value='isolated'")
             (root / 'site').mkdir()
         with patch.object(box_scrape, 'run_pipeline', side_effect=fake_pipeline), \
@@ -65,7 +65,7 @@ class BoxScrapeTests(unittest.TestCase):
         run.assert_not_called()
         git.assert_not_called()
         self.assertTrue((target / 'site').is_dir())
-        with sqlite3.connect(self.checkout / 'tg.db') as db:
+        with contextlib.closing(sqlite3.connect(self.checkout / 'tg.db')) as db, db:
             self.assertEqual(db.execute('select value from fixture').fetchone()[0], 'original')
 
     def test_pipeline_forces_public_fetch_environment(self):
@@ -93,6 +93,32 @@ class BoxScrapeTests(unittest.TestCase):
                                 env=dict(os.environ, BOX_PYTHON=sys.executable), capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('dry-run: no execution', result.stdout)
+
+    def test_publish_failure_preserves_persistence_success(self):
+        calls = []
+        def run(command, **kwargs):
+            calls.append(command)
+            if 'tools/publish_pages.sh' in command:
+                raise subprocess.CalledProcessError(1, command)
+        with patch.object(box_scrape.subprocess, 'check_output', side_effect=['main', '']), \
+             patch.object(box_scrape.subprocess, 'run', side_effect=run), \
+             patch.object(box_scrape, 'run_pipeline'), \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            box_scrape.execute(self.args())
+        self.assertIn('data persistence succeeded', output.getvalue())
+        self.assertEqual(calls[-3][1], 'tools/persist_action_data.sh')
+        self.assertEqual(calls[-1][1:], ['tools/publish_pages.sh', '--already-built'])
+
+    def test_persistence_failure_never_publishes(self):
+        def run(command, **kwargs):
+            if 'tools/persist_action_data.sh' in command:
+                raise subprocess.CalledProcessError(1, command)
+        with patch.object(box_scrape.subprocess, 'check_output', side_effect=['main', '']), \
+             patch.object(box_scrape.subprocess, 'run', side_effect=run) as runner, \
+             patch.object(box_scrape, 'run_pipeline'):
+            with self.assertRaises(subprocess.CalledProcessError):
+                box_scrape.execute(self.args())
+        self.assertEqual(len(runner.call_args_list), 3)
 
     def test_busy_lock_skips_execution(self):
         with open(self.checkout / '.box-scrape.lock', 'a') as lock:
@@ -158,13 +184,13 @@ db.close()
                          ['https://t.me/s/first', 'https://example.com/feed'])
         self.assertEqual([(s['source'], s['requests'], s['result'], s['new'], s['error_code'])
                           for s in statuses], [('a-first', 1, 'ok', 1, None), ('c-feed', 1, 'ok', 1, None)])
-        with sqlite3.connect(target / 'tg.db') as db:
+        with contextlib.closing(sqlite3.connect(target / 'tg.db')) as db, db:
             self.assertEqual(db.execute('select ch,id,text,images from msg').fetchall(),
                              [('first', 101, 'Fresh message', '[]')])
             self.assertEqual(db.execute('select source,id,images from entry').fetchall(),
                              [('c-feed', 'fresh', '[]')])
         self.assertFalse(list((target / 'media').rglob('*.webp')))
-        with sqlite3.connect(self.checkout / 'tg.db') as db:
+        with contextlib.closing(sqlite3.connect(self.checkout / 'tg.db')) as db, db:
             self.assertIsNone(db.execute("select name from sqlite_master where name='msg'").fetchone())
 
 

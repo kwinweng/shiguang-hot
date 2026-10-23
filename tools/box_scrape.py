@@ -8,7 +8,7 @@ import sqlite3
 import subprocess
 import sys
 from datetime import datetime
-from contextlib import redirect_stdout, redirect_stderr
+from contextlib import closing, redirect_stdout, redirect_stderr
 
 
 def positive(value):
@@ -49,8 +49,8 @@ def isolated_copy(checkout, target):
             shutil.copytree(source, target / name, ignore=shutil.ignore_patterns('__pycache__'))
         elif source.is_file():
             shutil.copy2(source, target / name)
-    with sqlite3.connect(f'file:{checkout / "tg.db"}?mode=ro', uri=True) as source:
-        with sqlite3.connect(target / 'tg.db') as destination:
+    with closing(sqlite3.connect(f'file:{checkout / "tg.db"}?mode=ro', uri=True)) as source:
+        with closing(sqlite3.connect(target / 'tg.db')) as destination:
             source.backup(destination)
 
 
@@ -94,6 +94,11 @@ def execute(args):
     subprocess.run(['git', 'merge', '--ff-only', 'origin/main'], cwd=root, check=True)
     run_pipeline(root)
     subprocess.run(['sh', 'tools/persist_action_data.sh'], cwd=root, check=True)
+    try:
+        subprocess.run([sys.executable, 'tools/write_build_info.py'], cwd=root, check=True)
+        subprocess.run(['sh', 'tools/publish_pages.sh', '--already-built'], cwd=root, check=True)
+    except Exception as error:
+        print(f'Pages publish failed (data persistence succeeded): {error}', flush=True)
 
 
 def main(argv=None):

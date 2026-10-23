@@ -1,6 +1,6 @@
 # Box 采集切换（PR A / step 0）
 
-公开仓库的 Actions 分钟免费。本次迁移是为把采集调度交给自有 Linux 主机；Pages 仍由 Actions 构建部署。
+公开仓库的 Actions 分钟免费。本次迁移把采集、构建与发布交给自有 Linux 主机；Pages 改从 gh-pages 根目录部署。
 本文件取代 SCHEDULE-OPERATIONS.md 中旧的 schedule、dispatch 采集说明；内网同步保持原流程。
 
 ## 新数据流与边界
@@ -8,9 +8,10 @@
 Box 每小时 :07/:37 运行 pipeline（Telegram、RSS/YouTube 及既有 trial 采集），公开模式构建通过后，仅提交 tg.db 并普通推送 main。
 复用 tools/persist_action_data.sh：无变化不提交；提交失败或推送被拒绝即失败，不强推、不自动 rebase。
 主机 push hook 要求 ALLOW_MAIN_PUSH=publish；仅 tools/persist_action_data.sh 为该次 main 推送设置此变量，不 export，也不在 bot routine 中设置。
-Actions 仅在 main 的 tg.db、public-feeds/** 推送或 workflow_dispatch 时运行，NO_FETCH=1 始终生效。
-Actions 不提交数据库，contents 权限降为 read，因此没有推送循环。dispatch_id 继续兼容旧调用方，但手动触发只部署。
-公开 feed 推送仍可独立触发部署。既有 :11 外部 dispatch 可取消其中重复部署调用；保留内网 sync.sh。
+数据持久化成功后，runner 在同一锁和日志中更新 build-info.json，调用 tools/publish_pages.sh --already-built。
+发布失败会明确记录 Pages publish failed，但不改变采集/持久化成功的退出状态，也不撤销数据提交。
+Actions 仅保留 workflow_dispatch 手动测试，contents: read；无构建、部署或 Pages 写权限。
+公开 feed 推送由下一轮 bot routine 发布。取消既有 :11 外部 dispatch 的部署调用；保留内网 sync.sh。
 
 使用专用公开 checkout 和专用用户，禁止复用含私有数据的内网 tg.db。正常模式要求 main 分支、受跟踪文件干净。
 每轮先 fetch origin main，再 merge --ff-only；存在分叉即停止，运维先保留本地数据库和提交再处理。
@@ -32,7 +33,7 @@ flock 覆盖同步、采集、提交和推送；同 checkout 的第二轮直接�
 
    checkout 和日志目录须归 bot routine 运行用户所有。BOX_PYTHON 指定绝对解释器；脚本不加载 .env。
    运维通过既有安全方式配置 SSH deploy key（可写）或具有 Contents 写权限的 PAT，不把凭证放命令或日志。
-   不能使用 GITHUB_TOKEN 作为 Box 推送凭证：其推送通常不会触发后续 Actions。
+   Box 使用独立凭证推送 main 和 gh-pages；脚本不读取或打印凭证。
 3. 先检查参数（无采集、无 Git 操作）：
 
    ```sh
@@ -58,8 +59,10 @@ flock 覆盖同步、采集、提交和推送；同 checkout 的第二轮直接�
 5. 合并本 PR 的工作流变更，使旧 Actions schedule 停止；等待原采集运行结束，避免两个写库方重叠。
    记录这一短暂采集空窗，随后运行 Box 正常模式一次（不带 test-dir、limit、dry-run）。
 6. 检查退出码和时间戳日志：应有 start、fetch_status、built site 和 success。
-   核验新提交只包含 tg.db。无变化时不产生提交；可用 workflow_dispatch 单独验证部署。
-7. 在 GitHub Actions 核验本次 tg.db push 触发 hourly，Build 步骤 NO_FETCH=1，Pages 部署成功。
+   核验 main 新提交只包含 tg.db。数据库无变化时不产生数据提交，但仍发布站点。
+7. **Pages source switch**：首次 gh-pages 发布成功后，在 Settings → Pages → Build and deployment 选择 Deploy from a branch，分支 gh-pages，目录 / (root)。
+   当前配置为 build_type=workflow、cname=null；本 PR 不自动修改远端设置。站点地址保持 https://kwinweng.github.io/shiguang-hot/。
+   在 Pages 核验分支部署成功；不要在 gh-pages 首次发布前切换来源。
    核对线上 build-info.json 的数据库 SHA-256、public_feeds_tree 和 source_commit 与构建输入一致。
    浏览今日、热点、栏目；确认更新时间与公开内容。工作流绿色不替代页面验收。
 8. 创建唯一的定时 bot routine，调度时区设为 Asia/Shanghai，每小时 :07 和 :37 各运行一次 tools/box_scrape.sh：
@@ -72,9 +75,22 @@ flock 覆盖同步、采集、提交和推送；同 checkout 的第二轮直接�
    tools/box_cron.example 保留，仅供有 cron 的主机参考；此 Box 不使用该文件。
 9. 连续观察 24 小时：bot routine 执行记录、逐轮日志、最后成功时间、请求状态、数据库提交、Pages 最新部署。
    busy 表示上一轮仍运行；长期 busy、blocked、持续错误或 Pages 落后须调查。日志使用日期加 PID；配置 logrotate/保留期并监控磁盘。
-   Box media 不会随 tg.db 提交，Actions 只能使用现有 cache；缓存缺图时页面会缺少本地配图，图片同步不在 step 0 范围。
+   Box media 不随 tg.db 提交；站点内引用的公开配图随 site/ 发布，不依赖 Actions cache。
+
+## 发布脚本
+
+`BOX_PYTHON` 与 box_scrape.sh 一致，默认 python3。独立执行 `sh tools/publish_pages.sh` 会运行
+`SITE_MODE=public MAIL_DIGEST=0 TZ=Asia/Shanghai python pipeline.py`，成功后运行 `python tools/write_build_info.py`。
+`--already-built` 跳过两步构建，要求现有 site/index.html 和 site/build-info.json；runner 在数据持久化后刷新元数据再使用该选项。
+`--dry-run` 仍构建并在临时 worktree 准备单个无父提交，打印文件数和 SHA，但不推送；可与 --already-built 组合。
+脚本拒绝缺失入口、元数据或包含任意 .env* 的 site/；添加 .nojekyll，默认移除 CNAME，仅 PAGES_CNAME 非空时生成。
+当前无自定义域名，不设置 PAGES_CNAME。发布用 `git push --force origin <commit>:refs/heads/gh-pages`，不设置 ALLOW_MAIN_PUSH。
+临时 worktree 通过 trap 清理；主 checkout 的 index、main 均不改变。gh-pages 每轮仅保留一个提交。
+发布失败可在排查后用 --already-built 重试；持久化失败则不会尝试发布。
 
 ## 故障与回滚
+
+- **Pages 来源回滚**：暂停 bot routine，等待当前运行结束；Settings → Pages 将来源切回 GitHub Actions，再普通 revert 本次 PR，恢复先前 Actions 部署工作流。保留数据库和日志，不强推 main。
 
 - **配置回滚**：先暂停/删除 bot routine，等待当前 Box 运行结束，再恢复旧 hourly.yml（schedule :07/:37、dispatch 采集和数据库持久化）。
   用普通提交发布恢复，不强推。旧工作流的 tg.db push 不触发采集，可恢复历史文件整体内容。
