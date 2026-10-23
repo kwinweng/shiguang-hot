@@ -162,7 +162,7 @@ def prepare(c, site, out):
 def shell(page, day):
     E = render.E
     return (f'<section id="news-history" data-day="{E(day)}" data-root="{E(page.rel)}">'
-            '<nav aria-label="资讯视图"><a href="#screens/look">速览</a> · '
+            f'<nav aria-label="资讯视图"><a href="{E(page.url("index.html#feed"))}">实时流</a> · '
             f'<a href="{E(page.url("hot.html"))}">热点</a></nav>'
             '<div class="news-controls"><button type="button" id="news-source-toggle" aria-label="筛选来源" '
             f'aria-expanded="false">{icon("sliders-horizontal")}</button><select id="news-source" aria-label="来源" hidden></select>'

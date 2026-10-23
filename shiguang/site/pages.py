@@ -11,7 +11,7 @@
 Merged pages keep their addresses as redirects (all.html, archive/index.html, the hot source's
 index). Markup lives in render.py; build.py stages and swaps the output.
 """
-import re, shutil
+import os, re, shutil
 from datetime import date, datetime, time, timedelta
 from shiguang.config import PLATFORMS, ROOT, WEB, config, private_mode
 from shiguang.site import history
@@ -24,7 +24,7 @@ from shiguang.site.render import Page, Site
 
 TABS = ['today', 'hot', 'columns', 'favorites']
 FAVORITES = {'enabled': True, 'label': '收藏', 'path': 'favorites.html'}
-CORE = [('today', 'index.html', '今日', 'home'), ('hot', 'index.html#screens/look', '资讯', 'hot'),
+CORE = [('today', 'today.html', '今日', 'home'), ('hot', 'index.html#feed', '资讯', 'hot'),
         ('columns', 'columns.html', '栏目', 'all'), ('favorites', 'favorites.html', '收藏', 'bookmark')]
 DIGEST_ITEMS = 3   # cards per issue in a day's 各栏目 section; the rest is one tap away on the issue page
 EARLY = 6          # before this hour, today's page also shows yesterday
@@ -118,9 +118,10 @@ class Content:
                         for r in rows if r['ch'] in history.RETIRED and r['day'] < self.today]
         # Inbox issues, newest first; images are recompressed into <id>/img/.
         self.issues = {}
+        sample = os.getenv('SAMPLE_DATA') == '1' or bool(rows) and all(r['title'].startswith('[示例]') for r in rows)
         for s in sorted(self.sources.values(), key=lambda s: (s['order'], s['id'])):
             if s['type'] != 'inbox': continue
-            loaded = load_issues(s, private)
+            loaded = [] if sample else load_issues(s, private)
             # Preserve adapter-owned media and other files; regenerate only pages.
             for page in (out / s['id']).glob('*.html'): page.unlink()
             if loaded:
@@ -212,6 +213,9 @@ def write_pages(rows, hot, now, out, assets, entries=(), inbox_only=False):
         w.redirect('all.html', 'index.html', '今日')
         w.redirect('archive/index.html', 'index.html', '今日')
         (out / '.nojekyll').write_text('')
+
+        from shiguang.site.news import publish
+        publish(c, out)
 
     print(f'built {len(c.telegram)} TG, {len(c.feed)} feed, {len(c.issues)} inbox sources -> {out}')
     return cfg
