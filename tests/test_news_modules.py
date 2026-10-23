@@ -56,11 +56,13 @@ class NewsModuleTests(unittest.TestCase):
         self.assertFalse(messages([self.item()], self.sources)[0]['hot'])
 
     def test_stats_stale_threshold_and_week(self):
+        self.sources['a']['channel'] = 'public_channel'
         rows = messages([self.item(1,ts='2026-10-23T11:00:00+08:00'),
                          self.item(2,ts='2026-10-17T00:00:00+08:00',url='https://t.me/test/2'),
                          self.item(3,ts='2026-10-16T23:59:59+08:00',url='https://t.me/test/3'),
                          self.item(4,source_id='b',ts='2026-10-22T12:00:00+08:00',url='https://t.me/test/4')],self.sources)
         stats = source_stats(rows,self.sources,self.now)
+        self.assertEqual(stats[0]['url'], 'https://t.me/public_channel')
         self.assertEqual((stats[0]['today_count'],stats[0]['seven_day_count'],stats[0]['status']),(1,2,'ok'))
         self.assertEqual(stats[1]['status'],'ok')
         self.assertEqual(source_stats(rows,self.sources,self.now,23)[1]['status'],'stale')
@@ -90,6 +92,11 @@ class NewsModuleTests(unittest.TestCase):
         self.assertEqual(event['source_count'],2)
         self.assertEqual(len(event['original_links']),2)
 
+    def test_daily_summary_keeps_complete_headlines(self):
+        title = '完整标题' * 20
+        rows = messages([self.item(title=title)], self.sources)
+        self.assertEqual(MockProvider().summarize('2026-10-22', rows)['summary'], title)
+
     def test_blocks_only_daily_reaches_today_and_history(self):
         source = dict(id='daily', name='日报', visibility='public', type='inbox', order=0)
         issues = [dict(date=day, blocks=[dict(type='oneliner', items=['日报 ' + day])])
@@ -108,6 +115,24 @@ class NewsModuleTests(unittest.TestCase):
             self.assertEqual(doc['stats']['sources'], {'daily': 1})
             self.assertEqual(doc['messages'][0]['title'], '日报 2026-10-22')
             self.assertEqual(doc['summary'], '日报 2026-10-22')
+
+    def test_cli_backfill_includes_blocks_only_daily(self):
+        from tools import daily_summary
+        source = dict(id='daily', name='日报', visibility='public', type='inbox', order=0)
+        issue = dict(date='2026-10-22', blocks=[dict(type='oneliner', items=['纯 blocks 日报'])])
+        content = SimpleNamespace(sources={'daily': source}, stream=[], issues={'daily': [issue]},
+                                  tagged=lambda items, source: items)
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.dict(os.environ), \
+                patch.object(daily_summary, 'Content', return_value=content), \
+                patch.object(daily_summary, 'config', return_value={}), \
+                patch('pipeline.collect', return_value=([], [])), \
+                patch('socket.socket', side_effect=AssertionError('network forbidden')):
+            daily_summary.main(['--backfill-from', '2026-10-22', '--output', folder])
+            doc = json.loads((Path(folder)/'2026-10-22.json').read_text())
+            self.assertEqual(doc['stats']['sources'], {'daily': 1})
+            self.assertEqual(doc['messages'][0]['title'], '纯 blocks 日报')
+            self.assertEqual(doc['summary'], '纯 blocks 日报')
 
     def test_offline_sample_build_and_immutable_snapshot(self):
         cfg = config()

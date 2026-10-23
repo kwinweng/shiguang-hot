@@ -57,7 +57,9 @@ def source_stats(rows, sources, now, stale_hours=24):
             continue
         own = [r for r in rows if r['source'] == source['id'] and datetime.fromisoformat(r['time']) <= now]
         last = own[0]['time'] if own else None
-        result.append(dict(id=source['id'], name=source['name'], type=source['type'],
+        channel = source.get('channel', '')
+        url = f'https://t.me/{channel}' if source['type'] == 'telegram' and re.fullmatch(r'[A-Za-z0-9_]+', channel) else ''
+        result.append(dict(id=source['id'], name=source['name'], type=source['type'], url=url,
                            today_count=sum(datetime.fromisoformat(r['time']) >= start for r in own),
                            seven_day_count=sum(datetime.fromisoformat(r['time']) >= week for r in own),
                            last_update=last, status='stale' if not last or
@@ -84,8 +86,13 @@ class MockProvider:
             events.append(dict(title=first['title'], summary=f'{excerpt}。本事件整理自当天 {len(group)} 条原消息，请结合原文核对。',
                                category=first['category'], source_count=len({r['source'] for r in group}),
                                original_links=[r['link'] for r in group if r['link']], messages=group))
+        headlines = []
+        for event in events:
+            if headlines and len('；'.join([*headlines, event['title']])) > 60:
+                break
+            headlines.append(event['title'])
         return dict(schema=1, date=day, provider=self.name, sample=True,
-                    summary='；'.join(e['title'] for e in events)[:60], events=events,
+                    summary='；'.join(headlines), events=events,
                     stats=dict(total=len(rows), sources=dict(Counter(r['source'] for r in rows)),
                                categories=dict(Counter(r['category'] for r in rows))), messages=rows)
 

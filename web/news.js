@@ -74,7 +74,9 @@ if (typeof document !== 'undefined') {
         const today = new Date(Date.parse(live.updated) + 8*3600000).toISOString().slice(0,10);
         const own = day && index.days.includes(day) ? (await load(`history/${day}.json`)).messages.filter(r=>r.source===source.id) : source.messages;
         const rows = own.filter(r => day ? r.day === day : scope === 'today' ? r.day === today : r.day >= floor);
-        html = back('#sources', '来源') + heading(source.name) + `<p class="sub">今天 ${source.today_count} 条 · 近7天 ${source.seven_day_count} 条</p><div class="scope"><a href="#source/${e(source.id)}?scope=today">今天</a><a href="#source/${e(source.id)}?scope=week">近7天</a></div>` + list(rows);
+        html = back('#sources', '来源') + heading(source.name)
+          + (source.type === 'telegram' && safe(source.url) ? `<a class="ext" href="${safe(source.url)}" target="_blank" rel="noopener noreferrer">在 Telegram 打开频道 ↗</a>` : '')
+          + `<p class="sub">今天 ${source.today_count} 条 · 近7天 ${source.seven_day_count} 条</p><div class="scope"><a aria-current="${!day && scope === 'today'}" href="#source/${e(source.id)}?scope=today">今天</a><a aria-current="${!day && scope !== 'today'}" href="#source/${e(source.id)}?scope=week">近7天</a></div>` + list(rows);
       } else if (parts[0] === 'history') {
         const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(parts[1] || '') ? parts[1] : (index.days.at(-1) || live.updated.slice(0,10)).slice(0,7);
         const [year, m] = month.split('-').map(Number);
@@ -83,10 +85,15 @@ if (typeof document !== 'undefined') {
         html += `<div class="mh"><a class="back" aria-label="上个月" href="#history/${shift(-1)}">${icon('caret-left')}</a><b>${year} 年 ${m} 月</b><a class="back" aria-label="下个月" href="#history/${shift(1)}">${icon('caret-right')}</a></div><div class="cal">`;
         html += '日一二三四五六'.split('').map(w=>`<i>${w}</i>`).join('');
         html += '<span></span>'.repeat(new Date(Date.UTC(year,m-1,1)).getUTCDay());
-        html += monthDays(month,index.days).map(d=>d.enabled ? `<a href="#day/${d.day}">${Number(d.day.slice(-2))}</a>` : `<span class="off" aria-disabled="true">${Number(d.day.slice(-2))}</span>`).join('') + '</div>';
+        const today = new Date(Date.parse(live.updated) + 8*3600000).toISOString().slice(0,10);
+        const selected = index.days.at(-1);
+        html += monthDays(month,index.days).map(d=>d.enabled ? `<a class="${d.day === selected ? 'sel' : ''}" href="#day/${d.day}">${Number(d.day.slice(-2))}</a>` : `<span class="off${d.day === today ? ' td' : ''}" aria-disabled="true">${Number(d.day.slice(-2))}</span>`).join('') + '</div>';
         html += '<p class="leg">灰色日期暂无总结。今天的总结明早 00:30 生成。</p>';
         const latest = index.days.at(-1);
-        if (latest) html += `<a class="btn" href="#day/${latest}">最近回顾 · ${latest}</a>`;
+        if (latest) {
+          const doc = await load(`history/${latest}.json`);
+          html += `<a class="peek" href="#day/${latest}"><div><small>${e(latest)} · ${doc.stats.total} 条</small><b>${e(doc.summary)}</b></div>${icon('caret-right')}</a>`;
+        }
       } else if (parts[0] === 'day') {
         const day = parts[1];
         if (!index.days.includes(day)) throw new Error('这一天暂无总结，明早 00:30 后再看。');
@@ -96,13 +103,13 @@ if (typeof document !== 'undefined') {
         const label = new Date(`${day}T12:00:00+08:00`).toLocaleDateString('zh-CN', {timeZone:'Asia/Shanghai', month:'long', day:'numeric', weekday:'short'});
         html = back(`#history/${day.slice(0,7)}`, '日历') + heading(label, nav(-1,'前一天','caret-left') + nav(1,'后一天','caret-right'), true);
         html += `<p class="sub">${doc.stats.total} 条消息 · ${Object.keys(doc.stats.sources).length} 个来源 · MOCK 样例总结</p>`;
-        html += `<section class="day-summary"><h2> ${doc.provider === 'mock' ? 'AI 摘要（样例）' : 'AI 摘要'}</h2><p>${e(doc.summary)}</p></section>` + controls(cat);
-        const events = filter(doc.events,cat);
+        html += `<section class="day-summary"><h2>${doc.provider === 'mock' ? 'AI 摘要（样例）' : 'AI 摘要'}</h2><p>${e(doc.summary)}</p></section>`;
+        const events = doc.events;
         const summaries = (members, title) => members.length ? `<h2 class="sh">${title}</h2>` + members.map(event => {
           const i = doc.events.indexOf(event);
           return `<article class="sum"><span class="no">${i+1}</span><div><a class="event-title" href="#event/${day}/${i}"><b>${e(event.title)}</b></a><p>${e(event.summary)}</p><small>${e(event.category)} · ${event.source_count} 个来源</small><details><summary>${event.messages.length} 条原消息 ${icon('caret-down')}</summary><ul>${event.messages.map(r=>`<li>${row(r)}</li>`).join('')}</ul></details></div></article>`;
         }).join('') : '';
-        html += summaries(events.filter(event=>event.source_count > 1), '热点') + summaries(events.filter(event=>event.source_count <= 1), '大事件');
+        html += summaries(events, '热点');
         if (!events.length) html += '<p class="empty">该分类暂无事件。</p>';
         html += '<h2 class="sh">当天来源</h2>' + Object.entries(doc.stats.sources).map(([sid, count]) => {
           const name = doc.messages.find(r=>r.source===sid)?.source_name || sid;

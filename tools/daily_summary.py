@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from shiguang.config import ROOT, config
-from shiguang.model import BEIJING
+from shiguang.model import BEIJING, home_candidates
 from shiguang.site.pages import Content
 from shiguang.site.news_data import daily_documents, messages, write_json
 
@@ -34,7 +34,8 @@ def main(argv=None):
         items = list(content.stream)
         for sid, issues in content.issues.items():
             for issue in issues:
-                items.extend(content.issue_cards(sid, issue))
+                source = content.sources[sid]
+                items.extend(content.tagged(home_candidates(issue, source), source))
         floor = args.backfill_from or (now.date() - timedelta(days=1)).isoformat()
         docs = daily_documents(messages(items, content.sources), now, floor)
         for day, document in docs.items():
