@@ -1,0 +1,149 @@
+{
+  "schema": "shiguang.feed/1",
+  "source": "github",
+  "date": "2026-10-23",
+  "title": "GitHub 热门早报",
+  "blocks": [
+    {
+      "type": "oneliner",
+      "items": [
+        "今日看点：给 Fire TV 去广告的 dumbtv、Rust 写的离线办公套件 ElyOffice 冒头，《旷野之息》原生重编译项目也在飙升。",
+        "领域榜·Python 命令行：终端表格神器 VisiData、命令输出转 JSON 的 jc 和直播流播放器 Streamlink。"
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "title": "新秀榜",
+      "items": [
+        {
+          "title": "humblemuzzu/dumbtv",
+          "body": "家里 Fire TV 广告多、菜单卡？dumbtv 用 ADB 从电脑帮你去掉赞助推荐和追踪，换上干净主页，还自带一键还原，想恢复随时回到原样。\n★ 1.3k · Java · 创建于 2026-10-18",
+          "link": "https://github.com/humblemuzzu/dumbtv",
+          "source": "GitHub",
+          "date": "2026-10-23",
+          "images": [
+            {
+              "file": "1533e447b1ef5a58560e990a.webp",
+              "alt": "humblemuzzu/dumbtv 预览图"
+            }
+          ]
+        },
+        {
+          "title": "ELY-Open-Source/ElyOffice",
+          "body": "一套 Rust 写的离线办公软件，文档、表格、演示、PDF 都有，还能管 Git 和 Markdown。文件只留在自己文件夹，不要账号不传云端。\n★ 872 · Rust · 创建于 2026-10-19",
+          "link": "https://github.com/ELY-Open-Source/ElyOffice",
+          "source": "GitHub",
+          "date": "2026-10-23",
+          "images": [
+            {
+              "file": "7a07db456e4ad539649775cd.webp",
+              "alt": "ELY-Open-Source/ElyOffice 预览图"
+            }
+          ]
+        },
+        {
+          "title": "tek-sys-hub/Rubix-lang",
+          "body": "编译器整份用 x86-64 汇编手写的语言，不要 libc 也不要 LLVM，能直接产出 Linux、Windows 原生程序，玩底层的人值得看看。\n★ 1.9k · Assembly · 创建于 2026-10-19",
+          "link": "https://github.com/tek-sys-hub/Rubix-lang",
+          "source": "GitHub",
+          "date": "2026-10-23",
+          "images": [
+            {
+              "file": "57425aa4e32702461bcec2c5.webp",
+              "alt": "tek-sys-hub/Rubix-lang 预览图"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "飙升榜",
+      "items": [
+        {
+          "title": "Revivedx/SavageWindRecomp",
+          "body": "把《旷野之息》静态重编译成原生 PC 程序的项目，初始台地已能流畅运行并带存档，README 坦白几乎全由 AI 写成，想尝鲜可帮忙测试。\n★ 560 · C · 创建于 2026-10-16",
+          "link": "https://github.com/Revivedx/SavageWindRecomp",
+          "source": "GitHub",
+          "date": "2026-10-23",
+          "images": [
+            {
+              "file": "5d99a5a65d10c3d8bc237241.webp",
+              "alt": "Revivedx/SavageWindRecomp 预览图"
+            }
+          ]
+        },
+        {
+          "title": "peach-mitao/peach",
+          "body": "给自己用的私人馆藏工具，把本地硬盘和 115、PikPak 等网盘合成一个封面墙，能补信息、搜字幕、追更新，整理先预览可撤回。\n★ 2.6k · Python · 创建于 2026-08-19",
+          "link": "https://github.com/peach-mitao/peach",
+          "source": "GitHub",
+          "date": "2026-10-23",
+          "images": [
+            {
+              "file": "6300b0a21346f3ac824b5210.webp",
+              "alt": "peach-mitao/peach 预览图"
+            }
+          ]
+        },
+        {
+          "title": "lemomo-ai/lemo-opuscar",
+          "body": "用代码而不是视频模型做短片的风格工具箱，内置几十种影片风格，每种都配一支成品片，装上技能就能让编码助手照你的故事拍一支。\n★ 5.6k · JavaScript · 创建于 2026-09-26",
+          "link": "https://github.com/lemomo-ai/lemo-opuscar",
+          "source": "GitHub",
+          "date": "2026-10-23",
+          "images": [
+            {
+              "file": "f63ced2b1e26414c550f26c5.webp",
+              "alt": "lemomo-ai/lemo-opuscar 预览图"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "领域榜·Python 命令行",
+      "items": [
+        {
+          "title": "saulpw/visidata",
+          "body": "在终端里飞速翻表格的小工具，TSV、CSV、Excel、JSON 都能直接打开，随手排序筛选改数据，一行 pip 就能用，处理数据很省事。\n★ 9.4k · Python · 创建于 2016-10-27",
+          "link": "https://github.com/saulpw/visidata",
+          "source": "GitHub",
+          "date": "2026-10-23",
+          "images": [
+            {
+              "file": "4fa7052a9722a6ed5bddd5f5.webp",
+              "alt": "saulpw/visidata 预览图"
+            }
+          ]
+        },
+        {
+          "title": "kellyjonbrazil/jc",
+          "body": "把各种命令行输出转成 JSON 的小工具，dig、ls 之类的结果直接交给 jq 处理，写脚本时解析文本特别顺手，也能当 Python 库调用。\n★ 8.7k · Python · 创建于 2019-10-15",
+          "link": "https://github.com/kellyjonbrazil/jc",
+          "source": "GitHub",
+          "date": "2026-10-23",
+          "images": [
+            {
+              "file": "37102ca72809ac356c2f11d1.webp",
+              "alt": "kellyjonbrazil/jc 预览图"
+            }
+          ]
+        },
+        {
+          "title": "streamlink/streamlink",
+          "body": "不想开着卡顿的直播网页？它把 Twitch、YouTube 等站点的流直接接到本地播放器看，插件式支持很多站点，命令行和库两种玩法。\n★ 11.9k · Python · 创建于 2016-09-16",
+          "link": "https://github.com/streamlink/streamlink",
+          "source": "GitHub",
+          "date": "2026-10-23",
+          "images": [
+            {
+              "file": "505d8185f3a8be27d34ab2d4.webp",
+              "alt": "streamlink/streamlink 预览图"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
