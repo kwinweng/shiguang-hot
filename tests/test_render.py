@@ -149,10 +149,10 @@ class DesignSystemTests(unittest.TestCase):
         self.assertEqual(html.count('<svg class="sprite"'), 1)
         soup = BeautifulSoup(html, 'html.parser')
         self.assertIsNotNone(soup.select_one('nav.bottom a.active.slot-1'))
-        self.assertIn('slot-1', soup.select_one('nav.bottom .tab__pill')['class'])
+        self.assertEqual(len(soup.select('nav.bottom a')), 3)
         # Tab bar: words only.
         self.assertIsNotNone(soup.select_one('nav.bottom svg.phosphor'))
-        self.assertEqual(soup.select_one('nav.bottom a.active').get_text(), '今日')
+        self.assertEqual(soup.select_one('nav.bottom a.active').get_text(), '资讯')
         # Lead block uses a 3D status icon at lead size.
         self.assertIsNotNone(soup.select_one('.g-lead .s-icon--lead'))
 

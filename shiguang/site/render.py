@@ -14,7 +14,8 @@ from typing import Callable
 from shiguang.model import BEIJING
 from shiguang.site.icons import icon, sprite, status_icon
 
-E = lambda v: html.escape(str(v or ''), quote=True)
+UI_LABELS = {'今日重点': '热点', '今日实时': '实时', '往日回顾': '回顾'}
+E = lambda v: html.escape(UI_LABELS.get(str(v or ''), str(v or '')), quote=True)
 
 
 # ---------- Context ----------
@@ -57,7 +58,7 @@ class Page:
         return path if re.match(r'https?://', path) else self.rel + path
 
 
-SLOT_LABELS = {'today': '今日', 'hot': '资讯', 'columns': '栏目', 'favorites': '收藏'}
+SLOT_LABELS = {'hot': '资讯', 'columns': '探索', 'me': '我的'}
 WEEKDAYS = '一二三四五六日'
 BLOCK_TITLES = {'oneliner': '一句话速览', 'markets': '市场看板', 'chart': '一张图', 'tomorrow': '明日看点'}
 EXTERNAL = 'target="_blank" rel="noopener noreferrer"'
@@ -304,27 +305,19 @@ def nav_slots(page):
     Words only, as the spec asks. The selected slot's bright-glass block is its own element so it
     can slide between pages.
     """
-    site = page.site
     from shiguang.site.history import icon as news_icon
-    glyphs = {'today': 'house', 'hot': 'newspaper', 'columns': 'compass', 'favorites': 'bookmark-simple'}
-    lookup = {entry[0]: entry for entry in site.entries}
-    labels = dict(SLOT_LABELS, favorites=site.favorites.get('label', '收藏'))
-    result = ''
     current = page.tab or page.active
-    for n, key in enumerate(site.tabs, 1):
-        name = labels.get(key, site.sources.get(key, {}).get('name', key))
-        if key not in lookup:
-            result += f'<span class="tab slot-{n} nav-unavailable" aria-disabled="true">{E(name)}</span>'
-            continue
-        _, path, _, _ = lookup[key]
-        active = current == key
-        classes = ' '.join(c for c in ('tab', f'slot-{n}', 'active' if active else '', 'home-slot' if key == 'home' else '') if c)
-        result += (f'<a href="{page.url(path)}" class="{classes}"'
-                   + (' aria-current="page"' if active else '')
-                   + f'>{news_icon(glyphs[key]) if key in glyphs else ""}<span>{E(name)}</span></a>')
-        if active:
-            result = f'<span class="tab__pill slot-{n}" aria-hidden="true"></span>' + result
-    return result
+    selected = 'columns' if current == 'columns' else 'me' if current in ('me', 'favorites') else 'hot'
+    return ''.join(
+        f'<a href="{page.url(path)}" class="tab slot-{n}{" active" if key == selected else ""}"'
+        + (' aria-current="page"' if key == selected else '')
+        + f'>{news_icon(glyph)}<span>{label}</span></a>'
+        for n, (key, path, label, glyph) in enumerate([
+            ('hot', 'index.html#feed', '资讯', 'newspaper'),
+            ('columns', 'index.html#explore/play', '探索', 'compass'),
+            ('me', 'index.html#me', '我的', 'bookmark-simple')], 1))
+
+
 
 
 def more_menu(page):

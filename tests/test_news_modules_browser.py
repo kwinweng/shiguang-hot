@@ -51,117 +51,173 @@ class NewsModulesBrowserTests(unittest.TestCase):
         self.page.goto('https://offline.test/index.html#'+hash)
         self.page.wait_for_selector('#news:not([aria-busy])')
 
-    def test_live_source_and_summary_first(self):
-        self.open()
-        self.assertEqual(self.page.locator('.flt button').count(),6)
-        self.assertEqual(self.page.locator('.row').count(),48)
-        self.assertEqual(self.page.locator('.flt button').evaluate_all('(buttons) => buttons.map(b => b.getAttribute("aria-label"))'),
-                         ['全部','热门','科技','财经','国际','数码'])
-        self.assertEqual(self.page.locator('.row a, .ol').count(), 0)
-        self.page.get_by_role('button',name='科技',exact=True).click()
+    def test_default_tabs_filters_and_no_image_detail(self):
+        self.open('')
+        self.assertEqual(self.page.locator('.news-nav a').all_text_contents(), ['资讯', '探索', '我的'])
+        self.assertEqual(self.page.locator('.seg a').all_text_contents(), ['实时', '热点', '回顾'])
+        self.assertEqual(self.page.locator('.seg [aria-current]').inner_text(), '实时')
+        self.assertEqual(self.page.locator('.row').count(), 48)
+        self.page.get_by_role('button', name='科技', exact=True).click()
         self.page.wait_for_function("document.querySelectorAll('.row').length === 16")
         self.page.locator('.row').first.click()
-        self.page.wait_for_selector('.dt h2')
-        self.assertEqual(self.page.locator('.dt h2').inner_text(),'AI 摘要（样例）')
-        self.assertIn('可能不准确', self.page.locator('.dt .foot').inner_text())
-        self.assertEqual(self.page.locator('.dt a.btn').inner_text().strip(), '看原文')
-        self.assertRegex(self.page.locator('.dt a.btn').get_attribute('href'),r'^https://t.me/.+/\d+$')
-        self.assertTrue(self.page.url.startswith('https://offline.test/index.html#message/'))
-        self.page.locator('.back').click()
-        self.page.wait_for_selector('.row')
-        self.assertIn('category=',self.page.url)
-        self.page.locator('.acts a[href="#sources"]').click()
-        self.page.wait_for_selector('.srow')
-        self.assertNotIn('邮件精华',self.page.locator('#news').inner_text())
-        self.page.locator('.srow[href="#source/xhqcankao"]').click()
-        self.page.wait_for_selector('.scope')
-        self.assertIn('近7天',self.page.locator('#news').inner_text())
-        self.assertEqual(self.page.locator('.scope [aria-current="true"]').inner_text(), '近7天')
-        self.assertTrue(self.page.locator('a.ext').is_visible())
-        self.page.locator('.scope a').first.click()
-        self.page.wait_for_selector('.scope a:first-child[aria-current="true"]')
-        self.assertEqual(self.page.locator('.scope [aria-current="true"]').inner_text(), '今天')
-        self.assertEqual(self.errors,[])
-
-    def test_calendar_review_expand_filter_and_original_detail(self):
-        self.open('history/2026-10')
-        self.assertEqual(self.page.locator('.cal a').count(),7)
-        self.assertEqual(self.page.locator('.cal .off').count(),24)
-        self.page.locator('.cal a[href="#day/2026-10-22"]').click()
-        self.page.wait_for_selector('.sum')
-        self.assertEqual(self.page.locator('.sum').count(),6)
-        self.page.locator('details summary').first.click()
-        self.assertTrue(self.page.locator('details').first.get_attribute('open') is not None)
-        self.assertTrue(self.page.locator('details .row').first.is_visible())
-        self.page.locator('details summary').first.click()
-        self.assertIsNone(self.page.locator('details').first.get_attribute('open'))
-        self.assertFalse(self.page.locator('details .row').first.is_visible())
-        self.assertTrue(self.page.url.endswith('#day/2026-10-22'))
-        self.assertEqual(self.page.locator('.flt').count(), 0)
-        self.assertEqual(self.page.locator('.sh').first.inner_text(), '热点')
-        summary = self.page.locator('.day-summary')
-        self.assertLess(summary.locator('h2').evaluate('(el) => parseFloat(getComputedStyle(el).fontSize)'), 20)
-        self.assertTrue(summary.locator('p').evaluate('(el) => el.scrollHeight <= el.clientHeight'))
-        self.page.locator('.event-title').first.click()
-        self.page.wait_for_selector('.dt h2')
-        self.assertEqual(self.page.locator('.dt h2').inner_text(),'AI 摘要（样例）')
-        self.assertTrue(self.page.locator('.dt .btn').is_visible())
-        self.assertEqual(self.errors,[])
-
-    def test_mobile_dark_and_today_has_no_old_news_calendar(self):
-        self.open()
-        for width in (320,393,1280):
-            self.page.set_viewport_size({'width':width,'height':852})
-            self.assertTrue(self.page.evaluate('document.documentElement.scrollWidth <= innerWidth'))
-        self.page.locator('#theme').click()
-        self.assertEqual(self.page.locator('html').get_attribute('data-theme'),'dark')
-        self.open('today')
-        self.assertEqual(self.page.locator('#news-calendar, #news-history, .cal, .flt').count(),0)
-        self.assertNotIn('看往日', self.page.locator('#news').inner_text())
-        self.assertEqual(self.errors,[])
-
-    def test_review_summary_source_counts_and_all_raw_messages(self):
-        day = '2026-10-22'
-        doc = json.loads((self.out/f'history/{day}.json').read_text())
-        journal = dict(doc['messages'][0], id='journal-only', source='daily', source_name='日报', type='inbox')
-        doc['messages'].append(journal)
-        doc['stats']['sources']['daily'] = 1
-        doc['stats']['total'] += 1
-        self.page.route(f'**/history/{day}.json', lambda route: route.fulfill(json=doc))
-        data = json.loads((self.out/'data/sources.json').read_text())
-        data['sources'].append(dict(id='daily', name='日报', type='inbox', messages=[]))
-        self.page.route('**/data/sources.json', lambda route: route.fulfill(json=data))
-        self.open('day/' + day)
-        self.assertEqual(self.page.locator('.day-summary h2').inner_text().strip(), 'AI 摘要（样例）')
-        self.assertEqual(self.page.locator('.day-summary p').inner_text(), doc['summary'])
-        for sid, count in doc['stats']['sources'].items():
-            link = self.page.locator(f'.srow[href="#source/{sid}?day={day}"]')
-            self.assertIn(f'{count} 条', link.inner_text())
-        self.page.locator(f'.srow[href="#source/daily?day={day}"]').click()
-        self.page.wait_for_selector('.row')
+        self.page.wait_for_selector('.dt h1')
+        self.assertEqual(self.page.locator('.dt img').count(), 0)
+        self.assertRegex(self.page.locator('.dt a.btn').get_attribute('href'), r'^https://t.me/.+/\d+$')
+        self.page.get_by_role('button', name='收藏', exact=True).click()
+        self.open('favorites')
         self.assertEqual(self.page.locator('.row').count(), 1)
-        self.open('day/' + day)
-        self.page.get_by_role('link', name='看当天全部原始消息', exact=True).click()
-        self.page.wait_for_selector('.row')
-        self.assertEqual(self.page.locator('.row').count(), len(doc['messages']))
-        self.assertIn('日报', self.page.locator('#news').inner_text())
+        self.page.locator('.row').click()
+        self.page.wait_for_selector('.dt h1')
+        self.page.get_by_role('button', name='取消收藏', exact=True).click()
+        self.open('favorites')
+        self.assertEqual(self.page.locator('.row').count(), 0)
         self.assertEqual(self.errors, [])
 
-    def test_detail_image_order_note_and_original_post(self):
-        data = json.loads((self.out/'data/sources.json').read_text())
-        message = next(s['messages'][0] for s in data['sources'] if s['type'] == 'telegram' and s['messages'])
-        message['image'] = 'icon-192.png'
-        self.page.route('**/data/sources.json', lambda route: route.fulfill(json=data))
-        self.open('message/' + message['id'])
-        self.page.locator('.dt img').wait_for()
-        self.assertEqual(self.page.locator('.dt').evaluate('(el) => Array.from(el.children).map(c => c.tagName)'),
-                         ['SMALL', 'H1', 'IMG', 'H2', 'P', 'A', 'P'])
-        self.assertIn(message['source_name'], self.page.locator('.dt > small').inner_text())
-        self.assertIn(message['time'][:16].replace('T', ' '), self.page.locator('.dt > small').inner_text())
-        self.assertEqual(self.page.locator('.dt .btn').get_attribute('href'), message['link'])
-        self.assertEqual(self.page.locator('.dt .btn').get_attribute('target'), '_blank')
-        for theme in ('light', 'dark'):
-            self.page.locator('html').evaluate('(el, theme) => el.dataset.theme = theme', theme)
-            self.assertEqual(self.page.locator('.dt .btn').evaluate('(el) => getComputedStyle(el).backgroundColor'),
-                             self.page.locator('html').evaluate('(el) => {const s = document.createElement("span"); s.style.color="var(--c-brand)"; el.append(s); const c=getComputedStyle(s).color; s.remove(); return c;}'))
+    def test_existing_public_bookmarks_remain_reachable(self):
+        saved = dict(id='old-saved-item', title='已有收藏', url='https://example.test/original',
+                     source='旧来源', time='2026-10-20', snippet='已有摘要')
+        self.page.add_init_script('localStorage.setItem("shiguang-favorites-public", '+json.dumps(json.dumps([saved], ensure_ascii=False))+');')
+        self.open('favorites')
+        self.assertEqual(self.page.locator('.row b').inner_text(), '已有收藏')
+        self.page.locator('.row').click()
+        self.page.wait_for_selector('.dt h1')
+        self.assertEqual(self.page.locator('.dt a').get_attribute('href'), saved['url'])
+        self.assertEqual(self.page.locator('.dt p').inner_text(), saved['snippet'])
+        self.page.get_by_role('button', name='取消收藏', exact=True).click()
+        self.assertEqual(self.page.evaluate('JSON.parse(localStorage.getItem("shiguang-favorites-public"))'), [])
+        self.assertEqual(self.errors, [])
+
+    def test_review_date_strip_expand_and_today_pending(self):
+        self.open('review/2026-10-22')
+        self.assertEqual(self.page.locator('.cal').count(), 0)
+        self.assertTrue(self.page.locator('.date-strip').is_visible())
+        self.assertEqual(self.page.locator('.review-event').count(), 6)
+        self.page.locator('.review-event summary').first.click()
+        self.assertTrue(self.page.locator('.review-event .row').first.is_visible())
+        self.page.locator('.review-event .row').first.click()
+        self.page.wait_for_selector('.dt h1')
+        self.page.locator('.back').click()
+        self.page.wait_for_selector('.date-strip')
+        self.page.get_by_role('link', name='今天', exact=True).click()
+        self.page.wait_for_function("document.querySelector('#news').textContent.includes('00:30 后生成')")
+        self.assertEqual(self.errors, [])
+
+    def test_focus_switches_at_2200_and_expands_all_published_items(self):
+        self.page.clock.set_fixed_time(datetime(2026, 10, 24, 21, 59, tzinfo=BEIJING))
+        data = json.loads((self.out/'data/live.json').read_text())
+        rows = data['messages'][:12]
+        self.page.route('**/data/focus.json', lambda r: r.fulfill(json={'days': {'2026-10-23': rows, '2026-10-24': rows[:2]}}))
+        self.open('focus')
+        self.assertIn('10月23日的热点 · 今晚 22:00 更新', self.page.locator('#news').inner_text())
+        self.assertEqual(self.page.locator('.focus-row').count(), 12)
+        self.page.locator('.focus-row summary').first.click()
+        self.assertTrue(self.page.locator('.focus-body').first.is_visible())
+        self.assertIn(rows[0]['source_name'], self.page.locator('.focus-body').first.inner_text())
+        self.page.clock.set_fixed_time(datetime(2026, 10, 24, 22, 0, tzinfo=BEIJING))
+        self.open('me')
+        self.open('focus')
+        self.assertEqual(self.page.locator('.focus-row').count(), 2)
+        self.assertIn('10月24日 22:00 日报', self.page.locator('#news').inner_text())
+        self.assertEqual(self.errors, [])
+
+    def test_explore_classification_detail_and_broken_image(self):
+        base = json.loads((self.out/'data/live.json').read_text())['messages'][0]
+        rows = [dict(base, id='play', section='play', category='温泉', image='missing.jpg'),
+                dict(base, id='kan', section='kan', category='电影', image=''),
+                dict(base, id='buy', section='buy', category='数码', image='')]
+        self.page.route('**/data/explore.json', lambda r: r.fulfill(json={'messages': rows}))
+        self.open('explore/play')
+        self.assertEqual(self.page.locator('.seg a').all_text_contents(), ['好玩', '好看', '好买'])
+        self.assertEqual(self.page.locator('.chips button').all_text_contents(), ['全部', '温泉'])
+        self.page.wait_for_function("document.querySelector('.row img') === null")
+        for section in ('kan', 'buy'):
+            self.open('explore/' + section)
+            self.assertEqual(self.page.locator('.row').count(), 1)
+            self.page.locator('.row').click()
+            self.page.wait_for_selector('.dt h1')
+            self.assertEqual(self.page.locator('.dt img').count(), 0)
+        self.assertEqual(self.errors, [])
+
+    def test_refresh_six_tabs_bypasses_cache_and_counts_new_ids(self):
+        self.page.add_init_script("""window.fetchOptions=[]; const nativeFetch=window.fetch;
+            window.fetch=(url, options)=>{window.fetchOptions.push(options?.cache);return nativeFetch(url, options);};""")
+        base = json.loads((self.out/'data/live.json').read_text())
+        fresh = dict(base, messages=[dict(base['messages'][0], id='new-item'), *base['messages'][1:]])
+        for target in ('feed', 'focus', 'review/2026-10-22', 'explore/play', 'explore/kan', 'explore/buy'):
+            self.open(target)
+            requests = []
+            self.page.on('request', lambda r: requests.append(r))
+            self.page.evaluate('window.fetchOptions=[]')
+            self.page.route('**/data/live.json', lambda r: r.fulfill(json=fresh))
+            self.page.evaluate("""() => {
+                const touch = y => new Touch({identifier:1,target:document.body,clientY:y});
+                document.dispatchEvent(new TouchEvent('touchstart',{touches:[touch(10)]}));
+                document.dispatchEvent(new TouchEvent('touchmove',{touches:[touch(120)],cancelable:true}));
+                document.dispatchEvent(new TouchEvent('touchend',{touches:[]}));
+            }""")
+            self.page.wait_for_function("!document.querySelector('#news').hasAttribute('aria-busy') && /新增|已是最新/.test(document.querySelector('#refresh-status').textContent)")
+            self.assertGreater(len(requests), 0)
+            self.assertTrue(all(v == 'no-store' for v in self.page.evaluate('window.fetchOptions')))
+            if target == 'feed':
+                self.assertEqual(self.page.locator('#refresh-status').inner_text(), '新增 1 条')
+        self.assertEqual(self.errors, [])
+
+    def test_retry_offline_cache_unknown_route_and_404_file(self):
+        self.page.route('**/data/live.json', lambda r: r.fulfill(status=503, body='unavailable'))
+        self.open()
+        self.assertIn('加载失败', self.page.locator('#news').inner_text())
+        self.page.unroute('**/data/live.json')
+        self.page.get_by_role('button', name='重试', exact=True).click()
+        self.page.wait_for_selector('.row')
+        self.context.set_offline(True)
+        self.page.wait_for_selector('.offline')
+        self.assertEqual(self.page.locator('.row').count(), 48)
+        self.context.set_offline(False)
+        self.open('unknown')
+        self.assertEqual(self.page.get_by_role('link', name='回到资讯', exact=True).get_attribute('href'), '#feed')
+        self.page.goto('https://offline.test/404.html')
+        self.page.wait_for_selector('#news:not([aria-busy])')
+        self.assertTrue(self.page.get_by_role('link', name='回到资讯', exact=True).is_visible())
+        self.assertEqual(self.errors, [])
+
+    def test_mobile_theme_layout_and_about_logo(self):
+        self.open()
+        for width in (320, 393, 1280):
+            self.page.set_viewport_size({'width': width, 'height': 852})
+            self.assertTrue(self.page.evaluate('document.documentElement.scrollWidth <= innerWidth'))
+        self.open('settings')
+        self.page.get_by_role('button', name='暗色', exact=True).click()
+        self.assertEqual(self.page.locator('html').get_attribute('data-theme'), 'dark')
+        self.page.reload()
+        self.page.wait_for_selector('#news:not([aria-busy])')
+        self.assertEqual(self.page.locator('html').get_attribute('data-theme'), 'dark')
+        self.open('about')
+        self.assertEqual(self.page.locator('.about img').get_attribute('src'), 'favicon.svg')
+        self.assertEqual(self.errors, [])
+
+    def test_row_c_dimensions_and_only_detail_title_is_bold(self):
+        live = json.loads((self.out/'data/live.json').read_text())
+        r = live['messages'][0]
+        r['image'] = 'icon-192.png'
+        sources = json.loads((self.out/'data/sources.json').read_text())
+        for source in sources['sources']:
+            for message in source['messages']:
+                if message['id'] == r['id']:
+                    message['image'] = r['image']
+        self.page.route('**/data/live.json', lambda route: route.fulfill(json=live))
+        self.page.route('**/data/sources.json', lambda route: route.fulfill(json=sources))
+        self.open()
+        dimensions = self.page.locator('.row').first.evaluate("""row => ({
+            category:row.querySelector('.cc').getBoundingClientRect().width,
+            image:[row.querySelector('img').width,row.querySelector('img').height],
+            titleWeight:getComputedStyle(row.querySelector('b')).fontWeight,
+            columns:getComputedStyle(row).gridTemplateColumns
+        })""")
+        self.assertEqual(dimensions['category'], 64)
+        self.assertEqual(dimensions['image'], [76,76])
+        self.assertEqual(dimensions['titleWeight'], '400')
+        self.page.locator('.row').first.click()
+        self.page.wait_for_selector('.dt h1')
+        self.assertEqual(self.page.locator('.dt h1').evaluate('el=>getComputedStyle(el).fontSize'), '24px')
+        self.assertEqual(self.page.locator('.dt h1').evaluate('el=>getComputedStyle(el).fontWeight'), '600')
         self.assertEqual(self.errors, [])

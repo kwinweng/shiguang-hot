@@ -22,10 +22,10 @@ from shiguang.site import render
 from shiguang.site.light import ambient_uris, light_css, photo_like
 from shiguang.site.render import Page, Site
 
-TABS = ['today', 'hot', 'columns', 'favorites']
+TABS = ['hot', 'columns', 'me']
 FAVORITES = {'enabled': True, 'label': '收藏', 'path': 'favorites.html'}
-CORE = [('today', 'today.html', '今日', 'home'), ('hot', 'index.html#feed', '资讯', 'hot'),
-        ('columns', 'columns.html', '栏目', 'all'), ('favorites', 'favorites.html', '收藏', 'bookmark')]
+CORE = [('hot', 'index.html#feed', '资讯', 'hot'),
+        ('columns', 'index.html#explore/play', '探索', 'all'), ('me', 'index.html#me', '我的', 'bookmark')]
 DIGEST_ITEMS = 3   # cards per issue in a day's 各栏目 section; the rest is one tap away on the issue page
 EARLY = 6          # before this hour, today's page also shows yesterday
 HOT_DAYS = 3       # days on the 热点 timeline
@@ -96,7 +96,7 @@ class Content:
         self.cfg, self.private, self.now = cfg, private, now
         self.today = now.astimezone(BEIJING).date().isoformat()
         self.topics = cfg['topics']
-        self.sources = {s['id']: s for s in cfg['sources']
+        self.sources = {s['id']: dict(s, name=render.UI_LABELS.get(s['name'], s['name'])) for s in cfg['sources']
                         if private or (s['visibility'] == 'public' and s['id'] in history.ALLOWED)}
         self.hot_source = cfg['hot']['source'] if cfg['hot']['source'] in self.sources else None
         by_channel = {s['channel']: s for s in self.sources.values() if s['type'] == 'telegram'}

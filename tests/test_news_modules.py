@@ -134,6 +134,31 @@ class NewsModuleTests(unittest.TestCase):
             self.assertEqual(doc['messages'][0]['title'], '纯 blocks 日报')
             self.assertEqual(doc['summary'], '纯 blocks 日报')
 
+    def test_focus_is_uncapped_and_explore_uses_only_real_categories(self):
+        sources = {sid: dict(id=sid, name=name, visibility=visibility, type='inbox', order=n)
+                   for n, (sid, name, visibility) in enumerate([
+                       ('hot-daily', '日报', 'public'), ('world', '环球', 'public'),
+                       ('play', '好玩', 'public'), ('buy', '好买', 'public'), ('mail', '邮件精华', 'private')])}
+        def issue(sid, categories):
+            return dict(date='2026-10-23', sections=[dict(title='内容', items=[
+                dict(title=f'{sid}-{n}', body=f'{sid} body {n}', topic=cat, link=f'https://example.test/{sid}/{n}')
+                for n, cat in enumerate(categories)])])
+        content = SimpleNamespace(sources=sources, stream=[], hot_source='hot-daily',
+                                  issues={sid: [issue(sid, cats)] for sid, cats in [
+                                      ('hot-daily', ['国际'] * 15), ('world', ['国际']),
+                                      ('play', ['温泉', '电影', '展览', '游戏']), ('buy', ['数码']), ('mail', ['温泉'])]},
+                                  now=self.now, today='2026-10-23', tagged=lambda items, source: items)
+        with tempfile.TemporaryDirectory() as folder, patch('shiguang.site.news.ROOT', Path(folder)):
+            out = Path(folder)
+            publish(content, out)
+            focus = json.loads((out/'data/focus.json').read_text())['days']['2026-10-23']
+            self.assertEqual(len(focus), 15)
+            explore = json.loads((out/'data/explore.json').read_text())['messages']
+            self.assertEqual([(r['category'], r['section']) for r in explore], [
+                ('温泉', 'play'), ('电影', 'kan'), ('展览', 'kan'), ('游戏', 'play'), ('数码', 'buy')])
+            self.assertNotIn('邮件精华', json.dumps(explore, ensure_ascii=False))
+            self.assertIn('回到资讯', (out/'404.html').read_text())
+
     def test_offline_sample_build_and_immutable_snapshot(self):
         cfg = config()
         rows = sample_rows(cfg,self.now)

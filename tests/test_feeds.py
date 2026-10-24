@@ -177,9 +177,9 @@ class PrivacyBuildTests(unittest.TestCase):
                     self.assertEqual(set(json.loads((target/'archive/manifest.json').read_text())['days']),{'2026-10-17','2026-10-16'})
                     past=BeautifulSoup((target/'archive/2026-10-16.html').read_text(),'html.parser')
                     self.assertFalse(past.select('.today-summaries article'))
-                    self.assertEqual(past.select_one('nav.bottom a.active').get_text(),'今日')
+                    self.assertEqual(past.select_one('nav.bottom a.active').get_text(),'资讯')
                     # 「光」: the tab bar holds words only.
-                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['今日','资讯','栏目','收藏'])
+                    self.assertEqual([a.get_text() for a in home.select('nav.bottom a')],['资讯','探索','我的'])
                     self.assertIsNotNone(home.select_one('nav.bottom svg.phosphor'))
                     self.assertEqual(home.select_one('nav.bottom a.active')['aria-current'],'page')
                     self.assertTrue(home.select('article button.bookmark[aria-pressed="false"][aria-label="收藏"]'))
@@ -188,7 +188,7 @@ class PrivacyBuildTests(unittest.TestCase):
                     self.assertFalse(favorites.select('[data-source]'))
                     self.assertEqual(favorites.body['data-bookmark-scope'],mode)
                     self.assertIn('还没有收藏',favorites.get_text())
-                    self.assertIsNotNone(home.select_one('#more-nav a[href="../columns.html"]'))
+                    self.assertIsNotNone(home.select_one('#more-nav a[href="../index.html#explore/play"]'))
                     self.assertFalse(home.select('#more-nav a[href="tg/index.html"]'))
                     # 栏目: by channel (grouped by platform), and by tag.
                     columns=BeautifulSoup((target/'columns.html').read_text(),'html.parser')
@@ -206,16 +206,15 @@ class PrivacyBuildTests(unittest.TestCase):
                         self.assertFalse(soup.select('[data-source="mail"]'),page.name)
                         self.assertFalse([n for n in range(5) if f'mail{n}' in text],page.name)
                     hot=BeautifulSoup((target/'hot.html').read_text(),'html.parser')
-                    self.assertIsNotNone(hot.select_one('[data-timeline] .tl-track'))
-                    self.assertEqual(len(hot.select('.tl-day')),3)
+                    self.assertIn('index.html#focus', hot.select_one('meta[http-equiv="refresh"]')['content'])
                     # Merged pages keep their addresses.
                     self.assertIn('url=../index.html"',(target/'hot-daily/index.html').read_text())
                     self.assertIn('url=../index.html"',(target/'archive/index.html').read_text())
                     self.assertIn('url=index.html"',(target/'all.html').read_text())
                     channel_page=BeautifulSoup((target/'CE_Observe/index.html').read_text(),'html.parser')
                     self.assertEqual(len(channel_page.select('article')),20)
-                    self.assertEqual(channel_page.select_one('nav.bottom a.active').get_text(),'栏目')
-                    self.assertEqual(BeautifulSoup((target/'x/index.html').read_text(),'html.parser').select_one('nav.bottom a.active').get_text(),'栏目')
+                    self.assertEqual(channel_page.select_one('nav.bottom a.active').get_text(),'探索')
+                    self.assertEqual(BeautifulSoup((target/'x/index.html').read_text(),'html.parser').select_one('nav.bottom a.active').get_text(),'探索')
                     if mode=='public': self.assertFalse((target/'mail').exists())
 
     def test_public_rebuild_scrubs_private_tree_and_detects_private_copy(self):

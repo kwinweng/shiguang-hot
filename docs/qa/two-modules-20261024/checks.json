@@ -1,0 +1,297 @@
+{
+  "viewport": [
+    393,
+    852
+  ],
+  "errors": [],
+  "checks": [
+    {
+      "page": "live",
+      "theme": "light",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": "400"
+    },
+    {
+      "page": "focus",
+      "theme": "light",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "review",
+      "theme": "light",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": "400"
+    },
+    {
+      "page": "play",
+      "theme": "light",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "kan",
+      "theme": "light",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "buy",
+      "theme": "light",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "me",
+      "theme": "light",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "favorites",
+      "theme": "light",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "settings",
+      "theme": "light",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "detail-noimg",
+      "theme": "light",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "about",
+      "theme": "light",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "404",
+      "theme": "light",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "live",
+      "theme": "dark",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": "400"
+    },
+    {
+      "page": "focus",
+      "theme": "dark",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "review",
+      "theme": "dark",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": "400"
+    },
+    {
+      "page": "play",
+      "theme": "dark",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "kan",
+      "theme": "dark",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "buy",
+      "theme": "dark",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "me",
+      "theme": "dark",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "favorites",
+      "theme": "dark",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "settings",
+      "theme": "dark",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "detail-noimg",
+      "theme": "dark",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "about",
+      "theme": "dark",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    },
+    {
+      "page": "404",
+      "theme": "dark",
+      "noOverflow": true,
+      "tabs": [
+        "资讯",
+        "探索",
+        "我的"
+      ],
+      "barHeight": 70,
+      "rowTitleWeight": null
+    }
+  ]
+}
