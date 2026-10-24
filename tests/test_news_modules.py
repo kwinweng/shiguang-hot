@@ -1,6 +1,7 @@
 """PR B contracts: offline summaries, Beijing days, exact dedupe and public output."""
 import json
 import os
+import sqlite3
 import tempfile
 import unittest
 from datetime import datetime
@@ -13,7 +14,8 @@ from shiguang.config import config
 from shiguang.model import BEIJING, Item
 from shiguang.site.news_data import CATEGORIES, FlashProvider, MockProvider, category, daily_documents, messages, source_stats
 from shiguang.site.build import build
-from shiguang.site.news import publish
+from shiguang.site.news import publish, explore_messages
+from shiguang.ingest.trial import ensure_table
 
 
 class NewsModuleTests(unittest.TestCase):
@@ -148,16 +150,36 @@ class NewsModuleTests(unittest.TestCase):
                                       ('hot-daily', ['国际'] * 15), ('world', ['国际']),
                                       ('play', ['温泉', '电影', '展览', '游戏']), ('buy', ['数码']), ('mail', ['温泉'])]},
                                   now=self.now, today='2026-10-23', tagged=lambda items, source: items)
-        with tempfile.TemporaryDirectory() as folder, patch('shiguang.site.news.ROOT', Path(folder)):
+        with tempfile.TemporaryDirectory() as folder, patch('shiguang.site.news.ROOT', Path(folder)), \
+                patch('shiguang.site.news.explore_messages', return_value=[]):
             out = Path(folder)
             publish(content, out)
             focus = json.loads((out/'data/focus.json').read_text())['days']['2026-10-23']
             self.assertEqual(len(focus), 15)
             explore = json.loads((out/'data/explore.json').read_text())['messages']
-            self.assertEqual([(r['category'], r['section']) for r in explore], [
-                ('温泉', 'play'), ('电影', 'kan'), ('展览', 'kan'), ('游戏', 'play'), ('数码', 'buy')])
+            self.assertEqual(explore, [])  # Inbox content must not populate trial exploration.
             self.assertNotIn('邮件精华', json.dumps(explore, ensure_ascii=False))
             self.assertIn('回到资讯', (out/'404.html').read_text())
+
+    def test_explore_reads_existing_trial_database_without_schema_changes(self):
+        with tempfile.TemporaryDirectory() as folder, patch('shiguang.ingest.telegram.D', folder):
+            self.assertEqual(explore_messages(), [])
+            path = Path(folder)/'tg.db'
+            with sqlite3.connect(path) as db:
+                self.assertEqual(explore_messages(), [])
+                ensure_table(db)
+                for sid, section, category in [('steam','好玩','games'), ('bambu-lab','好买','3d-printing'),
+                                               ('unknown','好玩','games'), ('steam','好看','shows')]:
+                    db.execute('insert into trial_item values(?,?,?,?,?,?,?,?,?)',
+                               (sid, section, category, f'https://example.test/{sid}/{section}',
+                                '标题', '摘要', 'javascript:bad', None, '2026-10-23T12:00:00Z'))
+                db.commit()
+            before = path.read_bytes()
+            rows = explore_messages()
+            self.assertEqual({(r['section'], r['category']) for r in rows}, {('play','游戏'), ('buy','3D 打印')})
+            self.assertTrue(all(r['image']=='' and r['time']=='' for r in rows))
+            self.assertEqual(rows, explore_messages())
+            self.assertEqual(path.read_bytes(), before)
 
     def test_offline_sample_build_and_immutable_snapshot(self):
         cfg = config()

@@ -129,6 +129,9 @@ class NewsModulesBrowserTests(unittest.TestCase):
         self.open('explore/play')
         self.assertEqual(self.page.locator('.seg a').all_text_contents(), ['好玩', '好看', '好买'])
         self.assertEqual(self.page.locator('.chips button').all_text_contents(), ['全部', '温泉'])
+        self.page.get_by_role('button', name='温泉', exact=True).click()
+        self.page.wait_for_function("document.querySelector('.chips [aria-pressed=true]').textContent==='温泉'")
+        self.assertEqual(self.page.locator('.row').count(), 1)
         self.page.wait_for_function("document.querySelector('.row img') === null")
         for section in ('kan', 'buy'):
             self.open('explore/' + section)
@@ -195,7 +198,7 @@ class NewsModulesBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.locator('.about img').get_attribute('src'), 'favicon.svg')
         self.assertEqual(self.errors, [])
 
-    def test_row_c_dimensions_and_only_detail_title_is_bold(self):
+    def test_row_c_dimensions_and_title_weights(self):
         live = json.loads((self.out/'data/live.json').read_text())
         r = live['messages'][0]
         r['image'] = 'icon-192.png'
@@ -208,16 +211,38 @@ class NewsModulesBrowserTests(unittest.TestCase):
         self.page.route('**/data/sources.json', lambda route: route.fulfill(json=sources))
         self.open()
         dimensions = self.page.locator('.row').first.evaluate("""row => ({
-            category:row.querySelector('.cc').getBoundingClientRect().width,
+            category:row.querySelector('.cc'),
             image:[row.querySelector('img').width,row.querySelector('img').height],
             titleWeight:getComputedStyle(row.querySelector('b')).fontWeight,
             columns:getComputedStyle(row).gridTemplateColumns
         })""")
-        self.assertEqual(dimensions['category'], 64)
+        self.assertIsNone(dimensions['category'])
         self.assertEqual(dimensions['image'], [76,76])
         self.assertEqual(dimensions['titleWeight'], '400')
         self.page.locator('.row').first.click()
         self.page.wait_for_selector('.dt h1')
         self.assertEqual(self.page.locator('.dt h1').evaluate('el=>getComputedStyle(el).fontSize'), '24px')
         self.assertEqual(self.page.locator('.dt h1').evaluate('el=>getComputedStyle(el).fontWeight'), '600')
+        self.assertEqual(self.errors, [])
+
+    def test_round_one_metadata_brand_missing_item_and_focus(self):
+        self.open()
+        self.assertTrue(self.page.locator('.brand img').is_visible())
+        self.assertEqual(self.page.locator('.ph h1').evaluate('e=>getComputedStyle(e).fontWeight'), '600')
+        self.assertRegex(self.page.locator('.row .meta').first.inner_text(), r'.+ · .+ · \d{2}:\d{2}$')
+        self.assertEqual(self.page.locator('.flt button').first.inner_text(), '全部 48')
+        self.page.locator('.seg a').nth(1).click()
+        self.page.wait_for_selector('.seg a[href="#focus"][aria-current]')
+        self.assertEqual(self.page.locator('.seg a').nth(1).evaluate('e=>getComputedStyle(e).backgroundColor'), 'rgba(0, 0, 0, 0)')
+        self.open('message/does-not-exist')
+        self.assertIn('这条内容找不到了', self.page.locator('#news').inner_text())
+        self.assertEqual(self.page.locator('.skeleton').count(), 0)
+        self.assertTrue(self.page.get_by_role('link', name='返回资讯').is_visible())
+        self.open('explore/kan')
+        self.assertTrue(self.page.get_by_role('link', name='先去看资讯').is_visible())
+        self.open('review/2026-10-22')
+        dates = self.page.locator('.date-strip a').evaluate_all('els=>els.map(e=>e.hash)')
+        self.assertEqual(dates, sorted(dates, reverse=True))
+        self.assertEqual(self.page.locator('.date-nav').count(), 0)
+        self.assertNotIn('摘要（样例）', self.page.locator('#news').inner_text())
         self.assertEqual(self.errors, [])

@@ -3,11 +3,39 @@ import hashlib
 import json
 import os
 import shutil
+import sqlite3
 from pathlib import Path
 
 from shiguang.config import ROOT, WEB
 from shiguang.model import home_candidates
+from shiguang.model import safe_link
+from shiguang.ingest import trial, telegram
 from shiguang.site.news_data import MockProvider, daily_documents, messages, source_stats, write_json
+
+
+def explore_messages():
+    """Read existing trial data without ingestion, migrations, or database writes."""
+    database = Path(telegram.D) / 'tg.db'
+    if not database.is_file():
+        return []
+    config = trial.load()
+    sources = {s['id']: s for s in config['sources']}
+    categories = {c['id']: c['name'] for c in config['categories']}
+    result = []
+    with sqlite3.connect(database.as_uri() + '?mode=ro', uri=True) as db:
+        if not db.execute("select 1 from sqlite_master where type='table' and name='trial_item'").fetchone():
+            return []
+        for sid, section, category, url, title, summary, image, published, fetched in db.execute(
+                'select source_id, section, category, url, title, summary, image_url, published_at, fetched_at '
+                'from trial_item order by coalesce(published_at, fetched_at) desc, url'):
+            if sid not in sources or section not in ('好玩', '好买') or not safe_link(url):
+                continue
+            result.append(dict(id='trial-' + hashlib.sha256(url.encode()).hexdigest()[:20],
+                               source=sid, source_name=sources[sid]['name'], section={'好玩':'play','好买':'buy'}[section],
+                               category=categories.get(category, category), title=title, summary=summary,
+                               text=summary, link=safe_link(url), image=safe_link(image or ''),
+                               time=published or '', day=(published or '')[:10]))
+    return result
 
 
 def publish(content, out):
@@ -44,7 +72,8 @@ def publish(content, out):
     history.mkdir()
     for day, doc in stored.items():
         write_json(history / f'{day}.json', doc)
-    write_json(history / 'index.json', dict(days=sorted(stored), sample=sample))
+    write_json(history / 'index.json', dict(days=sorted(stored), sample=sample,
+               message_days={r['id']: day for day, doc in stored.items() for r in doc['messages']}))
     groups = []
     for row in live:
         if not groups or groups[-1]['hour'] != row['hour']:
@@ -59,23 +88,7 @@ def publish(content, out):
             for issue in issues:
                 focus[issue['date']] = messages(content.tagged(home_candidates(issue, sources[sid]), sources[sid]), sources)
     write_json(out / 'data/focus.json', dict(days=focus))
-    explore = []
-    for sid, issues in content.issues.items():
-        if sid == getattr(content, 'hot_source', None) or not issues:
-            continue
-        for item in content.tagged(home_candidates(issues[0], sources[sid]), sources[sid]):
-            category = item.category
-            source_name = sources[sid]['name']
-            section = ('buy' if any(w in source_name for w in ('好买', '购物')) else
-                       'kan' if category in ('剧', '电影', '小说', '展览') else
-                       'play' if category in ('吃喝', '美食', '新店', '出行', '温泉', '游戏', '风景', '北京周末') else None)
-            if section is None:
-                continue
-            for row in messages([item], sources):
-                row['category'] = item.category
-                row['section'] = section
-                explore.append(row)
-    write_json(out / 'data/explore.json', dict(messages=explore))
+    write_json(out / 'data/explore.json', dict(messages=[] if os.getenv('SAMPLE_DATA') == '1' else explore_messages()))
     names = {}
     for name in ('news-tokens.css', 'news.css', 'news-icons.js', 'news.js', 'modules.js'):
         data = (WEB / name).read_bytes()
@@ -87,7 +100,7 @@ def publish(content, out):
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>拾光热榜 · 资讯与探索</title>'''
     html += ''.join(f'<link rel="stylesheet" href="{names[name]}">' for name in ('news-tokens.css', 'news.css'))
-    html += '''<link rel="icon" href="favicon.svg"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest"></head><body><header class="brand"><a href="index.html">拾光热榜</a>
+    html += '''<link rel="icon" href="favicon.svg"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest"></head><body><header class="brand"><a href="index.html"><img src="logo-d-tab.svg" alt="">拾光热榜</a>
 <button id="theme" aria-label="切换明暗模式">明暗</button></header><main class="pg" id="news" aria-live="polite">
 <div class="skeleton" aria-label="加载中"></div></main><div id="refresh-status" role="status" aria-live="polite"></div><noscript>请启用 JavaScript 查看实时流。
 <a href="archive/''' + content.today + '''.html">查看静态文字页</a></noscript>

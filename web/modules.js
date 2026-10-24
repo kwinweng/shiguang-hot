@@ -12,7 +12,17 @@ const Modules = (() => {
     return new Set(after.filter(r => !old.has(r.id)).map(r => r.id)).size;
   };
   const notFoundLabel = '回到资讯';
-  return {defaultTab, focusDay, addedCount, notFoundLabel};
+  const distinctSummary = (title, summary) => {
+    const normalize = value => String(value || '').normalize('NFKC').replace(/[\p{P}\p{Z}\s]/gu, '').toLowerCase();
+    const a = normalize(title), b = normalize(summary);
+    if (!b || a === b) return '';
+    if (a && (a.includes(b) || b.includes(a)) && Math.min(a.length,b.length)/Math.max(a.length,b.length) >= .85) return '';
+    const pairs = value => new Set(Array.from({length:Math.max(0,value.length-1)}, (_,i)=>value.slice(i,i+2)));
+    const x = pairs(a), y = pairs(b);
+    const same = [...x].filter(pair=>y.has(pair)).length;
+    return x.size+y.size && 2*same/(x.size+y.size) >= .9 ? '' : summary;
+  };
+  return {defaultTab, focusDay, addedCount, notFoundLabel, distinctSummary};
 })();
 if (typeof module !== 'undefined') module.exports = Modules;
 if (typeof document !== 'undefined') (() => {
@@ -60,10 +70,14 @@ if (typeof document !== 'undefined') (() => {
   const newsTabs = selected => heading('资讯') + tabs([['feed','实时'],['focus','热点'],['review','回顾']], selected);
   const empty = text => `<div class="empty">${e(text)}</div>`;
   const notFound = () => empty('404 · 这个页面不存在') + `<a class="btn pri" href="#feed">${Modules.notFoundLabel}</a>`;
-  const row = r => `<a class="row c" data-id="${e(r.id)}" href="#message/${encodeURIComponent(r.id)}?from=${encodeURIComponent(location.hash || '#feed')}"><span class="cc">${e(r.category)}</span><div class="tx"><b>${e(r.title)}</b><p>${e(r.summary)}</p><small>${e(r.time?.slice(0,16).replace('T',' ') || r.day)}${r.location ? ' · ' + e(r.location) : ''}</small></div>${r.image ? `<img loading="lazy" src="${e(r.image)}" alt="">` : ''}</a>`;
+  const row = r => {
+    const live = !r.section;
+    const summary = Modules.distinctSummary(r.title, r.summary);
+    return `<a class="row c${live?' live-row':''}" data-id="${e(r.id)}" href="#message/${encodeURIComponent(r.id)}?from=${encodeURIComponent(location.hash || '#feed')}">${live?'':`<span class="cc">${e(r.category)}</span>`}<div class="tx">${live?`<div class="meta">${[r.source_name,r.category,r.time?.slice(11,16)].filter(Boolean).map(e).join(' · ')}</div>`:''}<b>${e(r.title)}</b>${summary?`<p>${e(summary)}</p>`:''}${live?'':`<small>${e(r.time?.slice(0,16).replace('T',' ') || r.day)}${r.location ? ' · ' + e(r.location) : ''}</small>`}</div>${r.image ? `<img loading="lazy" src="${e(r.image)}" alt="">` : ''}</a>`;
+  };
   const list = rows => rows.map(row).join('') || empty('暂无内容');
   const focusRows = rows => rows.map(r => `<details class="focus-row" data-id="${e(r.id)}"><summary><span class="cc">${e(r.category)}</span><span>${e(r.title)}</span>${icon('caret-down')}</summary><div class="focus-body"><p>${e(r.summary)}</p><small>来源：${e(r.source_name)}</small>${safe(r.link) ? `<a class="ext" href="${safe(r.link)}" target="_blank" rel="noopener noreferrer">打开原文</a>` : ''}<button class="btn" data-save="${e(r.id)}">${isSaved(r) ? '取消收藏' : '收藏'}</button></div></details>`).join('') || empty('这一天没有热点');
-  const controls = cat => `<div class="flt" aria-label="按分类筛选">${categories.map((name,i) => `<button data-category="${name}" aria-label="${name}" aria-pressed="${cat===name}" class="${cat===name?'on':''}">${icon(icons[i],cat===name)}<span>${name}</span></button>`).join('')}</div>`;
+  const controls = (cat, count) => `<div class="flt" aria-label="按分类筛选">${categories.map((name,i) => `<button data-category="${name}" aria-label="${name}" aria-pressed="${cat===name}" class="${cat===name?'on':''}">${icon(icons[i],cat===name)}<span>${name}${i===0?' '+count:''}</span></button>`).join('')}</div>`;
   const getRoute = () => {
     const [path, q = ''] = (location.hash.slice(1) || (main.dataset.notFound ? '404' : Modules.defaultTab)).split('?');
     return {path, parts:path.split('/'), query:new URLSearchParams(q)};
@@ -71,10 +85,10 @@ if (typeof document !== 'undefined') (() => {
   const beijingToday = () => new Date(Date.now()+8*3600000).toISOString().slice(0,10);
   const dateLabel = day => `${Number(day.slice(5,7))}月${Number(day.slice(8))}日`;
   const reviewNav = (day, days) => {
-    const shift = delta => new Date(Date.parse(day+'T12:00:00Z')+delta*86400000).toISOString().slice(0,10);
     const today = beijingToday();
-    const all = [...new Set([...days, today, shift(-1), day])].sort();
-    return `<div class="date-nav"><a aria-label="前一天" href="#review/${shift(-1)}">‹</a><span>${dateLabel(day)}</span><a aria-label="后一天" href="#review/${shift(1)}">›</a><a href="#review/${new Date(Date.parse(today)-86400000).toISOString().slice(0,10)}">昨天</a><a href="#review/${today}">今天</a></div><div class="date-strip">${all.map(d=>`<a href="#review/${d}" ${d===day?'aria-current="date"':''}>${dateLabel(d)}</a>`).join('')}</div>`;
+    const yesterday = new Date(Date.parse(today)-86400000).toISOString().slice(0,10);
+    const all = [...new Set([...days, today, yesterday, day])].filter(d=>d<=today).sort().reverse();
+    return `<nav class="date-strip" aria-label="回顾日期">${all.map(d=>`<a href="#review/${d}" ${d===day?'aria-current="date"':''}>${d===today?'今天':d===yesterday?'昨天':dateLabel(d)}</a>`).join('')}</nav>`;
   };
   const applyTheme = () => {
     const theme = storage.get('rebang-theme', 'system');
@@ -92,7 +106,7 @@ if (typeof document !== 'undefined') (() => {
       if (parts[0] === 'feed' || parts[0] === 'today') {
         const live = await load('data/live.json', fresh);
         rows = filter(live.messages, query.get('category'));
-        html = newsTabs('feed') + controls(query.get('category') || '全部') + `<p class="sub">${e(live.updated.slice(0,16).replace('T',' '))} 更新</p>` + list(rows);
+        html = newsTabs('feed') + controls(query.get('category') || '全部', live.messages.length) + `<p class="sub">${e(live.updated.slice(0,16).replace('T',' '))} 更新</p>` + list(rows);
       } else if (parts[0] === 'focus') {
         const doc = await load('data/focus.json', fresh);
         const day = Modules.focusDay();
@@ -107,7 +121,7 @@ if (typeof document !== 'undefined') (() => {
         if (index.days.includes(day)) {
           const doc = await load(`history/${day}.json`, fresh);
           rows = doc.messages;
-          html += `<section class="day-summary"><h2>${doc.provider==='mock'?'摘要（样例）':'摘要'}</h2><p>${e(doc.summary)}</p></section>`;
+          html += `<section class="day-summary"><p>${e(doc.summary)}</p></section>`;
           html += doc.events.map(event => `<details class="review-event"><summary>${e(event.title)}</summary><p>${e(event.summary)}</p><small>${event.source_count} 个来源</small>${list(event.messages)}</details>`).join('') || empty('这一天没有热点');
         } else html += empty(day === beijingToday() ? '00:30 后生成' : '这一天暂无回顾');
       } else if (parts[0] === 'explore') {
@@ -118,8 +132,8 @@ if (typeof document !== 'undefined') (() => {
         const cats = [...new Set(own.map(r=>r.category))];
         rows = own.filter(r=>!query.get('category') || r.category===query.get('category'));
         html = heading('探索') + tabs([['explore/play','好玩'],['explore/kan','好看'],['explore/buy','好买']], 'explore/'+section);
-        if (cats.length) html += `<div class="chips"><button data-category="">全部</button>${cats.map(c=>`<button data-category="${e(c)}">${e(c)}</button>`).join('')}</div>`;
-        html += rows.length ? list(rows) : empty(({play:'今天还没挑到好玩的',kan:'今天还没挑到好看的',buy:'今天还没挑到值得买的'})[section]);
+        if (cats.length) html += `<div class="chips">${['',...cats].map(c=>`<button data-category="${e(c)}" aria-pressed="${(query.get('category')||'')===c}">${e(c||'全部')}</button>`).join('')}</div>`;
+        html += rows.length ? list(rows) : own.length ? `<div class="empty">${icon('squares-four')}<h2>这个分类这期没有</h2><p>换个分类，或者看全部。</p><a class="empty-action" href="#explore/${section}">看全部</a></div>` : `<div class="empty">${icon(({play:'compass',kan:'television-simple',buy:'shopping-bag'})[section])}<h2>${({play:'今天还没挑到好玩的',kan:'今天还没挑到好看的',buy:'今天还没挑到值得买的'})[section]}</h2><p>每期内容挑好后一起更新。</p><a class="empty-action" href="#feed">先去看资讯</a></div>`;
       } else if (parts[0] === 'me') {
         area = 'me';
         html = heading('我的') + `<div class="me-list"><a href="#favorites">${icon('bookmark-simple')}收藏 <small>${favorites.length} 条</small>${icon('caret-right')}</a><a href="#settings">${icon('gear-six')}设置<small>${({system:'跟随系统',light:'亮色',dark:'暗色'})[storage.get('rebang-theme','system')]||'跟随系统'}</small>${icon('caret-right')}</a><a href="#about">${icon('info')}关于<small>v0.3</small>${icon('caret-right')}</a></div><p class="foot">不需要登录，收藏只存在这台设备上</p>`;
@@ -137,18 +151,17 @@ if (typeof document !== 'undefined') (() => {
         const source = doc.sources.find(s=>s.id===parts[1]);
         if (parts[0]==='source' && !source) html = notFound();
         else if (source) { rows=source.messages; html=back('#sources','来源')+heading(source.name)+list(rows); }
-        else html = back('#about','关于')+heading('来源')+doc.sources.map(s=>`<a class="stat" href="#source/${e(s.id)}">${e(s.name)} · 今天 ${s.today_count} 条 · 近7天 ${s.seven_day_count} 条</a>`).join('');
+        else html = back('#about','关于')+heading('来源')+doc.sources.map(s=>`<a class="stat" href="#source/${e(s.id)}"><span>${e(s.name)} · 今天 ${s.today_count} 条 · 近7天 ${s.seven_day_count} 条</span>${icon('caret-right')}</a>`).join('');
       } else if (parts[0] === 'message') {
         const [sourceDoc, explore] = await Promise.all([load('data/sources.json',fresh),load('data/explore.json',fresh)]);
-        let r = [...explore.messages,...sourceDoc.sources.flatMap(s=>s.messages),...favorites].find(r=>r.id===parts[1]);
+        const id = decodeURIComponent(parts[1] || '');
+        let r = [...explore.messages,...sourceDoc.sources.flatMap(s=>s.messages),...favorites].find(r=>r.id===id);
         if (!r) {
           const index = await load('history/index.json',fresh);
-          for (const day of index.days.slice().reverse()) {
-            r = (await load(`history/${day}.json`,fresh)).messages.find(r=>r.id===parts[1]);
-            if (r) break;
-          }
+          const day = index.message_days?.[id];
+          if (day) r = (await load(`history/${day}.json`,fresh)).messages.find(r=>r.id===id);
         }
-        if (!r) html=notFound();
+        if (!r) html=empty('这条内容找不到了')+back('#feed','返回资讯');
         else {
           rows=[r]; area=r.section?'explore':'news';
           const from = /^#(feed|focus|review|explore|favorites|source)(\/|\?|$)/.test(query.get('from') || '') ? query.get('from') : '#feed';
