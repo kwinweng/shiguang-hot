@@ -62,6 +62,11 @@ class SchedulerTests(unittest.TestCase):
     def state(self, field='status'):
         return self.db.execute('select ' + field + ' from source_fetch_state').fetchone()[0]
 
+    def events(self):
+        prefix = 'fetch_status '
+        return [json.loads(line[len(prefix):]) for line in self.log.getvalue().splitlines()
+                if line.startswith(prefix)]
+
     def test_aliases_same_hour_and_persisted_database_have_one_batch(self):
         self.network.return_value = response(rss()); self.network.side_effect = None
         self.run_sources(sources=[FEED, dict(FEED, id='feed-b')])
@@ -186,14 +191,77 @@ class SchedulerTests(unittest.TestCase):
         self.assertEqual(self.db.execute('select last_success_at from source_fetch_state where source_id=?', (scheduler.plans([FEED])[0][0],)).fetchone()[0], success)
         self.assertEqual(sorted(r[0] for r in self.db.execute('select status from source_fetch_state')), ['error', 'ok'])
 
-    def test_blocked_has_no_automatic_retry_and_logs_no_body_or_url(self):
+    def test_blocked_skips_within_cooldown_and_logs_no_body_or_url(self):
         self.network.side_effect = [response(b'private body', status=403)]
-        self.run_sources(); self.run_sources(NOW + timedelta(days=3))
-        self.assertEqual(self.network.call_count, 1)
+        self.run_sources()
         self.assertEqual(self.state(), 'blocked')
-        self.assertIn('"source_status": "blocked"', self.log.getvalue())
+        self.assertEqual(self.state('consecutive_failures'), 1)
+        self.assertEqual(self.state('next_eligible_at'),
+                         scheduler.stamp(NOW + timedelta(seconds=scheduler.BLOCKED_COOLDOWN_SECONDS)))
+        self.run_sources(NOW + timedelta(seconds=scheduler.BLOCKED_COOLDOWN_SECONDS - 1))
+        self.assertEqual(self.network.call_count, 1)
+        self.assertIn('"skip_reason": "blocked"', self.log.getvalue())
         self.assertNotIn(FEED['url'], self.log.getvalue())
         self.assertNotIn('private body', self.log.getvalue())
+
+    def test_blocked_retries_after_cooldown(self):
+        self.network.side_effect = [response(status=403), response(status=403)]
+        self.run_sources()
+        self.run_sources(NOW + timedelta(seconds=scheduler.BLOCKED_COOLDOWN_SECONDS))
+        self.assertEqual(self.network.call_count, 2)
+        self.assertEqual(self.state(), 'blocked')
+        self.assertEqual(self.state('consecutive_failures'), 2)
+        self.assertEqual(self.state('next_eligible_at'),
+                         scheduler.stamp(NOW + timedelta(seconds=2 * scheduler.BLOCKED_COOLDOWN_SECONDS)))
+
+    def test_blocked_success_resets_status_and_counter(self):
+        self.network.side_effect = [response(status=403), response()]
+        self.run_sources()
+        self.run_sources(NOW + timedelta(seconds=scheduler.BLOCKED_COOLDOWN_SECONDS))
+        self.assertEqual(self.network.call_count, 2)
+        self.assertEqual(self.state(), 'ok')
+        self.assertEqual(self.state('consecutive_failures'), 0)
+        self.assertEqual(self.state('last_success_at'),
+                         scheduler.stamp(NOW + timedelta(seconds=scheduler.BLOCKED_COOLDOWN_SECONDS)))
+        self.assertEqual(self.state('next_eligible_at'),
+                         scheduler.stamp(scheduler.next_hour(NOW + timedelta(seconds=scheduler.BLOCKED_COOLDOWN_SECONDS))))
+
+    def test_repeated_blocks_alert_at_threshold(self):
+        self.network.side_effect = [response(status=403)] * scheduler.BLOCKED_ALERT_THRESHOLD
+        now = NOW
+        for blocks in range(1, scheduler.BLOCKED_ALERT_THRESHOLD + 1):
+            self.run_sources(now)
+            self.assertEqual(self.state('consecutive_failures'), blocks)
+            if blocks < scheduler.BLOCKED_ALERT_THRESHOLD:
+                self.assertNotIn('"alert": "blocked"', self.log.getvalue())
+            now += timedelta(seconds=scheduler.BLOCKED_COOLDOWN_SECONDS)
+        self.assertEqual(self.network.call_count, scheduler.BLOCKED_ALERT_THRESHOLD)
+        self.assertEqual(self.state(), 'blocked')
+        alerts = [event for event in self.events() if event.get('alert') == 'blocked']
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0]['source'], FEED['id'])
+        self.assertEqual(alerts[0]['consecutive_blocks'], scheduler.BLOCKED_ALERT_THRESHOLD)
+
+    def test_blocked_alert_counts_only_consecutive_blocked_results(self):
+        self.network.side_effect = [response(status=503), response(status=503), response(status=403)]
+        self.run_sources(NOW)
+        self.run_sources(NOW + timedelta(hours=1))
+        self.run_sources(NOW + timedelta(hours=3))
+        self.assertEqual(self.network.call_count, 3)
+        self.assertEqual(self.state(), 'blocked')
+        self.assertEqual(self.state('consecutive_failures'), 3)
+        self.assertNotIn('"alert": "blocked"', self.log.getvalue())
+
+    def test_legacy_blocked_state_with_past_next_eligible_is_retried(self):
+        scheduler.ensure_schema(self.db); self.db.commit()
+        past = scheduler.stamp(NOW - timedelta(hours=1))
+        self.db.execute('''insert into source_fetch_state(source_id,last_attempt_at,next_eligible_at,status,error_code)
+            values(?,?,?,'blocked','blocked')''', (scheduler.plans([FEED])[0][0], past, past))
+        self.db.commit()
+        self.network.return_value = response(); self.network.side_effect = None
+        self.run_sources()
+        self.assertEqual(self.network.call_count, 1)
+        self.assertEqual(self.state(), 'ok')
 
     def test_retry_after_is_respected_and_never_before_next_natural_hour(self):
         self.network.side_effect = [response(headers={'retry-after': '7200'}, status=429)]
