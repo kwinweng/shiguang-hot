@@ -123,13 +123,14 @@ body,h1,h2,h3,b,strong,button,a{font-weight:400}
 .sub{padding:10px 0 4px;font-size:13px;color:var(--c-text-3)}
 .flt{padding:6px 0 2px;margin:0;border:0;gap:8px;overflow-x:auto}.flt button{width:auto;height:48px;min-width:44px;gap:4px;flex:none}
 .flt button>span:not(.ic){position:static;width:auto;height:auto;overflow:visible;clip-path:none;white-space:nowrap;font-size:13px}
-.row.c,details .row.c{display:grid;grid-template-columns:64px minmax(0,1fr) auto;column-gap:12px;align-items:start;padding:16px 0}
+.row.c,details .row.c{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:start;padding:16px 0}
+.row.c .cc{display:block}
 .cc{font-size:13px;line-height:23px;color:var(--c-text-3);overflow-wrap:anywhere}
 .row.c .tx{min-width:0}.row.c b{font-size:16px;line-height:23px;font-weight:400}
 .row.c p{font-size:14px;line-height:21px;margin-top:4px;-webkit-line-clamp:2}
 .row.c small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;line-height:16px;margin-top:8px}
 .row.c img{width:76px;height:76px;border-radius:6px;margin-top:3px}
-.row.c:not(:has(img)){grid-template-columns:64px minmax(0,1fr)}
+.row.c:not(:has(img)){grid-template-columns:minmax(0,1fr)}
 .row.c:not(:has(img)) .tx{grid-column:1 / -1}
 .row.c.live-row,details .row.c.live-row{grid-template-columns:minmax(0,1fr) auto}
 .row.c.live-row:not(:has(img)){grid-template-columns:minmax(0,1fr)}

@@ -143,6 +143,49 @@ class NewsModulesBrowserTests(unittest.TestCase):
             self.assertEqual(self.page.locator('.dt img').count(), 0)
         self.assertEqual(self.errors, [])
 
+    def test_explore_image_category_above_title_and_trimmed_title(self):
+        console_errors = []
+        self.page.on('console', lambda message: console_errors.append(message.text)
+                     if message.type == 'error' else None)
+        base = json.loads((self.out/'data/live.json').read_text())['messages'][0]
+        title = '‘Paralyzed’ 标题中的 空格保留'
+        rows = [dict(base, id='with-image', section='play', category='影视',
+                     title=' \t\u3000' + title + '\u00a0\n', summary='独立正文内容',
+                     image='icon-192.png'),
+                dict(base, id='without-image', section='play', category='游戏',
+                     title='无图标题', image='')]
+        self.page.route('**/data/explore.json', lambda r: r.fulfill(json={'messages': rows}))
+        self.open('explore/play')
+        self.page.get_by_role('button', name='影视', exact=True).click()
+        self.page.wait_for_function("document.querySelectorAll('.row').length === 1")
+        self.assertEqual(self.page.locator('.row b').text_content(), title)
+        self.assertEqual(self.page.locator('.row p').text_content(), '独立正文内容')
+        self.page.wait_for_function("document.querySelector('.row img').naturalWidth > 0")
+        for width in (320, 393, 1280):
+            self.page.set_viewport_size({'width': width, 'height': 852})
+            boxes = self.page.locator('.row').evaluate("""row => {
+                const box = el => {
+                    const r = el.getBoundingClientRect();
+                    return {left:r.left, right:r.right, top:r.top, bottom:r.bottom};
+                };
+                return {row:box(row), category:box(row.querySelector('.cc')),
+                        title:box(row.querySelector('b')), text:box(row.querySelector('p')),
+                        image:box(row.querySelector('img'))};
+            }""")
+            for part in ('category', 'title', 'text'):
+                self.assertAlmostEqual(boxes[part]['left'], boxes['row']['left'], delta=1)
+                self.assertLessEqual(boxes[part]['right'], boxes['image']['left'] - 11)
+            self.assertLessEqual(boxes['category']['bottom'], boxes['title']['top'])
+            self.assertAlmostEqual(boxes['image']['right'], boxes['row']['right'], delta=1)
+            self.assertAlmostEqual(boxes['image']['right'] - boxes['image']['left'], 76, delta=1)
+        self.page.screenshot(path='/tmp/rebang-explore-image-desktop.png')
+        self.page.set_viewport_size({'width': 393, 'height': 852})
+        self.page.screenshot(path='/tmp/rebang-explore-image-mobile.png')
+        self.assertEqual(self.page.url, 'https://offline.test/index.html#explore/play?category=%E5%BD%B1%E8%A7%86')
+        self.assertIn('拾光热榜', self.page.title())
+        self.assertEqual(console_errors, [])
+        self.assertEqual(self.errors, [])
+
     def assert_full_width_text(self):
         for width in (320, 393, 1280):
             self.page.set_viewport_size({'width': width, 'height': 852})

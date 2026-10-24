@@ -172,10 +172,11 @@ class NewsModuleTests(unittest.TestCase):
                                                ('unknown','好玩','games'), ('steam','好看','shows')]:
                     db.execute('insert into trial_item values(?,?,?,?,?,?,?,?,?)',
                                (sid, section, category, f'https://example.test/{sid}/{section}',
-                                '标题', '摘要', 'javascript:bad', None, '2026-10-23T12:00:00Z'))
+                                ' \t\u3000标题\u00a0\n', '摘要', 'javascript:bad', None, '2026-10-23T12:00:00Z'))
                 db.commit()
             before = path.read_bytes()
             rows = explore_messages()
+            self.assertTrue(all(r['title'] == '标题' for r in rows))
             self.assertEqual({(r['section'], r['category']) for r in rows}, {('play','游戏'), ('buy','3D 打印')})
             self.assertTrue(all(r['image']=='' and r['time']=='' for r in rows))
             self.assertEqual(rows, explore_messages())

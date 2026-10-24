@@ -1,5 +1,14 @@
 # 交接记录
 
+## 2026-10-24 PR #31 有图探索条目修补
+
+- 探索分类标签必须放在 `.tx` 内并独占一行；有图行使用正文、图片两列，不能沿用分类占左列的三列网格。无图及坏图仍保持全文宽度。
+- `explore_messages()` 输出标题时执行 `strip()`，列表渲染再执行 `trim()`，兼容已有缓存数据；保留标题内部空格。
+- 浏览器回归使用正常加载的图片，覆盖 320、393、1280 像素宽度、分类筛选、标签与正文位置、图片右对齐及标题首尾空白。截图位于 `/tmp/rebang-explore-image-desktop.png` 和 `/tmp/rebang-explore-image-mobile.png`。
+- 验证：`python3 -m pytest -q`（196 passed、58 subtests）、`node --test tests/*.test.js`（9 passed）、`NO_FETCH=1 python3 pipeline.py` 均通过。
+- Python 首轮在 `test_dirty_checkout_refused_at_sync_and_persist` 的 Git 索引字节快照比较中偶发失败；未改代码完整重跑通过。未扩大本次修补范围。
+- 未读取密钥文件，未 push、合并、部署或操作 gh-pages。
+
 ## 2026-10-24 PR #31 第二轮修复
 
 - 无图列表标题跨满整行，不保留图片占位；图片加载失败移除后同样恢复整行宽度。

@@ -32,7 +32,7 @@ def explore_messages():
                 continue
             result.append(dict(id='trial-' + hashlib.sha256(url.encode()).hexdigest()[:20],
                                source=sid, source_name=sources[sid]['name'], section={'好玩':'play','好买':'buy'}[section],
-                               category=categories.get(category, category), title=title, summary=summary,
+                               category=categories.get(category, category), title=title.strip(), summary=summary,
                                text=summary, link=safe_link(url), image=safe_link(image or ''),
                                time=published or '', day=(published or '')[:10]))
     return result
