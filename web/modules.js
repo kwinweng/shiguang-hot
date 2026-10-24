@@ -121,7 +121,6 @@ if (typeof document !== 'undefined') (() => {
         if (index.days.includes(day)) {
           const doc = await load(`history/${day}.json`, fresh);
           rows = doc.messages;
-          html += `<section class="day-summary"><p>${e(doc.summary)}</p></section>`;
           html += doc.events.map(event => `<details class="review-event"><summary>${e(event.title)}</summary><p>${e(event.summary)}</p><small>${event.source_count} 个来源</small>${list(event.messages)}</details>`).join('') || empty('这一天没有热点');
         } else html += empty(day === beijingToday() ? '00:30 后生成' : '这一天暂无回顾');
       } else if (parts[0] === 'explore') {

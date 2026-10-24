@@ -130,6 +130,7 @@ body,h1,h2,h3,b,strong,button,a{font-weight:400}
 .row.c small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;line-height:16px;margin-top:8px}
 .row.c img{width:76px;height:76px;border-radius:6px;margin-top:3px}
 .row.c:not(:has(img)){grid-template-columns:64px minmax(0,1fr)}
+.row.c:not(:has(img)) .tx{grid-column:1 / -1}
 .row.c.live-row,details .row.c.live-row{grid-template-columns:minmax(0,1fr) auto}
 .row.c.live-row:not(:has(img)){grid-template-columns:minmax(0,1fr)}
 .live-row .meta{font-size:12px;line-height:18px;color:var(--c-text-3);margin-bottom:4px}

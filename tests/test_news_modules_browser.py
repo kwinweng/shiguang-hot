@@ -91,6 +91,7 @@ class NewsModulesBrowserTests(unittest.TestCase):
         self.open('review/2026-10-22')
         self.assertEqual(self.page.locator('.cal').count(), 0)
         self.assertTrue(self.page.locator('.date-strip').is_visible())
+        self.assertEqual(self.page.locator('.day-summary').count(), 0)
         self.assertEqual(self.page.locator('.review-event').count(), 6)
         self.page.locator('.review-event summary').first.click()
         self.assertTrue(self.page.locator('.review-event .row').first.is_visible())
@@ -133,12 +134,33 @@ class NewsModulesBrowserTests(unittest.TestCase):
         self.page.wait_for_function("document.querySelector('.chips [aria-pressed=true]').textContent==='温泉'")
         self.assertEqual(self.page.locator('.row').count(), 1)
         self.page.wait_for_function("document.querySelector('.row img') === null")
+        self.assert_full_width_text()
         for section in ('kan', 'buy'):
             self.open('explore/' + section)
             self.assertEqual(self.page.locator('.row').count(), 1)
             self.page.locator('.row').click()
             self.page.wait_for_selector('.dt h1')
             self.assertEqual(self.page.locator('.dt img').count(), 0)
+        self.assertEqual(self.errors, [])
+
+    def assert_full_width_text(self):
+        for width in (320, 393, 1280):
+            self.page.set_viewport_size({'width': width, 'height': 852})
+            dimensions = self.page.locator('.row').first.evaluate("""row => ({
+                row:row.getBoundingClientRect().width,
+                title:row.querySelector('b').getBoundingClientRect().width,
+                images:row.querySelectorAll('img').length
+            })""")
+            self.assertEqual(dimensions['images'], 0)
+            self.assertAlmostEqual(dimensions['title'], dimensions['row'], delta=1)
+
+    def test_explore_play_without_image_uses_full_width(self):
+        base = json.loads((self.out/'data/live.json').read_text())['messages'][0]
+        rows = [dict(base, id='no-image', section='play', category='温泉', image='')]
+        self.page.route('**/data/explore.json', lambda r: r.fulfill(json={'messages': rows}))
+        self.open('explore/play')
+        self.assertEqual(self.page.locator('.row').count(), 1)
+        self.assert_full_width_text()
         self.assertEqual(self.errors, [])
 
     def test_refresh_six_tabs_bypasses_cache_and_counts_new_ids(self):
