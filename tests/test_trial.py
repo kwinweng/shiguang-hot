@@ -194,6 +194,11 @@ class TrialTests(unittest.TestCase):
                             self.assertNotIn(sid, (out / path).read_text())
                     for path in list(out.rglob('*')) + list((ROOT / 'public-feeds').rglob('*')):
                         if path.is_file() and path.suffix in ('.html', '.json', '.js', '.css', '.md'):
+                            if path == out / 'data/explore.json':
+                                explore = json.loads(path.read_text())['messages']
+                                self.assertEqual(len(explore), len(trial_cfg['sources']))
+                                self.assertEqual({r['section'] for r in explore}, {'play', 'buy'})
+                                continue
                             text = path.read_text()
                             for source in trial_cfg['sources']:
                                 self.assertNotIn(source['id'], path.relative_to(out).as_posix() if path.is_relative_to(out) else path.name)

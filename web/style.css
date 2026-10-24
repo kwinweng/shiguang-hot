@@ -544,3 +544,10 @@ html.vt-local::view-transition-group(lightbox-image){animation-duration:var(--du
 /* ---------- 栏目: channel / tag switch ---------- */
 .view-switch{margin:0 0 var(--space-4)}
 [data-panel][hidden]{display:none}
+
+/* Shared legacy pages use the approved three-slot floating navigation. */
+.g-tabbar{bottom:calc(12px + var(--safe-bottom));width:calc(100% - 24px);max-width:402px;height:70px;padding:0;grid-template-columns:repeat(3,minmax(0,1fr));border-radius:35px}
+.g-tabbar .tab{height:70px;display:flex;flex-direction:column;gap:3px;font-size:11px;line-height:16px;font-weight:400}
+.g-tabbar .tab.active{color:var(--ink);font-weight:400}
+.g-tabbar .tab__pill{display:none}
+body :is(h1,h2,h3,h4,b,strong,a,button,label,span){font-weight:400!important}

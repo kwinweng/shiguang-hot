@@ -27,7 +27,7 @@ PR B 覆盖下文旧首页导航说明：首页改为实时流，来源与历史
 
 内网版的登录（登录页 + 180 天 Cookie，代替 Basic Auth）由 `tools/login_gate.py` 提供，接入 nginx/Caddy 的方法见 `PRIVATE_LOGIN.md`。
 
-根目录另有几个兼容入口，给本机脚本用：`run.sh`、`mailbuild.py`（本机定时任务调用）、`validate_feed.py`（投递 bot 调用）、`feeds.py`（`publish_public.py` 可能 `import feeds`，其 `config()` 仍返回旧字段）。本机脚本收进仓库后删除后两个。
+根目录另有几个兼容入口，给本机脚本用：`mailbuild.py`（本机定时任务调用）、`validate_feed.py`（投递 bot 调用）、`feeds.py`（`publish_public.py` 可能 `import feeds`，其 `config()` 仍返回旧字段）。本机脚本收进仓库后删除后两个。
 
 ## 页面
 

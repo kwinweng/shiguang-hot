@@ -1,6 +1,14 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const news = require('../web/news.js');
+const modules = require('../web/modules.js');
+
+test('duplicate and near duplicate summaries disappear, distinct text survives', () => {
+  assert.equal(modules.distinctSummary('新产品今日发布！', '新产品今日发布'), '');
+  assert.equal(modules.distinctSummary('新产品今天正式发布', '新产品今天正式发布。'), '');
+  assert.equal(modules.distinctSummary('新产品发布', '价格与上市时间另行公布'), '价格与上市时间另行公布');
+  assert.equal(modules.distinctSummary('标题', ''), '');
+});
 
 test('all six filters select category rather than source', () => {
   assert.deepEqual(news.categories,['全部','热门','科技','财经','国际','数码']);
