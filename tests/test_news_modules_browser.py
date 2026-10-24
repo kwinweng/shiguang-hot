@@ -120,6 +120,33 @@ class NewsModulesBrowserTests(unittest.TestCase):
         self.assertNotIn('看往日', self.page.locator('#news').inner_text())
         self.assertEqual(self.errors,[])
 
+    def test_theme_icon_accessibility_and_keyboard_toggle(self):
+        for initial in ('light', 'dark'):
+            with self.subTest(initial=initial):
+                self.page.emulate_media(color_scheme=initial)
+                self.page.goto('about:blank')
+                self.open()
+                button = self.page.locator('#theme')
+                for position, mode in enumerate((initial, 'dark' if initial == 'light' else 'light', initial)):
+                    self.assertEqual(self.page.locator('html').get_attribute('data-theme'), mode)
+                    label = '切换到浅色模式' if mode == 'dark' else '切换到深色模式'
+                    self.assertEqual(button.get_attribute('aria-label'), label)
+                    self.assertEqual(button.get_attribute('title'), label)
+                    self.assertEqual(button.inner_text().strip(), '')
+                    self.assertEqual(button.locator('.ic svg[aria-hidden="true"]').count(), 1)
+                    glyph = 'sun_line' if mode == 'dark' else 'moon_line'
+                    expected_path = self.page.evaluate('(glyph) => /<path d="([^"]+)"/.exec(window.ICONS[glyph])[1]', glyph)
+                    self.assertEqual(button.locator('svg path').get_attribute('d'), expected_path)
+                    box = button.bounding_box()
+                    self.assertGreaterEqual(box['width'], 44)
+                    self.assertGreaterEqual(box['height'], 44)
+                    if position == 0:
+                        button.click()
+                    elif position == 1:
+                        button.focus()
+                        self.page.keyboard.press('Enter')
+                self.assertEqual(self.errors, [])
+
     def test_review_summary_source_counts_and_all_raw_messages(self):
         day = '2026-10-22'
         doc = json.loads((self.out/f'history/{day}.json').read_text())

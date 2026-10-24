@@ -64,7 +64,7 @@ def publish(content, out):
 <title>拾光热榜 · 实时流与历史回顾</title>'''
     html += ''.join(f'<link rel="stylesheet" href="{names[name]}">' for name in ('news-tokens.css', 'news.css'))
     html += '''</head><body><header class="brand"><a href="index.html">拾光热榜</a>
-<button id="theme" aria-label="切换明暗模式">明暗</button></header><main class="pg" id="news" aria-live="polite">
+<button id="theme" aria-label="切换到深色模式" title="切换到深色模式"></button></header><main class="pg" id="news" aria-live="polite">
 <p>正在加载消息…</p></main><noscript>请启用 JavaScript 查看实时流。
 <a href="archive/''' + content.today + '''.html">查看静态文字页</a></noscript>
 <nav class="news-nav" aria-label="主导航"><a href="today.html#today">今日</a><a href="index.html#feed">资讯</a><a href="columns.html">栏目</a><a href="favorites.html">收藏</a></nav>'''

@@ -166,8 +166,17 @@ if (typeof document !== 'undefined') {
       if (current === generation) main.removeAttribute('aria-busy');
     }
   };
-  document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  document.getElementById('theme').onclick = () => document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  const themeButton = document.getElementById('theme');
+  const setTheme = theme => {
+    document.documentElement.dataset.theme = theme;
+    const dark = theme === 'dark';
+    const label = dark ? '切换到浅色模式' : '切换到深色模式';
+    themeButton.innerHTML = icon(dark ? 'sun' : 'moon');
+    themeButton.setAttribute('aria-label', label);
+    themeButton.setAttribute('title', label);
+  };
+  setTheme(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  themeButton.onclick = () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
   addEventListener('hashchange', route);
   route();
 }

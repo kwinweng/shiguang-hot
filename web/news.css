@@ -77,6 +77,7 @@ body{background:var(--c-bg)}
 .brand,.pg{max-width:var(--s-content-col);margin:auto;padding-left:var(--sp-20);padding-right:var(--sp-20)}
 .brand{display:flex;justify-content:space-between;align-items:center;min-height:56px;border-bottom:1px solid var(--c-line)}
 .brand>a{font-weight:600}.brand button{min-height:44px;min-width:44px}
+#theme{display:inline-flex;align-items:center;justify-content:center}
 .pg{padding-top:var(--sp-12);padding-bottom:calc(102px + env(safe-area-inset-bottom))}
 .news-nav{position:fixed;bottom:0;left:0;right:0;padding:16px 20px calc(16px + env(safe-area-inset-bottom));background:var(--c-bg);border-top:1px solid var(--c-line);display:flex;justify-content:center;gap:24px}
 .news-nav a{min-height:44px;display:flex;align-items:center;color:var(--c-brand)}
