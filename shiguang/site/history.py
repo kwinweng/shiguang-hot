@@ -16,9 +16,7 @@ ALLOWED = frozenset(('CE_Observe FinanceNewsDaily HuaErJie1 NewlearnerChannel Ti
 PHOSPHOR = json.loads(Path(__file__).with_name('phosphor.json').read_text())
 RETIRED = {sid: dict(id=sid, channel=sid, name=name, order=order, type='telegram',
                      visibility='public', icon='all', home={'weight': 1, 'cap': 4})
-           for sid, name, order in [('pelosi3', '敏感经济信息分享', 56),
-                                    ('liangjiahepost', '梁家河邮报', 60),
-                                    ('titan_pain', '某科学的一个频道', 61)]}
+           for sid, name, order in [('titan_pain', '某科学的一个频道', 61)]}
 
 
 def icon(name):
