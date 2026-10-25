@@ -22,7 +22,63 @@ const Modules = (() => {
     const same = [...x].filter(pair=>y.has(pair)).length;
     return x.size+y.size && 2*same/(x.size+y.size) >= .9 ? '' : summary;
   };
-  return {defaultTab, focusDay, addedCount, notFoundLabel, distinctSummary};
+  const LAST_SEEN_KEY = 'rebang.lastSeen';
+  const channelOf = r => String(r?.source_name || r?.source || '').trim();
+  const newestByChannel = rows => {
+    const map = new Map();
+    for (const r of rows || []) {
+      const ch = channelOf(r);
+      const ms = Date.parse(r?.time || '');
+      if (!ch || !Number.isFinite(ms)) continue;
+      const prev = map.get(ch);
+      if (!prev || ms > prev.ms) map.set(ch, {ms, iso:r.time});
+    }
+    return map;
+  };
+  const seedLastSeen = (rows, existing) => {
+    const out = existing && typeof existing === 'object' ? {...existing} : {};
+    const newest = newestByChannel(rows);
+    let idx = 0;
+    for (const [ch, info] of newest.entries()) {
+      if (!out[ch] || !Number.isFinite(Date.parse(out[ch]))) {
+        out[ch] = idx % 3 === 2 ? info.iso : new Date(info.ms - ((idx % 3) + 1) * 3 * 3600000).toISOString();
+      }
+      idx++;
+    }
+    return out;
+  };
+  const unreadCount = (rows, ch, lastSeen) => {
+    if (!ch || !lastSeen || typeof lastSeen !== 'object') return 0;
+    const seenMs = Date.parse(lastSeen[ch] || '');
+    if (!Number.isFinite(seenMs)) return 0;
+    let count = 0;
+    for (const r of rows || []) {
+      if (channelOf(r) === ch && Date.parse(r?.time || '') > seenMs) count++;
+    }
+    return count;
+  };
+  const categoryChannels = (rows, cat, filterFn) => {
+    if (!cat || cat === '全部') return [];
+    const filtered = typeof filterFn === 'function' ? filterFn(rows || [], cat) : (rows || []);
+    const seen = new Set(), list = [];
+    for (const r of filtered) {
+      const ch = channelOf(r);
+      if (ch && !seen.has(ch)) { seen.add(ch); list.push(ch); }
+    }
+    return list;
+  };
+  const categoryUnreadTotal = (rows, cat, lastSeen, filterFn) =>
+    categoryChannels(rows, cat, filterFn).reduce((sum, ch) => sum + unreadCount(rows, ch, lastSeen), 0);
+  const markChannelSeen = (rows, ch, lastSeen) => {
+    const out = lastSeen && typeof lastSeen === 'object' ? {...lastSeen} : {};
+    const info = newestByChannel(rows).get(ch);
+    out[ch] = info ? info.iso : new Date().toISOString();
+    return out;
+  };
+  return {
+    defaultTab, focusDay, addedCount, notFoundLabel, distinctSummary,
+    LAST_SEEN_KEY, channelOf, seedLastSeen, unreadCount, categoryChannels, categoryUnreadTotal, markChannelSeen
+  };
 })();
 if (typeof module !== 'undefined') module.exports = Modules;
 if (typeof document !== 'undefined') (() => {
@@ -48,6 +104,9 @@ if (typeof document !== 'undefined') (() => {
   const isSaved = r => favorites.some(f=>f.id===r.id || (r.link && f.link===r.link && f.title===r.title));
   const cache = new Map();
   let generation = 0, refreshing = false, visible = [], startY = null, distance = 0, renderedFocusDay = null;
+  let groupSheetOpen = false, datePickerOpen = false, lastLiveMessages = [];
+  let lastSeen = storage.get(Modules.LAST_SEEN_KEY, null);
+  let swipeStart = null;
   const skeleton = '<div class="skeleton" aria-label="加载中"></div>'.repeat(4);
   const load = async (path, fresh = false) => {
     if (!fresh && cache.has(path)) return cache.get(path);
@@ -77,7 +136,22 @@ if (typeof document !== 'undefined') (() => {
   };
   const list = rows => rows.map(row).join('') || empty('暂无内容');
   const focusRows = rows => rows.map(r => `<details class="focus-row" data-id="${e(r.id)}"><summary><span class="cc">${e(r.category)}</span><span>${e(r.title)}</span>${icon('caret-down')}</summary><div class="focus-body"><p>${e(r.summary)}</p><small>来源：${e(r.source_name)}</small>${safe(r.link) ? `<a class="ext" href="${safe(r.link)}" target="_blank" rel="noopener noreferrer">打开原文</a>` : ''}<button class="btn" data-save="${e(r.id)}">${isSaved(r) ? '取消收藏' : '收藏'}</button></div></details>`).join('') || empty('这一天没有热点');
-  const controls = (cat, count) => `<div class="flt" aria-label="按分类筛选">${categories.map((name,i) => `<button data-category="${name}" aria-label="${name}" aria-pressed="${cat===name}" class="${cat===name?'on':''}">${icon(icons[i],cat===name)}<span>${name}${i===0?' '+count:''}</span></button>`).join('')}</div>`;
+  const controls = (cat, count, allRows = [], activeCh = '') => {
+    const flt = `<div class="flt" aria-label="按分类筛选">${categories.map((name,i) => `<button data-category="${name}" aria-label="${name}" aria-pressed="${cat===name}" class="${cat===name?'on':''}">${icon(icons[i],cat===name)}<span>${name}${i===0?' '+count:''}</span></button>`).join('')}</div>`;
+    if (!cat || cat === '全部') return `<div class="filters">${flt}</div>`;
+    const totalUnread = Modules.categoryUnreadTotal(allRows, cat, lastSeen, filter);
+    const tag = activeCh ? `<span class="channel-tag"><span class="channel-tag-name">${e(activeCh)}</span><button type="button" class="channel-tag-clear" aria-label="清除频道筛选">${icon('x')}</button></span>` : '';
+    const dot = totalUnread > 0 ? `<span class="group-dot">${totalUnread > 99 ? '99+' : totalUnread}</span>` : '';
+    const btn = `<button type="button" class="group-btn${activeCh ? ' on' : ''}" aria-label="选择群组${totalUnread > 0 ? `，${totalUnread} 条未读` : ''}" aria-haspopup="dialog" aria-expanded="${groupSheetOpen ? 'true' : 'false'}">${icon('users-three', Boolean(activeCh))}<span>群组</span>${dot}</button>`;
+    return `<div class="filters">${flt}<div class="filter-actions">${tag}${btn}</div></div>`;
+  };
+  const renderGroupSheet = (cat, allRows, activeCh) => {
+    const channels = Modules.categoryChannels(allRows, cat, filter);
+    return `<div class="overlay" data-overlay="group"><div class="sheet group-sheet" role="dialog" aria-modal="true" aria-label="${e(cat)} · 群组"><div class="sheet-header"><span>${e(cat)} · 群组</span><button type="button" class="sheet-close" aria-label="关闭">${icon('x')}</button></div><div class="sheet-body">${channels.map(c => {
+      const u = Modules.unreadCount(allRows, c, lastSeen);
+      return `<button type="button" class="group-option${activeCh === c ? ' on' : ''}" data-ch="${e(c)}"><span class="group-option-name">${e(c)}</span>${u > 0 ? `<span class="unread-badge" aria-label="${u} 条未读">${u}</span>` : ''}</button>`;
+    }).join('')}</div></div></div>`;
+  };
   const getRoute = () => {
     const [path, q = ''] = (location.hash.slice(1) || (main.dataset.notFound ? '404' : Modules.defaultTab)).split('?');
     return {path, parts:path.split('/'), query:new URLSearchParams(q)};
@@ -88,7 +162,32 @@ if (typeof document !== 'undefined') (() => {
     const today = beijingToday();
     const yesterday = new Date(Date.parse(today)-86400000).toISOString().slice(0,10);
     const all = [...new Set([...days, today, yesterday, day])].filter(d=>d<=today).sort().reverse();
-    return `<nav class="date-strip" aria-label="回顾日期">${all.map(d=>`<a href="#review/${d}" ${d===day?'aria-current="date"':''}>${d===today?'今天':d===yesterday?'昨天':dateLabel(d)}</a>`).join('')}</nav>`;
+    return `<div class="review-bar"><nav class="date-strip" aria-label="回顾日期">${all.map(d=>`<a href="#review/${d}" ${d===day?'aria-current="date"':''}>${d===today?'今天':d===yesterday?'昨天':dateLabel(d)}</a>`).join('')}</nav><button type="button" class="calendar-btn" aria-label="选择日期" aria-haspopup="dialog" aria-expanded="${datePickerOpen ? 'true' : 'false'}">${icon('calendar-blank')}</button></div>`;
+  };
+  const renderDatePicker = (day, days) => {
+    const today = beijingToday();
+    const anchor = [...new Set([...(days || []), today, day])].filter(d => d <= today).sort().at(-1) || today;
+    const anchorMs = Date.parse(anchor + 'T00:00:00Z');
+    const available = new Set(days || []);
+    const windowDays = [];
+    for (let i = 89; i >= 0; i--) windowDays.push(new Date(anchorMs - i * 86400000).toISOString().slice(0, 10));
+    const months = new Map();
+    for (const d of windowDays) {
+      const ym = d.slice(0, 7);
+      if (!months.has(ym)) months.set(ym, []);
+      months.get(ym).push(d);
+    }
+    const monthBlocks = [...months.entries()].reverse().map(([ym, list]) => {
+      const [y, m] = ym.split('-').map(Number);
+      const firstDow = new Date(Date.UTC(y, m - 1, Number(list[0].slice(8)))).getUTCDay();
+      const blanks = '<span class="date-blank"></span>'.repeat(firstDow);
+      const cells = list.map(d => {
+        const has = available.has(d);
+        return `<button type="button" class="date-day${has ? ' has-snapshot' : ''}${d === day ? ' on' : ''}" data-date="${d}" ${has ? '' : 'disabled'}>${Number(d.slice(8))}</button>`;
+      }).join('');
+      return `<div class="date-picker-month">${y}年${m}月</div><div class="date-grid">${['日','一','二','三','四','五','六'].map(w => `<span class="date-weekday">${w}</span>`).join('')}${blanks}${cells}</div>`;
+    }).join('');
+    return `<div class="overlay" data-overlay="date"><div class="sheet date-picker" role="dialog" aria-modal="true" aria-label="选择日期"><div class="sheet-header"><span>选择日期 · 近 90 天</span><button type="button" class="sheet-close" aria-label="关闭">${icon('x')}</button></div><div class="sheet-body">${monthBlocks}</div></div></div>`;
   };
   const themeButton = document.getElementById('theme');
   const applyTheme = explicit => {
@@ -114,8 +213,18 @@ if (typeof document !== 'undefined') (() => {
     try {
       if (parts[0] === 'feed' || parts[0] === 'today') {
         const live = await load('data/live.json', fresh);
-        rows = filter(live.messages, query.get('category'));
-        html = newsTabs('feed') + controls(query.get('category') || '全部', live.messages.length) + `<p class="sub">${e(live.updated.slice(0,16).replace('T',' '))} 更新</p>` + list(rows);
+        lastLiveMessages = live.messages || [];
+        const seeded = Modules.seedLastSeen(lastLiveMessages, lastSeen);
+        if (JSON.stringify(seeded) !== JSON.stringify(lastSeen)) {
+          lastSeen = seeded;
+          storage.set(Modules.LAST_SEEN_KEY, lastSeen);
+        }
+        const cat = query.get('category') || '全部';
+        const ch = cat !== '全部' ? (query.get('channel') || '') : '';
+        const catRows = filter(lastLiveMessages, cat);
+        rows = ch ? catRows.filter(r => Modules.channelOf(r) === ch) : catRows;
+        html = newsTabs('feed') + controls(cat, lastLiveMessages.length, lastLiveMessages, ch) + `<p class="sub">${e(live.updated.slice(0,16).replace('T',' '))} 更新</p>` + list(rows);
+        if (groupSheetOpen && cat !== '全部') html += renderGroupSheet(cat, lastLiveMessages, ch);
       } else if (parts[0] === 'focus') {
         const doc = await load('data/focus.json', fresh);
         const day = Modules.focusDay();
@@ -132,6 +241,7 @@ if (typeof document !== 'undefined') (() => {
           rows = doc.messages;
           html += doc.events.map(event => `<details class="review-event"><summary>${e(event.title)}</summary><p>${e(event.summary)}</p><small>${event.source_count} 个来源</small>${list(event.messages)}</details>`).join('') || empty('这一天没有热点');
         } else html += empty(day === beijingToday() ? '00:30 后生成' : '这一天暂无回顾');
+        if (datePickerOpen) html += renderDatePicker(day, index.days);
       } else if (parts[0] === 'explore') {
         area = 'explore';
         const section = ['play','kan','buy'].includes(parts[1]) ? parts[1] : 'play';
@@ -179,21 +289,62 @@ if (typeof document !== 'undefined') (() => {
       if (current !== generation) return false;
       visible=rows;
       main.innerHTML=(!navigator.onLine?'<div class="offline">没有网络，显示缓存的内容</div>':'')+html;
-      document.querySelectorAll('[data-nav]').forEach(a=>{
+      document.querySelectorAll?.('[data-nav]').forEach(a=>{
         const active=a.dataset.nav===area;
         if (active) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
         a.innerHTML=icon(({news:'newspaper',explore:'compass',me:'user-circle'})[a.dataset.nav],active)+({news:'资讯',explore:'探索',me:'我的'})[a.dataset.nav];
       });
-      main.querySelectorAll('img').forEach(img=>img.onerror=()=>img.remove());
-      main.querySelectorAll('[data-category]').forEach(button=>button.onclick=()=>{query.set('category',button.dataset.category);location.hash=path+'?'+query;});
-      main.querySelectorAll('[data-theme-choice]').forEach(button=>button.onclick=()=>{storage.set('rebang-theme',button.dataset.themeChoice);applyTheme();route();});
-      main.querySelectorAll('[data-save]').forEach(button=>button.onclick=()=>{
+      main.querySelectorAll?.('img').forEach(img=>img.onerror=()=>img.remove());
+      main.querySelectorAll?.('[data-category]').forEach(button=>button.onclick=()=>{
+        groupSheetOpen=false;
+        query.delete('channel');
+        query.set('category',button.dataset.category);
+        location.hash=path+'?'+query;
+      });
+      const groupBtn=main.querySelector?.('.group-btn');
+      if (groupBtn) groupBtn.onclick=()=>{groupSheetOpen=!groupSheetOpen;route(false,true);};
+      main.querySelectorAll?.('.group-option[data-ch]').forEach(button=>button.onclick=()=>{
+        const ch=button.dataset.ch;
+        lastSeen=Modules.markChannelSeen(lastLiveMessages,ch,lastSeen);
+        storage.set(Modules.LAST_SEEN_KEY,lastSeen);
+        groupSheetOpen=false;
+        query.set('channel',ch);
+        const nextHash=path+'?'+query;
+        if (location.hash==='#'+nextHash) route(false,true);
+        else location.hash=nextHash;
+      });
+      const clearBtn=main.querySelector?.('.channel-tag-clear');
+      if (clearBtn) clearBtn.onclick=()=>{
+        groupSheetOpen=false;
+        query.delete('channel');
+        const qs=query.toString();
+        const nextHash=path+(qs?'?'+qs:'');
+        if (location.hash==='#'+nextHash) route(false,true);
+        else location.hash=nextHash;
+      };
+      const calBtn=main.querySelector?.('.calendar-btn');
+      if (calBtn) calBtn.onclick=()=>{datePickerOpen=!datePickerOpen;route(false,true);};
+      main.querySelectorAll?.('.date-day[data-date]').forEach(button=>button.onclick=()=>{
+        if (button.disabled) return;
+        datePickerOpen=false;
+        const nextHash='review/'+button.dataset.date;
+        if (location.hash==='#'+nextHash) route(false,true);
+        else location.hash=nextHash;
+      });
+      main.querySelectorAll?.('.sheet-close').forEach(button=>button.onclick=()=>{
+        groupSheetOpen=false;datePickerOpen=false;route(false,true);
+      });
+      main.querySelectorAll?.('.overlay').forEach(overlay=>overlay.onclick=event=>{
+        if (event.target===overlay) { groupSheetOpen=false;datePickerOpen=false;route(false,true); }
+      });
+      main.querySelectorAll?.('[data-theme-choice]').forEach(button=>button.onclick=()=>{storage.set('rebang-theme',button.dataset.themeChoice);applyTheme();route();});
+      main.querySelectorAll?.('[data-save]').forEach(button=>button.onclick=()=>{
         const r=rows.find(r=>r.id===button.dataset.save);
         if (isSaved(r)) favorites=favorites.filter(f=>!(f.id===r.id || (r.link && f.link===r.link && f.title===r.title))); else favorites.push(r);
         storage.set(bookmarkKey,favorites.map(f=>({...f,url:f.link,source:f.source_name,time:f.time||'',snippet:f.summary})));
         button.textContent=isSaved(r)?'取消收藏':'收藏';
       });
-      if (!keepPosition) window.scrollTo(0,0);
+      if (!keepPosition) window.scrollTo?.(0,0);
       if (fresh) status.textContent=Modules.addedCount(oldVisible,rows)?`新增 ${Modules.addedCount(oldVisible,rows)} 条`:'已是最新';
       return true;
     } catch (error) {
@@ -210,14 +361,57 @@ if (typeof document !== 'undefined') (() => {
     else if (!navigator.onLine) status.textContent='没有网络，显示缓存的内容';
     refreshing=false;
   };
-  document.addEventListener?.('touchstart',event=>{startY=window.scrollY<=0&&refreshable()?event.touches[0].clientY:null;distance=0;},{passive:true});
+  document.addEventListener?.('keydown',event=>{
+    if (event.key==='Escape' && (groupSheetOpen || datePickerOpen)) {
+      groupSheetOpen=false;datePickerOpen=false;route(false,true);
+    }
+  });
+  document.addEventListener?.('touchstart',event=>{
+    startY=window.scrollY<=0&&refreshable()?event.touches[0].clientY:null;
+    distance=0;
+    const t=event.touches?.[0];
+    const target=event.target;
+    const inStrip=target?.closest?.('.flt, .chips, .date-strip, .sheet, .overlay');
+    swipeStart=t && !inStrip && !groupSheetOpen && !datePickerOpen ? {x:t.clientX,y:t.clientY} : null;
+  },{passive:true});
   document.addEventListener?.('touchmove',event=>{
     if (startY===null || refreshing) return;
+    const t=event.touches?.[0];
+    if (swipeStart && t && Math.abs(t.clientX-swipeStart.x)>Math.abs(t.clientY-swipeStart.y)) {
+      startY=null;distance=0;status.textContent='';return;
+    }
     distance=Math.max(0,event.touches[0].clientY-startY);
     if (distance>10) { status.textContent=distance>=72?'松手刷新':'下拉刷新';event.preventDefault(); }
   },{passive:false});
-  document.addEventListener?.('touchend',()=>{if(distance>=72)refresh();else if(!refreshing)status.textContent='';startY=null;distance=0;},{passive:true});
-  document.addEventListener?.('touchcancel',()=>{startY=null;distance=0;if(!refreshing)status.textContent='';},{passive:true});
+  document.addEventListener?.('touchend',event=>{
+    if(distance>=72)refresh();else if(!refreshing)status.textContent='';
+    startY=null;distance=0;
+    const t=event.changedTouches?.[0];
+    if (swipeStart && t) {
+      const dx=t.clientX-swipeStart.x, dy=t.clientY-swipeStart.y;
+      if (Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.5) {
+        const dir=dx<0?1:-1;
+        const {path,parts,query}=getRoute();
+        if (parts[0]==='feed' || parts[0]==='today') {
+          const cur=query.get('category')||'全部';
+          const idx=categories.indexOf(cur);
+          const next=categories[Math.max(0,Math.min(categories.length-1,(idx===-1?0:idx)+dir))];
+          if (next && next!==cur) {
+            groupSheetOpen=false;query.delete('channel');query.set('category',next);
+            location.hash=path+'?'+query;
+          }
+        } else if (parts[0]==='explore') {
+          const sections=['play','kan','buy'];
+          const cur=sections.includes(parts[1])?parts[1]:'play';
+          const idx=sections.indexOf(cur);
+          const next=sections[Math.max(0,Math.min(sections.length-1,idx+dir))];
+          if (next && next!==cur) location.hash='explore/'+next;
+        }
+      }
+    }
+    swipeStart=null;
+  },{passive:true});
+  document.addEventListener?.('touchcancel',()=>{startY=null;distance=0;swipeStart=null;if(!refreshing)status.textContent='';},{passive:true});
   applyTheme();
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>applyTheme());
   themeButton.onclick=()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';storage.set('rebang-theme',next);applyTheme(next);};

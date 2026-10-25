@@ -62,3 +62,33 @@ test('public text and original URLs cannot inject markup or script URLs', () => 
   assert.equal(news.escape('<script>"&'), '&lt;script&gt;&quot;&amp;');
   assert.equal(news.safe('https://t.me/test/1'),'https://t.me/test/1');
 });
+
+test('B5 group filter channels, unread counts, and markChannelSeen update rebang.lastSeen', () => {
+  assert.equal(modules.LAST_SEEN_KEY, 'rebang.lastSeen');
+  const rows = [
+    {id:'1', source:'tech_a', source_name:'科技资讯', category:'科技', time:'2026-10-25T10:00:00+08:00', hot:true},
+    {id:'2', source:'tech_a', source_name:'科技资讯', category:'科技', time:'2026-10-25T08:00:00+08:00', hot:false},
+    {id:'3', source:'tech_b', source_name:'开源快讯', category:'科技', time:'2026-10-25T09:00:00+08:00', hot:false},
+    {id:'4', source:'fin_a', source_name:'财经早报', category:'财经', time:'2026-10-25T09:30:00+08:00', hot:false}
+  ];
+  assert.deepEqual(modules.categoryChannels(rows, '全部', news.filter), []);
+  assert.deepEqual(modules.categoryChannels(rows, '科技', news.filter), ['科技资讯', '开源快讯']);
+  const seeded = modules.seedLastSeen(rows, null);
+  assert.ok(seeded['科技资讯']);
+  assert.ok(seeded['开源快讯']);
+  assert.equal(modules.unreadCount(rows, '科技资讯', seeded), 2);
+  assert.equal(modules.unreadCount(rows, '开源快讯', seeded), 1);
+  assert.equal(modules.categoryUnreadTotal(rows, '科技', seeded, news.filter), 3);
+  const afterSeen = modules.markChannelSeen(rows, '科技资讯', seeded);
+  assert.equal(afterSeen['科技资讯'], '2026-10-25T10:00:00+08:00');
+  assert.equal(modules.unreadCount(rows, '科技资讯', afterSeen), 0);
+  assert.equal(modules.categoryUnreadTotal(rows, '科技', afterSeen, news.filter), 1);
+});
+
+test('B5 CSS enforces transparent chips with bottom underline and uses only token variables', () => {
+  const css = readFileSync(new URL('../web/news.css', `file://${__filename}`), 'utf8');
+  assert.match(css, /\.flt button\{[^}]*background:transparent;border:0;border-radius:0/);
+  assert.match(css, /\.chips button\{[^}]*background:transparent;border:0;border-radius:0/);
+  assert.match(css, /\.group-sheet|\.group-option/);
+  assert.match(css, /\.date-picker/);
+});
