@@ -31,7 +31,11 @@ class TrialTests(unittest.TestCase):
         cfg = trial.load()
         self.assertEqual(len(cfg['sources']), 13)
         self.assertEqual(len(cfg['categories']), 7)
-        self.assertFalse(set(history.RETIRED) & {s['id'] for s in config()['sources']})
+        sources = {s['id']: s for s in config()['sources']}
+        self.assertEqual(sources['pelosi3']['order'], 56)
+        self.assertNotIn('liangjiahepost', sources)
+        self.assertEqual(set(history.RETIRED), {'liangjiahepost', 'titan_pain'})
+        self.assertFalse(set(history.RETIRED) & sources.keys())
         self.assertTrue(set(history.RETIRED) <= history.ALLOWED)
 
     def test_config_rejects_invalid(self):
@@ -166,7 +170,7 @@ class TrialTests(unittest.TestCase):
             root = Path(folder)
             with patch.object(telegram, 'D', str(root)), patch.object(telegram, 'MEDIA', str(root / 'media')):
                 db, _ = telegram.open_db(True)
-                for sid in history.RETIRED:
+                for sid in ['pelosi3', 'liangjiahepost', 'titan_pain']:
                     for day in ['2026-10-21', '2026-10-22']:
                         db.execute('insert into msg values(?,?,?,?,?,?,?)',
                                    (sid, int(day[-2:]), day + 'T12:00:00+08:00', f'{sid} archived story', '[]', '', '[]'))
@@ -186,6 +190,11 @@ class TrialTests(unittest.TestCase):
                         build(rows, [], NOW, entries)
                     old = (out / 'archive/data/2026-10-21.json').read_text()
                     old_html = (out / 'archive/2026-10-21.html').read_text()
+                    old_items = json.loads(old)['items']
+                    for sid in ['pelosi3']:
+                        self.assertEqual(sum(item['source'] == sid for item in old_items), 1)
+                        self.assertIn(sid + ' archived story', old_html)
+                        self.assertIn(sid + ' archived story', (out / sid / 'index.html').read_text())
                     for sid in history.RETIRED:
                         self.assertIn(sid + ' archived story', old)
                         self.assertIn(sid + ' archived story', old_html)

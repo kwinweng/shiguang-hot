@@ -17,6 +17,8 @@ from shiguang.ingest import http
 
 TABLES = {'source_fetch_meta', 'source_fetch_state', 'source_fetch_batch', 'fetch_resource_state'}
 BACKOFF = (1, 2, 4, 8, 12, 24)
+BLOCKED_COOLDOWN_SECONDS = 6 * 3600
+BLOCKED_ALERT_THRESHOLD = 3
 
 
 def utc(now):
@@ -136,6 +138,16 @@ def emit(source, **fields):
     print('fetch_status ' + json.dumps(dict(source=source['id'], **fields), sort_keys=True), file=sys.stderr)
 
 
+def report(source, result):
+    if result.pop('blocked_alert', False):
+        emit(source, result='alert', alert='blocked', error_code=result['error_code'],
+             consecutive_blocks=result.pop('consecutive_blocks'),
+             next_eligible_at=result['next_eligible_at'])
+    else:
+        result.pop('consecutive_blocks', None)
+    emit(source, **result)
+
+
 def claim(db, source_id, now):
     now = utc(now)
     hour = now.astimezone(BEIJING).strftime('%Y-%m-%dT%H')
@@ -150,7 +162,7 @@ def claim(db, source_id, now):
                 db.execute("update source_fetch_batch set status='interrupted',finished_at=? where source_id=? and status='running'", (stamp(now), source_id))
                 db.execute("update source_fetch_state set status='interrupted',error_code='interrupted' where source_id=?", (source_id,))
         reason = None
-        if row and row[0] == 'blocked':
+        if row and row[0] == 'blocked' and row[1] and utc(datetime.fromisoformat(row[1])) > now:
             reason = 'blocked'
         elif db.execute('select 1 from source_fetch_batch where source_id=? and hour_key=?', (source_id, hour)).fetchone():
             reason = 'hour_used'
@@ -316,9 +328,11 @@ class Batch:
         status = 'blocked' if code == 'blocked' else ('partial' if self.progress else 'error') if code else 'ok'
         failures = self.failures + 1 if code else 0
         eligible = next_hour(self.now)
-        if code == 'rate_limited':
+        if code == 'blocked':
+            eligible = finished + timedelta(seconds=BLOCKED_COOLDOWN_SECONDS)
+        elif code == 'rate_limited':
             eligible = max(eligible, errors[code].retry_at)
-        elif code and code != 'blocked':
+        elif code:
             eligible = max(eligible, finished + timedelta(hours=BACKOFF[min(failures - 1, len(BACKOFF) - 1)]))
         self.db.execute('''update source_fetch_state set status=?,error_code=?,next_eligible_at=?,
             consecutive_failures=?,last_success_at=case when ?='ok' then ? else last_success_at end where source_id=?''',
@@ -329,11 +343,21 @@ class Batch:
             and (resource_key like 'image:%' or resource_key like 'telegram:%')
             and coalesce(last_attempt_at,'') < ?''', (stamp(self.now - timedelta(days=14)),))
         self.db.commit()
+        # The batch table has no error_code column; 'blocked' is its only blocked-result status.
+        consecutive_blocks = 0
+        for (batch_status,) in self.db.execute(
+                '''select status from source_fetch_batch where source_id=? and finished_at is not null
+                   order by finished_at desc, rowid desc''', (self.source_id,)):
+            if batch_status != 'blocked':
+                break
+            consecutive_blocks += 1
         success = self.db.execute('select last_success_at from source_fetch_state where source_id=?', (self.source_id,)).fetchone()[0]
         return dict(result=status, error_code=code, next_eligible_at=stamp(eligible),
                     attempt_id=self.attempt, hour_key=self.now.astimezone(BEIJING).strftime('%Y-%m-%dT%H'),
                     last_checked=stamp(self.now), last_success=success,
-                    requests=self.requests, cache_hits=self.cached, new=self.new)
+                    requests=self.requests, cache_hits=self.cached, new=self.new,
+                    blocked_alert=code == 'blocked' and consecutive_blocks >= BLOCKED_ALERT_THRESHOLD,
+                    consecutive_blocks=consecutive_blocks)
 
 
 def run(db, sources, images_migrated=False, *, clock=None, first_page_only=False):
@@ -368,4 +392,4 @@ def run(db, sources, images_migrated=False, *, clock=None, first_page_only=False
             raise  # State corruption/persistence errors must block collection/publication.
         except (http.FetchFailure, ValueError, OSError) as error:
             batch.note(error)
-        emit(source, **batch.finish(clock()))
+        report(source, batch.finish(clock()))

@@ -39,7 +39,7 @@ if (typeof document !== 'undefined') (() => {
     get(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } },
     set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* Storage can be unavailable in private browsing. */ } }
   };
-  const bookmarkKey = document.body.dataset.bookmarkScope === 'private' ? 'shiguang-favorites-private' : 'shiguang-favorites-public';
+  const bookmarkKey = document.body?.dataset?.bookmarkScope === 'private' ? 'shiguang-favorites-private' : 'shiguang-favorites-public';
   let favorites = storage.get(bookmarkKey, []);
   if (!Array.isArray(favorites)) favorites = [];
   favorites = favorites.filter(r=>r && typeof r.id==='string' && typeof r.title==='string').map(r=>({
@@ -90,9 +90,18 @@ if (typeof document !== 'undefined') (() => {
     const all = [...new Set([...days, today, yesterday, day])].filter(d=>d<=today).sort().reverse();
     return `<nav class="date-strip" aria-label="回顾日期">${all.map(d=>`<a href="#review/${d}" ${d===day?'aria-current="date"':''}>${d===today?'今天':d===yesterday?'昨天':dateLabel(d)}</a>`).join('')}</nav>`;
   };
-  const applyTheme = () => {
-    const theme = storage.get('rebang-theme', 'system');
-    document.documentElement.dataset.theme = theme === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme;
+  const themeButton = document.getElementById('theme');
+  const applyTheme = explicit => {
+    const pref = explicit || storage.get('rebang-theme', 'system');
+    const theme = pref === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : pref;
+    document.documentElement.dataset.theme = theme;
+    if (themeButton) {
+      const dark = theme === 'dark';
+      const label = dark ? '切换到浅色模式' : '切换到深色模式';
+      themeButton.innerHTML = icon(dark ? 'sun' : 'moon');
+      themeButton.setAttribute('aria-label', label);
+      themeButton.setAttribute('title', label);
+    }
   };
   async function route(fresh = false, keepPosition = false) {
     const current = ++generation;
@@ -201,23 +210,23 @@ if (typeof document !== 'undefined') (() => {
     else if (!navigator.onLine) status.textContent='没有网络，显示缓存的内容';
     refreshing=false;
   };
-  document.addEventListener('touchstart',event=>{startY=window.scrollY<=0&&refreshable()?event.touches[0].clientY:null;distance=0;},{passive:true});
-  document.addEventListener('touchmove',event=>{
+  document.addEventListener?.('touchstart',event=>{startY=window.scrollY<=0&&refreshable()?event.touches[0].clientY:null;distance=0;},{passive:true});
+  document.addEventListener?.('touchmove',event=>{
     if (startY===null || refreshing) return;
     distance=Math.max(0,event.touches[0].clientY-startY);
     if (distance>10) { status.textContent=distance>=72?'松手刷新':'下拉刷新';event.preventDefault(); }
   },{passive:false});
-  document.addEventListener('touchend',()=>{if(distance>=72)refresh();else if(!refreshing)status.textContent='';startY=null;distance=0;},{passive:true});
-  document.addEventListener('touchcancel',()=>{startY=null;distance=0;if(!refreshing)status.textContent='';},{passive:true});
+  document.addEventListener?.('touchend',()=>{if(distance>=72)refresh();else if(!refreshing)status.textContent='';startY=null;distance=0;},{passive:true});
+  document.addEventListener?.('touchcancel',()=>{startY=null;distance=0;if(!refreshing)status.textContent='';},{passive:true});
   applyTheme();
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);
-  document.getElementById('theme').onclick=()=>{storage.set('rebang-theme',document.documentElement.dataset.theme==='dark'?'light':'dark');applyTheme();};
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>applyTheme());
+  themeButton.onclick=()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';storage.set('rebang-theme',next);applyTheme(next);};
   addEventListener('hashchange',()=>route());
   addEventListener('online',()=>route(true,true));
   addEventListener('offline',()=>route(false,true));
   // A page left open across the Beijing publication boundary changes its date too.
-  setInterval(()=>{
+  if (typeof setInterval !== 'undefined') setInterval(()=>{
     if (getRoute().parts[0]==='focus' && renderedFocusDay!==Modules.focusDay()) route(true,true);
-  },60000);
+  },60000)?.unref?.();
   route();
 })();

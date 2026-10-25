@@ -2,6 +2,36 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const news = require('../web/news.js');
 const modules = require('../web/modules.js');
+const {readFileSync} = require('node:fs');
+const vm = require('node:vm');
+
+for (const initial of ['light', 'dark']) {
+  test(`theme toggle starts in ${initial} mode and updates icon and accessible action`, () => {
+    const button = {setAttribute(name, value) { this[name] = value; }};
+    const root = {dataset:{}};
+    const context = vm.createContext({
+      window:{}, document:{documentElement:root, body:{dataset:{}}, getElementById(id) {
+        return id === 'theme' ? button : {dataset:{}, setAttribute() {}, removeAttribute() {}};
+      }},
+      matchMedia:() => ({matches:initial === 'dark'}),
+      addEventListener() {}, location:{hash:'#feed'}, URLSearchParams,
+      fetch:() => new Promise(() => {})
+    });
+    for (const asset of ['news-icons.js', 'news.js', 'modules.js']) {
+      vm.runInContext(readFileSync(new URL('../web/' + asset, `file://${__filename}`), 'utf8'), context);
+    }
+    for (const mode of [initial, initial === 'dark' ? 'light' : 'dark', initial]) {
+      assert.equal(root.dataset.theme, mode);
+      const label = mode === 'dark' ? '切换到浅色模式' : '切换到深色模式';
+      assert.equal(button['aria-label'], label);
+      assert.equal(button.title, label);
+      const glyph = mode === 'dark' ? 'sun_line' : 'moon_line';
+      assert.match(context.window.ICONS[glyph], /<svg[^>]*aria-hidden="true"><path d="[^"]+"\/><\/svg>/);
+      assert.equal(button.innerHTML, `<span class="ic">${context.window.ICONS[glyph]}</span>`);
+      button.onclick();
+    }
+  });
+}
 
 test('duplicate and near duplicate summaries disappear, distinct text survives', () => {
   assert.equal(modules.distinctSummary('新产品今日发布！', '新产品今日发布'), '');

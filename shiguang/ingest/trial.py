@@ -159,4 +159,4 @@ def run(db, sources, *, clock=None):
             raise
         except OSError as error:
             batch.note(error)
-        scheduler.emit(source, **batch.finish(clock()))
+        scheduler.report(source, batch.finish(clock()))
