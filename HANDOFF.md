@@ -1,5 +1,13 @@
 # 交接记录
 
+## 2026-10-25 恢复 pelosi3（保持已停更的 liangjiahepost 停用）
+
+- 恢复停用来源时，必须同时从 `shiguang/site/history.py` 的 `RETIRED` 移除，避免与 `sources.json` 双重注册。`pelosi3` 恢复顺序 56；`liangjiahepost`（10/22 停更）与 `titan_pain` 继续停用并保留在 `RETIRED`。
+- 回归在公开和私有模式中写入旧消息，验证归档 JSON 无重复、归档 HTML 与活跃来源页正常呈现；停用来源仍只出现在归档。
+- `python3 -m pytest -q` 通过：196 passed、58 subtests passed。指定 `NO_FETCH=1` 的公开、私有离线构建均成功，输出分别为 `/tmp/hot-tg10-public`、`/tmp/hot-tg10-private`，耗时约 16.4 秒、18.4 秒。
+- 两模式真实构建均保留 `pelosi3` 的 120 条、`liangjiahepost` 的 32 条归档消息，每来源仅注册一次。私有构建出现 Pillow 透明调色板转 RGBA 警告，退出码仍为 0。
+- 未改调度、未新增处理流程；未读取密钥文件，未发布、合并或部署。
+
 ## 2026-10-24 PR #31 有图探索条目修补
 
 - 探索分类标签必须放在 `.tx` 内并独占一行；有图行使用正文、图片两列，不能沿用分类占左列的三列网格。无图及坏图仍保持全文宽度。
