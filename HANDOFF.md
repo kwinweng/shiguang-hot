@@ -1,5 +1,14 @@
 # 交接记录
 
+## 2026-11-07 news 公开产物接收端
+
+- 原私有同步方案由负责人明确决定替换：默认无凭据下载 public gh-pages，允许移除 mail 和 private-only 历史；保持 reader、认证和 nginx 配置不变。每 20 分钟下载、独立 staging 校验、Linux renameat2 原子交换，保留一版 previous。
+- 守卫：public scope/schema 3、归档 SHA/HTML 一致、整树邮件标记禁止、非空 live、内容日不回退且近期、文件数至少 max(100, 当前排除 mail 文件数的一半)。旧 private UID/日期逐个保留已不符合迁移目标，不再要求。
+- 实踩：Linux 会保留 `.news-sync.lock` 供后续进程锁同一 inode；临时清理断言应只检查 staging 目录，不能把持久锁文件判为泄漏或在运行中删除锁。
+- 验证：Linux 同步 23/23（含权限、原子 inode 交换和 previous）；全套 228 项为 205 通过、21 可选浏览器跳过、2 个已在 origin/main 重现的 Steam RDF 失败。Node 13/13；Bash 语法与 diff 检查通过。
+- 真实默认下载 dry-run 通过：现站 3162 文件，公开候选 2143，最低 1546；内容日 11-03→11-07。完整包约 76.3 MB，下载/校验约 32.4 秒，峰值 RSS 约 139 MiB；每轮完整下载产生网络和磁盘开销，不增加采集或模型调用。
+- 迁移前静态 tar.gz 与 SQLite `.backup` 已独立保存于受限备份目录，数据库 quick_check=ok。临时 reader 副本导入 public 成功：new_versions=1100、rejected=0；11-04..11-07 均有记录、最新日 11-07。安装及 Box 最终验收待本 PR 的后续交接更新。
+
 ## 2026-11-07 公开数据源切换：白名单与邮件退役
 
 - 负责人明确批准 `news.kwinweng.com` 及其 iOS reader 只接收 public gh-pages。8 个已配置 Telegram 频道加入 `ALLOWED`；`mail` 从活动配置移除，另设 `PRIVATE_RETIRED` 永久阻断，不能放进只保留公开历史的 `RETIRED`。
