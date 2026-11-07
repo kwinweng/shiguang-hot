@@ -1,0 +1,11 @@
+[Unit]
+Description=Check Shiguang public gh-pages every 20 minutes
+
+[Timer]
+OnCalendar=*-*-* *:00/20:00
+RandomizedDelaySec=90
+Persistent=true
+Unit=news-sync.service
+
+[Install]
+WantedBy=timers.target
