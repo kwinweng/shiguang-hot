@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """拾光热榜：收内容 → 统一 → 加工 → 出页。Box bot routine 负责采集并发布 gh-pages。
 
-NO_FETCH=1 跳过 Telegram 抓取（只读 tg.db）；SITE_MODE=private 构建含邮件的内网版。
+NO_FETCH=1 跳过 Telegram 抓取（只读 tg.db）；生产站点使用 SITE_MODE=public。
 """
 import os
 from contextlib import nullcontext

@@ -105,10 +105,41 @@ class ArchiveTests(unittest.TestCase):
             self.assertEqual(len(data['items']), 2)
             self.assertNotIn('fetch_status', json.dumps(data))
             verify_public(out, config())
-            private = next(s for s in config()['sources'] if s['id'] == 'mail')
-            (out / 'leak.json').write_text(json.dumps({'source': private['id']}))
+            self.assertNotIn('mail', {s['id'] for s in config()['sources']})
+            self.assertNotIn('mail', history.RETIRED)
+            (out / 'leak.json').write_text(json.dumps({'source': 'mail'}))
             with self.assertRaises(RuntimeError):
                 verify_public(out, config())
+
+    def test_eight_public_channels_rebuild_past_days_and_copy_images(self):
+        ids = ('shuangyunews_rss myBigCharacterPoster yxzbp OneMillion_AI '
+               'reorx_share dps_build se7enw Awesome' + 'ChatGPT').split()
+        self.assertTrue(set(ids) <= history.ALLOWED)
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); out = root / 'out'; out.mkdir()
+            (out / 'mail').mkdir()
+            (out / 'mail/index.html').write_text('retired private output')
+            rows = []
+            for sid in ids:
+                media = root / 'media' / sid
+                media.mkdir(parents=True)
+                (media / 'sample.webp').write_bytes(b'offline image')
+                for day in ('2026-10-01', '2026-10-21'):
+                    rows.append(dict(ch=sid, id=day, title='public channel story', body='',
+                                     images=[f'media/{sid}/sample.webp'], ts=day + 'T12:00:00+08:00',
+                                     day=day, cat='科技'))
+            with patch.object(pages, 'ROOT', root), patch.object(pages, 'load_issues', return_value=[]), \
+                 patch.object(pages, 'private_mode', return_value=False):
+                cfg = pages.write_pages(rows, [], datetime(2026, 10, 22, tzinfo=BEIJING),
+                                        out, publish_assets(out, True))
+            self.assertFalse((out / 'mail').exists())
+            for day in ('2026-10-01', '2026-10-21'):
+                payload = json.loads((out / f'archive/data/{day}.json').read_text())
+                self.assertEqual({r['source'] for r in payload['items']}, set(ids))
+                for sid in ids:
+                    self.assertIn(f'media/{sid}/sample.webp', (out / f'archive/{day}.html').read_text())
+                    self.assertTrue((out / f'media/{sid}/sample.webp').is_file())
+            verify_public(out, cfg)
 
     def test_year_old_text_and_expired_images_need_no_network(self):
         rows = [item(1, ts='2025-10-22'), item(2, ts='2026-09-22')]

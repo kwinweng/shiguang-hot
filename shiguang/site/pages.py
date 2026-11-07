@@ -165,6 +165,8 @@ class Content:
 def write_pages(rows, hot, now, out, assets, entries=(), inbox_only=False):
     """Write every page into `out`; returns the config used (build.py checks the public tree with it)."""
     cfg = config(); private = private_mode()
+    for sid in history.PRIVATE_RETIRED:
+        shutil.rmtree(out / sid, ignore_errors=True)
     if not private:
         for source in cfg['sources']:
             if source['visibility'] == 'private' or source['id'] not in history.ALLOWED:

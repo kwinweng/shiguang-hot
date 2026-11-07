@@ -9,10 +9,14 @@ from shiguang.model import BEIJING
 from shiguang.site import render
 
 SCHEMA = 3
-# 已停用来源，只为旧归档保留
 ALLOWED = frozenset(('CE_Observe FinanceNewsDaily HuaErJie1 NewlearnerChannel TimeHorizonX '
                      'freechinese liangjiahepost pelosi3 scitech_fans titan_pain tnews365 '
-                     'xhqcankao zaihuapd world x github hot-daily').split())
+                     'xhqcankao zaihuapd world x github hot-daily shuangyunews_rss '
+                     'myBigCharacterPoster yxzbp OneMillion_AI reorx_share dps_build '
+                     'se7enw ' 'AwesomeChatGPT').split())
+# Private retired sources never enter archives, even after their config is removed.
+PRIVATE_RETIRED = {'mail': '邮件精华'}
+# 已停用的公开来源，只为旧归档保留
 PHOSPHOR = json.loads(Path(__file__).with_name('phosphor.json').read_text())
 RETIRED = {sid: dict(id=sid, channel=sid, name=name, order=order, type='telegram',
                      visibility='public', icon='all', home={'weight': 1, 'cap': 4})
