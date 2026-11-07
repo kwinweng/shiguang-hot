@@ -1,5 +1,13 @@
 # 交接记录
 
+## 2026-11-07 公开数据源切换：白名单与邮件退役
+
+- 负责人明确批准 `news.kwinweng.com` 及其 iOS reader 只接收 public gh-pages。8 个已配置 Telegram 频道加入 `ALLOWED`；`mail` 从活动配置移除，另设 `PRIVATE_RETIRED` 永久阻断，不能放进只保留公开历史的 `RETIRED`。
+- 复用输出目录时主动删除退役邮件目录；归档按完整保留库重建，来源契约变化使历史页失效重建，新增频道媒体沿现有可见频道复制流程发布。隔离回归验证全部 8 频道的多个过去日期和图片，以及配置移除后邮件目录/标记仍被拒绝。
+- 真实公开离线构建成功并通过 `verify_public`：8 频道共 482 条，逐来源归档数量与已提交库一致。此 Mac checkout 无 media 缓存，不能据本地构建宣称真实图片可用；需核验 Box gh-pages。
+- 验证：Node 13/13；Linux 全套 205 项中 182 通过、21 项因无 Playwright 跳过、2 项 Steam RDF 失败，已在未修改 origin/main 独立重现（解析结果为空）。本次相关归档/隐私/feeds/原子构建回归通过。Mac 全套另有 Linux renameat2 缺失、临时目录实路径和既有浏览器/索引快照环境失败，不为本任务更改这些无关实现。
+- 生产备份已创建并验证 SQLite quick_check=ok；生产安装与 Box 发布验收将在同步脚本 PR 记录。不在公开交接中记录服务器地址或私人内容。
+
 ## 2026-10-25 恢复 pelosi3（保持已停更的 liangjiahepost 停用）
 
 - 恢复停用来源时，必须同时从 `shiguang/site/history.py` 的 `RETIRED` 移除，避免与 `sources.json` 双重注册。`pelosi3` 恢复顺序 56；`liangjiahepost`（10/22 停更）与 `titan_pain` 继续停用并保留在 `RETIRED`。

@@ -66,6 +66,19 @@ class PublicPrivacyTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, 'private 标记: feed.json'):
                     verify_public(self.root, self.cfg)
 
+    def test_retired_mail_stays_blocked_without_source_configuration(self):
+        cfg = dict(sources=[])
+        for name, text in [('mail/index.html', 'retired output'),
+                           ('leak.json', '{"source":"mail"}'),
+                           ('index.html', '<article data-source="邮件精华">retired</article>')]:
+            with self.subTest(name=name):
+                self.write(name, text)
+                with self.assertRaises(RuntimeError):
+                    verify_public(self.root, cfg)
+                (self.root / name).unlink()
+                if name.startswith('mail/'):
+                    (self.root / 'mail').rmdir()
+
     def test_private_directory_and_anonymous_copied_body_stay_blocked(self):
         (self.root / 'mail').mkdir()
         with self.assertRaisesRegex(RuntimeError, 'private 目录'):

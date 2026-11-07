@@ -13,7 +13,7 @@ from shiguang.model import BEIJING
 from shiguang.site.pages import write_pages
 from shiguang.site.render import E
 from shiguang.site.privacy import verify_source_markers
-from shiguang.site.history import ALLOWED
+from shiguang.site.history import ALLOWED, PRIVATE_RETIRED
 
 
 @contextmanager
@@ -87,6 +87,8 @@ def publish_assets(out, full):
 def verify_public(out, cfg):
     """Refuse to publish if anything from a private source leaked into the public tree."""
     forbidden = [s for s in cfg['sources'] if s['visibility'] == 'private' or s['id'] not in ALLOWED]
+    forbidden += [dict(id=sid, name=name, type='retired') for sid, name in PRIVATE_RETIRED.items()
+                  if not any(s['id'] == sid for s in forbidden)]
     for s in forbidden:
         if (out / s['id']).exists(): raise RuntimeError('公开产物存在 private 目录')
     private_text = []
