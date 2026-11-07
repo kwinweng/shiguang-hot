@@ -1,0 +1,818 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#FAF6EF" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0C0B0F" media="(prefers-color-scheme: dark)"><title>Newlearnerの自留地 · 拾光热榜</title><link rel="icon" href="../favicon.ico?v=ccf261630d"><link rel="icon" type="image/svg+xml" href="../favicon.svg?v=ccf261630d"><link rel="apple-touch-icon" href="../apple-touch-icon.png?v=ccf261630d"><link rel="manifest" href="../manifest.webmanifest?v=ccf261630d"><script>document.documentElement.classList.add('js');const t=new URLSearchParams(location.search).get('theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');</script><link rel="stylesheet" href="../style.0541f6cf53.css"><style>:root{--light-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAoCAIAAABmcd1FAAAELklEQVR42p2WzW4cyRGEv8iqnqGElQ5erbEHHw0bfgE/uZ7ERz+BYUCHBTGSyOnK8KGqu2uGIxvr4pDsv4mMzIzKaH3+/Jlp/f3y7y9//JLLi2KR3sMTvLd/yvz5OX69xB9aOIsJFIoiRUSEQv3vvoDgdn17es1oSOgMC6pQrf4JJIRA9N+x9OYAqDPun14vXz98d1mlj+gJTuhkneylxdlRLDo6Wwj1ODpi6SH0L+u3L+cX6RM6SYtV4WROaFk5pyoSYe3oYqAe4EdKN9D/+uUS8WuJqgirSBUtcMKnpiVVEJIc7gdbBhPdkRBIB/R5+bSWdYkkjKQIVGExS+NDRrXqzrdDa5z3umygW5gKPNe/SBFPl1be17haSYACFaioXjlZ1ZQddMsbaeDuDdYWoV5OfwvhBdfltf500gU1ZCSpWKUrBIpVjtSPGDvrKSEA1S7GVhtRrSf0gujQqKChYVN2Qpa7QnSo5EBmO6kR4eISxRKqqYJSAzogXso7HBCSwL4pyKGSnfNekKBA6U8HhBX9YNdXeIHgoKaDmGbZMdMG4qZqCism7R869SA4qW3q5cMdWQ8SMCDudyzzTvOoxBz+0dI2QwTCO4Tx+D8OtjMeXP7Riv6QDTa2nP2r3m6kVujXB+hAvkP3W+iEBDtskSJ7HDCk8Lv2dcTbctkewPZ09TaGCZpJMHKTM9zo6O4xErJfl/MohbG91c4PCxWZZoWkeIVrD6AejcQpZ9DkFjQ8pTQVYYS5LU3YmZlqKnl9as8arLcPCa3kGm7hJu/lHj8+mmL3dm3g0TKdeb62c/tefB2JM4jLKefir3ILrwPXW0HuSnIkZEz9uP4T+Hn9c62/ha+aUhMJAQlruAVNWNrkoQPLsiaBG4SHrj9d/1H8LbxCO0Ri9x5CKz7KzdTASTWz7PFuu6GX8IvucY+uBS26uv1WxVNl5lr3m8UWbW+8uO24Le9h7tdM1zdbZhMKilv53ACZu1Hzv9fwxu/Lx7yzt5vRpFQYGb3ZfNukejPTBtPn86fkbJX+/Y3zcZBEKrIP4XsUPRrX1Of6V4mLLu/0GuCj4sJYPVKkSlJSMc/d3dHn95DdGCJCivhen171ISmmJ35LyiWJpNCN8a4IeuwFFUmhlzjVOFWVIE2OHabedDWeOmXPQfWw3keNQojgNeqqelX18PNdGDJaVXfWNxV9+2Iz3Q2ErEau1Be9z4HrMXB6DxVJJBPrDU/SI/OaFNK0rhS7DEjv0xhQIhO+Q9l7KB7Itnuj08q4UtLKw6EOZzGyhqINFj9i+kDXalqHkR1zw90xxxDStEt/jDft1RgUm5vXHLM97Ry4G8Z25B/tc78ZWbFZg2nRzLCYYWA+/Pt3L8c+zqMpsTtuN9zplcC8te7/CszGGkxzdtbc4/5OuvMrjidXG+P//8Wd1n8AXSiwVFP++hUAAAAASUVORK5CYII=");--dark-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAoCAIAAABmcd1FAAAEU0lEQVR42pWW3Y4jNRSEvzp2JzPLsgtaJCQkLriAG97/dRCvAMPM7iTtU1zY/ZfNCGF1km6nXadcPq5jffz4kV377env60+OCRUUSMDZfLC/f9GnL/rwrPdzcVZRIkpEjSglSikRUUKKCCEJVY6tvTcBAUICARMUU1BYQiCpv63dZ9fTHw/QP8yv87dEgUA9AA/oDJN99jIRCYs1sjqytIL2vgP0h8t1PkOBgKiKE3owZzg1zqZaBWkEljSmvsNcA90I8vnHNtWgVEVVVGKSTnCCKVU9ZJECBKGt9UASQoteG/Tj+ZOnoE+6SFGkiiYxJd+iCWpXXGH6Wq3SL+oPzqsgL/FL8nh+fHJ9JZqiSxqKiiZTZ506ZVMkORaesVIdkZZfQPW5/A5qj6JOl/rNOb4QKaEIqbBelM56jIy9IKwXe9aKIIKTiYoe0KxIwlIoilU8cIsJKJJ7hmhjOnRh1wdUlXKdIGKIG2XJaKGQ4hKPuGdiz/Yt6wbiTo0txUXNKlcYAocVyODOxUhMHmCDl7Xk847wbsOMp8giglWt1H4jbnnLLnuPe3C3MVdcAYR3LxwYHCZ3r/cwTrtdM1rIADIC7MOfNjb0a4X0nQj3ekIGE3QU5ARje0A4adg46X2jmwMLg294EWomrbQwzugQAz2xH/IFLCxSHXDE8HhrC3iYd8ScaoSbskHKDSdO6DESp5Yr3AYuy3e/XefINuFwZr26tj7sKidk5ztiuMdr4RZO5crSNvYi01iYTaJwpq9tanPJ+SH/YbA25KBMlmzhJrdwW6ToSizqewu3zijkZ2c7Xa9Te42cO0GcXgO4Vb90NVZBnB29CzBUZ3nGGNd3+Sfw/uXn6fwkN4xGpgUkDpQwy0000QqZfTsuMoiNteyR4Ca6Mu8uf4S/yLNoYwEHqcE93ETGWM+xXiORjqyXgQu0uMoXaHhdpt3lDmqRQW5ZbI7baH/rAR02NHGDy5phuunficAdfLyyDptR8nT78i3E1zv8fhu1sT28R+HN5G6bCSOj7Mu8OdPbHtJ/LufvrFM/C/Q132WrQE1hIgnv/FG6cdZDmPqsX019nf4qJFwXdxjUNIwhLCVKolG81e5Rz1dz385OqBInoWs5X8PSU9CG4QzqfVhJIilJ8abZgb7WeSz1IJA8xUXTVVOO2qpt3YxR45xEEqnoHuilEB3L4aH0hCSLV9VZZVYsUuyMx5opSVjRCLM/gu0q3E2VEdHfeaHOxIXHXSEY/gOkoudGEqMg7c6Rm75H9ACFmfHssMPWYl5ebKzroyS2zLtTH29zsIJpkLq6j+ymkEYdx8bI0po2+wzR2xuo57XLrM+ONGlD2j4Sxzd89d+bM/q4uObF0XJQhnS35IOn6K0Nch964WZmZZfCiRdrPXqawW/g+qu7WJBdLmq9Hq61kVEvjo53g+j7YTygAdQyxwFhz/frAwdvRLn177r6plDCStFYt6ep/9f+BYvSCZiIsSy8AAAAAElFTkSuQmCC")}</style><script src="../app.941f023264.js" defer></script><script src="../history.3b5cc051ac.js" defer></script></head><body data-bookmark-scope="public" data-favorites="../favorites.html" data-light-source="media/NewlearnerChannel/16109_1.webp"><svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false"><!-- Tabler Icons 3.48.0 (MIT, Paweł Kuna) --><defs><linearGradient id="status-sun" x2=".6" y2="1"><stop stop-color="#ffe6a2"/><stop offset="1" stop-color="var(--sun)"/></linearGradient><linearGradient id="status-paper" x2=".7" y2="1"><stop stop-color="var(--icon-light)"/><stop offset="1" stop-color="var(--icon-shade)"/></linearGradient></defs><symbol id="t-search" viewBox="0 0 24 24"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></symbol><symbol id="t-menu-2" viewBox="0 0 24 24"><path d="M4 6l16 0"/><path d="M4 12l16 0"/><path d="M4 18l16 0"/></symbol><symbol id="t-x" viewBox="0 0 24 24"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></symbol><symbol id="t-bookmark" viewBox="0 0 24 24"><path d="M18 7v14l-6 -4l-6 4v-14a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4"/></symbol><symbol id="t-external-link" viewBox="0 0 24 24"><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6"/><path d="M11 13l9 -9"/><path d="M15 4h5v5"/></symbol><symbol id="t-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6l6 -6"/></symbol><symbol id="t-home" viewBox="0 0 24 24"><path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/></symbol><symbol id="t-flame" viewBox="0 0 24 24"><path d="M12 10.941c2.333 -3.308 .167 -7.823 -1 -8.941c0 3.395 -2.235 5.299 -3.667 6.706c-1.43 1.408 -2.333 3.294 -2.333 5.588c0 3.704 3.134 6.706 7 6.706c3.866 0 7 -3.002 7 -6.706c0 -1.712 -1.232 -4.403 -2.333 -5.588c-2.084 3.353 -3.257 3.353 -4.667 2.235"/></symbol><symbol id="t-news" viewBox="0 0 24 24"><path d="M16 6h3a1 1 0 0 1 1 1v11a2 2 0 0 1 -4 0v-13a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1v12a3 3 0 0 0 3 3h11"/><path d="M8 8l4 0"/><path d="M8 12l4 0"/><path d="M8 16l4 0"/></symbol><symbol id="t-calendar" viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h16"/><path d="M11 15h1"/><path d="M12 15v3"/></symbol><symbol id="t-message" viewBox="0 0 24 24"><path d="M8 9h8"/><path d="M8 13h6"/><path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12"/></symbol><symbol id="t-code" viewBox="0 0 24 24"><path d="M7 8l-4 4l4 4"/><path d="M17 8l4 4l-4 4"/><path d="M14 4l-4 16"/></symbol><symbol id="t-world" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18"/><path d="M12.5 3a17 17 0 0 1 0 18"/></symbol><symbol id="t-mail" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10"/><path d="M3 7l9 6l9 -6"/></symbol><symbol id="t-brand-telegram" viewBox="0 0 24 24"><path d="M15 10l-4 4l6 6l4 -16l-18 7l4 2l2 6l3 -4"/></symbol><symbol id="t-sun" viewBox="0 0 24 24"><path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/></symbol><symbol id="tf-bookmark" viewBox="0 0 24 24"><path d="M14 2a5 5 0 0 1 5 5v14a1 1 0 0 1 -1.555 .832l-5.445 -3.63l-5.444 3.63a1 1 0 0 1 -1.55 -.72l-.006 -.112v-14a5 5 0 0 1 5 -5h4z"/></symbol><symbol id="s-x" viewBox="0 0 64 64"><ellipse cx="32" cy="56" rx="22" ry="4" fill="var(--wash)"/><g fill="none" stroke="var(--ink-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16h31a9 9 0 0 1 9 9v17a9 9 0 0 1-9 9H29L17 57l2-9a9 9 0 0 1-9-9V25a9 9 0 0 1 6-9Z" fill="var(--icon-shade)"/><path d="M16 11h29a9 9 0 0 1 9 9v17a9 9 0 0 1-9 9H27L14 53l3-10a9 9 0 0 1-9-9V20a9 9 0 0 1 8-9Z" fill="url(#status-paper)"/><path d="M18 23h17m-17 8h12"/><path d="M43 22c3 5-3 6-1 10 2-1 3-3 3-4 6 6 3 11-2 11s-8-5-4-9c0 3 1 3 1 3-1-5 2-6 3-11Z" fill="url(#status-sun)" stroke="none"/></g></symbol><symbol id="s-code" viewBox="0 0 64 64"><ellipse cx="32" cy="56" rx="22" ry="4" fill="var(--wash)"/><g fill="none" stroke="var(--ink-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="14" width="46" height="38" rx="8" fill="url(#status-paper)"/><path d="m25 25-9 8 9 8m14-16 9 8-9 8m-4-20-6 24" stroke="var(--sun)" stroke-width="3"/></g></symbol><symbol id="s-home" viewBox="0 0 64 64"><ellipse cx="32" cy="56" rx="22" ry="4" fill="var(--wash)"/><g fill="none" stroke="var(--ink-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="46" cy="19" r="10" fill="url(#status-sun)" stroke="none"/><path d="M46 5V2m11 10 3-2M33 10l-2-2m27 16 3 1" stroke="var(--sun)"/><path d="m14 20 35 4 5 27-34 3Z" fill="var(--icon-shade)"/><path d="M10 19 43 16 46 49 15 53a4 4 0 0 1-4-4Z" fill="url(#status-paper)"/><path d="m43 16 7 7-6 1Z" fill="var(--icon-light)"/><path d="m16 26 21-2m-20 6 21-2" stroke="var(--sun)" stroke-width="3"/><path d="m17 36 8-1 1 9-8 1Z" fill="var(--sun)" stroke="none"/><path d="m30 35 8-1m-8 6 8-1m-8 6 8-1m-22 5 23-2"/><path d="m46 30 2 18c0 3 4 3 5 1" stroke="var(--icon-light)"/></g></symbol><symbol id="s-hot" viewBox="0 0 64 64"><ellipse cx="32" cy="56" rx="22" ry="4" fill="var(--wash)"/><g fill="none" stroke="var(--ink-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M35 8c4 15-12 17-5 28 5-2 9-8 9-13 18 18 12 32-7 32C12 55 9 37 21 24c-1 9 4 11 4 11-3-13 6-18 10-27Z" fill="var(--sun)"/><path d="M30 46c-5-6 1-12 4-15-1 8 8 9 5 15-2 5-7 5-9 0Z" fill="url(#status-paper)" stroke="none"/></g></symbol><symbol id="s-mail" viewBox="0 0 64 64"><ellipse cx="32" cy="56" rx="22" ry="4" fill="var(--wash)"/><g fill="none" stroke="var(--ink-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="11" y="19" width="43" height="34" rx="7" fill="url(#status-paper)"/><path d="m12 23 20 16 21-16M12 50l14-15m27 15L39 36"/><rect x="37" y="10" width="17" height="16" rx="5" fill="var(--sun)" stroke="none"/></g></symbol><symbol id="s-world" viewBox="0 0 64 64"><ellipse cx="32" cy="56" rx="22" ry="4" fill="var(--wash)"/><g fill="none" stroke="var(--ink-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="31" r="23" fill="url(#status-paper)"/><ellipse cx="32" cy="31" rx="11" ry="23"/><path d="M10 31h44M14 18c11 6 25 6 36 0M14 44c11-6 25-6 36 0"/><path d="m24 16 8-5 7 7-4 10-10-3-5 9-7-6 3-11Zm16 18 10 4-8 11-5-6Z" fill="var(--sun)" stroke="none"/></g></symbol><symbol id="s-archive" viewBox="0 0 64 64"><ellipse cx="32" cy="56" rx="22" ry="4" fill="var(--wash)"/><g fill="none" stroke="var(--ink-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="14" width="40" height="40" rx="8" fill="url(#status-paper)"/><path d="M12 24h40"/><path d="M13 23v-3a6 6 0 0 1 6-6h26a6 6 0 0 1 6 6v3Z" fill="var(--sun)" stroke="none"/><path d="M23 9v10m18-10v10M22 34h5m10 0h5m-20 9h5"/><rect x="35" y="39" width="9" height="9" rx="3" fill="var(--sun)" stroke="none"/></g></symbol><symbol id="s-all" viewBox="0 0 64 64"><ellipse cx="32" cy="56" rx="22" ry="4" fill="var(--wash)"/><g fill="none" stroke="var(--ink-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="17" y="12" width="34" height="38" rx="7" transform="rotate(10 34 31)" fill="var(--wash)"/><rect x="11" y="18" width="35" height="36" rx="7" transform="rotate(-7 29 36)" fill="url(#status-paper)"/><path d="M19 37h19m-18 8h13"/><rect x="19" y="24" width="19" height="6" rx="3" fill="var(--sun)" stroke="none"/></g></symbol><symbol id="s-bookmark" viewBox="0 0 64 64"><ellipse cx="32" cy="56" rx="22" ry="4" fill="var(--wash)"/><g fill="none" stroke="var(--ink-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="12" width="40" height="42" rx="8" fill="url(#status-paper)"/><path d="M24 8h16v26l-8-6-8 6Z" fill="var(--sun)" stroke="none"/><path d="M21 42h22m-22 6h14"/></g></symbol></svg><div class="g-light" aria-hidden="true"><i class="g-light__field"></i></div><header class="g-topbar"><div class="g-topbar__inner g-column"><a class="g-topbar__brand" href="../index.html">拾光热榜</a><span class="g-topbar__where" aria-hidden="true">Newlearnerの自留地</span><nav class="g-seg desktop-nav" aria-label="主导航"><a href="../index.html#feed" class="tab slot-1"><svg class="phosphor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M88,112a8,8,0,0,1,8-8h80a8,8,0,0,1,0,16H96A8,8,0,0,1,88,112Zm8,40h80a8,8,0,0,0,0-16H96a8,8,0,0,0,0,16ZM232,64V184a24,24,0,0,1-24,24H32A24,24,0,0,1,8,184.11V88a8,8,0,0,1,16,0v96a8,8,0,0,0,16,0V64A16,16,0,0,1,56,48H216A16,16,0,0,1,232,64Zm-16,0H56V184a23.84,23.84,0,0,1-1.37,8H208a8,8,0,0,0,8-8Z"/></svg><span>资讯</span></a><a href="../index.html#explore/play" class="tab slot-2 active" aria-current="page"><svg class="phosphor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM172.42,72.84l-64,32a8.05,8.05,0,0,0-3.58,3.58l-32,64A8,8,0,0,0,80,184a8.1,8.1,0,0,0,3.58-.84l64-32a8.05,8.05,0,0,0,3.58-3.58l32-64a8,8,0,0,0-10.74-10.74ZM138,138,97.89,158.11,118,118l40.15-20.07Z"/></svg><span>探索</span></a><a href="../index.html#me" class="tab slot-3"><svg class="phosphor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,177.57-51.77-32.35a8,8,0,0,0-8.48,0L72,209.57V48H184Z"/></svg><span>我的</span></a></nav><div class="g-topbar__actions"><button class="g-round" type="button" id="search-toggle" aria-label="搜索"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-search"/></svg></button><button class="g-round" type="button" id="more-toggle" aria-label="全部导航" aria-expanded="false" aria-controls="more-nav"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-menu-2"/></svg></button></div></div></header><div class="layout g-column"><main id="main"><div class="g-lead"><svg class="s-icon s-icon--lead" data-section="all" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#s-all"/></svg><div class="g-lead__text"><h1 class="g-lead__title">Newlearnerの自留地</h1><p class="g-lead__note">Telegram · 最近 30 条</p></div></div><div class="filterbar"><div class="filters" role="toolbar" aria-label="话题"><button class="g-pill pill selected" type="button" data-value="" aria-pressed="true">全部</button><button class="g-pill pill" type="button" data-value="全球" aria-pressed="false">全球</button><button class="g-pill pill" type="button" data-value="财经" aria-pressed="false">财经</button><button class="g-pill pill" type="button" data-value="AI" aria-pressed="false">AI</button><button class="g-pill pill" type="button" data-value="数码" aria-pressed="false">数码</button><button class="g-pill pill" type="button" data-value="开发者" aria-pressed="false">开发者</button><button class="g-pill pill" type="button" data-value="其他" aria-pressed="false">其他</button></div></div><div class="searchline"><label class="g-field g-field--search"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-search"/></svg><input id="q" type="search" placeholder="搜索" aria-label="搜索" autocomplete="off"></label><label class="g-field g-field--select"><select id="channel" aria-label="筛选来源"><option value="">全部来源</option><option value="NewlearnerChannel">Newlearnerの自留地</option></select><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></label></div><div class="section-label"><h2>11月7日 周六</h2></div><article class="g-card card news card--side" data-cat="财经" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">财经</span></span><time datetime="2026-11-07T12:22:57+08:00">11-07 12:22</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16109" target="_blank" rel="noopener noreferrer">NewsEconomicsFinance</a></h2><p class="card__body">💡《一飞周报》每周带你关注科技导向金融市场与周围的价值信息
+
+本周内容（305th）：Notion
+
+💹 市场
+• 美股极端抛售
+• 科技股引爆市场
+• 黄金开始反弹
+• SpaceX风暴中心
+
+📈 股票
+• AMD 业绩未能撑起股价
+
+👨🏻‍💻 专栏
+• 当尾部风险成为现实
+
+.....
+
+《一飞周报》更多地关注股票投资与科技动态。在这个嘈杂的时代，希望能与自留地读者一起传递更多有价值的信息。
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16109_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16109_1.webp" alt="NewsEconomicsFinance" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16109" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;4525cc8a3009dfdd7565dd4ef005e60ce96220ef1a3912d5f4f45d288aa3fb7d&quot;, &quot;title&quot;: &quot;NewsEconomicsFinance&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16109&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-07T12:22:57+08:00&quot;, &quot;snippet&quot;: &quot;💡《一飞周报》每周带你关注科技导向金融市场与周围的价值信息\n\n本周内容（305th）：Notion\n\n💹 市场\n• 美股极端抛售\n• 科技股引爆市场\n• 黄金开始反弹\n• SpaceX风暴中心\n\n📈 股票\n• AMD 业绩未能撑起股价\n\n👨🏻‍💻 专栏\n• 当尾部风险成为现实\n\n.....\n\n《一飞周报》更多地关注股票投资与科技动态。在这个嘈杂的时代，希望能与自留地读者一起传递更多有价值的信息。\n\n频道：@NewlearnerChannel&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="其他" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span></span><time datetime="2026-11-07T08:59:01+08:00">11-07 08:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16108" target="_blank" rel="noopener noreferrer">days</a></h2><p class="card__body">❄️ 今日立冬
+
+立，建始也，表示冬季自此开始。冬是终了的意思，万物收藏也，意思是说秋季农作物全部收晒完毕，收藏入库，动物也已藏起来准备冬眠。“水冰地冻之始，万物收藏之际。”中国又把立冬作为冬季的开始
+
+“落水荷塘满眼枯，西风渐作北风呼。”立冬后气温会逐步下降，除了注意穿衣外，可食用饺子🥟等食品“补冬”
+
+🥶 再见秋天，年尾你好！大家那里的气温怎么样，注意添衣保暖哦～
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16108_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16108_1.webp" alt="days" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16108" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;1f30eb1bdf726ea2286dd5eeacf2085b4893e21eab8c526ad734486b4015dcbb&quot;, &quot;title&quot;: &quot;days&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16108&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-07T08:59:01+08:00&quot;, &quot;snippet&quot;: &quot;❄️ 今日立冬\n\n立，建始也，表示冬季自此开始。冬是终了的意思，万物收藏也，意思是说秋季农作物全部收晒完毕，收藏入库，动物也已藏起来准备冬眠。“水冰地冻之始，万物收藏之际。”中国又把立冬作为冬季的开始\n\n“落水荷塘满眼枯，西风渐作北风呼。”立冬后气温会逐步下降，除了注意穿衣外，可食用饺子🥟等食品“补冬”\n\n🥶 再见秋天，年尾你好！大家那里的气温怎么样，注意添衣保暖哦～\n\n频道：@NewlearnerChannel&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><div class="section-label"><h2>11月6日 周五</h2></div><article class="g-card card news card--side" data-cat="财经" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="reach">2 个频道</span><span class="cat">财经</span></span><time datetime="2026-11-06T21:00:29+08:00">11-06 21:00</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16107" target="_blank" rel="noopener noreferrer">News</a></h2><p class="card__body">🌃 自留地晚报【11.6】
+
+1️⃣ OpenAI 发布网络安全专用模型 GPT-6 Cyber，较上代提升 51%
+
+2️⃣ DeepSeek Harness 日活跃用户已达 154 万，日消耗 Token 约 92 万亿
+
+3️⃣ Anthropic 宣布为 Claude 加入个人理财功能，仅拥有只读权限
+
+4️⃣ 苹果 计划为 HomeView 增加第三方 AI 聊天机器人
+
+5️⃣ 大疆 发布 Matrice 5T 无人机，标配激光雷达、毫米波雷达、全彩全向视觉感知系统，售价 57488 元
+
+6️⃣ Cloudflare 年化营收首破 30 亿美元，Q3 营收 7.83 亿美元同比增长 39%
+
+7️⃣ 长江存储 计划建设第四座 NAND 工厂，工厂使用国产设备占比力争达到 70%
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16107_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16107_1.webp" alt="News" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16107" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;54edc562353d87b7d643cfbea8c93639eb43c5891185e6df620bf700cb0e7bb6&quot;, &quot;title&quot;: &quot;News&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16107&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-06T21:00:29+08:00&quot;, &quot;snippet&quot;: &quot;🌃 自留地晚报【11.6】\n\n1️⃣ OpenAI 发布网络安全专用模型 GPT-6 Cyber，较上代提升 51%\n\n2️⃣ DeepSeek Harness 日活跃用户已达 154 万，日消耗 Token 约 92 万亿\n\n3️⃣ Anthropic 宣布为 Claude 加入个人理财功能，仅拥有只读权限\n\n4️⃣ 苹果 计划为 HomeView 增加第三方 AI 聊天机器人\n\n5️⃣ 大疆 发布 Matrice 5T 无人机，标配激光雷达、毫米波雷达、全彩全向视觉感知系统，售价 57488 元\n\n6️⃣ Cloudflare 年化营收首破 30 亿美元，Q3 营收 7.83 亿美元同比增长 39%\n\n7️⃣ 长江存储 计划建设第四座 NAND 工厂，工厂使用国产设备占比力争达到 70%\n\n频道：@NewlearnerChannel&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="全球" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">全球</span></span><time datetime="2026-11-06T14:59:01+08:00">11-06 14:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16106" target="_blank" rel="noopener noreferrer">MoviesTV</a></h2><p class="card__body">🎬 Newlearnerの自留地「流媒体周报」251
+
+🔍 重点关注
+
+▎第 36 届哥谭独立电影奖公布提名名单
+
+🔗：完整名单
+
+• 最佳影片：《克拉丽莎》《夜店小子》《首演》《噩梦中的梦》《激情邀约》《约瑟芬》《迷鼠》《纸老虎》《黄金时段》《瘴气营地的青春性事与死亡》《为了你的母亲》
+
+• 最佳国际影片：《突如其来》《神之子》《蓝鹭》《每时每刻》《故土》《菲律宾女孩》《行走之人》《米诺陶》《可能的爱》《温柔以待》
+
+• 最佳原创剧本：《每时每刻》《行走之人》《可能的爱》《温柔以待》《野马九号》
+
+• 最佳改编剧本：《突如其来》《克拉丽莎》《激情邀约》《米诺陶》《黄金时段》
+
+• 观众选择奖：《后室》《黑球》《爱情抓马》《激情邀约》《迈克尔·杰克逊：巨星之路》《痴迷》《挽救计划》《你能看到一切》
+
+其中，《突如其来》《克拉丽莎》《行走之人》《激情邀约》《温柔以待》各获 4 项提名，全度妍提名最佳主角表演，桑德拉·惠勒凭借《故土》提名最佳配角表演
+
+年底已至，各种颁奖接踵而来，可以看到那些各大电影节上面的香饽饽，也纷纷出现在这些电影奖的提名名单中。期待它们能够早日呈上大荧幕（或放源），让影迷们好好过一把瘾
+
+▎第 47 届青龙电影奖公布入围名单
+
+🔗：完整名单
+
+• 最优秀作品奖：《希望》《群体》《世界的主人》《暗杀者们》《与王生活的男人》
+
+• 最佳导演：罗泓轸《希望》/ 延尚昊《群体》/尹佳恩《世界的主人》/ 张恒准《与王生活的男人》/ 许秦豪《暗杀者们》
+
+• 最佳剧本：《可能的爱》《庆州纪行》《凶降喜讯》《世界的主人》《与王生活的男人》
+
+罗泓轸《希望》入围 10 项，李沧东《可能的爱》入围 8 项，但李沧东长期抵制青龙奖，所以本片未申报最佳作品和最佳导演；表演奖方面，赵寅成凭借这两部片分别提名男主角和男配角，全度妍再度入围影后
+
+▎2026 金鸡国际影展公布展映片单
+
+🔗：完整片单
+
+• 《我们的救赎》｜伊曼努尔·马雷｜比利时、法国
+• 《每时每刻》｜桑德拉·沃尔纳｜奥地利、德国
+• 《故土》｜帕维乌·帕夫利科夫斯基｜波兰、德国、意大利、法国
+• 《无处安放我的双眼》｜洪常秀｜韩国
+• 《林中绿洲》｜扬尼斯·伦茨｜德国、奥地利
+• 《夏日红炎》｜布鲁诺·杜蒙｜葡萄牙、法国、意大利、西班牙、卡塔尔等
+
+本届金鸡国际影展于 11 月 6 日至 29 日在厦门举办，展映主题为『此刻：国际新片展映」。来自世界各国的新锐佳作，带着不同土地的故事与思考，即将在大银幕与观众相见，连接起创作者与观众跨越山海的电影共鸣（已开票）
+
+📌 一周简报
+
+1️⃣ 电影《饥饿游戏：收获日出》确认引进内地，《饥饿游戏》迎来最残酷的一届，档期待定
+2️⃣ 窦靖童确认加盟 FX 尚未定名的犯罪剧情剧集试播集，一同加盟的还有陈法拉、Jun Che、肖恩·考夫曼、陈琼华
+3️⃣ 腾讯视频 2027 大剧片单公布：《三体：黑暗森林》《超新星纪元》《流浪地球短篇集》等在列
+4️⃣ Apple TV 现象级科幻剧《同乐者》第二季已于本周在美国新墨西哥州阿尔伯克基开拍
+5️⃣ 剧场版《孤独摇滚！星之足迹》将于2027年上映，确认由若林信执导，堀口悠纪子担任角色设计，吉田惠里香负责剧本，动画制作为 CloverWorks
+6️⃣ 电影《戴高乐之战》确认引进，影片由上下部《戴高乐之战：淬炼时代》和《戴高乐之战：我写下你的名字》组成，档期待定
+7️⃣ 2026年英国独立电影奖式公布提名名单：《突如其来》《可能的爱》双双入围最佳国际独立电影奖，《埃尔西诺》以12项提名领跑、《忽喇喇似大厦倾》紧随其后
+8️⃣ Netflix 上线 AI Discover 标签页，可按照用户心情推荐影视内容
+9️⃣ 动画电影《愤怒的小鸟3》正式官宣引进大陆、档期待定，预告中胖红解锁全新「奶爸」身份，并迎来鸟生的全新挑战
+
+🍿 精彩预告
+
+1️⃣ 深度安静 / 11 月 10 日 / 全国艺联
+2️⃣ 爷爷奶奶那些事 / 11 月 10 日 / 全国艺联
+3️⃣ 海上钢琴师 4K 修复版 / 11 月 13 日 / 内地重映
+4️⃣ 魔法秘境 / 11 月 27 日 / 内地
+5️⃣ 卡西莫多：巴黎灵魂 / 11 月 27 日 / Netflix
+6️⃣ 傲慢与偏见 / 12 月 3 日 / Netflix
+7️⃣ 勇敢者游戏 3：失控世界 / 12 月 25 日 / 北美
+8️⃣ 死亡搁浅：孤立无援 / 2027 年 / Disney+
+
+🧑‍💻 影音闲谈
+
+• 南京百丽宫影城：2026 年德国电影展·南京站｜完整片单及排片发布
+• UPEE：[Review] 哪天的形状 - 陈静琳 (2026)
+• RadioStartKey：关于爱，人类究竟写出过多少伟大的旋律？ | 从披头士到王菲，一场关于爱的音乐漫谈
+• HOPICO：你一定不能错过世界上最好听的音乐之巴西音乐！（第二集）
+• 导筒 directube：《燃烧女子的肖像》之后，席安玛如何重塑自己的电影语言？
+• 人物：卫诗雅 | 拿了影后，我还是怕没戏拍
+• THE FACE：《EVA》，我的成年后遗症
+• Talk 三联：对谈李皖 | 中国摇滚，在大厦崩塌中诞生
+
+🎤 接上期继续说说演出。我曾经期待着在 Livehouse 看一次蛙池，但事实是看了三次音乐节也没有遇上能去的 Livehouse 场次，直到如今已经没那么想看了。造化弄人的是，美国独立摇滚乐队 Racing Mount Pleasant 请了蛙池来当嘉宾，结果买了 RMP 的我如愿在 Livehouse 看了一次蛙池
+
+今年除了 Emo 在内地巡演中大放异彩，民谣和管弦乐的结合也颇为流行，此前重点和大家分享的 caroline 和 BCNR 都属于此列。在这些美妙的现场，有时候很难判断人声到底是器乐的一种伴奏，还是刺破器乐的一次点睛。RMP 在我的理解中，显然也属于这一类音乐，而且非常有趣的是，这三只乐队成员都非常多，RMP 也有整整 7 个人
+
+RMP 最吸引人的地方，是将 Indie Folk、Chamber Pop、Art Rock、Post-Rock 和爵士乐融合在一起：既有民谣式的私人情绪，又有管乐、弦乐和多层次编曲带来的宏大感。乐队最初成员是大学里的几名学生，一开始以 Kingfisher 的名义活动（感兴趣可以去听听他们真正意义上的第一张专辑 Grip Your Fist, I&#x27;m Heaven Bound），逐渐形成融合民谣、独立摇滚和管弦乐编曲的风格
+
+直到去年，乐队正式更名为 Racing Mount Pleasant（来自芝加哥附近的一块高速公路出口路牌），确定了 7 个人的阵容，并提出了同名专辑。要十分感谢 Apple Music 的推荐，让我有机会认识这样一只优秀的乐队。RMP 的配器非常丰富，除了三大件之外，还有小号、电萨克斯、小提琴等其他乐器的加入。真期待他们未来能够出现在偏器乐的音乐节中！
+
+Sam DuBose 作为主唱，贡献了不逊色于 BCNR 前成员 Tyler Hyde 的表现，尤其是乐队同名歌曲那句 I don&#x27;t know the reason why, I can&#x27;t meet your eyes，把民谣唱出了一种中西部 Emo 的味道。Kaysen Chown 担任女小提琴手，却能熟练切换电吉他和木吉他，还会演奏 Harmonium（簧风琴），我称她为「武器大师」。女贝斯 Tyler Thenstedt 更是深藏不露，玩乐队只是她的副业，她主修神经科学，曾在神经科学实验室工作，已有神经科学论文署名。这支非常年轻的乐队，真是让人惊喜连连
+
+二刷《奥德赛》之后，拖着疲惫的身躯来到 RMP 的现场，被音色发亮的小提琴和萨克斯唤醒了感官。小提琴、萨克斯、吉他、贝斯和鼓仿佛历经一场精密的外科手术，轮番上次、交替穿行、错落有致，却能够营造一个宏观之中仍可窥见微观细节的整体。乐队时而 Emo、时而后朋克、时而民谣，亦或器乐齐鸣，好似《采石》的结尾一般炸裂。两把萨克斯对吹之时，温暖上行的音色，给人以莫大的救赎感，真是美妙极了
+
+历经了看完电影的疲惫，以及因为 蛙池 还是老样子产生的「腻了」情绪（他们应该停下巡演认真做新歌），听到 RMP 真是让人耳目一新！最后乐队久违地设置了 Encore 环节，好久没有喊得这么舒畅了。可以说，如果没有 AM 的推荐，我就不会站在这里认真观察他们每一个人，了解到那些了不起的历史和过往。Live 的魅力就在于此，不止是耳机里面的歌曲冲击着你的胸膛，更能够去一窥做出这些音乐的乐手的真容。即便只能作为观众感受着，不能和他们有太多的交流，我们之间依然产生了一种联结（王忆灵把它称之为 地久天长）
+
+每个人都是一座孤岛，却又始终渴望与他人发生联系。Racing Mount Pleasant 的音乐恰好呈现了这种微妙的关系：不同的乐器保留着各自的声音，却又在共同的演奏中寻找彼此的位置。或许这正是音乐最接近生命本质的时刻 —— 我们不必变得相同，也依然能够共同构成某种完整
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16106_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16106_1.webp" alt="MoviesTV" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16106" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;b79c06fd879ae7ddb72baae5f2ce515b369a1e83dae71e3d7e39458758b30f39&quot;, &quot;title&quot;: &quot;MoviesTV&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16106&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-06T14:59:01+08:00&quot;, &quot;snippet&quot;: &quot;🎬 Newlearnerの自留地「流媒体周报」251\n\n🔍 重点关注\n\n▎第 36 届哥谭独立电影奖公布提名名单\n\n🔗：完整名单\n\n• 最佳影片：《克拉丽莎》《夜店小子》《首演》《噩梦中的梦》《激情邀约》《约瑟芬》《迷鼠》《纸老虎》《黄金时段》《瘴气营地的青春性事与死亡》《为了你的母亲》\n\n• 最佳国际影片：《突如其来》《神之子》《蓝鹭》《每时每刻》《故土》《菲律宾女孩》《行走之人》《米诺陶》《可能的爱》《温柔以待》\n\n• 最佳原创剧本：《每时每刻》《行走之人》《可能的爱》《温柔以待》《野马九号》\n\n• 最佳改编剧本：《突如其来》《克拉丽莎》《激情邀约》《米诺陶》《黄金时段》\n\n• 观众选择奖：《后室》《黑球》《爱情抓马》《激情邀约》《迈克尔·杰克逊：巨星之路》《痴迷》《挽救计划》《你能看到一切》\n\n其中，《突如其来》《克拉丽莎》《行走之人》《激情邀约》《温柔以待》各获 4 项提名，全度妍提名最佳主角表演，桑德拉·惠勒凭借《故土》提名最佳配角表演\n\n年底已至，各种颁奖接踵而来，可以看到那些各大电影节上面的香饽饽，也纷纷出现在这些电影奖的提名名单中。期待它们能够早日呈上大荧幕（或放源），&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="全球" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">全球</span></span><time datetime="2026-11-06T08:59:01+08:00">11-06 08:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16105" target="_blank" rel="noopener noreferrer">News</a></h2><p class="card__body">☀️ 自留地早报【11.6】
+
+1️⃣ OpenAI 宣布，将收购企业 Pierre 以扩充 Codex 第一方代码编写、理解、审查工具，其开源项目将继续保持开源
+
+2️⃣ Reuters 报道称，欧盟委员会宣布正式启动欧洲芯片设计平台，以 5.25 亿欧元支持中小型半导体业者发展
+
+3️⃣ Omdia 统计数据显示，2026 Q3 全球平板电脑出货量下滑至 3,200 万台，同比大幅萎缩 23%，创下近三年单季新低
+
+4️⃣ TechCrunch 报道称，Meta 收购 AI 编程初创公司 Conductor，该公司研发的编程工具允许用户通过在多个并行工作空间中部署 AI 智能体，同时启动和推进多个软件项目
+
+5️⃣ 索尼 发布 2026 上半财年及 Q2 财报：上半财年营业总收入 6.27 万亿日元，同比增长 9.4%；第二财季营业总收入 3.43 万亿日元，同比增长 10%
+
+6️⃣ Nintendo 发布 2027 上半财年财报：营业总收入 9660.41 亿日元，同比下降 12.1%；Nintendo Switch 2 硬件销量达 649 万台，软件销量达 2,449 万份
+
+7️⃣ AMD 官宣，AMD FSR 4.1.2 超分辨率技术首次登陆微软 XBOX Series X | S 主机平台
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16105_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16105_1.webp" alt="News" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16105" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;2a05ee53dbfb3f29f7422d095c2052ce936c9a207bf8a9121f42f9b88ae121fa&quot;, &quot;title&quot;: &quot;News&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16105&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-06T08:59:01+08:00&quot;, &quot;snippet&quot;: &quot;☀️ 自留地早报【11.6】\n\n1️⃣ OpenAI 宣布，将收购企业 Pierre 以扩充 Codex 第一方代码编写、理解、审查工具，其开源项目将继续保持开源\n\n2️⃣ Reuters 报道称，欧盟委员会宣布正式启动欧洲芯片设计平台，以 5.25 亿欧元支持中小型半导体业者发展\n\n3️⃣ Omdia 统计数据显示，2026 Q3 全球平板电脑出货量下滑至 3,200 万台，同比大幅萎缩 23%，创下近三年单季新低\n\n4️⃣ TechCrunch 报道称，Meta 收购 AI 编程初创公司 Conductor，该公司研发的编程工具允许用户通过在多个并行工作空间中部署 AI 智能体，同时启动和推进多个软件项目\n\n5️⃣ 索尼 发布 2026 上半财年及 Q2 财报：上半财年营业总收入 6.27 万亿日元，同比增长 9.4%；第二财季营业总收入 3.43 万亿日元，同比增长 10%\n\n6️⃣ Nintendo 发布 2027 上半财年财报：营业总收入 9660.41 亿日元，同比下降 12.1%；Nintendo Switch 2 硬件销量达 649 万台，软件销量达 2,449 万份\n&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><div class="section-label"><h2>11月5日 周四</h2></div><article class="g-card card news card--side" data-cat="全球" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">全球</span></span><time datetime="2026-11-05T21:00:02+08:00">11-05 21:00</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16104" target="_blank" rel="noopener noreferrer">News</a></h2><p class="card__body">🌃 自留地晚报【11.5】
+
+1️⃣ OpenAI 推出 Images 2.6 模型，支持直接生成和编辑 GIF 动画
+
+2️⃣ 高通 联合 SpaceX 建设星链移动全美国 5G 网络
+
+3️⃣ 月之暗面 2.8 万亿参数 Kimi K3.1 Pro 开放权重
+
+4️⃣ 苹果 macOS 27.3 开发者预览版将“实时活动”带入菜单栏，支持无灵动岛 Mac
+
+5️⃣ Nothing 将于 12 月发布首款 AI 原生设备
+
+6️⃣ OPPO 将于 11 月 9 日发布 Reno17 系列手机，搭载“全焦段 4K 超清长实况”
+
+7️⃣ 高通 2026 财年归母净利润 136.28 亿美元同比增长 146%
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16104_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16104_1.webp" alt="News" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16104" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;2f1a760b3f1f9020e70016f7f721c7fa22947477cfd02dcacaebe7c0737c164e&quot;, &quot;title&quot;: &quot;News&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16104&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-05T21:00:02+08:00&quot;, &quot;snippet&quot;: &quot;🌃 自留地晚报【11.5】\n\n1️⃣ OpenAI 推出 Images 2.6 模型，支持直接生成和编辑 GIF 动画\n\n2️⃣ 高通 联合 SpaceX 建设星链移动全美国 5G 网络\n\n3️⃣ 月之暗面 2.8 万亿参数 Kimi K3.1 Pro 开放权重\n\n4️⃣ 苹果 macOS 27.3 开发者预览版将“实时活动”带入菜单栏，支持无灵动岛 Mac\n\n5️⃣ Nothing 将于 12 月发布首款 AI 原生设备\n\n6️⃣ OPPO 将于 11 月 9 日发布 Reno17 系列手机，搭载“全焦段 4K 超清长实况”\n\n7️⃣ 高通 2026 财年归母净利润 136.28 亿美元同比增长 146%\n\n频道：@NewlearnerChannel&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--wide" data-cat="财经" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">财经</span></span><time datetime="2026-11-05T18:04:20+08:00">11-05 18:04</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16103" target="_blank" rel="noopener noreferrer">AIAPPiOS</a></h2><p class="card__body">☎️ 下次打客服电话，让这个AI替你等
+
+🔗：Web
+
+⭐️ Features
+
+• 随时用 iMessage 联络它
+• 帮你扫描电邮取消订阅
+• 帮你盯你追踪的项目发布时间
+• 帮你打电话预定餐厅
+
+👀 最近所有的 AI 巨头都在上演 personal agent 大战，除了大家都有所闻的 Grok Bot，ChatGPT Dot，Meta Muse，或许大家也听说过刚刚完成10亿美元 的 C 轮融资 Instinct AI
+
+🩶 不过我今天想要介绍一下 Tab Bot，如同 Instinct AI 一样，你可以直接在 iMessage 或 WhatsApp 里给它发消息，但是不同于其他的 agent，你还可以让它帮你订餐厅、买机票，甚至打客服电话
+
+🍴 最近我常常在请它帮忙打电话预定海外的餐厅，跟酒店确认提早入住和绑定会员账号。除此之外，他们的新功能是你可以把它拉进群里，下次约饭直接让它帮忙订位。
+
+🗝️ 这款产品目前还在内测，但是我们拿到了邀请码，欢迎有海外手机号码的同学去试完一下
+
+本文同步发送于笔者频道 @RollerRolling
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16103_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16103_1.webp" alt="AIAPPiOS" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16103" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;d01a582228252518564e97c72c8dde9b3bbdc285614231cf55dff6400a7c2a60&quot;, &quot;title&quot;: &quot;AIAPPiOS&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16103&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-05T18:04:20+08:00&quot;, &quot;snippet&quot;: &quot;☎️ 下次打客服电话，让这个AI替你等\n\n🔗：Web\n\n⭐️ Features\n\n• 随时用 iMessage 联络它\n• 帮你扫描电邮取消订阅\n• 帮你盯你追踪的项目发布时间\n• 帮你打电话预定餐厅\n\n👀 最近所有的 AI 巨头都在上演 personal agent 大战，除了大家都有所闻的 Grok Bot，ChatGPT Dot，Meta Muse，或许大家也听说过刚刚完成10亿美元 的 C 轮融资 Instinct AI\n\n🩶 不过我今天想要介绍一下 Tab Bot，如同 Instinct AI 一样，你可以直接在 iMessage 或 WhatsApp 里给它发消息，但是不同于其他的 agent，你还可以让它帮你订餐厅、买机票，甚至打客服电话\n\n🍴 最近我常常在请它帮忙打电话预定海外的餐厅，跟酒店确认提早入住和绑定会员账号。除此之外，他们的新功能是你可以把它拉进群里，下次约饭直接让它帮忙订位。\n\n🗝️ 这款产品目前还在内测，但是我们拿到了邀请码，欢迎有海外手机号码的同学去试完一下\n\n本文同步发送于笔者频道 @RollerRolling\n\n频道：@NewlearnerChann&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--wide" data-cat="AI" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">AI</span></span><time datetime="2026-11-05T12:03:55+08:00">11-05 12:03</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16102" target="_blank" rel="noopener noreferrer">APPLEAI碎碎念</a></h2><p class="card__body">🐳 自留地 Trail：iOS 27.3 国行 Apple 智能初体验
+
+好久没有更新「自留地 Trail」这个板块了。昨天 Apple 智能国行在 Beta 系统上线后，我们邀请两位主编，第一时间上手并分享了他们的感受，也欢迎大家畅所欲言
+
+👨🏻‍💻 主编肖茂
+
+伴随着凌晨熬夜的心跳加快，在多次刷新后看到了 iOS 27.3 推送，又经历了下载固件、升级系统和下载 Apple 智能的漫长等待，终于迎来国行 Apple 智能的实机体验
+
+全屏跑马灯带来短暂兴奋劲过后，陆续体验完这次 Apple 智能更新带来诸多更新，可惜在笔者看来其中比较实用的寥寥无几，只解决了从无到有的问题
+
+📲 开启条件
+
+① 使用国行设备，也就是在「设置 &gt; 通用 &gt; 关于本机」中，「型号」末尾三个字符为「CH/A」的设备；
+② 使用海外版设备，登录的 Apple 账户国家或地区为中国大陆，也就是俗称的「国区 ID」；
+③ 使用海外版设备，未登录 Apple 账户，且设备定位位于中国大陆。
+
+🎤 Siri 对话
+
+相较之前的 Siri 还是要聪明一点点，他会判断本地能不能处理指令，无法处理的时候就调用千问大模型进行处理，日常生活中一些小问题就可以直接呼出 Siri 进行解决，不用去搜索或者问 AI 了。通过Siri跟千问的对话，还能同步到千问 App
+
+但是我觉得现阶段还是说不上多好用，就比如你没法主动选择调用千问大模型，毕竟本地模型的能力太有限，我尝试像那些车机的语音助手一样在一段话里下达多个指令，但是 Siri 只能对第一指令做出反应，后面的就都被忽略了；语音识别也太简陋，对于普通话不太标准的我来说很容易误识别
+
+值得一提的是，可以在需要文字识别的时候，呼出 Siri 让它识别屏幕上的文字就可以调用千问大模型，操作更加便利结果也更准确，在以往就只能截图在编辑界面识别或者将截图传输到第三方 App 进行识别
+
+🖼️ 图像消除
+
+国产安卓系统标配多年的图像消除功能，国内 iOS 这次也终于搭载上了，通过涂抹或者框选本地模型就会自动识别需要消除的部分并高亮，在不是那么复杂的图片中我感觉效果还是可以的，如果要追求更加精细的效果就得使用第三方 App 了。有点耐人寻味的是，在部分图片中如果识别到敏感信息就无法启动图像消除功能，提示“根据相关法律法规的要求，无法处理此图像”
+
+📢 通知摘要
+
+开启通知摘要后，比如像微信对象给你发了一堆消息，在通知中心里面 Apple 智能会为你把这些消息总结一下，当你恰好在忙没时间看就可以大概扫一眼决定是不是赶紧回复的。Apple 智能还能分析消息内容，把重要的消息置顶可以第一时间查看，避免错过重要消息。当然，这还得用一段时间才能知道到底 Apple 智能能不能抓住重点
+
+📝 说在最后
+
+不管怎么说，Apple 智能入华终于迈出来实质的一步，逆全球化的背景下，Apple 智能还能进入国内难能可贵。系统级别的东西可以没有第三方好用，但是操作便捷只要能够满足部分需求就足以对第三方 App 造成降维打击，就像当年相册不能查看 Exif 信息，我会专门下个 App ，后来支持了虽然看得不算很完整我还是卸载这个 App
+
+前段时间等待了多年的武汉通登陆 Apple Pay ，Visa 拿到了银行卡清算牌照，如今国行 Apple 智能也来了，有些改变或许迟到，但不意味着没有可能
+
+👨🏻‍💻 主编 WATERS：国行 Apple 智能，终于等到这一天
+
+国行 Apple 智能随 iOS 27.3 Beta 开放后，我最关心的还是：这些等了很久的功能，能不能让手机用起来省点事？
+
+🗣 Siri：终于可以随意一点
+
+理解临时改口、接着上文继续聊，比换上新动画更实用。复杂问题可以交给千问，也支持针对照片、PDF 提问。不过，部分需求仍要跳转 App，离一句话把事情办完还有距离。
+
+✍️ 写作与摘要：小功能更容易留下来
+
+相比从头生成文章，我更看好选中文字后直接改写、缩短和提炼重点，省去来回复制。录音与通话摘要也有实际用途，但时间、金额和最终安排，还是要回看原文或者录音确认。
+
+📷 视觉与照片：入口方便，效果看场景
+
+视觉智能把询问、翻译和搜图放在一起，看菜单、认物品都更顺手。照片消除则还不够稳定，复杂背景容易留下修补痕迹，测试中也有闪退和连续使用 AI 时发热的反馈。
+
+🤔 迟到之后，还该期待什么？
+
+对照美区，国行首批开放的功能仍有缺口。千问和百度识图带来了本地服务，但 ChatGPT 更换千问之后，功能覆盖和操作衔接也应该跟上。用户不该买完设备，还要反复查哪些能用、哪些继续等。期待 Apple 把各地区的差异和补齐计划讲清楚，而不是让「终于上线」替代对完成度的要求。
+
+💡 体验与感受
+
+写作、摘要这些随手可用的小工具，比演示里无所不能的助手更让我期待。接下来希望看到的，是少一次跳转、少一次重复说明，以及更稳定的结果。上线只是开始，好用才值得留下。
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16102_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16102_1.webp" alt="APPLEAI碎碎念" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16102" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;7cb23853905480a17c81ce2d4ceb55c01208e7a91e8ce905dc2405d53fae4446&quot;, &quot;title&quot;: &quot;APPLEAI碎碎念&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16102&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-05T12:03:55+08:00&quot;, &quot;snippet&quot;: &quot;🐳 自留地 Trail：iOS 27.3 国行 Apple 智能初体验\n\n好久没有更新「自留地 Trail」这个板块了。昨天 Apple 智能国行在 Beta 系统上线后，我们邀请两位主编，第一时间上手并分享了他们的感受，也欢迎大家畅所欲言\n\n👨🏻‍💻 主编肖茂\n\n伴随着凌晨熬夜的心跳加快，在多次刷新后看到了 iOS 27.3 推送，又经历了下载固件、升级系统和下载 Apple 智能的漫长等待，终于迎来国行 Apple 智能的实机体验\n\n全屏跑马灯带来短暂兴奋劲过后，陆续体验完这次 Apple 智能更新带来诸多更新，可惜在笔者看来其中比较实用的寥寥无几，只解决了从无到有的问题\n\n📲 开启条件\n\n① 使用国行设备，也就是在「设置 &gt; 通用 &gt; 关于本机」中，「型号」末尾三个字符为「CH/A」的设备；\n② 使用海外版设备，登录的 Apple 账户国家或地区为中国大陆，也就是俗称的「国区 ID」；\n③ 使用海外版设备，未登录 Apple 账户，且设备定位位于中国大陆。\n\n🎤 Siri 对话\n\n相较之前的 Siri 还是要聪明一点点，他会判断本地能不能处理指令，无法处理的时候就调用千问大模型进&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="AI" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">AI</span></span><time datetime="2026-11-05T08:59:02+08:00">11-05 08:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16101" target="_blank" rel="noopener noreferrer">News</a></h2><p class="card__body">☀️ 自留地早报【11.5】
+
+1⃣️ Anthropic ：Anthropic 正在开发一套开源系统，用于验证某一 AI 输出究竟由哪个模型生成
+
+2⃣️ Asiae ：AMD 当地时间今日在韩国首尔与 AI NPU 企业 FuriosaAI、DPU 企业 MangoBoost 签署谅解备忘录，三方将共同构建开放式异构 AI 计算生态系统
+
+3⃣️ 中国信通院CAICT ：华为、阿里、腾讯、小米、百度、火山引擎等 20 家单位共同起草发布《智能体发展自律公约》，抵制利用智能体实施算法压榨、黑灰产等行为
+
+4️⃣ 腾讯混元 ：腾讯混元 Hy4 正式版发布，号称首次跻身最强开源模型之列、为真实生产力而生
+
+5⃣️ 魔芯科技KOKONI ：魔芯科技发布基于华为昇腾原生的 4D 世界模型 MoWorld 2.0，场景可互动、编辑、调用
+
+6⃣️ Metacritic ：任天堂备受期待的《塞尔达传说：时之笛》重制版将于今天正式发售，媒体评测已解禁，均分 96 分
+
+7️⃣ 酷派 ：安卓首款阔直板手机酷派 COOL X Wide 宣布延期发货，官方发布致歉说明
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16101_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16101_1.webp" alt="News" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16101" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;0c1c1003b5e7cfa2c826e989046838cb876e3d44cb8eb9c3c807792b53c06d58&quot;, &quot;title&quot;: &quot;News&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16101&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-05T08:59:02+08:00&quot;, &quot;snippet&quot;: &quot;☀️ 自留地早报【11.5】\n\n1⃣️ Anthropic ：Anthropic 正在开发一套开源系统，用于验证某一 AI 输出究竟由哪个模型生成\n\n2⃣️ Asiae ：AMD 当地时间今日在韩国首尔与 AI NPU 企业 FuriosaAI、DPU 企业 MangoBoost 签署谅解备忘录，三方将共同构建开放式异构 AI 计算生态系统\n\n3⃣️ 中国信通院CAICT ：华为、阿里、腾讯、小米、百度、火山引擎等 20 家单位共同起草发布《智能体发展自律公约》，抵制利用智能体实施算法压榨、黑灰产等行为\n\n4️⃣ 腾讯混元 ：腾讯混元 Hy4 正式版发布，号称首次跻身最强开源模型之列、为真实生产力而生\n\n5⃣️ 魔芯科技KOKONI ：魔芯科技发布基于华为昇腾原生的 4D 世界模型 MoWorld 2.0，场景可互动、编辑、调用\n\n6⃣️ Metacritic ：任天堂备受期待的《塞尔达传说：时之笛》重制版将于今天正式发售，媒体评测已解禁，均分 96 分\n\n7️⃣ 酷派 ：安卓首款阔直板手机酷派 COOL X Wide 宣布延期发货，官方发布致歉说明\n\n频道：@NewlearnerCh&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><div class="section-label"><h2>11月4日 周三</h2></div><article class="g-card card news card--side" data-cat="财经" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">财经</span></span><time datetime="2026-11-04T20:59:01+08:00">11-04 20:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16100" target="_blank" rel="noopener noreferrer">News</a></h2><p class="card__body">🌃 自留地晚报 【11.04】
+
+1️⃣ MacRumors 报道称，iOS 27.3 开发者预览版正式为中国大陆地区带来「Apple 智能与 Siri」；其与与阿里巴巴达成合作，在部分体验中接入千问
+
+2️⃣ 9to5Mac 报道称，iOS 27.3 首个 Beta 开发者预览版上线新版「健康」应用，已覆盖 11 种语言（含中文）；此外，国行还上线「迫近威胁警报」选项开关
+
+3️⃣ The Verge 报道称，ChatGPT 消费者产品负责人亚当 · 弗莱证实，ChatGPT 上的搜索类查询量，约相当于谷歌搜索查询量的 20%
+
+4️⃣ 9to5Mac 报道称，Apple 向第三方开发者开放 Siri AI 的全新「应用技能」（App Skills），让应用能够指导 Siri 执行更复杂的多步骤任务
+
+5️⃣ AMD 发布 2026 Q3 及前三财季财报：前三季度营业总收入351.66 亿美元，同比增长 44.31%；第三财季营业总收入 133.77 亿美元，同比增长 45%
+
+6️⃣ MacRumors 报道称，iPadOS 27.3 首个开发者预览版相机应用新增 Siri 入口，用户在支持的 iPad 上打开相机并切换到 Siri 标签页后，即可通过视觉智能获取眼前事物的相关信息
+
+7️⃣ Xbox 公布 11 月 XGP 第一批会免阵容：含《足球经理 27》《战锤幸存者》《毒液突击队》等
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16100_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16100_1.webp" alt="News" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16100" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;17a8a7cc040bdbac64abf3cd1c64c755aea4a38ecc4df1ae123cf7faa9f0994f&quot;, &quot;title&quot;: &quot;News&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16100&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-04T20:59:01+08:00&quot;, &quot;snippet&quot;: &quot;🌃 自留地晚报 【11.04】\n\n1️⃣ MacRumors 报道称，iOS 27.3 开发者预览版正式为中国大陆地区带来「Apple 智能与 Siri」；其与与阿里巴巴达成合作，在部分体验中接入千问\n\n2️⃣ 9to5Mac 报道称，iOS 27.3 首个 Beta 开发者预览版上线新版「健康」应用，已覆盖 11 种语言（含中文）；此外，国行还上线「迫近威胁警报」选项开关\n\n3️⃣ The Verge 报道称，ChatGPT 消费者产品负责人亚当 · 弗莱证实，ChatGPT 上的搜索类查询量，约相当于谷歌搜索查询量的 20%\n\n4️⃣ 9to5Mac 报道称，Apple 向第三方开发者开放 Siri AI 的全新「应用技能」（App Skills），让应用能够指导 Siri 执行更复杂的多步骤任务\n\n5️⃣ AMD 发布 2026 Q3 及前三财季财报：前三季度营业总收入351.66 亿美元，同比增长 44.31%；第三财季营业总收入 133.77 亿美元，同比增长 45%\n\n6️⃣ MacRumors 报道称，iPadOS 27.3 首个开发者预览版相机应用新增 Siri 入口，&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="开发者" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="reach">2 个频道</span><span class="cat">开发者</span></span><time datetime="2026-11-04T17:59:01+08:00">11-04 17:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16099" target="_blank" rel="noopener noreferrer">telegramBotGitHub情报CloudflareADAI</a></h2><p class="card__body">🤖 聊聊 Newlearnerの IT 社群的自动化入群方案部署 —— 从 AI Agent 到基于 Bot 和网页的黑盒程序
+
+Newlearnerの IT 社群是自留地频道的附属群聊，为了防止广告机器人无节制地自动加入，在很早之前我们就开启了「人工审核」才能入群的开关，并在今年设置了「只有加入群聊才能在频道下方留言」。但数量众多的广告小号还是让管理员们不堪其扰，我决定研究一套无人值守的方案，用魔法打败魔法
+
+1️⃣ 基于 Open Minis 的 AI Agent 尝试
+
+起初我能够想到用 AI 帮我审核入群信息，是受到了 Open Minis 开发者 Ethan Wang 的影响。看到他的推文后，立即向他咨询了如何部署，并成功跑了起来。做到这一点并不难：
+
+① 下载 Open Minis 并接入 AI API
+② 命令 AI 到 GitHub 找到 Minis Skills 仓库里的tg-hub skill
+③ 去 my.telegram.org 注册并得到 api_id 和 api_hash
+④ 进行配置并以个人账号方式在终端登录 Telegram
+⑤ 对群组实行扫描和监控，将「入群规则」详细地告诉 AI，达到什么样的标准可以进入，有哪些特征直接拒绝或封禁
+⑥ 将这套流程做成 Skill 或脚本一类的东西，和 AI 商量好通过关键词即可触发
+
+这样操作后，不止能够批量处理入群申请，还可以看群中是否有携带特征的潜伏广告 Bot，本质上就是个 人形自走机器人（部署有风险，请遵照 Telegram TOS）。如何定期运行呢？我想的是通过 iOS 的快捷指令，定时拉起处理一次入群消息，最终用下来也是非常省心无感
+
+🤔 但是 AI Agent 的方案有一些很显然的缺点。首先它需要消耗 Token，免费套餐并不能支持非常高频率地扫描处理，也就意味着几乎做不到实时；其次，终端过一段时间就要重新登录，目前 API 申请不如之前那么宽松了，更何况我不清楚这样高强度调用是否会招来封号；最重要的是，一旦信息多起来，并没有一套成体系的机制去记录和管理
+
+2️⃣ 非常成功的 Bot 和网页黑盒程序
+
+在群里分享取得的一些小小成果之后，群友找到了我，说见过类似的程序。我向他表明了我实际上需要类似 TelegramDoor 的一个基于网页后台的系统，可以在其中对每一个入群者进行详细的管理
+
+进过一番 Vibe Coding 之后，我们得到了整套系统，它由 Bot 作为后端、将数据传递呈现到网页前端，这套系统能够实现：
+
+① 规则 + 语义 + Jev 多层判断，识别用户特征，实时处理
+② 个人资料快照和判断依据展示
+③ 详尽的操作日志
+④ 灵活的判断规则，随时可根据需求调整，支持样本库和白名单功能
+⑤ 加入「统计」板块，便于前期根据预判断结果和准确率调整规则
+⑥ 机器人可自动执行封禁、拒绝与通过
+
+💡 我和群友用这套系统训练了大半个月，一一比对系统给出的预判断结果，也根据情况对规则进行了更加复杂的调整。我们发现，这套规则对于处理广告和小号非常适用（连续 7 日准确率超过 98%），但在判断真人方面还存在一些不确定性。针对「是真人但系统不通过」的情况，我们也加入了白名单机制：我会不定期去网页后台翻阅记录，如果发现拒绝了真人，则为他加入白名单，下次加入即可通过
+
+👀 为保险起见，也为了减少误伤，我们最终还是决定把那些「不够确定」的、或是「看起来是真人」的处理，通过 Telegram Channel 推送给我本人进行处理。整体运行下来，这样的案例非常少，也可以看到目前 TG 的生态几乎都是被广告占据了。总之，这套系统用下来还是很爽的，但为了保持其黑盒特性、给大家带来一个良好的聊天环境，我们并不打算将系统开源
+
+* 如有进群误伤或无法进群的情况，可以通过投稿机器人 @newlearner_pm_bot 与我取得联系
+
+📘 关联阅读：TelegramDoor - 基于 Cloudflare 的 Telegram 双向私信机器人
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16099_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16099_1.webp" alt="telegramBotGitHub情报CloudflareADAI" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16099" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;ef7553ef883bcd18bfeb1c66762220c62e81e536d372d68bb910cc78c53a577e&quot;, &quot;title&quot;: &quot;telegramBotGitHub情报CloudflareADAI&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16099&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-04T17:59:01+08:00&quot;, &quot;snippet&quot;: &quot;🤖 聊聊 Newlearnerの IT 社群的自动化入群方案部署 —— 从 AI Agent 到基于 Bot 和网页的黑盒程序\n\nNewlearnerの IT 社群是自留地频道的附属群聊，为了防止广告机器人无节制地自动加入，在很早之前我们就开启了「人工审核」才能入群的开关，并在今年设置了「只有加入群聊才能在频道下方留言」。但数量众多的广告小号还是让管理员们不堪其扰，我决定研究一套无人值守的方案，用魔法打败魔法\n\n1️⃣ 基于 Open Minis 的 AI Agent 尝试\n\n起初我能够想到用 AI 帮我审核入群信息，是受到了 Open Minis 开发者 Ethan Wang 的影响。看到他的推文后，立即向他咨询了如何部署，并成功跑了起来。做到这一点并不难：\n\n① 下载 Open Minis 并接入 AI API\n② 命令 AI 到 GitHub 找到 Minis Skills 仓库里的tg-hub skill\n③ 去 my.telegram.org 注册并得到 api_id 和 api_hash\n④ 进行配置并以个人账号方式在终端登录 Telegram\n⑤ 对群组实行扫描和监控，将&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--wide" data-cat="开发者" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">开发者</span></span><time datetime="2026-11-04T12:04:55+08:00">11-04 12:04</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16098" target="_blank" rel="noopener noreferrer">GitHubGFWAPP</a></h2><p class="card__body">🦋 FlClash：我最爱的 Clash 客户端又更新了
+
+🔗：GitHub | Releases
+
+⭐️ Features:
+
+• 全新仪表盘和卡片式代理组
+• 可选 Liquid Glass 效果
+• WebDAV 备份与恢复
+• 开源免费，支持桌面和 Android
+
+Clash 客户端已经介绍过不少了，虽然我一直偏爱安安静静待在菜单栏里的原生小工具，但在跨平台客户端里，FlClash 仍然是我最喜欢的一个。FlClash 基于 mihomo 内核，使用 Flutter 开发，支持 Android、Windows、macOS 和 Linux，最近的 0.9 系列又把 UI 大改了一遍。新版最明显的变化是仪表盘，美观度比之前好了很多，也更加现代。仪表盘的信息量依然不少，层次清晰，一目了然。
+
+FlClash 旧版就是 Material You 路线，这次给我的感觉是往 Material 3 Expressive 又走了一步，同时揉进了不少 Apple 式交互：连续圆角、可以拖动并停在不同高度的弹出面板、滑动选择菜单，以及可选的 Liquid Glass 效果。桌面侧边栏也加入了模糊效果，代理组改成卡片，分组切换则使用胶囊式标签。不得不说这一套新 UI 十分清爽和漂亮。功能上，新版也将连接、请求和 DNS 查询整理成了可排序的表格，更方便排查问题。
+
+🤔 0.9.0 移除了旧的自定义覆写，需要按新版方式重建为自定义配置；桌面端 TUN 设置的继承逻辑也有调整，自己改过 DNS、TUN 或覆写的用户尤其需要留意。FlClash 仍然免费、GPL-3.0 开源，如果你想在电脑和 Android 上使用一套相近的操作方式，这次更新很值得看看。至于这次多出来的玻璃和动效，好看归好看，代理工具最终还是要回到连接是否稳定、后台是否省心，在这方面我认为 FlClash 是十分优秀的。
+
+📘 关联阅读：
+
+1️⃣ Clash：熟悉的配置和规则，套上新的外壳
+2️⃣ Surge 周边工具合集：从配置、订阅到家庭网关
+3️⃣ ClashBar：原生轻量的 macOS 菜单栏代理客户端
+4️⃣ ClashMac：基于 SwiftUI 的轻量 Clash 客户端
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16098_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16098_1.webp" alt="GitHubGFWAPP" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16098" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;05846c6e5fdb5525b346a06ec195f9bb10c30a417c9d02784d7617d6e6923f3a&quot;, &quot;title&quot;: &quot;GitHubGFWAPP&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16098&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-04T12:04:55+08:00&quot;, &quot;snippet&quot;: &quot;🦋 FlClash：我最爱的 Clash 客户端又更新了\n\n🔗：GitHub | Releases\n\n⭐️ Features:\n\n• 全新仪表盘和卡片式代理组\n• 可选 Liquid Glass 效果\n• WebDAV 备份与恢复\n• 开源免费，支持桌面和 Android\n\nClash 客户端已经介绍过不少了，虽然我一直偏爱安安静静待在菜单栏里的原生小工具，但在跨平台客户端里，FlClash 仍然是我最喜欢的一个。FlClash 基于 mihomo 内核，使用 Flutter 开发，支持 Android、Windows、macOS 和 Linux，最近的 0.9 系列又把 UI 大改了一遍。新版最明显的变化是仪表盘，美观度比之前好了很多，也更加现代。仪表盘的信息量依然不少，层次清晰，一目了然。\n\nFlClash 旧版就是 Material You 路线，这次给我的感觉是往 Material 3 Expressive 又走了一步，同时揉进了不少 Apple 式交互：连续圆角、可以拖动并停在不同高度的弹出面板、滑动选择菜单，以及可选的 Liquid Glass 效果。桌面侧边栏也加入了模糊&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="财经" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="reach">3 个频道</span><span class="cat">财经</span></span><time datetime="2026-11-04T08:59:01+08:00">11-04 08:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16097" target="_blank" rel="noopener noreferrer">News</a></h2><p class="card__body">☀️ 自留地早报【11.4】
+
+1️⃣ TrendForce ：AI 网络与互连持续接近翻倍增长，2027 年产值 2798 亿美元
+
+2⃣️ MacRumors ：苹果首款折叠屏手机 iPhone Duo 原计划 11 月发布，最终“仓促提前至 10 月”致库存严重短缺
+
+3️⃣ 财联社 ：高盛称2030 年全球数据中心容量或达 273GW，五年投资需求约 8.5 万亿美元
+
+4⃣️ AppleInaider ：苹果预告 11 月 5 日新品直播，与歌手 Labrinth 合作
+
+5⃣️ Thelec ：三星显示和 LG Display 正为苹果产品 OLED 面板开发新工艺，有望提高屏幕整体亮度表现
+
+6⃣️ 谷歌确认 Wear OS 8 将上线系统状态栏功能
+
+7️⃣ 荣耀 700 系列手机官宣：旗舰级影像能力、内部代号 Flora，号称“全面大换新的一代”
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16097_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16097_1.webp" alt="News" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16097" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;588ef1646f2eb43e97c28b30ec0dfde00d3106a91d7e34493e4ca0a5e4097dab&quot;, &quot;title&quot;: &quot;News&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16097&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-04T08:59:01+08:00&quot;, &quot;snippet&quot;: &quot;☀️ 自留地早报【11.4】\n\n1️⃣ TrendForce ：AI 网络与互连持续接近翻倍增长，2027 年产值 2798 亿美元\n\n2⃣️ MacRumors ：苹果首款折叠屏手机 iPhone Duo 原计划 11 月发布，最终“仓促提前至 10 月”致库存严重短缺\n\n3️⃣ 财联社 ：高盛称2030 年全球数据中心容量或达 273GW，五年投资需求约 8.5 万亿美元\n\n4⃣️ AppleInaider ：苹果预告 11 月 5 日新品直播，与歌手 Labrinth 合作\n\n5⃣️ Thelec ：三星显示和 LG Display 正为苹果产品 OLED 面板开发新工艺，有望提高屏幕整体亮度表现\n\n6⃣️ 谷歌确认 Wear OS 8 将上线系统状态栏功能\n\n7️⃣ 荣耀 700 系列手机官宣：旗舰级影像能力、内部代号 Flora，号称“全面大换新的一代”\n\n频道：@NewlearnerChannel&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><div class="section-label"><h2>11月3日 周二</h2></div><article class="g-card card news card--side" data-cat="财经" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">财经</span></span><time datetime="2026-11-03T20:59:01+08:00">11-03 20:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16096" target="_blank" rel="noopener noreferrer">News</a></h2><p class="card__body">🌃 自留地晚报 【11.03】
+
+1️⃣ 苹果 宣布，2026 财年第四财季营收 1145 亿美元，同比增长 12%，iPhone 营收创同期纪录、服务营收创历史新高，全财年营收 4790 亿美元同样创下纪录
+
+2️⃣ 高通 宣布，高通 AI Hub 现已面向中国开发者开放，集成 Models、Workbench、Apps 和 GenieX 端侧推理框架，提供超过 230 个预优化模型
+
+3️⃣ Counterpoint 报告显示，第三季度全球智能手机出货量同比下滑 19%，但平均售价同比上涨 27% 至 442 美元，带动营收增长 3% 至 1140 亿美元，苹果拿下 50% 的营收份额创历史纪录
+
+4️⃣ 华尔街日报 报道称，苹果 CEO 特努斯在财报电话会上表示内存涨价“前所未有”，预计 12 月季度内存成本进一步走高，服务业务增长将继续放缓、毛利率继续下滑，苹果股价应声下跌
+
+5️⃣ 路透社 报道称，Anthropic 第三季度营收环比增长 47% 至 169.6 亿美元，增速较第二季度的 144% 明显放缓，净亏损收窄至 232.9 亿美元，算力相关承诺支出约 8954 亿美元
+
+6️⃣ 月之暗面 宣布，Kimi 推出游戏开发与创意工作解决方案，基于 Kimi K3.1 Pro 模型及 Kimi Code、Kimi Work，可通过插件直接操作 Unity、虚幻引擎和 Blender 等专业工具
+
+7️⃣ AppleInsider 报道称，苹果在财报电话会上确认受全球内存危机影响，Mac 和 iPad 供货紧张将至少持续到 2026 年底，M5 Ultra 版 Mac Studio 等待时间已达 7 至 8 周，512GB 内存版本更是长达 10 至 12 周
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16096_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16096_1.webp" alt="News" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16096" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;29e06f5da0b0d1d7f109b1fa6c31493f00d8c901728ab0b2f059edadc132bde1&quot;, &quot;title&quot;: &quot;News&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16096&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-03T20:59:01+08:00&quot;, &quot;snippet&quot;: &quot;🌃 自留地晚报 【11.03】\n\n1️⃣ 苹果 宣布，2026 财年第四财季营收 1145 亿美元，同比增长 12%，iPhone 营收创同期纪录、服务营收创历史新高，全财年营收 4790 亿美元同样创下纪录\n\n2️⃣ 高通 宣布，高通 AI Hub 现已面向中国开发者开放，集成 Models、Workbench、Apps 和 GenieX 端侧推理框架，提供超过 230 个预优化模型\n\n3️⃣ Counterpoint 报告显示，第三季度全球智能手机出货量同比下滑 19%，但平均售价同比上涨 27% 至 442 美元，带动营收增长 3% 至 1140 亿美元，苹果拿下 50% 的营收份额创历史纪录\n\n4️⃣ 华尔街日报 报道称，苹果 CEO 特努斯在财报电话会上表示内存涨价“前所未有”，预计 12 月季度内存成本进一步走高，服务业务增长将继续放缓、毛利率继续下滑，苹果股价应声下跌\n\n5️⃣ 路透社 报道称，Anthropic 第三季度营收环比增长 47% 至 169.6 亿美元，增速较第二季度的 144% 明显放缓，净亏损收窄至 232.9 亿美元，算力相关承诺支出约 8954 亿美&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--wide" data-cat="数码" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">数码</span></span><time datetime="2026-11-03T18:00:48+08:00">11-03 18:00</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16095" target="_blank" rel="noopener noreferrer">MacDisplayBlog</a></h2><p class="card__body">🖥 Apple 到底给屏幕起了多少个名字
+
+🔗：博客｜一图流
+
+💻 上周，Apple 发布了配备 PROLED XDR 显示屏的 MacBook Pro，把 MacBook 带入触屏 + OLED 时代。不过，比起触控，我的第一反应是：这个显示屏的名字，为什么如此陌生？
+
+🤔 于是，干脆找来 Claude，把 Apple 官网和支持站的技术规格页翻了一遍，把 Apple 用过的屏幕营销名捋了一下，顺手对了对 apple.com.cn 上的官方中文写法，发现在显示屏的品牌名上，Apple 还确实是有它的考虑。
+
+🔤 近年来 Apple 产品上的显示屏，大多遵循一种「三段式」的写法，排列组合：前缀（Super, Ultra, Liquid） + 视网膜 + 后缀（XDR, HD）。例如：iPad Pro M5 上的 Ultra Retina XDR（超精视网膜 XDR）显示屏、MacBook Pro M6 上的 Liquid Retina XDR（Liquid 视网膜 XDR）显示屏等。
+
+🪏 不过还是有细节值得挖：比如，Apple Vision Pro 的「显示屏」是唯一没有营销名的，规格页只是写了 micro-OLED 显示系统。
+
+🀄️ 官方中文名也有点意思：Retina 一律译作「视网膜」，Liquid 和 PROLED 却保留英文。「Liquid 视网膜」这种半中半英的写法，看久了也还是觉得奇奇怪怪。不过你还能怎么翻译 —— 液晶视网膜 🤡？
+
+😎 如果你和我一样也对科技术语感兴趣，欢迎点击上面的博客文章一探究竟。如果你知道什么公开网页上看不出来的秘辛，更欢迎交流～
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16095_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16095_1.webp" alt="MacDisplayBlog" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16095" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;b2c8682ff0fa0a4789b03ea6ae74e5b5e0608946655548f6873031e0c1a76350&quot;, &quot;title&quot;: &quot;MacDisplayBlog&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16095&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-03T18:00:48+08:00&quot;, &quot;snippet&quot;: &quot;🖥 Apple 到底给屏幕起了多少个名字\n\n🔗：博客｜一图流\n\n💻 上周，Apple 发布了配备 PROLED XDR 显示屏的 MacBook Pro，把 MacBook 带入触屏 + OLED 时代。不过，比起触控，我的第一反应是：这个显示屏的名字，为什么如此陌生？\n\n🤔 于是，干脆找来 Claude，把 Apple 官网和支持站的技术规格页翻了一遍，把 Apple 用过的屏幕营销名捋了一下，顺手对了对 apple.com.cn 上的官方中文写法，发现在显示屏的品牌名上，Apple 还确实是有它的考虑。\n\n🔤 近年来 Apple 产品上的显示屏，大多遵循一种「三段式」的写法，排列组合：前缀（Super, Ultra, Liquid） + 视网膜 + 后缀（XDR, HD）。例如：iPad Pro M5 上的 Ultra Retina XDR（超精视网膜 XDR）显示屏、MacBook Pro M6 上的 Liquid Retina XDR（Liquid 视网膜 XDR）显示屏等。\n\n🪏 不过还是有细节值得挖：比如，Apple Vision Pro 的「显示屏」是唯一没有营销名的，规&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="AI" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="reach">2 个频道</span><span class="cat">AI</span></span><time datetime="2026-11-03T12:02:45+08:00">11-03 12:02</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16094" target="_blank" rel="noopener noreferrer">潮流周刊Newsletter</a></h2><p class="card__body">潮流周刊（第288期） - 偶遇小猫
+
+封面图拍摄于周末去乔村吃饭，在门口看到两只小猫，晒着太阳，非常舒服的样子，一点都不怕人。
+
+潮流工具
+1. 2026 年，我的 21 条 AI Coding 最佳实践
+2. 分享 6 个我常用的 Chrome 扩展
+3. OpenUsage：又一个菜单栏看 Agent 额度的工具
+4. Mika：Android 端侧 AI Agent
+5. HackerTube：Karpathy 做的 Youtube 视频推荐首页
+6. TokenEconomizer：基于 Agent 经验驱动来减少 Token 成本
+
+随便写写
+1. 如何把自己改造得不那么程序员？
+2. 化身做饭博主来教大伙如何整一个非常好吃的大闸蟹
+3. 我的 GitHub CI 速度优化经验
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16094_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16094_1.webp" alt="潮流周刊Newsletter" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16094" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;75ce837c329afc55ef0f115013f8ce270b1705c6aa321fb877f408f8ac04aca0&quot;, &quot;title&quot;: &quot;潮流周刊Newsletter&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16094&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-03T12:02:45+08:00&quot;, &quot;snippet&quot;: &quot;潮流周刊（第288期） - 偶遇小猫\n\n封面图拍摄于周末去乔村吃饭，在门口看到两只小猫，晒着太阳，非常舒服的样子，一点都不怕人。\n\n潮流工具\n1. 2026 年，我的 21 条 AI Coding 最佳实践\n2. 分享 6 个我常用的 Chrome 扩展\n3. OpenUsage：又一个菜单栏看 Agent 额度的工具\n4. Mika：Android 端侧 AI Agent\n5. HackerTube：Karpathy 做的 Youtube 视频推荐首页\n6. TokenEconomizer：基于 Agent 经验驱动来减少 Token 成本\n\n随便写写\n1. 如何把自己改造得不那么程序员？\n2. 化身做饭博主来教大伙如何整一个非常好吃的大闸蟹\n3. 我的 GitHub CI 速度优化经验\n\n频道：@NewlearnerChannel&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="财经" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">财经</span></span><time datetime="2026-11-03T09:20:16+08:00">11-03 09:20</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16093" target="_blank" rel="noopener noreferrer">News</a></h2><p class="card__body">☀️ 自留地早报【11.3】
+
+1️⃣ 腾讯混元 ：发布了 AI 科研系统 Hyra 2.0，将研发重点从直接用 AI 攻克科学难题，转向让通用 Agent 参与科学模型、研究工作流及软件工具的研发与升级，让一次研发的成果在后续研究中被反复使用，推动科研范式从“刷题解题”走向“造工具”
+
+2️⃣ ChannelGate ：消息称三星屏厂通知了所有合作伙伴，明年的 OLED 面板的供应价格将有大幅上调，并非成本问题意在控价
+
+3️⃣ TrendForce集邦咨询 ：认为在人工智能计算负载转向推理和智能体的影响下，CPU 需求走强，带动高容量 MLCC 需求激增，这类 MLCC 的缺货预计将持续到 2027 年上半年
+
+4️⃣ Marvell ：Marvell 宣布将以全股票交易收购 Lumentum，拓展 AI 光互连版图
+
+5️⃣ IDC咨询 ：企业到 2028 年将在开源模型上运行 60% 的 AI 工作负载，并借助模型路由策略降低成本、对冲供应商锁定风险
+
+6️⃣ Phoronix ：受内存短缺影响，16GB 版树莓派 5 价格上调 80 美元至 385 美元
+
+7️⃣ Famitsu ：为庆祝本周《塞尔达传说：时之笛》重制版发售，谷歌搜索上线了一个彩蛋，可跳转至 1998 年复古搜索页
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16093_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16093_1.webp" alt="News" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16093" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;0da84f25ea1c86b9e6d946f841e8f261d3e6b0e63cbb46c93e491b19d73d568f&quot;, &quot;title&quot;: &quot;News&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16093&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-03T09:20:16+08:00&quot;, &quot;snippet&quot;: &quot;☀️ 自留地早报【11.3】\n\n1️⃣ 腾讯混元 ：发布了 AI 科研系统 Hyra 2.0，将研发重点从直接用 AI 攻克科学难题，转向让通用 Agent 参与科学模型、研究工作流及软件工具的研发与升级，让一次研发的成果在后续研究中被反复使用，推动科研范式从“刷题解题”走向“造工具”\n\n2️⃣ ChannelGate ：消息称三星屏厂通知了所有合作伙伴，明年的 OLED 面板的供应价格将有大幅上调，并非成本问题意在控价\n\n3️⃣ TrendForce集邦咨询 ：认为在人工智能计算负载转向推理和智能体的影响下，CPU 需求走强，带动高容量 MLCC 需求激增，这类 MLCC 的缺货预计将持续到 2027 年上半年\n\n4️⃣ Marvell ：Marvell 宣布将以全股票交易收购 Lumentum，拓展 AI 光互连版图\n\n5️⃣ IDC咨询 ：企业到 2028 年将在开源模型上运行 60% 的 AI 工作负载，并借助模型路由策略降低成本、对冲供应商锁定风险\n\n6️⃣ Phoronix ：受内存短缺影响，16GB 版树莓派 5 价格上调 80 美元至 385 美元\n\n7️⃣ Famit&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><div class="section-label"><h2>11月2日 周一</h2></div><article class="g-card card news card--side" data-cat="财经" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">财经</span></span><time datetime="2026-11-02T20:59:01+08:00">11-02 20:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16092" target="_blank" rel="noopener noreferrer">News</a></h2><p class="card__body">🌃 自留地晚报 【11.02】
+
+1️⃣ Macrumors 报道称，苹果明年上半年推出三款新 iPad，iPad Air 换装 OLED 屏、iPad Pro 加入均热板散热，另有一款入门级 iPad
+
+2️⃣ TheVerge 报道称，OpenAI、谷歌、微软和 Anthropic 联手推行 AI 数据抓取退出标准，网站可一次性对多家 AI 公司统一设置训练偏好，无需逐家单独处理
+
+3️⃣ DigiTimes 报道称，英伟达向韩国互联网巨头 Naver 投资 10 亿美元，持股比例将超越创始人李海珍，成为第三大股东
+
+4️⃣ 古尔曼 表示，苹果计划明年淘汰非触屏版 MacBook Pro，产品线仅保留 14 英寸基础款机型
+
+5️⃣ Tom’s Hardware 报道称，OpenAI CEO 奥尔特曼密访韩国，与三星、SK 集团高层洽谈存储芯片供应及未来 AI 数据中心合作
+
+6️⃣ 9to5Google 报道称，谷歌在 Android Dev Summit 2026 上表示，可拆键盘式二合一 Googlebook 笔记本即将到来，将成为下一个主推形态
+
+7️⃣ Tom‘s Hardware 报道称，法国议会通过约 112 亿美元“流量税”法案，按流量向互联网巨头计费，每 GB 内容约 0.055 欧元，谷歌、Meta 等面临新税负
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16092_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16092_1.webp" alt="News" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16092" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;ef62b68619370e534af2942c788fad16c0f1997b413cf013e69dee42e0b1234e&quot;, &quot;title&quot;: &quot;News&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16092&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-02T20:59:01+08:00&quot;, &quot;snippet&quot;: &quot;🌃 自留地晚报 【11.02】\n\n1️⃣ Macrumors 报道称，苹果明年上半年推出三款新 iPad，iPad Air 换装 OLED 屏、iPad Pro 加入均热板散热，另有一款入门级 iPad\n\n2️⃣ TheVerge 报道称，OpenAI、谷歌、微软和 Anthropic 联手推行 AI 数据抓取退出标准，网站可一次性对多家 AI 公司统一设置训练偏好，无需逐家单独处理\n\n3️⃣ DigiTimes 报道称，英伟达向韩国互联网巨头 Naver 投资 10 亿美元，持股比例将超越创始人李海珍，成为第三大股东\n\n4️⃣ 古尔曼 表示，苹果计划明年淘汰非触屏版 MacBook Pro，产品线仅保留 14 英寸基础款机型\n\n5️⃣ Tom’s Hardware 报道称，OpenAI CEO 奥尔特曼密访韩国，与三星、SK 集团高层洽谈存储芯片供应及未来 AI 数据中心合作\n\n6️⃣ 9to5Google 报道称，谷歌在 Android Dev Summit 2026 上表示，可拆键盘式二合一 Googlebook 笔记本即将到来，将成为下一个主推形态\n\n7️⃣ Tom‘s Har&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="开发者" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">开发者</span></span><time datetime="2026-11-02T18:02:33+08:00">11-02 18:02</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16091" target="_blank" rel="noopener noreferrer">Python潮流周刊</a></h2><p class="card__body">🐱🐱🐱🐱 第 173 期 🐱🐱🐱🐱
+
+🦄文章&amp;教程
+
+① PEP 823 提案为 Python 3.16 加入 None 感知访问运算符
+② Python 3.15 新增 frozendict 内置类型
+③ Python 3.15 自带的采样分析器 Tachyon
+④ DuckDB 2.0 为什么更快
+⑤ uv 换上的新 tar 解析器，速度翻倍也更安全
+⑥ Brotli 漏洞 CVSS 9.2，波及 requests 等 Python 包
+⑦ 用 Python 从零搭一套 RAG 系统：40 行跑通，再谈优化
+⑧ 让 LLM 输出不再失控，用 Pydantic 校验大模型输出
+⑨ Claude Code 团队如何做代码评审
+⑩ 用 Python 实现电梯调度算法
+⑪ 把 Bug 当病人、把编码智能体当医疗团队的五个月实验
+⑫ 我如何用 600 美元后训练出一个 Jev 式决策模型
+
+🐿️项目&amp;资源
+
+① orca：并行跑一整队智能体的开发环境
+② diagram-design：AI 编程智能体的编辑级图表技能
+③ Claude-Red：红队技能库
+④ Windows-MCP：Windows 上的计算机操作服务
+⑤ docker-agent：Docker 出品的 AI 智能体运行时
+⑥ MaxKB：开源企业级智能体平台
+⑦ SPACE：智能体代码执行沙箱
+⑧ mimic：抓取 App 流量生成 Python 客户端
+⑨ ref2game：让编码智能体用截图生成可玩游戏
+⑩ srt-whiteboard-animation：把字幕变成白板手绘动画
+⑪ weread-omni：微信读书的非官方增强工具包
+⑫ FridayOS1.0：Python 标准库离线部署 Markdown 知识库蓝图
+
+🥂讨论&amp;问题
+
+① PEP 718：让函数支持下标，显式指定泛型实参
+② Python 3.15.2 等五个版本发布紧急安全更新
+
+在信息洪流中为你淘金，助力 Python 技术视野拓展和职业发展。现在订阅，每周让自己进步一点点。
+
+👀 订阅：小报童 爱发电
+
+👀 合集：1季 2季 3季 4季
+
+🐱频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16091_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16091_1.webp" alt="Python潮流周刊" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16091" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;a208c0727d616b999997e59aa9b130104048e0b84a6b92623ba833fb9e7a1d23&quot;, &quot;title&quot;: &quot;Python潮流周刊&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16091&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-02T18:02:33+08:00&quot;, &quot;snippet&quot;: &quot;🐱🐱🐱🐱 第 173 期 🐱🐱🐱🐱\n\n🦄文章&amp;教程\n\n① PEP 823 提案为 Python 3.16 加入 None 感知访问运算符\n② Python 3.15 新增 frozendict 内置类型\n③ Python 3.15 自带的采样分析器 Tachyon\n④ DuckDB 2.0 为什么更快\n⑤ uv 换上的新 tar 解析器，速度翻倍也更安全\n⑥ Brotli 漏洞 CVSS 9.2，波及 requests 等 Python 包\n⑦ 用 Python 从零搭一套 RAG 系统：40 行跑通，再谈优化\n⑧ 让 LLM 输出不再失控，用 Pydantic 校验大模型输出\n⑨ Claude Code 团队如何做代码评审\n⑩ 用 Python 实现电梯调度算法\n⑪ 把 Bug 当病人、把编码智能体当医疗团队的五个月实验\n⑫ 我如何用 600 美元后训练出一个 Jev 式决策模型\n\n🐿️项目&amp;资源\n\n① orca：并行跑一整队智能体的开发环境\n② diagram-design：AI 编程智能体的编辑级图表技能\n③ Claude-Red：红队技能库\n④ Windows-MCP：Wind&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="数码" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">数码</span></span><time datetime="2026-11-02T11:59:01+08:00">11-02 11:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16089" target="_blank" rel="noopener noreferrer">ADAPPmacOS</a></h2><p class="card__body">🎈 Newlearner X 数码荔枝 「双十一」软件年度大促
+
+本次活动全场最低 6 折起，有整整 150 款软件参与促销，多款软件降至历史最低价。在此感谢所有支持自留地、支持正版的朋友！
+
+🕒 时间：即日起 – 11 月 13 日（部分软件活动时间以软件清单为准）
+
+👉 双十一会场：传送门
+
+🧧 多重优惠，先领后买
+
+① 新用户免费加入会员，首单金额减 5 元
+② 结算页面输入 NewlearnerChannel 优惠码，额外获得 95 折
+
+今年多款软件迎来较大力度促销，自留地为大家整理了一份 ⭐ 软件推荐清单
+
+以上清单涵盖全场促销中一些实用、高质量且价格适合的软件。大家可以多关注 Mole、AndroMeld、PixPin、LaunchOS、Typora、Downie、Bandizip、CleanShot X、UPDF、AirBuddy 3 这几款软件和服务
+
+👀 十一月是「软件促销月」，往往能遇到一年中最低的价格。根据往年经验，部分软件会在「黑五」进行官网促销，但力度一般小于数码荔枝。如果有软件或服务需要，在此时购买是最佳选择，便于每年同时期继续以促销价格续期。欢迎大家前往 活动会场 慢慢挑选！
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16089_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16089_1.webp" alt="ADAPPmacOS" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16089" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;6a32872b324e8b70391a998821bd554503ebe70e4b8db0a86a1229fb058437cf&quot;, &quot;title&quot;: &quot;ADAPPmacOS&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16089&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-02T11:59:01+08:00&quot;, &quot;snippet&quot;: &quot;🎈 Newlearner X 数码荔枝 「双十一」软件年度大促\n\n本次活动全场最低 6 折起，有整整 150 款软件参与促销，多款软件降至历史最低价。在此感谢所有支持自留地、支持正版的朋友！\n\n🕒 时间：即日起 – 11 月 13 日（部分软件活动时间以软件清单为准）\n\n👉 双十一会场：传送门\n\n🧧 多重优惠，先领后买\n\n① 新用户免费加入会员，首单金额减 5 元\n② 结算页面输入 NewlearnerChannel 优惠码，额外获得 95 折\n\n今年多款软件迎来较大力度促销，自留地为大家整理了一份 ⭐ 软件推荐清单\n\n以上清单涵盖全场促销中一些实用、高质量且价格适合的软件。大家可以多关注 Mole、AndroMeld、PixPin、LaunchOS、Typora、Downie、Bandizip、CleanShot X、UPDF、AirBuddy 3 这几款软件和服务\n\n👀 十一月是「软件促销月」，往往能遇到一年中最低的价格。根据往年经验，部分软件会在「黑五」进行官网促销，但力度一般小于数码荔枝。如果有软件或服务需要，在此时购买是最佳选择，便于每年同时期继续以促销价格续期。欢迎大家前往&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="全球" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="reach">4 个频道</span><span class="cat">全球</span></span><time datetime="2026-11-02T08:59:02+08:00">11-02 08:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16088" target="_blank" rel="noopener noreferrer">News</a></h2><p class="card__body">☀️ 自留地早报【11.2】
+
+1️⃣ 苹果 Apple 智能国行版官宣落地：接入阿里千问，11 月 4 日随 iOS 开发者 Beta 版开放测试
+
+2⃣️ 彭博社 ：AI 基建掀起军备竞赛，微软、谷歌、甲骨文等巨头承诺投入超 3 万亿美元
+
+3️⃣ DeepSeek 提出 Super-agent 架构设计：Router 与 Worker 双层架构，探索更自主的 Agent 系统
+
+4⃣️ OpenAI 宣布12 月起，ChatGPT 将与 Codex 共享额度
+
+5⃣️ The Information ：Meta 与中国企业傅利叶打造人形机器人原型，号称 Muse 模型的物理化身
+
+6⃣️ 9to5Google ：Apple Music 安卓版 7.0 发布，苹果升级品牌视觉，引入液态玻璃设计
+
+7️⃣ 响应欧盟 AI 法案，Grok 模型生成的文本将添加隐形水印
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16088_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16088_1.webp" alt="News" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16088" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;b0ed3b20a05cfae6ea390c21bdcddb44c2676d5209b1146aabba304fca907e3d&quot;, &quot;title&quot;: &quot;News&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16088&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-02T08:59:02+08:00&quot;, &quot;snippet&quot;: &quot;☀️ 自留地早报【11.2】\n\n1️⃣ 苹果 Apple 智能国行版官宣落地：接入阿里千问，11 月 4 日随 iOS 开发者 Beta 版开放测试\n\n2⃣️ 彭博社 ：AI 基建掀起军备竞赛，微软、谷歌、甲骨文等巨头承诺投入超 3 万亿美元\n\n3️⃣ DeepSeek 提出 Super-agent 架构设计：Router 与 Worker 双层架构，探索更自主的 Agent 系统\n\n4⃣️ OpenAI 宣布12 月起，ChatGPT 将与 Codex 共享额度\n\n5⃣️ The Information ：Meta 与中国企业傅利叶打造人形机器人原型，号称 Muse 模型的物理化身\n\n6⃣️ 9to5Google ：Apple Music 安卓版 7.0 发布，苹果升级品牌视觉，引入液态玻璃设计\n\n7️⃣ 响应欧盟 AI 法案，Grok 模型生成的文本将添加隐形水印\n\n频道：@NewlearnerChannel&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><div class="section-label"><h2>11月1日 周日</h2></div><article class="g-card card news card--side" data-cat="财经" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">财经</span></span><time datetime="2026-11-01T17:59:01+08:00">11-01 17:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16087" target="_blank" rel="noopener noreferrer">telegramBlogChannel</a></h2><p class="card__body">✈️ 【11.1 更新】 自留地导航页
+
+📩 投稿 &amp; 编辑申请：@newlearner_pm_bot
+
+👀 本周盘点：
+
+• 苹果悄然更新 iPad mini 第八代 / 苹果悄然更新 iMac 2026 / 苹果悄然更新 MacBook Pro 14 英寸 2026 / 苹果欣然发布 MacBook Pro with PROLED XDR
+• 潮流周刊（第287期） - 杭州金桂
+• Python 潮流周刊第 172 期
+• Mac.apk：走 Wine 路线的 macOS 原生运行 Android 应用工具
+• HomePlay：它会看着你，并将 CarPlay 带到 Mac 上
+• HelloGitHub：面向入门爱好者的开源项目月刊，近日更新第 127 期
+• ego(lite)：让 AI Agent 带着你的登录状态，在独立工作区里操作网页
+• 小扫帚：卸载 App，也把留下的零碎一起带走
+• 聊聊我的直营店 iPhone Duo 上手体验
+
+🎬 流媒体周报：第 31 届釜山电影节获奖名单公布，第 21 届罗马电影节获奖名单揭晓，《珠穆朗玛：云中彼岸》《时间里的爱人》《沙丘 3》内地定档等
+
+🍂 霜降之后，天气越来越有秋天的样子了。时至深秋，早晨的雾多了起来，周末的阴雨天气，也让气温凉了，非常期待本月中下旬多彩的世界。本周末没有做太多的事情，去超市采购、看了《疾速追杀》重映，又在家看了《黑球》和《突如其来》。一些电影节的好片子逐渐释出，影迷仿佛过年一般，还有《托尼》《茫然女王》《害群之马》等电影待看，和秋冬也很搭
+
+🍎 Apple 本周继续保持了现场发布的节奏，带来了新 iPad mini、MacBook Pro 14 英寸、iMac 以及触屏 MacBook Pro。可以观察到，大家对这些新品褒贬不一，各抒己见，这样真实鲜活的声音在 AI 时代并不多见了。实际上，除了一些设计大变革（譬如 iPad Pro 2018）以及加量不加价（譬如 iPhone 17）的时候，大多数的 Apple 新品从发布开始就会有各种争议，直到一段时间之后市场用销量给出答案
+
+我个人对 iPad mini 未上高刷表示遗憾，同时比较好奇触屏 MacBook Pro 铰链的手感到底如何、屏幕反复触碰之后会成什么样子、又有哪些 UI 适配触屏用途的细节之处，这些在媒体的简单上手中鲜有提及。正如之前在新闻稿所说，MacBook Pro 引入触屏，只是面向创作者和年轻一代多了一种交互方式，和当年「选择高端 = 选择 Touch Bar = 选择失去实体按键」不可同日而语
+
+此外，数码爱好者到底应不应该发声、应不应该把情感倾泻于电子产品这种（相对）快消品？面对越来越多的 AI 和商业稿件，社区当然应该有它自己的声音和态度，我想这也是大家聚集到一起的初衷。至于情感倾斜，抛开 重启感性 不谈，回顾频道一路走来，正是电子产品 —— 或者说 iPhone 和 Mac 让自留地成为了今天的模样；即便时过境迁，它们只占据生活中的一小部分，我们也不能忘记真正的根基和共识是什么
+
+享受物质带来的生活，而不局限于物品本身 —— 并不是一句漂亮话。当你真正历经了这些之后，那些美学、情感、思辨、求真，会潜移默化地影响着自己，推动你去做一些有意思的事 —— 无论是文字表达还是 Vibe Coding。一直有想法重启一次征文活动，就聊聊我们自身与电子产品之间的故事、联结，重新把刺眼的「情绪价值」拆解为尊重、欣赏、陪伴、赞美、包容等具象化的品质
+
+🤖 过去的一个月，一直在研究如何自动处理和过滤 附属群聊 以及投稿机器人的广告问题，后者已经和大家详细分享过。针对前者，我们开发了一套黑盒程序，经过半个月的测试准确率已经高于 99%，所以在本周已经正式投入自动化运行。我会尽快通过推送和大家分享一些其中的细节，如有进群误伤或无法进群的情况，可以通过投稿机器人 @newlearner_pm_bot 与我取得联系
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16087_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16087_1.webp" alt="telegramBlogChannel" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16087" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;f3d8f45ae39799c9c216844fec83e3bdf5600a9a67f1d9bb14f4cce89184d068&quot;, &quot;title&quot;: &quot;telegramBlogChannel&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16087&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-01T17:59:01+08:00&quot;, &quot;snippet&quot;: &quot;✈️ 【11.1 更新】 自留地导航页\n\n📩 投稿 &amp; 编辑申请：@newlearner_pm_bot\n\n👀 本周盘点：\n\n• 苹果悄然更新 iPad mini 第八代 / 苹果悄然更新 iMac 2026 / 苹果悄然更新 MacBook Pro 14 英寸 2026 / 苹果欣然发布 MacBook Pro with PROLED XDR\n• 潮流周刊（第287期） - 杭州金桂\n• Python 潮流周刊第 172 期\n• Mac.apk：走 Wine 路线的 macOS 原生运行 Android 应用工具\n• HomePlay：它会看着你，并将 CarPlay 带到 Mac 上\n• HelloGitHub：面向入门爱好者的开源项目月刊，近日更新第 127 期\n• ego(lite)：让 AI Agent 带着你的登录状态，在独立工作区里操作网页\n• 小扫帚：卸载 App，也把留下的零碎一起带走\n• 聊聊我的直营店 iPhone Duo 上手体验\n\n🎬 流媒体周报：第 31 届釜山电影节获奖名单公布，第 21 届罗马电影节获奖名单揭晓，《珠穆朗玛：云中彼岸》《时间里的爱人》《沙丘&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="财经" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">财经</span></span><time datetime="2026-11-01T08:59:01+08:00">11-01 08:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16086" target="_blank" rel="noopener noreferrer">monthsdays</a></h2><p class="card__body">早上好☀️，今天是 11 月的第一天
+
+🎉 转眼间频道已经七年又两个半月了，喜迎近 68000 订阅，感谢各位的关注和转发！
+
+十一月值得关注的日子：
+
+11月1日：万圣节
+11月7日：立冬
+11月11日：光棍节
+11月22日：小雪
+11月23日：下元节
+11月26日：感恩节
+11月27日：黑色星期五
+
+👨🏻‍💻 过去的一个月真快，感觉还沉浸在国庆假期没有走出，转眼间已经到了 11 月。我对 10 月的开头当然是不满意的，为了装修和一些琐事没能按照计划外出旅行，和去年落差太大了。同样的，Can Festival 也没有成行，即便听说整体体验不如前几届好，但还是没能和远方的朋友们半年见上一面。有时候常常想，难道真的过了某个「黄金节点」，朝着「腻了」和「中年」奔去了吗？
+
+🥳 不过，换个角度来看，这段时间同样见证了最好的朋友的婚礼，为他们拍照、送上祝福，看他们在台上念诗、回忆一起去看后朋克的现场、手拉起手，开心到几乎落泪。与朋友们一起调酒，和酒单设计师聊了聊新酒单，她告诉我原来容祖儿是拉拉，收获了两首歌《黄色大门》与《红屋顶》。作为 发达星期四 的老观众，去看了主理人邱阳的新乐队现场，邱阳站在我身边、狂野地摆弄吉他琴弦，有一种不真实的感觉。久久回味这些瞬间，它们塑造我成为我
+
+🛒 今年双十一倒是有一些想买的东西，主要就是把车子的两个前胎换掉了，顺手把鼠标也送去维修了一下。还在观察索尼发布的 100-400mm 长焦镜头，价格便宜得有些出奇，上手试了一下后发现最长端还是比较肉的。心心念念的 Apple Watch S12 陶瓷既没有太多折扣，更没有现货，目前在认真考虑是不是找时机买一只铝合金的算了。具体我会在双十一专栏再和大家分享，也欢迎你们投稿「好物」分享
+
+❄️ 送走了秋天最后一个节气，马上要迎来立冬了。今年没有参加一些疯狂的万圣节派对，而是试着在日常中感受秋天的气味和色彩。捡落叶、吃南瓜、晒太阳，在车里静静看落叶被风吹下，对象发来路上看到的彩虹照片和大橘猫，就这样做好了和秋天告别的心理建设。期望 11 月底能有个好天气，去栖霞山看看红叶
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16086_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16086_1.webp" alt="monthsdays" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16086" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;d42ac96d89e090eb286565127d2fa435d5b92eace7fd5667d1fe5004c54c1514&quot;, &quot;title&quot;: &quot;monthsdays&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16086&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-11-01T08:59:01+08:00&quot;, &quot;snippet&quot;: &quot;早上好☀️，今天是 11 月的第一天\n\n🎉 转眼间频道已经七年又两个半月了，喜迎近 68000 订阅，感谢各位的关注和转发！\n\n十一月值得关注的日子：\n\n11月1日：万圣节\n11月7日：立冬\n11月11日：光棍节\n11月22日：小雪\n11月23日：下元节\n11月26日：感恩节\n11月27日：黑色星期五\n\n👨🏻‍💻 过去的一个月真快，感觉还沉浸在国庆假期没有走出，转眼间已经到了 11 月。我对 10 月的开头当然是不满意的，为了装修和一些琐事没能按照计划外出旅行，和去年落差太大了。同样的，Can Festival 也没有成行，即便听说整体体验不如前几届好，但还是没能和远方的朋友们半年见上一面。有时候常常想，难道真的过了某个「黄金节点」，朝着「腻了」和「中年」奔去了吗？\n\n🥳 不过，换个角度来看，这段时间同样见证了最好的朋友的婚礼，为他们拍照、送上祝福，看他们在台上念诗、回忆一起去看后朋克的现场、手拉起手，开心到几乎落泪。与朋友们一起调酒，和酒单设计师聊了聊新酒单，她告诉我原来容祖儿是拉拉，收获了两首歌《黄色大门》与《红屋顶》。作为 发达星期四 的老观众，去看了主理人邱阳的新乐队现场，邱阳&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><div class="section-label"><h2>10月31日 周六</h2></div><article class="g-card card news card--wide" data-cat="财经" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="reach">2 个频道</span><span class="cat">财经</span></span><time datetime="2026-10-31T12:01:11+08:00">10-31 12:01</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16085" target="_blank" rel="noopener noreferrer">NewsEconomicsFinance</a></h2><p class="card__body">💡《一飞周报》每周带你关注科技导向金融市场与周围的价值信息
+
+本周内容（304th）：Notion
+
+💹 市场
+• 美联储暂停加息
+• 标普指数进一步回调
+• 半导体拖累整个市场
+• 黄金抛售并跌破关键级别
+
+📈 股票
+• Google 业绩后暴跌
+
+👨🏻‍💻 专栏
+• Anthropic 即将上市
+
+.....
+
+《一飞周报》更多地关注股票投资与科技动态。在这个嘈杂的时代，希望能与自留地读者一起传递更多有价值的信息。
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16085_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16085_1.webp" alt="NewsEconomicsFinance" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16085" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;5cb46f5a5ea5ead7c2cd15a4dd6b4ff57e9c77c2d590759c547ca070a0e545c8&quot;, &quot;title&quot;: &quot;NewsEconomicsFinance&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16085&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-10-31T12:01:11+08:00&quot;, &quot;snippet&quot;: &quot;💡《一飞周报》每周带你关注科技导向金融市场与周围的价值信息\n\n本周内容（304th）：Notion\n\n💹 市场\n• 美联储暂停加息\n• 标普指数进一步回调\n• 半导体拖累整个市场\n• 黄金抛售并跌破关键级别\n\n📈 股票\n• Google 业绩后暴跌\n\n👨🏻‍💻 专栏\n• Anthropic 即将上市\n\n.....\n\n《一飞周报》更多地关注股票投资与科技动态。在这个嘈杂的时代，希望能与自留地读者一起传递更多有价值的信息。\n\n频道：@NewlearnerChannel&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="其他" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span></span><time datetime="2026-10-31T08:59:01+08:00">10-31 08:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16084" target="_blank" rel="noopener noreferrer">days</a></h2><p class="card__body">🎃 Happy Halloween！
+
+在每年的 10 月 31 日晚，即万圣节前夜，小孩会穿上化妆服，戴上面具，挨家挨户收集糖果。而同时传说这一晚，各种鬼怪也会装扮成小孩混入群众之中一起庆祝万圣节的来临，而人类为了让鬼怪更融洽才装扮成各种鬼怪
+
+🍬 Trick or Treat 😈
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16084_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16084_1.webp" alt="days" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16084" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;25ea73ff2effc721095dcaae8f3232e1148b678f57e5c4a976fa662ede5a580d&quot;, &quot;title&quot;: &quot;days&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16084&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-10-31T08:59:01+08:00&quot;, &quot;snippet&quot;: &quot;🎃 Happy Halloween！\n\n在每年的 10 月 31 日晚，即万圣节前夜，小孩会穿上化妆服，戴上面具，挨家挨户收集糖果。而同时传说这一晚，各种鬼怪也会装扮成小孩混入群众之中一起庆祝万圣节的来临，而人类为了让鬼怪更融洽才装扮成各种鬼怪\n\n🍬 Trick or Treat 😈\n\n频道：@NewlearnerChannel&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><div class="section-label"><h2>10月30日 周五</h2></div><article class="g-card card news card--side" data-cat="财经" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">财经</span></span><time datetime="2026-10-30T21:00:33+08:00">10-30 21:00</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16083" target="_blank" rel="noopener noreferrer">News</a></h2><p class="card__body">🌃 自留地晚报【10.30】
+
+1️⃣ OpenAI 更新 AI 模型规范，将忠于人类意图作为核心准则
+
+2️⃣ DeepSeek 完成第二轮融资，募资约 150 亿美元
+
+3️⃣ Mistral AI 正式开放 Mistral Large 4 模型权重
+
+4️⃣ OpenAI 取消降低 Pro 100、Pro 200、Pro 500 及 Business Premium 的用量限制
+
+5️⃣ 集邦咨询 预估苹果首款触控 MacBook Pro 明年出货约 120~150 万台
+
+6️⃣ 智元 推出预训练 / 后训练 / 部署后实现全链路规模化学习的具身模型 GO-3 Preview
+
+7️⃣ 苹果 CarPlay 现接入 Claude，可在驾驶途中直接向 Claude 提问
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16083_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16083_1.webp" alt="News" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16083" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;df9d0022e5a8e1197fd664cf19b1756d063698c3a1fd0f81c6ff014aef373306&quot;, &quot;title&quot;: &quot;News&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16083&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-10-30T21:00:33+08:00&quot;, &quot;snippet&quot;: &quot;🌃 自留地晚报【10.30】\n\n1️⃣ OpenAI 更新 AI 模型规范，将忠于人类意图作为核心准则\n\n2️⃣ DeepSeek 完成第二轮融资，募资约 150 亿美元\n\n3️⃣ Mistral AI 正式开放 Mistral Large 4 模型权重\n\n4️⃣ OpenAI 取消降低 Pro 100、Pro 200、Pro 500 及 Business Premium 的用量限制\n\n5️⃣ 集邦咨询 预估苹果首款触控 MacBook Pro 明年出货约 120~150 万台\n\n6️⃣ 智元 推出预训练 / 后训练 / 部署后实现全链路规模化学习的具身模型 GO-3 Preview\n\n7️⃣ 苹果 CarPlay 现接入 Claude，可在驾驶途中直接向 Claude 提问\n\n频道：@NewlearnerChannel&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="全球" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">全球</span></span><time datetime="2026-10-30T14:59:01+08:00">10-30 14:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16082" target="_blank" rel="noopener noreferrer">MoviesTV</a></h2><p class="card__body">🎬 Newlearnerの自留地「流媒体周报」250
+
+🔍 重点关注
+
+▎第 31 届釜山电影节获奖名单公布
+
+🔗：完整名单
+
+【主竞赛单元】
+
+• 最佳影片：《午间餐》马基德·马基迪（伊朗）
+• 评审团特别奖：《我的母亲》艾迪·卡尤侬（印度尼西亚 / 中国香港 / 日本）
+• 最佳导演：李芸婵《有用的人》（中国台湾）
+• 最佳演员：周迅《初次尝到寂寞》（中国大陆）&amp; 姫野花春《Satoko 总是这样》（日本）
+• 艺术贡献奖：李丹枫（声音设计）《初次尝到寂寞》
+
+【新浪潮奖】
+
+• 最佳首作：《黑暗中的鸟儿》沙尚克·瓦利亚（印度）
+
+本届釜山电影节，伊朗名导马基德·马基迪执导的《午间餐》获得最佳影片；主竞赛单元的两部华语片均获奖，其中周迅凭借顾游执导的《初次尝到寂寞》封后
+
+什么是「电影的力量」？釜山电影节邀请众多影人手写了他们的答案：
+
+张艺谋：我相信电影的力量是爱和感情！
+周迅：共鸣→思考 ​​​
+毕赣：人与人穿越黑暗的过程。
+是枝裕和：连接人与人、世界和世界。
+李沧东：让不可见之物可感。
+杨紫琼：跨越边界、连接文化、提醒我们共享的人类价值。
+张律：心之镜。
+
+▎第 21 届罗马电影节获奖名单揭晓
+
+🔗：完整名单
+
+• 最佳影片：《忽喇喇似大厦倾》
+• 评审团大奖：《威尔逊·谢德的生死往复》
+• 最佳导演：拉菲基·法里亚拉《刚果男孩》
+• 评审团特别奖：阿尔·毛拉一家（参演者）《昨天，那只眼彻夜未眠》
+• 最佳导演首作：Clementine Orange / 丽莎·福斯伦德
+• 最佳纪录片：《身处食人魔之口》
+• 观众奖（并列）：Mustang
+
+📌 一周简报
+
+1️⃣ 第 39 届东京国际电影节正在进行时，选片总监市山尚三谈及今年「中国电影」在国际电影节上相对「低调」的表现，认为明星主演电影的票房失利、电影投资放缓，以及据称愈发复杂的审查流程，都可能是造成这一现象的原因
+2️⃣ 伊朗导演、戛纳金棕榈奖得主贾法·帕纳西（Jafar Panahi）近日被德黑兰革命法院缺席判处五年零一个月监禁，这一新判决与之前的六年监禁判决是分开的。法院还下令没收帕纳希的资产，并对他使用社交媒体和出国旅行实施为期两年的禁令 ​​​
+3️⃣ Spotify 2026 财年第三财季归母净利润 5.18 亿欧元，同比下降 42.38%
+4️⃣ 猫王音乐版权方起诉 Anthropic，指控其未经授权用 274 首歌曲训练 AI 模型
+5️⃣ 科幻电影《流浪地球 3》亮相全国影片推介会，该片已定档 2027 年大年初一，官方表示很快会放出全新物料
+6️⃣ A24 正在推进《艾尔登法环》电影改编项目，制作预算接近 2 亿美元，计划于 2028 年 3 月 3 日上映
+7️⃣ 索尼日本停产最后一款独立 4K 蓝光机，普通蓝光播放器仍在售
+
+🍿 精彩预告
+
+1️⃣ 珠穆朗玛：云中彼岸 / 11 月 6 日 / 全国艺联
+2️⃣ 指环王：力量之戒 / 11 月 11 日 / Prime Video
+3️⃣ 艾伦 / 11 月 12 日 / Netflix
+4️⃣ 时间里的爱人 / 11 月 28 日 / 内地
+5️⃣ 海豹小子 / 11 月 28 日 / Apple TV
+6️⃣ 懦夫 / 12 月 25 日 / 北美
+7️⃣ 沙丘 3 / 12 月 31 日 / 内地
+8️⃣ 小小星同伴 / 2027 年 / 全球
+
+🧑‍💻 影音闲谈
+
+• 发达星期四：贪新念旧｜看过这四部电影才能证明你最近进过电影院......
+• 怀炉写真机：摄影师还能当主角？这种冷门电影我等有闲阶级必看！
+• 导筒 directube：豆瓣评分 8.5，年度最佳新导演首作之一
+• NewNoise：七英里的回响，留在文字与影像里
+• EDopamine：七英里专访 | 下一张新专辑的颜色……
+• 黑胶唱片研究与收藏：三盲鼠 Three Blind Mice | 日本的 Blue Note
+• 四平米的岛：*我的秋日散步歌单 ep.32
+• HOPICO：戴佩妮告诉我她歌里的那个人是真实存在的！
+• noplanstoday：2026 秋 -&gt; 1981 秋 | 一张新专辑，听见 40 年前金曲背后的缺席与成全
+• UPEE：专访 PREP | 现场影响了我们做唱片的方式
+• UPEE：专访 The Notwist | 我们做自己会想听的音乐
+• UPEE：[Review] 22:22 - 肖骏 (2026)
+• CareForMusic 音乐关怀：莫西子诗 | 写给所有普通人的献诗
+• REANALOG：靠在舷窗睡眼惺忪的凌晨飞行 · 30分钟氛围钢琴即兴 · Felt Piano · Soft Signals
+
+🎤 自上次说完 Sea Power 之后，好久没有和大家聊看过的演出了，从本周继续，快速地过一遍。先说说八月酷暑之中，在上海瓦肆 est 看的 American Football 吧
+
+我想不用对美足做过多的介绍，它与我同岁，历经 20 多年带来了 4 张 LP，对后来者 Chinese Football 和 Japanese Football 有着举足轻重的影响。他们发行的首张同名专辑后来被认为是 Emo 第四浪潮（4th wave emo）和 Midwest Emo（中西部情绪摇滚）的奠基作品之一，影响了一代独立音乐人；其中的单曲 Never Meant 更被乐迷们称为「Emo 国歌」
+
+很多人形容听美足的感受像是「凌晨三点一个人在大学宿舍里回忆一段已经结束的感情」，而那栋位于伊利诺伊州 Urbana 的中西部住宅，也成为了许多乐迷的朝圣地点。美足最初只有三人，他们在大学时期相识、对音乐有共同的理解和追求；2014 年重组后，又加入了主唱 Mike Kinsella 的表弟 Nate Kinsella，直到今天又发展出了丰富的管乐和打击乐手
+
+虽然美足是中西部 Emo 的代表，但他们的音乐里面还融合了大量的数（后）摇以及爵士元素；擅长用复杂的数学摇滚结构，包装一个普通人对青春、爱情、遗憾和时间流逝的低声自白。从 LP1 几乎没有贝斯的干净演出，到 LP4 复杂的配器以及更深刻的表达，美足历经时间变得更加成熟。他们不再试图重现 1999 年那种大学时代的脆弱感，而是把中年危机、人生失败、关系破裂、衰老和自我反省转化成更加宏大的音乐语言
+
+明明提前了两个小时来到瓦肆，队伍还是排到了门外，上海又给我们一些小小的震撼。后来听前面的小孩哥讲，他下午 2 点就过来排队了；后面又听人讲，自己是翘课偷跑过来看美足的。不禁想到，在这个社交媒体无孔不入的时代，在这个不太能看清未来的年代，美足或许对这帮初高中生具有十足的精神影响
+
+由于人群太多，瓦肆的工作人员验票后居然没有给我们发手环（我们也不知道有），结果进门被拦下后又去补上，对瓦肆的好感又在下降。但好在还是站到了前排，第一次在上海的 Livehouse 前排看演出。Mike 携乐队登场，拉开了这场 Emo 盛宴
+
+不同于之前北京场糟糕的调音和表演，今晚美足在瓦肆的调音恰到好处：空旷的吉他音色、厚实的鼓点，穿插在其中的亮色打击乐，鼓手小号的加入无疑是点睛之笔；女声轻盈地哼唱，像是电闪雷鸣的暑夜。老 Mike 的嗓音也仿佛回春，全然没有之前巡演视频中的拉胯表现，乐队和观众逐渐都找对了状态、享受其中
+
+标志性的 Emo 吉他音色，充满了太阳、树枝、海浪、花朵的 VJ，我们在其中静静感受混合着 Emo、数摇和爵士的元素，复杂的情绪涌上心头。终于，Never Meant 前奏响起，那所中西部房屋出现在大屏，配合红色的灯光，许多人湿润了眼眶。那样的震撼，丝毫不亚于 惘闻 奉献的、从 Lonely God 突然转向《第八层地狱》的神级演出
+
+有人沙哑地喊着 Choose Life —— 上个世纪的青年文化口号，但生活是「坚硬」的，一不小心就会碰得头破血流。那些逃课的孩子们，他们相信 Choose Life 吗？他们能够 Choose Life 吗？当 Emo 和 抑郁 成为一个社会最显性的符号，这些孩子哭他们还没有登上时代列车就被抛弃，哭自己小小年纪就要参与残酷的竞争，哭自己只能在一场 Emo 演出中哭一哭
+
+自己从生活的泥潭中被拔出也有一些年，一直相信音乐、音乐现场有着治愈的力量，也更倾向于去欣赏音乐、感受情绪波动；但不得不承认的事实是，有相当一部分人来到现场，是为了从黑暗堕入更深的黑暗；只有在这里，他们才能被理解、被接纳、被包容，这里就是他们的「乌托邦」
+
+而我们只能在一旁看着，假装能够共情他们的眼泪、呼声和嘈杂的 Emo 音墙。Emo 音乐从小众破圈，当然反应了一定的社会之声。只是，在世界的面貌多数呈现衰退、下沉和腐败的境遇里，哪怕拖着一副残损躯壳，也要制造点所谓正常、健康、纯过日子以外的东西
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16082_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16082_1.webp" alt="MoviesTV" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16082" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;30c96563dded9e53dd5c930be269c249ea46afa98a9b1fd17e6f2172fd041dcd&quot;, &quot;title&quot;: &quot;MoviesTV&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16082&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-10-30T14:59:01+08:00&quot;, &quot;snippet&quot;: &quot;🎬 Newlearnerの自留地「流媒体周报」250\n\n🔍 重点关注\n\n▎第 31 届釜山电影节获奖名单公布\n\n🔗：完整名单\n\n【主竞赛单元】\n\n• 最佳影片：《午间餐》马基德·马基迪（伊朗）\n• 评审团特别奖：《我的母亲》艾迪·卡尤侬（印度尼西亚 / 中国香港 / 日本）\n• 最佳导演：李芸婵《有用的人》（中国台湾）\n• 最佳演员：周迅《初次尝到寂寞》（中国大陆）&amp; 姫野花春《Satoko 总是这样》（日本）\n• 艺术贡献奖：李丹枫（声音设计）《初次尝到寂寞》\n\n【新浪潮奖】\n\n• 最佳首作：《黑暗中的鸟儿》沙尚克·瓦利亚（印度）\n\n本届釜山电影节，伊朗名导马基德·马基迪执导的《午间餐》获得最佳影片；主竞赛单元的两部华语片均获奖，其中周迅凭借顾游执导的《初次尝到寂寞》封后\n\n什么是「电影的力量」？釜山电影节邀请众多影人手写了他们的答案：\n\n张艺谋：我相信电影的力量是爱和感情！\n周迅：共鸣→思考 ​​​\n毕赣：人与人穿越黑暗的过程。\n是枝裕和：连接人与人、世界和世界。\n李沧东：让不可见之物可感。\n杨紫琼：跨越边界、连接文化、提醒我们共享的人类价值。\n张律：心之镜。\n\n▎第 21 届罗马&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="财经" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">财经</span></span><time datetime="2026-10-30T08:59:01+08:00">10-30 08:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16081" target="_blank" rel="noopener noreferrer">News</a></h2><p class="card__body">☀️ 自留地早报【10.30】
+
+1️⃣ NVIDIA 开源最强转录 AI 模型 Nemotron 3.5 Transcribe，整合转录、说话人归属、翻译和音频问答，主要面向会议纪要、课堂录像、访谈整理和多语言客服等场景，支持 40 种语言
+
+2️⃣ WSJ 报道称，Apple 此前曾通过强势手段压价闪存，其中包括要求供应商接受大范围财务审计等，如今芯片销售商们正在向 Apple 展开报复
+
+3️⃣ XREAL 发布全球首款 Android XR 智能 AR 眼镜 XREAL AURA，采用棱镜式光学方案和外置计算模块，售价 1099 美元起
+
+4️⃣ 数码闲聊站 爆料称，iPhone Air 2 已开屏，将采用 6.55&quot; 1.5K + 120Hz LTPO OLED 面板，还将新增一颗超广角摄像头
+
+5️⃣ 一加 正式发布一加 Ace 7 系列手机，全系标配 9000mAh 大电池与 185Hz 东方屏，国补到手价 2761.65 元起
+
+6️⃣ 三星 发布 W27 心系天下折叠屏手机，基于 Galaxy Z Fold8 Ultra 打造，定价 18,999 元起。登记预约者可获得价值 1,399 元精英版 Samsung Care+ 服务
+
+7️⃣ 天猫迎来 Nintendo Switch 2（香港）首家电商旗舰店，主要销售 Switch 2 主机、游戏卡带、港服 eShop 点卡、手柄等配件，为内地消费者提供了更便捷的购物体验
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16081_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16081_1.webp" alt="News" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16081" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;03793102062c98149dbefc6f5950897ae6a90a67b7071ad9e31e856d3711890e&quot;, &quot;title&quot;: &quot;News&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16081&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-10-30T08:59:01+08:00&quot;, &quot;snippet&quot;: &quot;☀️ 自留地早报【10.30】\n\n1️⃣ NVIDIA 开源最强转录 AI 模型 Nemotron 3.5 Transcribe，整合转录、说话人归属、翻译和音频问答，主要面向会议纪要、课堂录像、访谈整理和多语言客服等场景，支持 40 种语言\n\n2️⃣ WSJ 报道称，Apple 此前曾通过强势手段压价闪存，其中包括要求供应商接受大范围财务审计等，如今芯片销售商们正在向 Apple 展开报复\n\n3️⃣ XREAL 发布全球首款 Android XR 智能 AR 眼镜 XREAL AURA，采用棱镜式光学方案和外置计算模块，售价 1099 美元起\n\n4️⃣ 数码闲聊站 爆料称，iPhone Air 2 已开屏，将采用 6.55\&quot; 1.5K + 120Hz LTPO OLED 面板，还将新增一颗超广角摄像头\n\n5️⃣ 一加 正式发布一加 Ace 7 系列手机，全系标配 9000mAh 大电池与 185Hz 东方屏，国补到手价 2761.65 元起\n\n6️⃣ 三星 发布 W27 心系天下折叠屏手机，基于 Galaxy Z Fold8 Ultra 打造，定价 18,999 元起。登记预约者可获&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><div class="section-label"><h2>10月29日 周四</h2></div><article class="g-card card news card--side" data-cat="AI" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">AI</span></span><time datetime="2026-10-29T21:00:55+08:00">10-29 21:00</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16080" target="_blank" rel="noopener noreferrer">News</a></h2><p class="card__body">🌃 自留地晚报【10.29】
+
+1️⃣ 苹果 上架 70W/140W 新款 Mac 电源适配器
+
+2️⃣ 谷歌 发布新一代前沿大模型 Gemini 4 Carbon
+
+3️⃣ IDC 报告，今年 Q3 中国智能手机出货约 5806 万台同比下滑 15.2%
+
+4️⃣ 谷歌 Play 商店将为折叠屏适配优秀的应用推流
+
+5️⃣ 索尼 推出 Prism Collection 系列 DualSense 手柄，采用半透明设计
+
+6️⃣ 机核网 ：任天堂“独立世界”10月28日直播内容汇总，《海之剑》将于本周四登录NS2
+
+7️⃣ 索尼 更新 PS+ 游戏 11 月内容，新增《死亡岛 2》《古墓丽影 IV–VI：复刻版》
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16080_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16080_1.webp" alt="News" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16080" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;e3c7a43643be5d85be58bf406981e77a1907f6694c9c4735f9ff91ca94e0284c&quot;, &quot;title&quot;: &quot;News&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16080&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-10-29T21:00:55+08:00&quot;, &quot;snippet&quot;: &quot;🌃 自留地晚报【10.29】\n\n1️⃣ 苹果 上架 70W/140W 新款 Mac 电源适配器\n\n2️⃣ 谷歌 发布新一代前沿大模型 Gemini 4 Carbon\n\n3️⃣ IDC 报告，今年 Q3 中国智能手机出货约 5806 万台同比下滑 15.2%\n\n4️⃣ 谷歌 Play 商店将为折叠屏适配优秀的应用推流\n\n5️⃣ 索尼 推出 Prism Collection 系列 DualSense 手柄，采用半透明设计\n\n6️⃣ 机核网 ：任天堂“独立世界”10月28日直播内容汇总，《海之剑》将于本周四登录NS2\n\n7️⃣ 索尼 更新 PS+ 游戏 11 月内容，新增《死亡岛 2》《古墓丽影 IV–VI：复刻版》\n\n频道：@NewlearnerChannel&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><article class="g-card card news card--side" data-cat="数码" data-ch="NewlearnerChannel"><div class="g-card__label"><span class="g-card__who"><span class="source" data-source="NewlearnerChannel">Newlearnerの自留地</span><span class="cat">数码</span></span><time datetime="2026-10-29T17:59:01+08:00">10-29 17:59</time></div><h2 class="card__title"><a href="https://t.me/NewlearnerChannel/16079" target="_blank" rel="noopener noreferrer">iPhone硬件图赏碎碎念</a></h2><p class="card__body">📱 聊聊我的直营店 iPhone Duo 上手体验
+
+作为 Apple 的第一款折叠屏手机，iPhone Duo 从问世、预售、正式发售、部分渠道破发，都牢牢吸引了大家的注意力。在上周末我也走进了 Apple 新街口，实际上手体验了一下这块折叠屏，今天聊聊「非常主观」的一些体验和看法
+
+🍎 Apple Store 环境与展出方式
+
+在正式聊具体体验之前，我想先说说直营店本身。我是周日上午开门时间附近进入的，不知道是因为来到了周末最后一天，还是到得比较早，几乎看不到太多的人流，门外也没有了 iPhone Pro 首发周成群结队的黄牛
+
+门店为 iPhone Duo 设计了专门的展台（一大张桌子），上面摆设的全部都是 Duo，桌子上还有 Duo 的宣传图。我想这应该是为了首发当日密集的人流准备的，除此之外再无其他特殊的点。一般的 iPhone 展台上，你能够看到 iPhone 18 Pro 系列和 iPhone Duo 展示在同一个支架之上
+
+Apple 为 iPhone Duo 的展出专门定制了更加宽的 MagSafe 支架，并在右侧位置放了磁铁。但由于折叠屏面积较大，个人感觉通过磁吸快速定位的体验做得很一般，总是要摸索半天，再三确认是否吸附好
+
+💡 具体体验
+
+① 外观与手感
+
+重点看了「星光白色」，整体非常轻薄，白色和金属色的碰撞也十分浑然一体。一种感觉是，D 型屏幕和后摄凸起的两颗摄像头显得没有那么难以接受；然而展开后的背面两种断面的直接拼接，还是非常丑陋
+
+手感上非常扎实，无论是开启还是合上的状态，拿在手中都不会感觉到坠手，反而能够摸出对应的质感。开合过程的体验则更加出彩，这套铰链带来的反馈非常可靠、丝滑，能够稳稳停在你想要的任何角度，就像 MacBook 的屏幕转轴一样让人心旷神怡
+
+② 外屏与内屏
+
+先说说优点吧。外屏采用了亮面 OLED，观感和旁边的 iPhone 18 Pro 无异。虽然采用了打孔摄像头，但放在右上角的位置无伤大雅。内屏虽然贴了纳米纹理表层，但依然有非常广的可视角度，很大程度上保证了内屏观看色彩的一致性。此外，因为有了这层膜，即便能用手摸到折痕，但用肉眼看的时候还是不易察觉
+
+剩下的则是我觉得不太行的地方，主要还是集中在这块内屏的纳米纹理表层。最表面来看，那个屏下摄像头由于上面没有覆盖表层，确实一眼能够看出，有些出戏。但我的顾虑主要还是色彩方面，纳米纹理表层某种程度上非常影响我们看到栩栩如生的色彩。你只需将旁边的 iPhone 18 Pro 拿来对比，便可一目了然
+
+这就像装修所使用的亮光砖和柔光砖，亮光砖看起来似乎更能够做出「效果」，但会平等地映出主灯、筒灯，让你家的地上光影斑驳；而柔光砖则通过柔光很好地修饰了这个问题，不过装出来的效果远不如亮光砖看上去通透敞亮。你可以说这两种砖各有利弊，亦可以说柔光砖其实是亮光砖的一种妥协
+
+从这个视角来看，iPhone Duo 的纳米纹理表层内屏也是这样的。为了修饰折痕和那些看起来廉价的体验，这款折叠屏选择放弃了通透的 OLED 观感，使得你无论看什么都泛白，像是需要加一些饱和度和对比度。作为摄影爱好者，我无法忽视这样明显的色彩观感区别，无法忽视内屏和外屏不同的色彩体验，更无法想象在 Duo 内屏修图会是怎样的一种「色彩一致性缺失」
+
+③ 影像方面
+
+由于几乎使用了 iPhone 17 的那套后摄，我对于 iPhone Duo 的影像方面从发布的第一天开始就未期待过。只是想，Apple 都付出了这么大的妥协在后背做凸起双摄，为什么不配备好一点的镜头，或是来个小长焦呢？
+
+在实际体验之前，我只是觉得影像表现会一般般。然后实际上手之后，我才发现事情没那么简单：iPhone Duo 的大内屏把许多取景糟糕的细节进一步放大，就像你举着一块 iPad 拍照一样，实际体验会更加糟糕一些
+
+当然，作为第一块折叠屏，我不应该对 Apple 抱有过高的期望，未来更新的新硬件应该会逐渐弥补这个问题。不过软件和 UI 的设计也让我一时间没有找到「双屏预览」和「看看镜头」这两个入口，只找到了「智能拍摄」。后来群友告诉我，Apple 把它们都做进了左上角的按钮，上手还需要仔细学习和研究
+
+④ 软件和 UI
+
+iPhone Duo 继续延续了 Apple 软硬件结合的好传统，把开合动画和铰链质感相结合，带来了无与伦比的体验。然而，展开内屏之后，我们所能够体验到的只有官方的那些东西，几乎没有日常用到的第三方 App 可以拿来把玩
+
+自 WWDC 后这么长的时间，竟然没有几个样板 App 可以装在 Demo 系统之中，这本身就能说明一些问题。这套系统开创性地针对 D 形屏做得各种优化我就不再展开讲，总是还是很优秀的，但直营店可供大家把玩的场景，基本可以用「无聊」来形容。就算是 Apple Vision Pro 国行演示，还装模作样地让你看了爱奇艺不是？
+
+另外，我知道 Apple 一直不会提供太详细的指引（新机器有引导），但 iPhone Duo 的分屏难倒了很多人，大家都在问店员怎么做才能分屏。这也是不够直观和直觉的一种体现，我凭借经验切多任务悬停了一会儿，才发现了入口；并且，想要将两个应用窗口组合起来，只能单击分屏线最中间的白色条
+
+不禁思考，iPad 这么多年了依然很多适配问题，iPhone Duo 地狱级别的六七种模式的适配工作，究竟需要多久才能让生态繁荣起来？我不好说，接下来还是要看后续的出货情况和市场占有率，否则会重蹈 Apple Vision Pro 的覆辙
+
+👀 一些想法
+
+综上，我从四个大方面和大家分享了我对于 Apple 第一款折叠屏的一些体验。看上去似乎批评多一些，如若全是赞美之辞，我也没有必要专门发一篇增加 AI 的学习负担了。iPhone Duo 是一个「中等 / 一般」的产品：有一些小亮点、有一些小巧思，硬件工程扎实、软件工程灵活；但这种新鲜的劲头会很快过去，让你重新思考它的未来以及是否值得去购买
+
+这种期望的落差，来自于我们以为 Apple 折叠屏会复刻当年 iPhone 发布、甚至于 iPhone X 问世时的那种震撼与前卫，但实际情况是折叠屏这个品类已经存在了好多年。Apple 做的事情，更像是精准找到了折叠屏这个品类的痛点，用软硬件结合的方式去尽量减少不适的体验；但它不能根除折叠屏的种种问题，就像你找不到一块混合了亮光砖和柔光砖所有优点的瓷砖。这就导致了折叠屏必然是一个小众市场（相对），Apple 的未来依然要押宝于直板机
+
+进一步的，随着认知的不断深入以及经历了 Apple 后乔布斯时代的点点滴滴，我们也应该清楚地认识到 Apple 本质就是个服务零售电子产品公司。在这个电子产品日趋成熟，边际成本不断上升的今天，任何方式的创新和新品类都是难上加难的；在用户不断增加的当下，要求 Apple 提供和奢侈品专卖店一样的态度和服务也是不现实的。更何况，短视频、AI 的出现让想法和内容大爆炸，人们本身的新奇阈值就已经被拔得相当高，处理和消化信息的速度和能力无法同日而语
+
+时至今日，经历了生活中许多事情的我，已经不再会为了一部新手机欢呼雀跃。对我来讲，保持「新鲜感」、迟一点「电子阳痿」最好的方式还是去生活、去连接，就像今年周年庆 文章 讲的那样 —— 去书写自己的人生故事。相机本身的功能我一天就能熟悉，但如果它陪伴我走过无数个日日夜夜，与之建立的情感、创作、记忆和美学就超越了物品本身。iPhone Duo 也是如此，这更是 Apple 一直追求的一种叙事
+
+走出围墙花园，去拥抱更大的世界 —— 享受物质带来的生活，而不局限于物品本身
+
+频道：@NewlearnerChannel</p><div class="card__media"><button class="photo" type="button" data-image="../media/NewlearnerChannel/16079_1.webp" aria-label="放大图片"><img src="../media/NewlearnerChannel/16079_1.webp" alt="iPhone硬件图赏碎碎念" loading="lazy" decoding="async"></button></div><div class="card__actions"><button class="g-btn g-btn--text expand" type="button" aria-expanded="false"><span>展开全文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-chevron-down"/></svg></button><a class="g-btn g-btn--text" href="https://t.me/NewlearnerChannel/16079" target="_blank" rel="noopener noreferrer"><span>阅读原文</span><svg class="i" aria-hidden="true" focusable="false"><use href="#t-external-link"/></svg></a><button class="icon-btn bookmark" type="button" data-bookmark="{&quot;id&quot;: &quot;f0a4971a0212e091e7db8f08ad14d140da1fc9485d9828588b88bf2c19ca4180&quot;, &quot;title&quot;: &quot;iPhone硬件图赏碎碎念&quot;, &quot;url&quot;: &quot;https://t.me/NewlearnerChannel/16079&quot;, &quot;source&quot;: &quot;Newlearnerの自留地&quot;, &quot;time&quot;: &quot;2026-10-29T17:59:01+08:00&quot;, &quot;snippet&quot;: &quot;📱 聊聊我的直营店 iPhone Duo 上手体验\n\n作为 Apple 的第一款折叠屏手机，iPhone Duo 从问世、预售、正式发售、部分渠道破发，都牢牢吸引了大家的注意力。在上周末我也走进了 Apple 新街口，实际上手体验了一下这块折叠屏，今天聊聊「非常主观」的一些体验和看法\n\n🍎 Apple Store 环境与展出方式\n\n在正式聊具体体验之前，我想先说说直营店本身。我是周日上午开门时间附近进入的，不知道是因为来到了周末最后一天，还是到得比较早，几乎看不到太多的人流，门外也没有了 iPhone Pro 首发周成群结队的黄牛\n\n门店为 iPhone Duo 设计了专门的展台（一大张桌子），上面摆设的全部都是 Duo，桌子上还有 Duo 的宣传图。我想这应该是为了首发当日密集的人流准备的，除此之外再无其他特殊的点。一般的 iPhone 展台上，你能够看到 iPhone 18 Pro 系列和 iPhone Duo 展示在同一个支架之上\n\nApple 为 iPhone Duo 的展出专门定制了更加宽的 MagSafe 支架，并在右侧位置放了磁铁。但由于折叠屏面积较大，个人感觉通过磁吸快&quot;}" aria-pressed="false" aria-label="收藏"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg></button></div></article><div class="empty" id="none" hidden><svg class="s-icon s-icon--lead" data-section="all" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#s-all"/></svg><p>换个词，再找找。</p></div><footer class="footer"><span>今日信息，留一份清晰。</span><span>更新于 11-08 04:16 北京时间</span></footer></main></div><nav class="g-tabbar bottom" aria-label="主导航"><a href="../index.html#feed" class="tab slot-1"><svg class="phosphor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M88,112a8,8,0,0,1,8-8h80a8,8,0,0,1,0,16H96A8,8,0,0,1,88,112Zm8,40h80a8,8,0,0,0,0-16H96a8,8,0,0,0,0,16ZM232,64V184a24,24,0,0,1-24,24H32A24,24,0,0,1,8,184.11V88a8,8,0,0,1,16,0v96a8,8,0,0,0,16,0V64A16,16,0,0,1,56,48H216A16,16,0,0,1,232,64Zm-16,0H56V184a23.84,23.84,0,0,1-1.37,8H208a8,8,0,0,0,8-8Z"/></svg><span>资讯</span></a><a href="../index.html#explore/play" class="tab slot-2 active" aria-current="page"><svg class="phosphor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM172.42,72.84l-64,32a8.05,8.05,0,0,0-3.58,3.58l-32,64A8,8,0,0,0,80,184a8.1,8.1,0,0,0,3.58-.84l64-32a8.05,8.05,0,0,0,3.58-3.58l32-64a8,8,0,0,0-10.74-10.74ZM138,138,97.89,158.11,118,118l40.15-20.07Z"/></svg><span>探索</span></a><a href="../index.html#me" class="tab slot-3"><svg class="phosphor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,177.57-51.77-32.35a8,8,0,0,0-8.48,0L72,209.57V48H184Z"/></svg><span>我的</span></a></nav><dialog class="g-panel sheet more-nav" id="more-nav" aria-labelledby="more-title"><div class="sheet__head"><h2 id="more-title">全部导航</h2><button class="g-round" type="button" data-close aria-label="关闭"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-x"/></svg></button></div><h3 class="sheet__group">页面</h3><div class="sheet__grid"><a class="g-wash sheet__link" href="../index.html#feed"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-flame"/></svg><span>资讯</span></a><a class="g-wash sheet__link" href="../index.html#explore/play"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-news"/></svg><span>探索</span></a><a class="g-wash sheet__link" href="../index.html#me"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-bookmark"/><use class="i__fill" href="#tf-bookmark"/></svg><span>我的</span></a></div><h3 class="sheet__group">栏目</h3><div class="sheet__grid"><a class="g-wash sheet__link" href="../world/index.html"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-world"/></svg><span>环球要闻</span></a><a class="g-wash sheet__link" href="../x/index.html"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-message"/></svg><span>推特爆款</span></a><a class="g-wash sheet__link" href="../github/index.html"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-code"/></svg><span>GitHub 热门</span></a></div></dialog><dialog class="lightbox" aria-label="图片查看器"><button class="g-round lightbox__close" type="button" data-close aria-label="关闭"><svg class="i" aria-hidden="true" focusable="false"><use href="#t-x"/></svg></button><img alt=""></dialog><div class="toast" id="toast" role="status" aria-live="polite"><span class="toast__text"></span><a class="g-btn g-btn--primary toast__action" hidden></a><button class="g-btn g-btn--primary toast__action" type="button" hidden></button></div></body></html>
