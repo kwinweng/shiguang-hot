@@ -1,0 +1,105 @@
+{
+ "errors": [],
+ "shots": [
+  {
+   "file": "01-lr-current-top.png",
+   "check": "顶栏日期/刷新时间/滑法/刷新/搜索；时事 banner + 热搜块（百度）"
+  },
+  {
+   "file": "02-hot-zhihu.png",
+   "check": "热搜分家 tab：知乎"
+  },
+  {
+   "file": "03-hot-bilibili.png",
+   "check": "热搜分家 tab：B 站"
+  },
+  {
+   "file": "04-swipe-to-world.png",
+   "check": "真触摸左滑换到下一频道（当前频道序号 1）"
+  },
+  {
+   "file": "05-banner-swiped.png",
+   "check": "banner 内左滑只换 banner（频道仍是 1，页码 2 / 5）"
+  },
+  {
+   "file": "06-feed-thumb-and-text.png",
+   "check": "信息流：有图左图右文、无图标题 + 3 行摘要 + 来源时间"
+  },
+  {
+   "file": "07-digital-end.png",
+   "check": "数码频道无限加载到底：147 条后显示「没有更多了」"
+  },
+  {
+   "file": "08-article.png",
+   "check": "整页正文（地址 #/item/FinanceNewsDaily%3A496633），收藏按钮只在这里"
+  },
+  {
+   "file": "09-favorited.png",
+   "check": "点收藏后提示只存本机浏览器"
+  },
+  {
+   "file": "10-back-restored.png",
+   "check": "系统返回：回到原频道原位置（前 (2, 700) → 后 (2, 700)）"
+  },
+  {
+   "file": "11-favorites-tab.png",
+   "check": "底栏「收藏」能看到刚收藏的条目"
+  },
+  {
+   "file": "12-favorites-after-reload.png",
+   "check": "刷新页面后收藏仍在（localStorage）"
+  },
+  {
+   "file": "13-ud-top.png",
+   "check": "切到「上下看频道」：频道上下排列，频道内 banner 左右滑"
+  },
+  {
+   "file": "14-ud-more.png",
+   "check": "上下模式每频道先放 6 条，「继续看」按钮，下面接下一频道"
+  },
+  {
+   "file": "15-blogger-x.png",
+   "check": "博主：平台 logo + 24 小时新帖数、头像行、真实推文卡"
+  },
+  {
+   "file": "16-blogger-translated.png",
+   "check": "英文推文：译文优先、标「机器翻译」、可看原文"
+  },
+  {
+   "file": "17-tweet-detail-comments.png",
+   "check": "推文详情：评论预览 + 收藏 + 打开原文"
+  },
+  {
+   "file": "18-blogger-jike-empty.png",
+   "check": "即刻未配置：显示真实原因与抓取状态，不编内容"
+  },
+  {
+   "file": "19-blogger-wechat.png",
+   "check": "公众号：夕小瑶有内容，其他需登录（第一期不接）"
+  },
+  {
+   "file": "20-history.png",
+   "check": "底栏「历史」：按北京日期翻（history 分支模块）"
+  },
+  {
+   "file": "21-search.png",
+   "check": "顶部搜索：纯前端匹配，没有 AI 摘要"
+  },
+  {
+   "file": "22-deeplink.png",
+   "check": "8:30 私聊稿深链 #/item/<id> 直接打开第 3 页条目（zaihuapd:45112）"
+  },
+  {
+   "file": "23-deeplink-back.png",
+   "check": "深链详情返回到首页频道"
+  },
+  {
+   "file": "24-desktop-1280.png",
+   "check": "1280 宽：居中手机栏宽，深色杂志风"
+  },
+  {
+   "file": "v10-reference.png",
+   "check": "v10 设计稿同尺寸截图（对照用）"
+  }
+ ]
+}
