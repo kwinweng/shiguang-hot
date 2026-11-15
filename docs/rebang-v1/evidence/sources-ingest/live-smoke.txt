@@ -1,0 +1,48 @@
+2026-11-15 20:48:36 CST
+exit 0
+file var/rebang/in/ingest.json generated_at 2026-11-15T20:48:36+08:00
+validate_items_envelope errors: 0 []
+items 3048 by_channel {'tools': 197, 'world': 513, 'finance': 1044, 'tech-ai': 959, 'digital': 149, 'current': 186}
+TG sources with status: 18 / 18; with items: 18 / 18
+reorx_share items: 0 ; excluded present: []
+channel mismatches: 0
+竹新社 channels: {'current'}  Apple Newsroom channels: {'digital'}
+highlight items: 98  image(http): 86  image_local: 910
+translated: 0  en items: 160
+  tnews365               current  ok              37   
+  myBigCharacterPoster   current  ok               1   
+  freechinese            world    ok             204   
+  shuangyunews_rss       world    ok              66   
+  FinanceNewsDaily       finance  ok             613   
+  TimeHorizonX           finance  ok              46   
+  HuaErJie1              finance  ok             158   
+  pelosi3                finance  ok             227   
+  zaihuapd               tech-ai  ok             286   
+  OneMillion_AI          tech-ai  ok             266   
+  AwesomeChatGPT         tech-ai  ok               6   
+  xhqcankao              tech-ai  ok             284   
+  scitech_fans           tech-ai  ok               2   
+  NewlearnerChannel      tech-ai  ok              43   
+  CE_Observe             digital  ok             141   
+  se7enw                 digital  ok               2   
+  dps_build              tools    ok               3   
+  yxzbp                  tools    ok              46   
+  bbc-world              world    ok              22   
+  guardian-world         world    ok              45   
+  google-blog            tech-ai  ok              20   
+  openai-blog            tech-ai  ok              44   
+  github-blog            tech-ai  ok               8   
+  apple-newsroom         digital  ok               6   
+  github-trending        tools    ok              15   
+  x                      current  ok             148 2026-11-14  
+  world                  world    ok             176 2026-11-14  
+  github                 tools    ok             133 2026-11-15  
+  hot-daily              None     ok               0 2026-11-14 marked=98 
+--- 7 个订阅/页面本次抓到的原始条数（14 天过滤前）
+apple-newsroom 2026-11-15T20:48:36+08:00 20 https://www.apple.com/newsroom/rss-feed.rss
+bbc-world 2026-11-15T20:48:36+08:00 22 https://feeds.bbci.co.uk/news/world/rss.xml
+github-blog 2026-11-15T20:48:36+08:00 10 https://github.blog/feed/
+github-trending 2026-11-15T20:48:36+08:00 15 https://github.com/trending
+google-blog 2026-11-15T20:48:36+08:00 20 https://blog.google/rss/
+guardian-world 2026-11-15T20:48:36+08:00 45 https://www.theguardian.com/world/rss
+openai-blog 2026-11-15T20:48:36+08:00 50 https://openai.com/news/rss.xml

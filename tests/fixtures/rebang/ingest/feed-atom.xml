@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Synthetic Blog</title>
+<entry><id>tag:example.com,2026:post-1</id><title>Atom post</title>
+<link rel="alternate" href="https://example.com/post-1"/><updated>2026-11-14T08:00:00Z</updated>
+<summary type="html">&lt;p&gt;Atom summary.&lt;/p&gt;</summary></entry>
+</feed>

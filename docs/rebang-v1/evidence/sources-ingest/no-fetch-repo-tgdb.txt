@@ -1,0 +1,38 @@
+file var/rebang/in/ingest-repo-tgdb.json generated_at 2026-11-15T20:48:23+08:00
+validate_items_envelope errors: 0 []
+items 3048 by_channel {'tools': 197, 'world': 513, 'finance': 1044, 'tech-ai': 959, 'digital': 149, 'current': 186}
+TG sources with status: 18 / 18; with items: 18 / 18
+reorx_share items: 0 ; excluded present: []
+channel mismatches: 0
+竹新社 channels: {'current'}  Apple Newsroom channels: {'digital'}
+highlight items: 98  image(http): 86  image_local: 250
+translated: 0  en items: 160
+  tnews365               current  ok              37   
+  myBigCharacterPoster   current  ok               1   
+  freechinese            world    ok             204   
+  shuangyunews_rss       world    ok              66   
+  FinanceNewsDaily       finance  ok             613   
+  TimeHorizonX           finance  ok              46   
+  HuaErJie1              finance  ok             158   
+  pelosi3                finance  ok             227   
+  zaihuapd               tech-ai  ok             286   
+  OneMillion_AI          tech-ai  ok             266   
+  AwesomeChatGPT         tech-ai  ok               6   
+  xhqcankao              tech-ai  ok             284   
+  scitech_fans           tech-ai  ok               2   
+  NewlearnerChannel      tech-ai  ok              43   
+  CE_Observe             digital  ok             141   
+  se7enw                 digital  ok               2   
+  dps_build              tools    ok               3   
+  yxzbp                  tools    ok              46   
+  bbc-world              world    cached          22   
+  guardian-world         world    cached          45   
+  google-blog            tech-ai  cached          20   
+  openai-blog            tech-ai  cached          44   
+  github-blog            tech-ai  cached           8   
+  apple-newsroom         digital  cached           6   
+  github-trending        tools    cached          15   
+  x                      current  ok             148 2026-11-14  
+  world                  world    ok             176 2026-11-14  
+  github                 tools    ok             133 2026-11-15  
+  hot-daily              None     ok               0 2026-11-14 marked=98 
