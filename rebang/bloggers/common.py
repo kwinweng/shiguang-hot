@@ -137,6 +137,10 @@ def apply_translation(item, translator, fields=('title', 'summary', 'body')):
     if item['lang'].startswith('zh') or translator is None:
         return item
     keys = [k for k in fields if item.get(k)]
+    # 摘要只是正文截短时只译正文，再从译文截出摘要，避免同一段话译两遍
+    derive_summary = 'body' in keys and 'summary' in keys and item['summary'] == summary_of(item['body'])
+    if derive_summary:
+        keys.remove('summary')
     if not keys:
         return item
     result = translator.translate_detailed([item[k] for k in keys], item['lang'])
@@ -145,6 +149,8 @@ def apply_translation(item, translator, fields=('title', 'summary', 'body')):
     texts, engine = result
     translation = {'title': '', 'summary': ''}
     translation.update(dict(zip(keys, texts)))
+    if derive_summary:
+        translation['summary'] = summary_of(translation['body'])
     translation['engine'] = engine
     translation['label'] = '机器翻译'
     item['translated'] = True

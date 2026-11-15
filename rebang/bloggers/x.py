@@ -6,6 +6,7 @@ includes.posts|tweets），转成博主卡片。
 （文本里嵌一段 JSON）。文件名以 quotes / replies / refs 开头的只当参考（补引用、评论），
 其中的帖子不会作为博主自己的卡片出现；可选 _dump.json 写 generated_at。
 """
+import html
 import json
 import re
 from pathlib import Path
@@ -84,7 +85,7 @@ def load_dump(path):
 def _full_text(post):
     note = post.get('note_tweet') or post.get('note_post') or {}
     text = note.get('text') or post.get('text') or ''
-    return normalize_text(text)
+    return normalize_text(html.unescape(text))
 
 
 def _avatar(user):

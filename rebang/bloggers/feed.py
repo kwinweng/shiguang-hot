@@ -1,4 +1,5 @@
 """RSS 2.0 / Atom 订阅源 → 博主帖子条目。博客、Wechat2RSS（夕小瑶）、自建 RSSHub（即刻）共用。"""
+import re
 import xml.etree.ElementTree as ET
 
 from .common import (BODY_CHARS, clip, detect_lang, html_images, html_to_text, iso, native_id,
@@ -68,6 +69,19 @@ def parse_feed(body):
     return entries
 
 
+_WX_HEAD = re.compile(r'^(?:原创|\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2})?|.{1,12})$')
+
+
+def _strip_wechat_header(text):
+    """公众号正文开头的「原创 / 作者 / 日期 / 属地」短行不进摘要。只删开头连续的短行，正文不动。"""
+    lines = text.split('\n')
+    index = 0
+    while index < len(lines) and index < 8 and (not lines[index].strip() or _WX_HEAD.match(lines[index].strip())):
+        index += 1
+    rest = '\n'.join(lines[index:]).strip()
+    return rest or text
+
+
 def feed_posts(body, platform, account, fetched_at, limit=10):
     """订阅源正文 → 条目列表（新到旧，最多 limit 条）。没有可解析时间的条目丢弃，不编时间。"""
     handle = account['handle']
@@ -80,7 +94,9 @@ def feed_posts(body, platform, account, fetched_at, limit=10):
             continue
         html = entry['html'] or entry['summary_html']
         body_text = html_to_text(html)
-        summary_text = html_to_text(entry['summary_html']) if entry['summary_html'] else body_text
+        if platform['id'] == 'wechat':
+            body_text = _strip_wechat_header(body_text)
+        summary_text = html_to_text(entry['summary_html']) if entry['summary_html'] and platform['id'] != 'wechat' else body_text
         images = html_images(html, url or account.get('home', ''))
         if entry['enclosure'] and entry['enclosure'] not in [m['url'] for m in images]:
             images.insert(0, {'url': entry['enclosure']})

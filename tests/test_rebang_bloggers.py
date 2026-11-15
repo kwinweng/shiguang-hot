@@ -293,3 +293,9 @@ def test_none_engine_and_module_signature(monkeypatch):
     import rebang.translate as t
     monkeypatch.setattr(t, '_default', Translator(engine='none'))
     assert t.translate(['Hello'], src_lang='en') is None
+
+
+def test_wechat_header_lines_not_in_summary():
+    items = feed_posts((FX / 'rss_wechat2rss.xml').read_bytes(), platform('wechat'), account('wechat', '夕小瑶科技说'), NOW.isoformat())
+    assert all(not i['summary'].startswith('原创') for i in items)
+    assert items[0]['title'] and items[0]['body']
