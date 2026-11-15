@@ -1,0 +1,55 @@
+"""frontend-v11 测试用的合成条目（契约格式，全部是假内容，只用于单测/浏览器测）。"""
+from datetime import datetime, timedelta
+
+from rebang.site.builder import BEIJING
+
+NOW = datetime(2026, 11, 15, 20, 0, tzinfo=BEIJING)
+TG = {'current': 'tnews365', 'world': 'freechinese', 'finance': 'FinanceNewsDaily', 'tech-ai': 'zaihuapd',
+      'digital': 'CE_Observe', 'tools': 'yxzbp'}
+
+
+def news(source, channel, n, *, minutes=0, image=None, summary='合成摘要，测试用。', **extra):
+    item = {'id': f'{source}:{n}', 'kind': 'news', 'channel': channel, 'source_id': source, 'source_name': source,
+            'title': f'{channel} 合成标题 {n}', 'summary': summary, 'body': f'{channel} 合成正文 {n}',
+            'url': f'https://example.com/{source}/{n}', 'image': image,
+            'published_at': (NOW - timedelta(minutes=minutes)).isoformat(), 'lang': 'zh', 'translated': False}
+    item.update(extra)
+    return item
+
+
+def img(n, w=1200, h=675):
+    return {'url': f'https://img.test/{n}.png', 'width': w, 'height': h}
+
+
+def envelope(items, producer='test'):
+    return {'schema': 'rebang.items/1', 'producer': producer, 'generated_at': NOW.isoformat(), 'items': items}
+
+
+def site_items():
+    """时事 70 条（7 张合格大图 → banner 5）、环球 1 条英文译文、财经 0 条图、其余各 3 条，外加 2 条博主帖。"""
+    items = []
+    for n in range(70):
+        image = img(n) if n < 7 else (img(n, 200, 100) if n == 8 else None)
+        items.append(news('tnews365', 'current', n, minutes=n * 5, image=image, summary='' if n == 9 else '合成摘要，测试用。'))
+    items.append(news('bbc-world', 'world', 1, title='Synthetic headline', lang='en', translated=True,
+                      translation={'title': '合成译文标题', 'summary': '合成译文摘要。', 'engine': 'test', 'label': '机器翻译'}))
+    for slug in ('finance', 'tech-ai', 'digital', 'tools'):
+        for n in range(3):
+            items.append(news(TG[slug], slug, n, minutes=n))
+    for n, handle in enumerate(('dotey', 'simonw')):
+        items.append({'id': f'x-{handle}:{n}', 'kind': 'post', 'channel': None, 'source_id': f'x-{handle}', 'source_name': 'X',
+                      'title': '', 'summary': f'合成推文 {n}', 'body': f'合成推文 {n}', 'url': f'https://x.com/{handle}/status/{n}',
+                      'published_at': (NOW - timedelta(hours=n)).isoformat(), 'lang': 'zh', 'translated': False,
+                      'blogger': {'platform': 'x', 'handle': handle, 'display_name': handle, 'avatar': None, 'verified': True,
+                                  'metrics': {'reply': 1, 'repost': 2, 'like': 3}, 'media': [], 'quote': None}})
+    return items
+
+
+def hotsearch():
+    return {'schema': 'rebang.hotsearch/1', 'generated_at': NOW.isoformat(), 'providers': [
+        {'id': 'baidu', 'name': '百度热搜', 'status': 'ok', 'fetched_at': NOW.isoformat(),
+         'items': [{'rank': 1, 'title': '合成置顶', 'url': 'https://www.baidu.com/s?wd=a', 'pinned': True}] +
+                  [{'rank': i, 'title': f'合成热搜 {i}', 'url': f'https://www.baidu.com/s?wd={i}', 'pinned': False, 'hot_score': 4900000 - i}
+                   for i in range(2, 13)]},
+        {'id': 'zhihu', 'name': '知乎热榜', 'status': 'error', 'fetched_at': NOW.isoformat(), 'error': 'http_403', 'items': []},
+        {'id': 'bilibili', 'name': 'B 站热搜', 'status': 'empty', 'fetched_at': None, 'items': []}]}
