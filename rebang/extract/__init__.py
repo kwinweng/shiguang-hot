@@ -83,6 +83,8 @@ def _drop_noise(soup):
     for c in soup.find_all(string=lambda n: isinstance(n, Comment)):
         c.extract()
     for tag in list(soup.find_all(True)):
+        if getattr(tag, 'decomposed', False) or tag.attrs is None:
+            continue
         classes = ' '.join(tag.get('class') or [])
         tid = tag.get('id') or ''
         role = tag.get('role') or ''
@@ -251,7 +253,9 @@ def apply_extraction(items, cache_dir, *, fetch=False, http_get=None, now=None, 
             html = raw.decode('utf-8', 'replace') if isinstance(raw, (bytes, bytearray)) else str(raw or '')
             got = extract_html(html, url)
         except Exception as ex:
-            got, err = None, type(ex).__name__
+            got, err = None, type(ex).__name__ + (f': {ex}' if str(ex) else '')
+            if len(err) > 200:
+                err = err[:200]
         else:
             err = 'too_short' if not got else None
         report['fetched'] += 1
