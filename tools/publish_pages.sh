@@ -38,7 +38,7 @@ git worktree add --detach "$worktree" HEAD >/dev/null
 git -C "$worktree" rm -rf --ignore-unmatch . >/dev/null
 cp -R site/. "$worktree/"
 # 拾光热榜 v11（rebang）：已构建的 site-v11/ 一并发布到 gh-pages 的 rebang/ 子目录
-# （news.kwinweng.com/rebang/）。REBANG_PUBLISH=0 不带；回退：删掉/改名 site-v11 后再发布一次即可下线。
+# （服务器 nginx 把它挂到 https://news.kwinweng.com/ 根路径）。REBANG_PUBLISH=0 不带——线上根路径会 404，只在回退到旧阅读器时用。
 rebang_site=${REBANG_SITE:-$root/site-v11}
 if [ "${REBANG_PUBLISH:-1}" != 0 ] && [ -f "$rebang_site/index.html" ] && [ -f "$rebang_site/data/meta.json" ]; then
     if [ -e "$worktree/rebang" ]; then
