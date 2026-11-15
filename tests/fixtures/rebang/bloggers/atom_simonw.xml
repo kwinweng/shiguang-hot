@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xml:lang="en-us" xmlns="http://www.w3.org/2005/Atom"><title>Simon Willison's Weblog</title><link href="http://simonwillison.net/" rel="alternate"/><link href="http://simonwillison.net/atom/everything/" rel="self"/><id>http://simonwillison.net/</id><updated>2026-11-14T23:59:28+00:00</updated><author><name>Simon Willison</name></author><entry><title>datasette-llm 0.1a11</title><link href="https://simonwillison.net/2026/Nov/14/datasette-llm/" rel="alternate"/><published>2026-11-14T23:59:28+00:00</published><updated>2026-11-14T23:59:28+00:00</updated><id>https://simonwillison.net/2026/Nov/14/datasette-llm/</id><summary type="html">
+    
+        &lt;p&gt;&lt;strong&gt;Release:&lt;/strong&gt; &lt;a href="https://github.com/datasette/datasette-llm/releases/tag/0.1a11"&gt;datasette-llm 0.1a11&lt;/a&gt;&lt;/p&gt;
+        &lt;p&gt;&lt;code&gt;datasette-llm&lt;/code&gt; is the intermediate plugin for Datasette that supports configuring LLMs for use with other Datasette plugins.&lt;/p&gt;
+&lt;p&gt;This release adds support for OpenAI-compatible endpoints, so you can configure Datasette to use an LLM hosted anywhere that talks the OpenAI pseudo-standard web protocol.&lt;/p&gt;
+&lt;p&gt;This means that if you're running local models with &lt;a href="https://lmstudio.ai"&gt;LM Studio&lt;/a&gt; or &lt;a href="https://ollama.com"&gt;Ollama&lt;/a&gt; or &lt;a href="https://github.com/ggml-org/llama.cpp"&gt;llama.cpp&lt;/a&gt; (which just hit &lt;a href="https://huggingface.co/blog/ggml-org/llama-cpp-v1"&gt;v1.0.0&lt;/a&gt;) you can run Datasette via &lt;code&gt;uvx&lt;/code&gt; like this:&lt;/p&gt;
+&lt;div class="highlight highlight-source-shell"&gt;&lt;pre&gt;wget https://datasette.io/content.db
+
+uvx --with datasette-agent datasette \
+  --root --secret 1 \
+  -s plugins.datasette-llm.default_model &lt;span class="pl-s"&gt;&lt;span class="pl-pds"&gt;'&lt;/span&gt;{&lt;/span&gt;
+&lt;span class="pl-s"&gt;    "model": "lmstudio-qwen",&lt;/span&gt;
+&lt;span class="pl-s"&gt;    "model_name": "qwen/qwen3.8-27b",&lt;/span&gt;
+&lt;span class="pl-s"&gt;    "api_base": "http://localhost:1234/v1"&lt;/span&gt;</summary><category term="uv"/><category term="datasette-agent"/><category term="llm"/><category term="datasette"/><category term="llms"/><category term="ai"/><category term="generative-ai"/></entry><entry><title>datasette-vega 0.7</title><link href="https://simonwillison.net/2026/Nov/14/datasette-vega/" rel="alternate"/><published>2026-11-14T17:09:09+00:00</published><updated>2026-11-14T17:09:09+00:00</updated><id>https://simonwillison.net/2026/Nov/14/datasette-vega/</id><summary type="html">
+    
+        &lt;p&gt;&lt;strong&gt;Release:&lt;/strong&gt; &lt;a href="https://github.com/simonw/datasette-vega/releases/tag/0.7"&gt;datasette-vega 0.7&lt;/a&gt;&lt;/p&gt;
+        &lt;p&gt;A new release of Datasette's longest untouched plugin, for rendering charts (using &lt;a href="https://vega.github.io/vega-lite/"&gt;Vega-Lite&lt;/a&gt;) against data in a table or custom query. The last release was in July 2018!&lt;/p&gt;
+&lt;p&gt;I finally bumped it for compatibility with the latest Datasette alphas, plus some cosmetic tweaks to make it work better with &lt;a href="https://lite.datasette.io/"&gt;Datasette Lite&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;(Datasette Lite just gained the ability to run JavaScript plugins like this! I'll write more about that soon.)&lt;/p&gt;
+&lt;p&gt;Since it works with Datasette Lite, the live demo in the README now &lt;a href="https://lite.datasette.io/?install=datasette-vega&amp;amp;csv=https%3A%2F%2Fraw.githubusercontent.com%2Ffivethirtyeight%2Fdata%2Fmaster%2Fairline-safety%2Fairline-safety.csv#/data/airline-safety?_size=max#g.mark=bar&amp;amp;g.x_column=airline&amp;amp;g.x_type=ordinal&amp;amp;g.y_column=fatalities_00_14&amp;amp;g.y_type=quantitative"&gt;links to this demo on Datasette Lite&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;</summary><category term="datasette"/><category term="visualisation"/><category term="datasette-lite"/></entry>
+</feed>

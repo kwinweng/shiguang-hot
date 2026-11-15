@@ -1,0 +1,374 @@
+{
+ "data": [
+  {
+   "attachments": {
+    "media_keys": [
+     "3_2121946493376430080"
+    ]
+   },
+   "author_id": "452072245",
+   "conversation_id": "2121946496119533937",
+   "created_at": "2026-11-15T12:40:43.000Z",
+   "edit_history_post_ids": [
+    "2121946496119533937"
+   ],
+   "id": "2121946496119533937",
+   "lang": "zh",
+   "note_tweet": {
+    "entities": {
+     "urls": [
+      {
+       "display_url": "github.com/aoyamashou/UUy…",
+       "end": 239,
+       "expanded_url": "https://github.com/aoyamashou/UUyc-companion",
+       "start": 216,
+       "url": "https://t.co/mLGZKKjwfF"
+      }
+     ]
+    },
+    "text": "AI 时代，越来越觉得民间更新比官方还勤快了\n\n最近想用折叠屏远程控制 Mac，安卓端还没法直接创建虚拟屏，但已经有人做了个 UU 远程伴侣，把这个需求补上了\n\n装在 Mac 上，填好手机分辨率，连上就自动准备虚拟屏，还能关掉其他屏幕，断开后自动恢复\n\n我已经我的折叠屏内屏设成了 2480 × 2248，手机上不用另外装东西\n\n以前缺个功能只能等官方，现在先去 GitHub 搜一下，说不定别人也嫌等得太久，已经自己做了一个😂\n\nhttps://t.co/mLGZKKjwfF"
+   },
+   "public_metrics": {
+    "bookmark_count": 0,
+    "impression_count": 250,
+    "like_count": 0,
+    "quote_count": 0,
+    "reply_count": 0,
+    "repost_count": 0
+   },
+   "text": "AI 时代，越来越觉得民间更新比官方还勤快了\n\n最近想用折叠屏远程控制 Mac，安卓端还没法直接创建虚拟屏，但已经有人做了个 UU 远程伴侣，把这个需求补上了\n\n装在 Mac 上，填好手机分辨率，连上就自动准备虚拟屏，还能关掉其他屏幕，断开后自动恢复\n\n我已经我的折叠屏内屏设成了 2480 × https://t.co/Q23Z31WpYm",
+   "url": "https://x.com/lxfater/status/2121946496119533937"
+  },
+  {
+   "attachments": {
+    "media_keys": [
+     "3_2121942398519668736"
+    ]
+   },
+   "author_id": "452072245",
+   "conversation_id": "2121942667076722960",
+   "created_at": "2026-11-15T12:25:30.000Z",
+   "edit_history_post_ids": [
+    "2121942667076722960"
+   ],
+   "id": "2121942667076722960",
+   "lang": "zh",
+   "public_metrics": {
+    "bookmark_count": 0,
+    "impression_count": 757,
+    "like_count": 1,
+    "quote_count": 0,
+    "reply_count": 3,
+    "repost_count": 0
+   },
+   "referenced_tweets": [
+    {
+     "id": "2121908804900270506",
+     "type": "quoted"
+    }
+   ],
+   "text": "正在用carbon测试纯想的提示词😂，希望有效果 https://t.co/G3x8GS8ObV https://t.co/aUtUr3HUsV",
+   "url": "https://x.com/lxfater/status/2121942667076722960"
+  },
+  {
+   "attachments": {
+    "media_keys": [
+     "13_2121715612896333824"
+    ],
+    "media_source_tweet_id": [
+     "2121717109352755265"
+    ]
+   },
+   "author_id": "1669276256",
+   "conversation_id": "2121756191495954772",
+   "created_at": "2026-11-15T00:04:31.000Z",
+   "edit_history_post_ids": [
+    "2121756191495954772"
+   ],
+   "id": "2121756191495954772",
+   "lang": "zh",
+   "public_metrics": {
+    "bookmark_count": 14,
+    "impression_count": 18749,
+    "like_count": 68,
+    "quote_count": 0,
+    "reply_count": 32,
+    "repost_count": 0
+   },
+   "text": "🐂🍺 SpaceX 第一次用机械臂夹住回收了二级飞船 https://t.co/lRijwQCyRx",
+   "url": "https://x.com/op7418/status/2121756191495954772"
+  },
+  {
+   "attachments": {
+    "media_keys": [
+     "3_2121749052039581696",
+     "3_2121749137733382144",
+     "3_2121751468650692609",
+     "3_2121751536158003200"
+    ]
+   },
+   "author_id": "39125788",
+   "conversation_id": "2121751565845360769",
+   "created_at": "2026-11-14T23:46:08.000Z",
+   "edit_history_post_ids": [
+    "2121751565845360769"
+   ],
+   "id": "2121751565845360769",
+   "lang": "en",
+   "public_metrics": {
+    "bookmark_count": 179,
+    "impression_count": 50383,
+    "like_count": 568,
+    "quote_count": 28,
+    "reply_count": 193,
+    "repost_count": 50
+   },
+   "text": "AI is getting better faster than our measurements are\n\nI threw together SatBench, which measures how quickly major AI benchmarks become saturated (effectively beaten). Of 173 benchmarks cited by the Labs since 2023, 63% are now saturated. Saturation is happening faster each year. https://t.co/tITFRo7w0z",
+   "url": "https://x.com/emollick/status/2121751565845360769"
+  },
+  {
+   "attachments": {
+    "media_keys": [
+     "13_2121660024564948992"
+    ]
+   },
+   "author_id": "1577241403",
+   "conversation_id": "2121661063007773081",
+   "created_at": "2026-11-14T17:46:30.000Z",
+   "edit_history_post_ids": [
+    "2121661063007773081"
+   ],
+   "id": "2121661063007773081",
+   "lang": "en",
+   "note_tweet": {
+    "entities": {
+     "mentions": [
+      {
+       "end": 60,
+       "id": "606342802",
+       "start": 55,
+       "username": "IKEA"
+      }
+     ]
+    },
+    "text": "✨ Progress update:\n\nI imported the entire catalogue of @IKEA in 3d into Interior AI after seeing someone do the same yesterday, I'll try to import more furniture brands soon to get more variety too\n\nAnyway so now you can import your home's blueprint or do a walk through video, it then rebuilds your home, and then you can redecorate it\n\nThis is now day 4 of rebuilding Interior AI now that's the models are smart enough to do 3d stuff properly, it still looks a bit clunky and all but it's going somewhere! 😊"
+   },
+   "public_metrics": {
+    "bookmark_count": 250,
+    "impression_count": 95981,
+    "like_count": 329,
+    "quote_count": 14,
+    "reply_count": 21,
+    "repost_count": 12
+   },
+   "referenced_tweets": [
+    {
+     "id": "2121291126803980696",
+     "type": "quoted"
+    }
+   ],
+   "text": "✨ Progress update:\n\nI imported the entire catalogue of @IKEA in 3d into Interior AI after seeing someone do the same yesterday, I'll try to import more furniture brands soon to get more variety too\n\nAnyway so now you can import your home's blueprint or do a walk through video, https://t.co/t2Ln0LL3Xf https://t.co/mTcTki6vht",
+   "url": "https://x.com/levelsio/status/2121661063007773081"
+  },
+  {
+   "attachments": {
+    "media_keys": [
+     "3_2121038822461124609"
+    ]
+   },
+   "author_id": "12497",
+   "conversation_id": "2121039423441981444",
+   "created_at": "2026-11-13T00:36:20.000Z",
+   "edit_history_post_ids": [
+    "2121039423441981444"
+   ],
+   "id": "2121039423441981444",
+   "lang": "en",
+   "public_metrics": {
+    "bookmark_count": 61,
+    "impression_count": 45697,
+    "like_count": 412,
+    "quote_count": 24,
+    "reply_count": 258,
+    "repost_count": 11
+   },
+   "text": "The pricing for Gemini 4 is pretty confusing - Argon and Carbon are the same token price as each other, and the new Hydrogen is only a 25% discount on that price - though Carbon/Argon will 2x in price on Dec 1st\n\nHydrogen's pelicans are notably worse\n https://t.co/XZqY5eQxcD https://t.co/miEABX7G0w",
+   "url": "https://x.com/simonw/status/2121039423441981444"
+  }
+ ],
+ "includes": {
+  "users": [
+   {
+    "id": "1577241403",
+    "name": "@levelsio",
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2077111020305162240/PwddgOau_normal.jpg",
+    "username": "levelsio",
+    "verified": false
+   },
+   {
+    "id": "39125788",
+    "name": "Ethan Mollick",
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1601382188712398850/3AAOlqrX_normal.jpg",
+    "username": "emollick",
+    "verified": false
+   },
+   {
+    "id": "12497",
+    "name": "Simon Willison",
+    "profile_image_url": "https://pbs.twimg.com/profile_images/378800000261649705/be9cc55e64014e6d7663c50d7cb9fc75_normal.jpeg",
+    "username": "simonw",
+    "verified": true,
+    "verified_type": "blue"
+   },
+   {
+    "id": "1669276256",
+    "name": "歸藏(guizang.ai)",
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1636981205504786434/xDl77JIw_normal.jpg",
+    "username": "op7418",
+    "verified": true,
+    "verified_type": "blue"
+   },
+   {
+    "id": "913314383526223872",
+    "name": "赵纯想",
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2100601213226291200/rWK8IknA_normal.jpg",
+    "username": "chunxiangai",
+    "verified": false
+   },
+   {
+    "id": "452072245",
+    "name": "铁锤人",
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2005527237874089984/LyyR6wom_normal.jpg",
+    "username": "lxfater",
+    "verified": true,
+    "verified_type": "blue"
+   }
+  ],
+  "media": [
+   {
+    "alt_text": "UU远程伴侣：民间更新比官方快",
+    "height": 1802,
+    "media_key": "3_2121946493376430080",
+    "type": "photo",
+    "url": "https://pbs.twimg.com/media/HXKrF9oWgAAdR1_.jpg",
+    "width": 1800
+   },
+   {
+    "height": 1620,
+    "media_key": "3_2121942398519668736",
+    "type": "photo",
+    "url": "https://pbs.twimg.com/media/HXKnXnGa8AAdyIY.jpg",
+    "width": 2248
+   },
+   {
+    "height": 1350,
+    "media_key": "3_2121749052039581696",
+    "type": "photo",
+    "url": "https://pbs.twimg.com/media/HXH3hXVXUAA8oE1.jpg",
+    "width": 2400
+   },
+   {
+    "height": 1350,
+    "media_key": "3_2121749137733382144",
+    "type": "photo",
+    "url": "https://pbs.twimg.com/media/HXH3mWkW8AAiimf.jpg",
+    "width": 2400
+   },
+   {
+    "height": 1350,
+    "media_key": "3_2121751468650692609",
+    "type": "photo",
+    "url": "https://pbs.twimg.com/media/HXH5uB6WgAE81h0.jpg",
+    "width": 2400
+   },
+   {
+    "height": 1350,
+    "media_key": "3_2121751536158003200",
+    "type": "photo",
+    "url": "https://pbs.twimg.com/media/HXH5x9ZWUAAsTgt.jpg",
+    "width": 2400
+   },
+   {
+    "duration_ms": 38315,
+    "height": 3840,
+    "media_key": "13_2121715612896333824",
+    "preview_image_url": "https://pbs.twimg.com/amplify_video_thumb/2121715612896333824/img/kaY5i3PGa7uk8SIb.jpg",
+    "type": "video",
+    "variants": [
+     {
+      "bit_rate": 2176000,
+      "content_type": "video/mp4",
+      "url": "https://video.twimg.com/amplify_video/2121715612896333824/vid/avc1/720x1280/YjM-BdmHKe3J3UcW.mp4"
+     },
+     {
+      "bit_rate": 950000,
+      "content_type": "video/mp4",
+      "url": "https://video.twimg.com/amplify_video/2121715612896333824/vid/avc1/480x852/C3ZBsMMil5B5_-Ei.mp4"
+     },
+     {
+      "content_type": "application/x-mpegURL",
+      "url": "https://video.twimg.com/amplify_video/2121715612896333824/pl/GRHtIquq6jeDkf5C.m3u8?v=cfc"
+     },
+     {
+      "bit_rate": 25128000,
+      "content_type": "video/mp4",
+      "url": "https://video.twimg.com/amplify_video/2121715612896333824/vid/avc1/2160x3840/SVVu4MkGffE9bccR.mp4"
+     },
+     {
+      "bit_rate": 632000,
+      "content_type": "video/mp4",
+      "url": "https://video.twimg.com/amplify_video/2121715612896333824/vid/avc1/320x568/cBHRyteY9qYh3ftR.mp4"
+     },
+     {
+      "bit_rate": 10368000,
+      "content_type": "video/mp4",
+      "url": "https://video.twimg.com/amplify_video/2121715612896333824/vid/avc1/1080x1920/KiE-GM2rmPM0feDE.mp4"
+     }
+    ],
+    "width": 2160
+   },
+   {
+    "duration_ms": 177168,
+    "height": 1920,
+    "media_key": "13_2121660024564948992",
+    "preview_image_url": "https://pbs.twimg.com/amplify_video_thumb/2121660024564948992/img/qoxIRJ9QOAvydYSm.jpg",
+    "type": "video",
+    "variants": [
+     {
+      "bit_rate": 2176000,
+      "content_type": "video/mp4",
+      "url": "https://video.twimg.com/amplify_video/2121660024564948992/vid/avc1/720x1280/Ub6QcIo2dqSbOJPN.mp4"
+     },
+     {
+      "bit_rate": 950000,
+      "content_type": "video/mp4",
+      "url": "https://video.twimg.com/amplify_video/2121660024564948992/vid/avc1/480x852/CIauWQe5dK8Us6bi.mp4"
+     },
+     {
+      "bit_rate": 632000,
+      "content_type": "video/mp4",
+      "url": "https://video.twimg.com/amplify_video/2121660024564948992/vid/avc1/320x568/aN5uU1u-aTEfNzzQ.mp4"
+     },
+     {
+      "content_type": "application/x-mpegURL",
+      "url": "https://video.twimg.com/amplify_video/2121660024564948992/pl/AV0R2fK8tcI3-LJD.m3u8?v=512"
+     },
+     {
+      "bit_rate": 10368000,
+      "content_type": "video/mp4",
+      "url": "https://video.twimg.com/amplify_video/2121660024564948992/vid/avc1/1080x1920/qL6Zps_KAxkiOly_.mp4"
+     }
+    ],
+    "width": 1080
+   },
+   {
+    "alt_text": "Grid comparing SVG pelican-on-bicycle illustrations from three models by Thinking level, each from 40 input tokens. gemini-4-carbon and gemini-4-argon draw rich seaside scenes; gemini-4-hydrogen is much worse at every level: crude pelicans on stick-like bikes with almost no scenery. HIGH: carbon, sailor cap, red cruiser, fish in basket, 20,305 output = 20.31 cents · 4m 11s; argon, red cap, teal scarf, blue fish in basket, 17,158 output = 17.17 cents · 2m 29s; hydrogen, 5,311 output = 3.99 cents · 19s. MEDIUM: carbon, sailor cap and red scarf on a beach, 11,020 output = 11.03 cents · 1m 53s; argon, huge beak, teal bike, pink sunset, 11,090 output = 11.10 cents · 1m 32s; hydrogen, 3,964 output = 2.98 cents · 17s. LOW: carbon, striped scarf by a railing, 9,153 output = 9.16 cents · 1m 34s; argon, chubby pelican before an orange sun, 10,177 output = 10.18 cents · 1m 21s; hydrogen, barest of all, 2,996 output = 2.25 cents · 10s.",
+    "height": 1852,
+    "media_key": "3_2121038822461124609",
+    "type": "photo",
+    "url": "https://pbs.twimg.com/media/HW9xkj-bsAEV4fm.jpg",
+    "width": 2088
+   }
+  ]
+ }
+}
