@@ -214,6 +214,38 @@ class IngestTests(unittest.TestCase):
         self.run_collect(fetch=True, http_get=fake_http(), translator=(fake, 'fake-mt'))
         self.assertEqual(len(calls), n)  # 第二次全走缓存，不重复翻
 
+
+    def test_partial_translation_title_without_body(self):
+        from rebang.ingest.core import apply_translation
+        body = 'Short summary here. ' + ('Long English paragraph. ' * 80)
+        items = [{
+            'id': 'bbc-world:1', 'source_id': 'bbc-world', 'title': 'Hello world title',
+            'summary': 'Short summary here.', 'body': body,
+            'blocks': [{'type': 'p', 'text': 'Long English paragraph. ' * 80}],
+            'lang': 'en', 'translated': False,
+        }]
+        def fake(texts, src, kinds=None):
+            if any(len(t) > 80 for t in texts):
+                return None
+            return ['译：' + t for t in texts]
+        n = apply_translation(items, (fake, 'fake-mt'))
+        self.assertEqual(n, 1)
+        self.assertTrue(items[0]['translated'])
+        trans = items[0]['translation']
+        self.assertEqual(trans['title'], '译：Hello world title')
+        self.assertEqual(trans['summary'], '译：Short summary here.')
+        self.assertTrue(trans.get('body_pending'))
+        self.assertNotIn('body', trans)
+        self.assertNotIn('blocks', trans)
+        # 正文补上之后去掉 body_pending，摘要可从正文译文截出
+        def later(texts, src, kinds=None):
+            return ['译：' + t for t in texts]
+        apply_translation(items, (later, 'fake-mt'))
+        trans = items[0]['translation']
+        self.assertFalse(trans.get('body_pending'))
+        self.assertTrue(trans['body'].startswith('译：'))
+        self.assertIn('blocks', trans)
+
     def test_translator_failure_leaves_untranslated(self):
         env = self.run_collect(fetch=True, http_get=fake_http(), translator=(lambda t, s: None, 'x'))
         self.assertFalse(any(i.get('translated') for i in env['items']))

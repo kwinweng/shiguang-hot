@@ -32,7 +32,7 @@
 | `published_at` | 是 | 带时区 ISO 8601（历史按北京时间日期分组） |
 | `fetched_at` | 否 | 带时区 |
 | `lang` | 是 | `zh` / `en` / … ；判断不了写 `und`（不翻译）。ingest 规则：含中日韩字符为 zh，否则 en |
-| `translated` + `translation` | 否 | 非中文才翻；`translation={title, summary, body?, blocks?, engine, label:"机器翻译"}`。入库时就译好，打开页面不现翻。流程：缓存 `var/rebang/translate/cache.json` 命中直接用 → 没命中进 `pending.json` → 由 Grok 翻好后 `python3 -m rebang.translate fill FILE --engine grok-bot` 回填，下次构建生效；只翻新增条目（增量）。公开新闻页会先抽全文（`rebang.extract`，按 URL 缓存，单轮有上限），抽失败则沿用原摘要 |
+| `translated` + `translation` | 否 | 非中文才翻；`translation={title, summary, body?, blocks?, body_pending?, engine, label:"机器翻译"}`。标题和摘要一旦有译文就写入，不必等正文或 blocks；正文稍后补上时详情页再换全文。正文还在排队时 `body_pending:true`，详情用已有的中文摘要并标明全文还在翻译，不把英文长文铺上去。入库时就译好，打开页面不现翻。流程：缓存 `var/rebang/translate/cache.json` 命中直接用 → 没命中进 `pending.json` → 由 Grok 翻好后 `python3 -m rebang.translate fill FILE --engine grok-bot` 回填，下次构建生效；只翻新增条目（增量）。公开新闻页会先抽全文（`rebang.extract`，按 URL 缓存，单轮有上限），抽失败则沿用原摘要 |
 | `highlight` / `highlight_date` | 否 | 今日重点标记（站上不单开栏） |
 | `blogger` | post 必填 | `{platform, handle, display_name, avatar?, verified?, metrics{reply,repost,like,quote,bookmark,view}?, media[{type:image|video|gif,url,preview_url?,duration_ms?}], quote{handle,text,display_name?,published_at?,url?,...}|null, comments[{handle,text,display_name?,avatar?,published_at?,url?,like?,text_zh?}]?}`；评论最多 10 条，按点赞排序。`like` 是非负整数，拿不到不写。英文回复译文在 `text_zh`，原文留在 `text`。拿不到的字段不写，不编数字。Grok bot 的 4 类整理内容是 `platform:"grok"`、`handle` = 来源 id（hot-daily/x/world/github）、`channel:null` |
 | `quote` | 否（news） | v13：TG 引用/转发的原帖。`{kind: forward|reply, source_name, url, text}`。`forward` = 频道转发别人的帖子，频道自己没写话时 `summary/body` 为空串，前端标「转发」；`reply` = 频道引用了某条帖子，`title/summary/body` 是频道自己的话，`quote.text` 是被引用的原文（≤1500 字）。来自 t.me 公开页面，拿不到不写 |
