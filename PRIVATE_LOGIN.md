@@ -1,5 +1,7 @@
 # 内网版登录：180 天免登录
 
+> 现状（2026-11-16）：news.kwinweng.com 已公开、不再要登录，服务器上的登录阅读器已下线。`tools/login_gate.py` 仍在仓库里，盒子上的内网预览是否还在用它未确认；没有部署需要时不要启用。
+
 浏览器自带的账号密码弹窗（Basic Auth）只把密码记在内存里，关掉浏览器就忘了，服务器没法给它设有效期。所以内网版改用 `tools/login_gate.py`：
 
 - 有一个登录页，登录成功后发一个签名 Cookie（`HttpOnly`、`SameSite=Lax`，走 HTTPS 时加 `Secure`）。

@@ -6,7 +6,14 @@
 https://codeload.github.com/kwinweng/shiguang-hot/tar.gz/refs/heads/gh-pages
 ```
 
-`news-sync.sh` 默认无凭据下载此压缩包，每 20 分钟校验后替换静态根。无需 Git、GitHub token、SSH 构建主机或私有 feeds。负责人已批准用 public 替换现有 private 静态站，删除 mail 与 private-only 历史；旧版“必须保留全部 private 历史”的方案不再适用。本目录不修改 reader 数据库、nginx 或认证配置。
+`news-sync.sh` 默认无凭据下载此压缩包，每 20 分钟校验后替换静态根。无需 Git、GitHub token、SSH 构建主机或私有 feeds。本目录不修改 nginx 配置。
+
+## 现状（2026-11-16）
+
+- 服务器上安装的 `/usr/local/libexec/news-sync.sh` 与本目录 `news-sync.sh` 一致（11/15 核对 md5）。
+- 静态根里同时有旧站树（gh-pages 根目录）和 v11（`rebang/`）。nginx 用 `try_files /rebang$uri …` 只对外提供 v11，挂在 https://news.kwinweng.com/ 根路径；旧站文件不再对外，但**校验仍按旧站格式**，所以旧站树必须继续发布。nginx 配置与回退见 [`docs/rebang-v1/OPERATIONS.md`](../docs/rebang-v1/OPERATIONS.md)。
+- 登录阅读器 `shiguang-reader.service` 已停用（`disable --now`），`/mail/`、`/archive/`、`/__login/`、`/api/` 返回 404。`shiguang-reader-update.timer` 仍在把静态树导入阅读器数据库（灵记的只读桥接用这个库）。
+- 2026-11-07 首次从私有站迁到公开 gh-pages 的过程与验收记录在 [`docs/HANDOFF-history.md`](../docs/HANDOFF-history.md)。
 
 ## 接收、校验与发布
 
@@ -18,21 +25,9 @@ https://codeload.github.com/kwinweng/shiguang-hot/tar.gz/refs/heads/gh-pages
 - 所有校验通过后，将目录设为 0755、文件设为 0644，并统一为现静态根的 uid/gid，供 nginx 读取。Linux `renameat2(RENAME_EXCHANGE)` 原子交换同文件系统上的两棵目录；不支持该调用时拒绝发布。保留一版同级 `<target>.news-sync-previous`，下一次成功发布会替换它。首次上一版可能包含私有内容，必须留在 Web root 之外，不能给它配置公开路由。
 - `flock` 防止发布重叠；timer 每 20 分钟加最多 90 秒抖动。每轮下载完整压缩包、计算当前/候选文件哈希及解析 HTML/JSON，会产生相应网络与磁盘 I/O。需预留压缩包、候选、上一版和独立迁移备份的空间；不新增采集或模型调用。
 
-## 首次迁移先决条件
+## 再次迁移或重装前
 
-生产操作由协调者执行，本地测试不能替代以下检查：
-
-1. 确认负责人已批准本次目标和影响范围，完成 Linux 隔离测试及真实候选 dry-run。盘点旧静态根、reader 导入状态和回退步骤；不要读取或打印凭据或私人正文。
-2. **先做独立备份**：静态树备份至 `/var/backups/news-kwinweng-pre-public-20261107.tar.gz`；使用 SQLite `.backup` 将 `/var/lib/shiguang-reader/topics.sqlite3` 一致性备份到同目录，限制访问并运行 `PRAGMA quick_check`。不要直接复制正在写入的数据库。脚本仅保留一版 previous，不能替代永久迁移备份。
-3. **先用临时 reader 数据库导入 public 候选**：从生产库用 SQLite `.backup` 创建临时副本，以 `shiguang-reader` 用户执行下列现有命令。确认无错误、`new_versions > 0`、11 月 4 日至当日均有导入，且 `source_versions` 最新日为当日。若 reader 拒绝 public 格式，停止安装并报告。该步骤不改生产 reader 库。
-
-   ```bash
-   runuser -u shiguang-reader -- /opt/shiguang-reader/venv/bin/python \
-     /opt/shiguang-reader/current/tools/topic_news.py import-published \
-     --database /tmp/reader-check/topics.sqlite3 --published-root /tmp/staged-public-site
-   ```
-
-4. 静态树原子发布后，等待现有 `shiguang-reader-update.timer` 导入，检查 `new_versions` 日志与生产库 `source_versions` 的最新日期。保持 reader、登录和 nginx 配置不变；已有 reader 历史不在本次删除范围内，停止从 private 产物新增数据即可。完成后清理临时目录。
+生产操作由协调者执行，本地测试不能替代：先确认阿欢批准目标和影响范围；先做独立备份（静态树 tar、阅读器库用 SQLite `.backup` 并 `PRAGMA quick_check`，不要直接复制正在写的库）；再用 `--dry-run` 审阅删除清单和最新内容日。脚本只保留一版 previous，不能代替永久备份。
 
 ## 本地隔离验证
 
@@ -56,7 +51,7 @@ bash deploy/news-sync.sh --source /tmp/synthetic-public-site \
 
 ## 接收服务器安装与验收
 
-依赖 Bash、Python 3.8+、curl、flock、realpath 和支持 `renameat2` 的 Linux 文件系统；无需 rsync、OpenSSH 或 GitHub 凭据。确认静态根父目录可由 service 写入，nginx 能穿过其父目录读取新树。从获批版本复制本目录三个文件到临时传输目录后，执行以下步骤；必须使用 `set -e`，预检失败即停止。
+依赖 Bash、Python 3.8+、curl、flock、realpath 和支持 `renameat2` 的 Linux 文件系统；无需 rsync、OpenSSH 或 GitHub 凭据。确认静态根父目录可由 service 写入，nginx 能穿过其父目录读取新树。从获批版本复制本目录三个文件到临时传输目录后，执行以下步骤；必须使用 `set -e`，预检失败即停止。（11/07 已安装，重装时才需要。）
 
 ```bash
 set -euo pipefail
@@ -66,7 +61,7 @@ bash /tmp/news-sync-install/news-sync.sh \
   --target /var/www/news.kwinweng.com --dry-run --work-dir /tmp/news-sync-check
 rmdir /tmp/news-sync-check
 
-# 仅在独立备份和临时 reader 导入验收通过后安装及启动。
+# 仅在独立备份通过后安装及启动。
 install -D -m 0755 /tmp/news-sync-install/news-sync.sh /usr/local/libexec/news-sync.sh
 install -m 0644 /tmp/news-sync-install/news-sync.service /etc/systemd/system/news-sync.service
 install -m 0644 /tmp/news-sync-install/news-sync.timer /etc/systemd/system/news-sync.timer
@@ -78,6 +73,6 @@ systemctl list-timers news-sync.timer
 journalctl -u news-sync.service -n 30 --no-pager
 ```
 
-验收应同时核对静态 public scope、非空 live、最新内容日、历史页、mail 路径不可访问，以及 reader 的实际导入结果。先确认 nginx 是否代理/缓存相关路径，不能把代理首页的响应当成静态根内容验证。
+验收应同时核对静态 public scope、非空 live、最新内容日、mail 路径不可访问，以及线上 v11 的 `data/meta.json` 时间。nginx 用 `try_files` 改写路径，不能把根路径的响应当成静态根 `index.html` 的内容。
 
 停止后续同步：`systemctl disable --now news-sync.timer`，再停止/等待正在运行的 service。协调者回退时须暂停 reader 导入，并在 Linux 上用 `renameat2(RENAME_EXCHANGE)` 原子交换静态根与同级 previous，不能用两次 `mv` 制造静态根缺失窗口；恢复 private 备份前须重新确认其暴露范围。reader 已导入的数据不会随静态树回退，须按已验证的 reader 恢复流程单独处理。

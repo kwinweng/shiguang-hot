@@ -1,16 +1,46 @@
 # 拾光热榜
 
-多来源资讯聚合站：Telegram 频道、推特爆款、GitHub 热门、环球要闻、今日重点，以及 RSS / YouTube，每 30 分钟更新。
+多来源资讯聚合站。仓库里有两套站点，共用同一个 Telegram 采集库 `tg.db`：
 
-- 线上版：https://kwinweng.github.io/shiguang-hot/
-- 公开 `gh-pages` 是 `news.kwinweng.com` 与其 iOS reader 的唯一站点数据源。公开白名单包括新增的 8 个 Telegram 频道；历史归档从保留的 `tg.db` 全量重建，配图由 Box 本地媒体缓存复制发布。
-- `mail`（邮件精华）已退役，不再采集或出页；它不属于公开历史来源，删除配置后仍由隐私检查永久禁止发布。
-- `news.kwinweng.com` 每 20 分钟无凭据接收公开产物，经校验后原子替换静态树；安装、备份、reader 预检与回退见 [同步说明](deploy/README.md)。
-- 页面：今日（含时光机）/ 热点（24 小时时间轴）/ 栏目（按渠道、按标签）/ 收藏。所有来源先变成同一种条目，再由页面按时间、渠道或标签去取。
-- Box bot routine 每小时 :07/:37 构建 `site/` 并发布到 `gh-pages`；Pages 从分支根目录部署。切换与回滚见 [操作说明](docs/BOX-SCRAPER-CUTOVER.md)。
-- 代码在 `shiguang/`（收内容 → 统一 → 加工 → 出页），样式和脚本在 `web/`，工具在 `tools/`，测试在 `tests/`。
-- 架构、页面规则和 `sources.json` 字段：`ARCHITECTURE.md`；投递新内容：`INGEST.md`。
-- 设计规范：「光」视觉规范 https://claude.ai/artifact/R2fskGqeaA8ozH9e7BHfNE ，对应关系见 `ARCHITECTURE.md` 的「视觉规范」。
-- 本地预览：`NO_FETCH=1 python3 pipeline.py`，然后打开 `site/index.html`。
+| | 拾光热榜 v11（现行） | 旧站（保留运行，不再对外主推） |
+|---|---|---|
+| 线上 | https://news.kwinweng.com/ （2026-11-16 起根路径；`/rebang/` 301 到根；全站 noindex） | 仍随 gh-pages 根目录发布到 https://kwinweng.github.io/shiguang-hot/ ；news.kwinweng.com 不再提供 |
+| 内容 | 6 频道（时事/环球/财经/科技与 AI/数码/工具与项目）+ 博主 + 热搜 + 收藏 + 搜索 | 资讯 / 探索 / 我的 |
+| 代码 | `rebang/`（采集适配、建站、推送稿）、`web-v11/`（前端） | `pipeline.py`、`shiguang/`、`web/` |
+| 产物 | `site-v11/`、`var/rebang/`（均不进 git） | `site/`（不进 git） |
+| 文档 | [`docs/rebang-v1/`](docs/rebang-v1/) | [`docs/LEGACY-SITE.md`](docs/LEGACY-SITE.md)、`ARCHITECTURE.md`、`DESIGN.md`、`INGEST.md` |
 
-`screenshot.png` 是「今日」的手机端截图。
+## 先读哪些
+
+1. [`AGENTS.md`](AGENTS.md)：谁能做什么、审批红绿灯。
+2. [`HANDOFF.md`](HANDOFF.md)：现在做到哪、下一步。
+3. [`DECISIONS.md`](DECISIONS.md) / [`NOT-DOING.md`](NOT-DOING.md)：阿欢亲口定的事和定了不做的事。
+4. v11：[`docs/rebang-v1/CONTRACT.md`](docs/rebang-v1/CONTRACT.md)（数据契约）、[`docs/rebang-v1/MODULES.md`](docs/rebang-v1/MODULES.md)（各模块入口、输入输出、已知缺口）、[`docs/rebang-v1/OPERATIONS.md`](docs/rebang-v1/OPERATIONS.md)（发布链路、服务器、回退）。
+5. 采集与发布：[`docs/BOX-SCRAPER-CUTOVER.md`](docs/BOX-SCRAPER-CUTOVER.md)（`tools/box_scrape.sh`）、[`docs/SOURCE-FETCH-OPERATIONS.md`](docs/SOURCE-FETCH-OPERATIONS.md)（逐来源小时配额、blocked）、[`deploy/README.md`](deploy/README.md)（服务器 news-sync）。
+
+## 关键位置
+
+| 要找 | 在哪 |
+|---|---|
+| v11 频道、来源、博主、热搜配置 | `rebang/contract/channels.json`、`bloggers.json`、`hotsearch.json`；校验 `rebang/contract/schema.py` |
+| v11 一键刷新（抓取 → 建站 → 发布） | `tools/rebang_refresh.sh` |
+| v11 静态站构建 | `rebang/site/`（`python3 -m rebang.site`） |
+| v11 前端 | `web-v11/index.html`、`app.js`、`lib.js`、`app.css`、`features/`（收藏、搜索） |
+| 8:30 今日重点私聊稿 | `rebang/push/`（`python3 -m rebang.push --dry-run`） |
+| 英文翻译回填 | `rebang/translate/`（`python3 -m rebang.translate pending` / `fill`） |
+| TG 采集（写 `tg.db`）、旧站构建 | `pipeline.py`、`shiguang/ingest/telegram.py`、`shiguang/site/build.py` |
+| 采集 + 数据提交 + 发布 gh-pages | `tools/box_scrape.sh` → `tools/persist_action_data.sh` → `tools/publish_pages.sh` |
+| 服务器接收端 | `deploy/news-sync.sh`、`.service`、`.timer` |
+| 测试 | `tests/`（`python3 -m pytest -q`；`node --test tests/*.test.js`） |
+
+## 常用命令
+
+```sh
+sh tools/rebang_refresh.sh                 # v11 全流程（生产克隆里跑会发布）
+sh tools/rebang_refresh.sh --no-publish    # 只抓取和建站
+python3 -m rebang.site --out /tmp/site-v11 # 只建站（无 var/rebang/in 时读测试样例）
+NO_FETCH=1 python3 pipeline.py             # 旧站离线构建到 site/
+python3 -m pytest -q && node --test tests/*.test.js
+```
+
+已知基线：`tests/test_news_modules_browser.py` 的 dark 主题子用例在未改动的 main 上也失败。

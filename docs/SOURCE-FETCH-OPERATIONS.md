@@ -1,8 +1,6 @@
-# 逐来源小时采集：运行与验收说明
+# 逐来源小时采集：运行说明
 
-实现依据为 [PR #17 Spec r2 @ 32708dc](https://github.com/kwinweng/shiguang-hot/blob/32708dc900ae01bec72c78eb059c9a613fc037f2/docs/SPEC-hourly-source-dedupe-r1.md)，需求入口为 [#16](https://github.com/kwinweng/shiguang-hot/issues/16)。本文件只说明实现和运行，不复制或替代唯一 Spec 正文。
-
-2026-10-21，阿欢在产品开发会话明确批准 Spec r2，以及独立分支开发、测试和提交 PR；接受自然小时、失败退避和共享数据库范围。该授权不包含合并、部署、修改 workflow 或另一会话的自动化。
+旧站采集器（`shiguang/ingest/`，由 `tools/box_scrape.sh` 每小时 :07/:37 调用）的配额、退避与 blocked 规则。依据 [PR #17 Spec r2 @ 32708dc](https://github.com/kwinweng/shiguang-hot/blob/32708dc900ae01bec72c78eb059c9a613fc037f2/docs/SPEC-hourly-source-dedupe-r1.md)（需求 [#16](https://github.com/kwinweng/shiguang-hot/issues/16)），2026-10-21 阿欢批准。测试：`tests/test_source_scheduler.py`（临时库、假 HTTP、可控时钟，不联网）。
 
 ## 实现边界
 
@@ -22,83 +20,29 @@
 
 仅承诺同一持久数据库及成功保存状态后的串行连续运行。旧数据库副本、状态丢失、跨机器独立数据库，以及 runner 在远端保存之前崩溃，不具备严格全局只抓一次保证。完整丢失的新状态无法与首次迁移可靠区分；必须恢复已知数据库并人工核对，不能靠删状态“修复”额度。
 
-## blocked 运行责任人与通知路径
+## blocked：谁看、怎么看
 
-2026-10-21，阿欢在产品开发会话明确确认：**总控负责 blocked 运行检查，解除 blocked、恢复采集仍由阿欢本人明确审批**。责任分工已确定；总控接单、日志访问和通知交付的验收证据，等待「拾光热榜流程优化」会话回传。本 PR 不改 Luna、Reason、群巡检或任何例程。
+- 2026-10-21 阿欢确认：**总控负责 blocked 检查；解除 blocked、恢复采集须阿欢本人明确批准**。
+- 采集器向构建 stderr 输出 `fetch_status {JSON}`：正常轮次含 source、attempt_id、hour_key、result、error_code、last_checked、last_success、next_eligible_at、requests、cache_hits、new；跳过轮次含 skip_reason，blocked 源持续输出 `source_status=blocked`。时间为 UTC。
+- 检查方法：打开 box 采集日志筛 `fetch_status`，看 `result=blocked` 和 `result=skip` 且 `source_status=blocked`，另查 Pages 发布失败；不能只看退出码。日志不可读或没有状态行时报告「未取得源级健康证据」，不能记为健康。
+- 采集器只输出状态，**没有内建通知**。通知链路（复用巡检与消息通道、在 #16 记录 `[总控 状态]`）当时等「拾光热榜流程优化」会话回传验收证据，**是否已验收未确认**。
 
-采集器向现有构建 stderr 输出 `fetch_status {JSON}`。正常轮次包含 source、attempt_id、hour_key、result、error_code、last_checked、last_success、next_eligible_at、requests、cache_hits、new。跳过轮次包含 skip_reason 和源现状；blocked 的后续跳过会持续输出 `source_status=blocked`。时间为 UTC，阅读时换算北京时间。计数为本批请求尝试/缓存复用/新增条目数，不是来源健康的替代指标。
-
-通知路径按以下方案落实并验收：
-
-1. 总控打开对应 Box bot routine 的 logs/box-scrape 日志，筛选 `fetch_status`；不能只看退出码。检查 `result=blocked`，以及 `result=skip` 且 `source_status=blocked`，并单独检查 Pages 发布失败。私有来源只在私有运行日志核对，不复制到公共工单。
-2. 首次发现或阻塞原因变化时，在 #16 发布一条 `[总控 状态]` 记录：运行链接、公开 source ID、首次发现北京时间、标准 error_code、最近成功时间、影响、处理负责人。相同源同一未解决阻塞更新同一记录，不每轮刷评论。
-3. 群内通知如获授权，沿既有交接路径回到「🔥热榜开发小组」。Mac 代发以 `[Mac Codex 代发]` 开头，只真正 @总控；不代发阿欢的批准或收到口令。本 PR 不执行群发送，也不赋予采集器 GitHub 凭据或发评论能力。
-4. 若运行没有开始、日志不可读或没有预期状态行，应报告“未取得源级健康证据”，不能记为健康。总控无法履责时，替补仍由阿欢指定；未指定时暂停该来源恢复操作。
-
-主责已定总控，通知接入与验收由「拾光热榜流程优化」会话复用现有巡检和消息通道落实，不重复搭建。本 PR 的采集器只输出状态，**不内建自动通知**。上线前须回传：实际复用的例程/通道标识与改动范围、总控可读取日志的证据、明确标为测试的 blocked 演练输入与对应代码版本、各环节北京时间、工单记录链接与通知交付凭证，以及重复告警抑制、原因变化、日志读取失败和通知失败的验证结果。区分测试链路已验证与部署后才可验证的生产接入，不以工具调用成功代替实际交付。
-
-**通知验收状态：待「拾光热榜流程优化」回传，尚未验收通过。** 责任分工确认、代码测试通过均不代替该验收；证据回传并核对前，不以“全部可观测”验收上线。#18 继续保持草稿，不合并、不部署。
-
-## 人工恢复与回滚（本轮不执行）
+## 人工恢复与回滚
 
 1. 总控核对原已准入公开入口确实恢复，无需登录/cookie/验证码绕过；保留可核查的时间与证据。不能通过换域名、代理、账号或新来源规避 blocked。
 2. 总控将来源、原因、恢复证据与拟维护操作交阿欢本人另行明确批准。未获批准不解除 blocked、不恢复采集；Spec/开发批准、CI通过、机器评论都不是恢复批准。
-3. 在对应数据库采集锁下先备份完整 `tg.db`，只更新获批来源的 blocked 状态/错误及下一可尝试时间（不早于维护时刻后的下一个北京时间自然小时）。保留 last_attempt、last_success、批次、内容及 gap；不删除额度行、不复制/重建状态。具体维护命令在获批时针对实际版本准备，本 PR 无解除命令或自动恢复按钮。
-4. 等下一次获准正常运行；检查该源成功/部分失败/再次blocked，并在原记录补结论。不要手动重跑现有 box 试运行。
+3. 在对应数据库采集锁下先备份完整 `tg.db`，只更新获批来源的 blocked 状态/错误及下一可尝试时间（不早于维护时刻后的下一个北京时间自然小时）。保留 last_attempt、last_success、批次、内容及 gap；不删除额度行、不复制/重建状态。具体维护命令在获批时针对实际版本准备，仓库里没有解除命令或自动恢复按钮。
+4. 等下一次获准正常运行；检查该源成功/部分失败/再次blocked，并在原记录补结论。
 
 代码回滚时保留新数据库及内容，旧代码会忽略新表，同时也会忽略新额度规则。因此需要另行批准的维护安排，在恢复正常采集前核对影响；不通过回滚数据库恢复旧额度。原 box 试运行状态与这些产品采集表无关，本轮未读取或迁移。
 
-## 验证范围
+## 试跑来源（trial，2026-10-22 起）
 
-### 来源试跑 v1（2026-10-22）
+13 个试跑源只在 `trial-sources.json` 注册，在同一采集入口、同一锁和调度表里运行，身份前缀 `trial:`，与正式来源配额隔离，只写 `trial_item` 和状态表，不传给公开期刊发布器（旧站「探索」读它）。不自动切换 RSSHub、不下载图片、不请求 Steam JSON、豆瓣 JSON 或 Apple 文章页。网页无有效条目视为 invalid_content 并退避；401/403 及登录/验证码同样 blocked。统计：`python3 tools/trial_report.py --days 7`（只读，输出到终端和被 git 忽略的 `reports/trial/`）。
 
-13 个试跑源仅由 `trial-sources.json` 注册，每小时在现有构建采集入口执行，
-使用同一锁与调度表，身份加 `trial:` 前缀，与正式来源配额隔离。
-成功仅表示完整解析并保存，不代表可展示；零新增也更新最近成功时间。
-不自动切换 RSSHub、不下载图片、不请求 Steam JSON、豆瓣 JSON 或 Apple 文章页。
-网页无有效条目视为 invalid_content 并退避；401/403 及登录/验证码继续 blocked，须按上文审批恢复。
-试跑跳过状态包含 source_status、最近检查/成功时间及下次可抓时间，完整状态也可通过 `trial:<id>` 数据库记录核对。
-
-待阿欢在合并前再次确认豆瓣平台是否保留；第一版照接、不过滤相声曲艺、酒吧、体育赛事。
-约 10/29 用 `python tools/trial_report.py --days 7` 检查数量、RSSHub 稳定性及跨源重复，
-再决定分类、页面设计和 Steam JSON；本轮不跨源去重（只按条目 URL 唯一约束去重）。
-公开/私有离线构建分别使用：
+离线构建检查：
 
 ```sh
 NO_FETCH=1 SITE_OUT=/tmp/shiguang-public python3 pipeline.py
 SITE_MODE=private NO_FETCH=1 SITE_OUT=/tmp/shiguang-private python3 pipeline.py
 ```
-
-两条命令只读现有库，输出分别在 `/tmp/shiguang-public/`、`/tmp/shiguang-private/`。
-本轮验收使用临时库和假 HTTP，不在仓库库或生产副本上执行采集。
-隐私检查按完整来源 URL、独立域名和来源标记核对；共享 `t.me` 域名属于现有正式 TG，
-无法要求整个构建对 `t.me` 的字面命中数为零。
-
-`tests/test_source_scheduler.py` 使用临时数据库、假 HTTP 响应和可控时钟。包括实际子进程领取后退出、另一个进程持锁的忙碌只读构建；不访问真实来源或运行生产迁移。另保留原 Telegram gap、feed 解析及公开隐私回归。
-
-2026-10-21 本机 macOS / Python 3.15：新增30项离线验收全部通过，连同原采集相关测试共50项通过。完整套件113项中111项通过，剩余2项均缺少 `renameat2`；未修改的 main `60812bd` 快照同样在原83项中出现相同2项失败。Python 3.12语法解析、Python编译及 `git diff --check` 通过。本轮未修改实际 `tg.db`、workflow、来源配置、正式页面或交接分支。
-
-### 2026-10-21 代码审查与 Linux 全量回归
-
-对 #18 初版 `48cfd55` 的采集路径、状态事务、条件请求、失败恢复、缓存和隐私边界完成审查，发现并用失败用例复现后修复四项问题：
-
-| 问题 | 修复及回归 |
-| --- | --- |
-| 第一张图片 blocked/429 后，剩余图片未登记，恢复后可能永久缺图 | 下载前登记完整图片清单；临时库模拟人工解除后，下一合法批次补齐多图。 |
-| 先成功的第二张图排在后来补齐的第一张之前 | 按原图片序号合并补图，保持原图顺序。 |
-| 批次响应缓存长期持有每张原始图片正文，首轮大量采集可能耗尽内存 | 成功转换即释放原始响应；同 URL 复用已转换文件，不重复请求或转码；失败响应同样释放。 |
-| 图片引用到期后，空资源行仍无限保留 | 清理超过14天且已无引用的图片/TG页元数据，保留有效 feed 验证器和条目。 |
-
-另增加真实 curl → 本机回环 HTTP 服务的集成测试，覆盖重定向响应头、ETag 与304；没有访问真实来源。
-
-最终在本任务隔离 Ubuntu 24.04.5 LTS / Linux 6.8 ARM64 / Python 3.12.3 / Git 2.43.0 中执行：
-
-```sh
-python -m unittest discover tests -v
-```
-
-结果：**117项全部通过，0失败、0错误、0跳过**（6.835秒）。新增验收累计34项；原 Mac 受限的两项原子换站测试也在真实 Linux 上通过。依赖为 beautifulsoup4 4.15.0、Pillow 13.0.0、soupsieve 3.0.3、typing_extensions 4.16.0。首次运行因 minimal 镜像缺少 git，5项测试夹具报环境错误；只在临时 VM 补齐 git 后完整重跑通过，未因此修改代码或测试要求。
-
-测试源码快照 SHA-256 为 `52b9e7727e85750fe304523dac9fd33dd81aab7fcb3c30b00bb4bd8de5f9c81b`，归档不包含 `.git`、凭据、本机配置或原 box 试运行状态。VM 未挂载用户目录、未启用容器/生产服务，回归后关闭。完整日志随本轮交付保留；这是隔离 Linux 的实际结果，不冒充 GitHub Actions 运行或 x86_64 验证。
-
-本轮没有改 workflow、部署、自动化或原交接分支。测试通过不代替合并、部署批准或上述责任/通知路径验收。

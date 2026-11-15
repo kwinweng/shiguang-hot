@@ -11,6 +11,10 @@
 - 深链：`https://news.kwinweng.com/#/item/<id>`（`REBANG_PUBLIC_BASE` 默认 `https://news.kwinweng.com/`，经 `--public-base` 写进 `data/meta.json`；8:30 私聊稿 `python3 -m rebang.push` 读它）。
 - 旧阅读器：`shiguang-reader.service` 已 `disable --now`；`shiguang-reader-update.timer` 仍在跑（灵记的 `lingji-news-source` 只读它的 `topics.sqlite3`）；`shiguang-reader-ai.timer` 原本就是 disabled。
 
+## 定时
+- 盒子没有 cron。`tools/rebang_refresh.sh` **尚未定时**；建议在工头「热榜抓取发布」例程里 `box_scrape.sh` 之后加一行 `sh tools/rebang_refresh.sh`（同样 30 分钟一次）。X 博主与翻译（每 2 小时）、8:30 私聊的例程草稿在盒子 `/workspace/rebang-v1-briefs/`，须阿欢批准后由工头创建。
+- 手动刷新：在 `/workspace/shiguang-prod` 跑 `sh tools/rebang_refresh.sh`（约 1–2 分钟）；有新英文条目时先 `python3 -m rebang.translate pending`，译好后 `fill`，再 `sh tools/rebang_refresh.sh --no-fetch`。
+
 ## 回退
 1. 根路径回到旧阅读器：服务器恢复 `/etc/nginx/sites-available/news.kwinweng.com.conf.bak-20261115-160953-pre-root`（UTC 时间戳），`systemctl enable --now shiguang-reader.service`，`nginx -t && systemctl reload nginx`。阅读器数据备份在 `/root/backup-shiguang-reader-20261115-160953/`。
 2. 更早的状态（只有 `/rebang/` 公开）：`.bak-20261115-151539-pre-rebang`；gh-pages 上线前的头在备份分支 `gh-pages-pre-rebang-20261115`。
