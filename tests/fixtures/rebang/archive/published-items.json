@@ -1,0 +1,112 @@
+{
+ "schema": "rebang.items/1",
+ "producer": "fixture",
+ "generated_at": "2026-11-15T20:00:00+08:00",
+ "note": "合成测试数据，不是真实内容。unpublished 未交给 build，不应出现在搜索索引里。",
+ "items": [
+  {
+   "id": "tnews365:1001",
+   "kind": "news",
+   "channel": "current",
+   "source_id": "tnews365",
+   "source_name": "竹新社",
+   "title": "合成标题一",
+   "summary": "合成摘要。",
+   "body": "合成正文。",
+   "url": "https://t.me/tnews365/1001",
+   "image": null,
+   "published_at": "2026-11-15T19:00:00+08:00",
+   "fetched_at": "2026-11-15T19:07:00+08:00",
+   "lang": "zh",
+   "translated": false,
+   "highlight": false
+  },
+  {
+   "id": "bbc-world:abc123",
+   "kind": "news",
+   "channel": "world",
+   "source_id": "bbc-world",
+   "source_name": "BBC World",
+   "title": "Synthetic headline",
+   "summary": "Synthetic summary.",
+   "url": "https://example.com/a",
+   "image": {
+    "url": "https://example.com/a.jpg",
+    "width": 1200,
+    "height": 675
+   },
+   "published_at": "2026-11-15T11:00:00Z",
+   "lang": "en",
+   "translated": true,
+   "translation": {
+    "title": "合成译文标题",
+    "summary": "合成译文摘要。",
+    "engine": "box-translate",
+    "label": "机器翻译"
+   }
+  },
+  {
+   "id": "tnews365:1301",
+   "kind": "news",
+   "channel": "current",
+   "source_id": "tnews365",
+   "source_name": "竹新社",
+   "title": "十三日旧闻",
+   "summary": "用来按日期回看的前一天条目。",
+   "body": "合成正文。",
+   "url": "https://t.me/tnews365/1001",
+   "image": null,
+   "published_at": "2026-11-13T15:30:00+08:00",
+   "fetched_at": "2026-11-15T19:07:00+08:00",
+   "lang": "zh",
+   "translated": false,
+   "highlight": false
+  },
+  {
+   "id": "x-dotey:1",
+   "kind": "post",
+   "channel": null,
+   "source_id": "x-dotey",
+   "source_name": "X",
+   "title": "",
+   "summary": "合成推文正文",
+   "url": "https://x.com/dotey/status/1",
+   "published_at": "2026-11-15T10:00:00+08:00",
+   "lang": "zh",
+   "translated": false,
+   "blogger": {
+    "platform": "x",
+    "handle": "dotey",
+    "display_name": "宝玉",
+    "avatar": null,
+    "verified": true,
+    "metrics": {
+     "reply": 1,
+     "repost": 2,
+     "like": 3
+    },
+    "media": [],
+    "quote": null
+   }
+  }
+ ],
+ "unpublished": [
+  {
+   "id": "tnews365:draft",
+   "kind": "news",
+   "channel": "current",
+   "source_id": "tnews365",
+   "source_name": "竹新社",
+   "title": "未上站草稿不应出现",
+   "summary": "草稿摘要",
+   "body": "合成正文。",
+   "url": "https://t.me/tnews365/1001",
+   "image": null,
+   "published_at": "2026-11-15T12:00:00+08:00",
+   "fetched_at": "2026-11-15T19:07:00+08:00",
+   "lang": "zh",
+   "translated": false,
+   "highlight": false
+  }
+ ]
+}

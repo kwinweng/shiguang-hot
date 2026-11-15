@@ -7,6 +7,7 @@
 ## 现在做到哪
 - 2026-11-15 阶段 0：集成分支 `feat/rebang-v1`（基于 origin/main 8b5c6735e）已写数据契约 `rebang/contract/` + 契约测试 20 项全绿。
 - 6 个功能分支与 worktree 已建（`/workspace/rebang-v1-wt/<name>`），任务卡在 `docs/rebang-v1/tasks/`。
+- history-favorites-search（`feat/rebang-v1-history-favorites-search`）：归档增量、搜索索引、历史/收藏/搜索模块已完成；手机尺寸实测通过，证据 `docs/rebang-v1/evidence/history-favorites-search/`。
 - 基线（未改动的 origin/main）：pytest 228 过 / 1 失败（`test_news_modules_browser` 主题切换 dark 子用例，原样复现，非本次引入）；node 13/13；`NO_FETCH=1 python3 pipeline.py` 成功（6527 TG，0 feed，4 inbox）。
 
 ## 下一步
