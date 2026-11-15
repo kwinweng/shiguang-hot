@@ -23,7 +23,7 @@
 | `tools/` | `box_scrape.sh`/`box_scrape.py` 采集入口、`persist_action_data.sh` 提交 tg.db、`publish_pages.sh` 发布 gh-pages、`validate_feed.py` 投递校验、`screenshot.py` 截图、`build_icons.py` 生成图标、`trial_report.py` 试跑统计、`daily_summary.py` 回顾生成 |
 | `tests/` | `python3 -m unittest discover tests` |
 
-内网版的登录（登录页 + 180 天 Cookie，代替 Basic Auth）由 `tools/login_gate.py` 提供，接入 nginx/Caddy 的方法见 `PRIVATE_LOGIN.md`。
+内网版的登录（登录页 + 180 天 Cookie，代替 Basic Auth）由 `tools/login_gate.py` 提供，接入 nginx/Caddy 的方法见 `PRIVATE_LOGIN.md`。脚本仍在仓库，但 news.kwinweng.com 已不再登录；盒子上的内网预览 `/workspace/tg-local/serve.sh` 用的是 `python3 -m http.server 8766`，不用 login_gate。
 
 根目录另有几个兼容入口，给本机脚本用：`mailbuild.py`（本机定时任务调用）、`validate_feed.py`（投递 bot 调用）、`feeds.py`（`publish_public.py` 可能 `import feeds`，其 `config()` 仍返回旧字段）。本机脚本收进仓库后删除后两个。
 
@@ -121,7 +121,7 @@
 
 ## 视觉规范（「光」，`web/style.css` 部分）
 
-两模块版页面的规范见 `DESIGN.md`（`web/news-tokens.css`、`web/news.css`）；以下「光」规范对应 `web/style.css` 里仍保留的 `g-*` 组件，哪些页面还在用未逐页核对。
+两模块版页面的规范见 `DESIGN.md`（`web/news-tokens.css`、`web/news.css`）。以下「光」规范对应 `web/style.css` 里仍保留的 `g-*` 组件：旧站由 `shiguang/site/render.py` 的 `document()` 输出整页壳（`g-light`、`g-topbar`、`g-tabbar` 等），条目卡片走 `g-card` / `g-sheet`；`web/app.js`、`web/history.js` 继续读写这些类。v11（`web-v11/`）不用这套。
 
 本站遵循「光」视觉规范：https://claude.ai/artifact/R2fskGqeaA8ozH9e7BHfNE 。颜色、字号、间距、圆角、阴影、时长都取自规范的 tokens（`web/style.css` 第 1 节），组件沿用规范的类名（`g-light`、`g-lead`、`g-card`、`g-sheet`、`g-wash`、`g-pill`、`g-btn`、`g-round`、`g-topbar`、`g-tabbar`、`g-seg`、`g-panel`）。和规范的对应：
 
