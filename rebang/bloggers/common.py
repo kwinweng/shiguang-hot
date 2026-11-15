@@ -131,26 +131,57 @@ def source_id(platform, handle):
     return f'{platform}-{handle}'
 
 
+def _translate_fields(translator, item, keys, kinds, lang):
+    """先整批，失败再逐项，这样标题不必等正文。返回 ({field: zh}, engine)。"""
+    if not keys:
+        return {}, None
+    texts = [item[k] for k in keys]
+    try:
+        result = translator.translate_detailed(texts, lang, kinds)
+    except TypeError:
+        result = translator.translate_detailed(texts, lang)
+    if result is not None:
+        out, engine = result
+        return {k: zh for k, zh in zip(keys, out) if isinstance(zh, str) and zh.strip()}, engine
+    mapped, engine = {}, None
+    for key, kind in zip(keys, kinds):
+        try:
+            one = translator.translate_detailed([item[key]], lang, [kind])
+        except TypeError:
+            one = translator.translate_detailed([item[key]], lang)
+        if one and isinstance(one[0][0], str) and one[0][0].strip():
+            mapped[key] = one[0][0]
+            engine = one[1]
+    return mapped, engine
+
+
 def apply_translation(item, translator, fields=('title', 'summary', 'body')):
-    """非中文条目入库时翻译；失败 → translated=false，不编译文。"""
+    """非中文条目入库时翻译。标题和摘要有译文就先写上，不必等正文；失败的字段不编。"""
     item['translated'] = False
     if item['lang'].startswith('zh') or translator is None:
         return item
-    keys = [k for k in fields if item.get(k)]
-    # 摘要只是正文截短时只译正文，再从译文截出摘要，避免同一段话译两遍
-    derive_summary = 'body' in keys and 'summary' in keys and item['summary'] == summary_of(item['body'])
-    if derive_summary:
-        keys.remove('summary')
-    if not keys:
-        return item
-    result = translator.translate_detailed([item[k] for k in keys], item['lang'])
-    if result is None:
-        return item
-    texts, engine = result
+    present = [k for k in fields if item.get(k)]
+    derive_summary = 'body' in present and 'summary' in present and item['summary'] == summary_of(item['body'])
+    head = [k for k in present if k in ('title', 'summary')]
+    # 摘要可由正文截出时仍先试译摘要，保证列表预览不必等长正文
+    tail = [k for k in present if k == 'body']
     translation = {'title': '', 'summary': ''}
-    translation.update(dict(zip(keys, texts)))
-    if derive_summary:
-        translation['summary'] = summary_of(translation['body'])
+    mapped, engine = _translate_fields(translator, item, head, head, item['lang'])
+    translation.update(mapped)
+    body_map, body_engine = _translate_fields(translator, item, tail, ['body'] * len(tail), item['lang'])
+    if body_map.get('body'):
+        translation['body'] = body_map['body']
+        engine = body_engine or engine
+        if derive_summary:
+            translation['summary'] = summary_of(translation['body'])
+    elif 'body' in present:
+        translation['body_pending'] = True
+    if not any(translation.get(k) for k in ('title', 'summary', 'body')):
+        return item
+    if not translation.get('title'):
+        translation['title'] = item.get('title') or ''
+    if translation.get('summary') is None:
+        translation['summary'] = ''
     translation['engine'] = engine
     translation['label'] = '机器翻译'
     item['translated'] = True
@@ -166,7 +197,10 @@ def translate_comments(item, translator):
     want = [c for c in comments if c.get('text') and detect_lang(c['text']) == 'en' and not c.get('text_zh')]
     if not want:
         return
-    result = translator.translate_detailed([c['text'] for c in want], 'en')
+    try:
+        result = translator.translate_detailed([c['text'] for c in want], 'en', ['comment'] * len(want))
+    except TypeError:
+        result = translator.translate_detailed([c['text'] for c in want], 'en')
     if result is None:
         return
     texts, _engine = result

@@ -54,8 +54,11 @@ class Cache:
         self.entries[text_key(text, src_lang)] = {'src': text, 'src_lang': src_lang, 'zh': zh, 'engine': engine}
         self.pending.pop(text_key(text, src_lang), None)
 
-    def want(self, text, src_lang):
-        self.pending.setdefault(text_key(text, src_lang), {'src': text, 'src_lang': src_lang})
+    def want(self, text, src_lang, kind=None):
+        key = text_key(text, src_lang)
+        rec = self.pending.setdefault(key, {'src': text, 'src_lang': src_lang})
+        if kind and not rec.get('kind'):
+            rec['kind'] = kind
 
     def save(self):
         """先并入盘上最新内容再写（ingest 与 bloggers 共用一份缓存，先后或同时跑都不互相覆盖）。"""
@@ -88,7 +91,7 @@ class Translator:
         self.http_post = http_post or _curl_post_json
         self.errors = 0
 
-    def translate_detailed(self, texts, src_lang='en'):
+    def translate_detailed(self, texts, src_lang='en', kinds=None):
         if self.engine == 'none' or not texts:
             return None
         if src_lang.startswith('zh'):
@@ -98,9 +101,10 @@ class Translator:
             engines = {h['engine'] for h in hits}
             return [h['zh'] for h in hits], '+'.join(sorted(engines))
         if self.engine == 'cache':
-            for text, hit in zip(texts, hits):
+            for i, (text, hit) in enumerate(zip(texts, hits)):
                 if not hit:
-                    self.cache.want(text, src_lang)
+                    kind = kinds[i] if kinds and i < len(kinds) else None
+                    self.cache.want(text, src_lang, kind=kind)
             return None
         if self.engine == 'openai-compatible':
             try:
@@ -109,8 +113,9 @@ class Translator:
                 self.errors += 1
                 out = None
             if out is None:
-                for text in texts:
-                    self.cache.want(text, src_lang)
+                for i, text in enumerate(texts):
+                    kind = kinds[i] if kinds and i < len(kinds) else None
+                    self.cache.want(text, src_lang, kind=kind)
                 return None
             model = os.environ.get('REBANG_TRANSLATE_MODEL', 'unknown')
             engine = f'openai-compatible:{model}'
@@ -160,6 +165,36 @@ def _curl_post_json(url, body, headers):
     if result.returncode:
         raise RuntimeError('network')
     return json.loads(result.stdout)
+
+
+
+PENDING_LIMIT = 150  # 例程单轮建议上限
+_KIND_RANK = {'title': 0, 'summary': 1, 'preview': 1, 'comment': 3, 'body': 4, 'block': 4}
+
+
+def pending_rank(key, rec):
+    """标题、摘要优先，长正文和回复靠后。没有 kind 时按长度估计。"""
+    src = rec.get('src') or ''
+    kind = rec.get('kind')
+    if kind in _KIND_RANK:
+        return (_KIND_RANK[kind], len(src), key)
+    n = len(src)
+    # 无 kind 的短词块多半是正文小标题（Gaza、Meta），不要排到列表标题前面
+    if n <= 24 and ' ' not in src.strip() and '\n' not in src:
+        return (4, n, key)
+    if n <= 220:
+        return (0, n, key)
+    if n <= 520:
+        return (1, n, key)
+    return (4, -n, key)
+
+
+def list_pending(cache, limit=None):
+    rows = [{'key': k, **v} for k, v in cache.pending.items()]
+    rows.sort(key=lambda r: pending_rank(r['key'], r))
+    if limit is not None:
+        rows = rows[: max(0, int(limit))]
+    return rows
 
 
 _default = None

@@ -38,6 +38,24 @@ test('译文优先并标「机器翻译」，原文保留可展开', () => {
   assert.match(card, /<div class="orig" [^>]*>World<\/div>/);
 });
 
+test('标题和摘要译文立刻生效，不必等正文；未译摘要不回退到英文', () => {
+  const it = {...base, lang: 'en', title: 'Hello', summary: 'World preview', body: 'Long English body',
+    translated: true, translation: {title: '你好', summary: '世界预览', engine: 't', label: '机器翻译', body_pending: true}};
+  const d = L.display(it);
+  assert.equal(d.title, '你好');
+  assert.equal(d.summary, '世界预览');
+  assert.equal(d.bodyPending, true);
+  assert.equal(d.body, '世界预览');
+  assert.equal(d.blocks, null);
+  assert.match(L.feedRowHTML(it), /<h3>你好<\/h3><p class="sum">世界预览<\/p>/);
+  assert.doesNotMatch(L.feedRowHTML(it), /Hello|World preview/);
+  const titleOnly = {...it, translation: {title: '你好', summary: '', engine: 't', label: '机器翻译', body_pending: true}};
+  assert.equal(L.display(titleOnly).title, '你好');
+  assert.equal(L.display(titleOnly).summary, '');
+  assert.doesNotMatch(L.feedRowHTML(titleOnly), /World preview|Hello/);
+});
+
+
 test('推文卡：没有互动数就不显示，不编数字', () => {
   const post = {...base, kind: 'post', blogger: {platform: 'x', handle: 'a', display_name: 'A', media: [], quote: null}};
   assert.doesNotMatch(L.tweetCardHTML(post, true), /class="metrics"/);

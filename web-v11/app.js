@@ -401,7 +401,14 @@
     const slot = '<div class="fav-slot" data-fav-slot></div>';
     const open = it.url ? `<a class="primary" href="${L.esc(it.url)}" target="_blank" rel="noopener">打开原文</a>` : '';
     const isGrok = it.kind === 'post' && it.blogger && it.blogger.platform === 'grok';
-    const blocks = d.blocks || it.blocks;
+    const blocks = d.blocks || (d.bodyPending ? null : it.blocks);
+    if (d.bodyPending && !(d.blocks && d.blocks.length) && !(it.kind === 'post' && !isGrok)) {
+      const who = ((it.blogger || {}).display_name || it.source_name);
+      const cover = it.image && it.image.url ? `<img class="cover" src="${L.esc(it.image.url)}" alt="${L.esc(it.image.alt || '')}" data-zoom="${L.esc(it.image.url)}">` : '';
+      return `${cover}<div class="src art-src"><span>${L.esc(who)} · ${L.esc(L.fmtTime(it.published_at))}</span>${d.translated ? `<span class="mt-badge">${L.esc(d.label)}</span>` : ''}</div>
+        <h3 class="art-title">${L.esc(d.title)}</h3><p class="art-pending">${L.esc(L.BODY_PENDING)}</p>${d.summary ? `<p class="art-text">${L.esc(d.summary)}</p>` : ''}
+        <div class="actions">${slot}${open}</div>`;
+    }
     if (blocks && blocks.length && !(it.kind === 'post' && isGrok)) {
       // 公众号 / 博客 / 抽出的新闻正文：按原文顺序；有译文 blocks 时直接显示中文，原文可展开
       const b = it.blogger || {};
@@ -421,8 +428,9 @@
     const cover = it.image && it.image.url ? `<img class="cover" src="${L.esc(it.image.url)}" alt="${L.esc(it.image.alt || '')}" data-zoom="${L.esc(it.image.url)}">` : '';
     const head = `${cover}
       <div class="src art-src"><span>${L.esc(it.source_name)} · ${L.esc(L.fmtTime(it.published_at))}</span>${it.highlight ? '<span class="t-badge">今日重点</span>' : ''}${d.translated ? `<span class="mt-badge">${L.esc(d.label)}</span>` : ''}</div>`;
+    const pending = d.bodyPending ? `<p class="art-pending">${L.esc(L.BODY_PENDING)}</p>` : '';
     const main = bare ? '<div class="fwd-tag">转发</div>' :
-      `<h3 class="art-title">${L.esc(d.title)}</h3>${text || !it.quote ? `<p class="art-text${text ? '' : ' none'}">${L.esc(text || L.NO_BODY)}</p>` : ''}${orig}`;
+      `<h3 class="art-title">${L.esc(d.title)}</h3>${pending}${text || !it.quote ? `<p class="art-text${text ? '' : ' none'}">${L.esc(text || L.NO_BODY)}</p>` : ''}${orig}`;
     return `${head}${main}${L.quoteCardHTML(it, true)}${L.tgStatsHTML(it, true)}${commentsHTML(it)}
       <div class="actions">${slot}${open}</div>`;
   }

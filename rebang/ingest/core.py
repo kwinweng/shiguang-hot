@@ -466,22 +466,46 @@ def default_translator():
     return (lambda texts, src: translator.translate_detailed(texts, src)), translator.engine, translator.save
 
 
-def _translate_one(fn, texts):
-    """逐条翻；缺一段就整条不标 translated（下次缓存补齐后再上）。返回 (译文列表, engine) 或 None。"""
-    want = [t for t in texts if t.strip()]
-    if not want:
+def _call_translator(fn, texts, kinds=None):
+    """兼容测试里只收 (texts, src) 的假翻译器。"""
+    if not texts:
         return None
-    got = fn(want, 'en')
+    try:
+        got = fn(texts, 'en', kinds) if kinds is not None else fn(texts, 'en')
+    except TypeError:
+        got = fn(texts, 'en')
     if isinstance(got, tuple):
         out, engine = got
     elif got is None:
         return None
     else:
         out, engine = got, None
-    if not (isinstance(out, list) and len(out) == len(want)):
+    if not (isinstance(out, list) and len(out) == len(texts)):
         return None
-    it = iter(out)
-    return [next(it) if t.strip() else '' for t in texts], engine
+    return out, engine
+
+
+def _translate_one(fn, texts, kinds=None):
+    """一批一起翻；缺一段则逐段再试，这样标题/摘要不必等正文。返回 (译文或 None 的列表, engine) 或 None。"""
+    if not texts:
+        return None
+    got = _call_translator(fn, texts, kinds)
+    if got:
+        return got
+    out, engine, any_hit = [], None, False
+    for i, text in enumerate(texts):
+        if not (text or '').strip():
+            out.append('')
+            continue
+        kind = [kinds[i]] if kinds and i < len(kinds) else None
+        one = _call_translator(fn, [text], kind)
+        if one:
+            out.append(one[0][0])
+            engine = one[1]
+            any_hit = True
+        else:
+            out.append(None)
+    return (out, engine) if any_hit else None
 
 
 def _blocks_texts(blocks):
@@ -521,7 +545,10 @@ def apply_translation(items, translator, cache=None):
     """只翻非中文条目的标题、摘要和正文（GitHub Trending 仓库名不翻）。按条增量：
     已译过的条目（cache/translations.json，按 id+标题+摘要+正文）直接复用；新条目或新抽出的
     正文才调。默认翻译器只查 rebang.translate 缓存，缺的原文进 pending.json，等 Grok 补译后
-    （python3 -m rebang.translate fill）下次生成即带上。"""
+    （python3 -m rebang.translate fill）下次生成即带上。
+
+    标题和摘要一旦有译文就写入，不等待正文。正文稍后补上；在此之前详情页用中文摘要，并标明全文还在翻译。
+    """
     if not translator:
         return 0
     fn, default_engine = translator[0], translator[1]
@@ -540,48 +567,66 @@ def apply_translation(items, translator, cache=None):
         derive_summary = bool(body and item.get('summary') and (item['summary'] == body or body.startswith(item['summary'])))
         missing_body = bool(body) and not (hit and hit.get('body'))
         missing_blocks = bool(item.get('blocks')) and not (hit and hit.get('blocks'))
-        if not hit or missing_body or missing_blocks:
-            keep_title = item['source_id'] == 'github-trending'
-            texts, slots = [], []
-            if not hit:
-                if not keep_title:
-                    texts.append(item['title']); slots.append('title')
-                if not derive_summary:
-                    texts.append(item['summary']); slots.append('summary')
-                if body:
-                    texts.append(body); slots.append('body')
-            else:
-                # 标题摘要已有，只补正文 / 正文块
-                if missing_body:
-                    texts.append(body); slots.append('body')
-            bkeys, btexts = ([], [])
-            if missing_blocks or (not hit and item.get('blocks')):
-                bkeys, btexts = _blocks_texts(item.get('blocks'))
-                texts.extend(btexts)
-            result = _translate_one(fn, texts) if texts else None
+        keep_title = item['source_id'] == 'github-trending'
+        # 1) 标题和摘要单独翻，不被长正文拖住
+        if not hit or not hit.get('title') or hit.get('summary') is None:
+            texts, slots, kinds = [], [], []
+            if not keep_title and not (hit and hit.get('title')):
+                texts.append(item['title']); slots.append('title'); kinds.append('title')
+            need_summary = not (hit and hit.get('summary') is not None)
+            src_sum = item.get('summary') or ''
+            if need_summary and src_sum.strip() and (not derive_summary or not (hit and hit.get('body'))):
+                texts.append(src_sum); slots.append('summary'); kinds.append('summary')
+            result = _translate_one(fn, texts, kinds) if texts else None
             if result:
-                out, engine = result
-                mapped = dict(zip(slots, out[:len(slots)]))
+                out, engine = (result or ([], None))
+                mapped = {slot: zh for slot, zh in zip(slots, out) if isinstance(zh, str) and zh.strip()}
                 title = item['title'] if keep_title else mapped.get('title') or (hit or {}).get('title')
-                trans_body = mapped.get('body') or (hit or {}).get('body')
                 summary = mapped.get('summary')
                 if summary is None:
-                    if derive_summary and trans_body:
-                        summary = _summary_from_body(trans_body)
-                    else:
-                        summary = (hit or {}).get('summary')
+                    summary = (hit or {}).get('summary')
+                if summary is None and not src_sum.strip():
+                    summary = ''
+                # 标题已译、摘要还在排队时先上标题，预览暂空，避免英文摘要出现在列表；下次仍会重试摘要
+                summary_pending = False
+                if summary is None and (title or '').strip():
+                    summary, summary_pending = '', True
                 if (title or '').strip() and summary is not None:
-                    hit = store[key(item)] = {
+                    prev = dict(hit or {})
+                    prev.update({
                         'title': title, 'summary': summary,
-                        'engine': engine or ((hit or {}).get('engine')) or default_engine,
-                    }
-                    if trans_body:
-                        hit['body'] = trans_body
-                    if bkeys:
-                        hit['blocks'] = _apply_block_texts(item['blocks'], bkeys, out[len(slots):])
-                    elif hit and (store.get(key(item)) or {}).get('blocks'):
-                        pass
+                        'engine': engine or prev.get('engine') or default_engine,
+                    })
+                    if summary_pending:
+                        prev['summary_pending'] = True
+                    else:
+                        prev.pop('summary_pending', None)
+                    hit = store[key(item)] = prev
                     changed = True
+        # 2) 正文和 blocks 另一次，缺了也不撤掉已有的标题/摘要
+        if hit and (missing_body or missing_blocks):
+            texts, slots, kinds = [], [], []
+            bkeys, btexts = ([], [])
+            if missing_body:
+                texts.append(body); slots.append('body'); kinds.append('body')
+            if missing_blocks:
+                bkeys, btexts = _blocks_texts(item.get('blocks'))
+                texts.extend(btexts)
+                kinds.extend(['block'] * len(btexts))
+            result = _translate_one(fn, texts, kinds) if texts else None
+            if result:
+                out, engine = result
+                mapped = {slot: zh for slot, zh in zip(slots, out[:len(slots)]) if isinstance(zh, str) and zh.strip()}
+                trans_body = mapped.get('body') or hit.get('body')
+                if trans_body:
+                    hit['body'] = trans_body
+                    if derive_summary:
+                        hit['summary'] = _summary_from_body(trans_body)
+                if bkeys and all(isinstance(x, str) and x.strip() for x in out[len(slots):]):
+                    hit['blocks'] = _apply_block_texts(item['blocks'], bkeys, out[len(slots):])
+                hit['engine'] = engine or hit.get('engine') or default_engine
+                store[key(item)] = hit
+                changed = True
         if not hit:
             continue
         item['translated'] = True
@@ -590,6 +635,8 @@ def apply_translation(items, translator, cache=None):
             trans['body'] = hit['body']
         if hit.get('blocks'):
             trans['blocks'] = hit['blocks']
+        if (body or item.get('blocks')) and not hit.get('body') and not hit.get('blocks'):
+            trans['body_pending'] = True
         item['translation'] = trans
         done += 1
     if changed and store_path:

@@ -6,6 +6,7 @@
   const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
   const NO_SUMMARY = '这条没有正文摘要。';
   const NO_BODY = '这条没有正文，可以点「打开原文」看原始内容。';
+  const BODY_PENDING = '全文译文还在准备，下面先放摘要。可打开原文阅读。';
   const HOT_FAIL = '暂时取不到。抓到之前这里空着，不编排名。';
 
   function esc(s) {
@@ -53,12 +54,20 @@
   /** 卡片摘要：去掉开头裸露的链接（TG 频道常把原文链接放在第一行），正文页仍显示完整内容 */
   function cardText(t) { return String(t || '').replace(/^(?:\s*https?:\/\/\S+)+\s*/, ''); }
   function display(item) {
-    const tr = item.translated && item.translation;
-    const shown = tr ? {title: tr.title || '', summary: cardText(tr.summary), body: tr.body || item.body || '',
-      blocks: tr.blocks || null} :
-      {title: item.title || '', summary: cardText(item.summary), body: item.body || '', blocks: null};
-    return {...shown, translated: !!tr, label: tr ? (tr.label || '机器翻译') : '',
-      orig: tr ? {title: item.title || '', summary: item.summary || '', body: item.body || '', blocks: item.blocks || null} : null};
+    const tr = item.translation || {};
+    const hasTr = !!(item.translated && (tr.title || tr.summary || tr.body || tr.blocks));
+    const title = (hasTr && tr.title) ? tr.title : (item.title || '');
+    // 标题已译、摘要还在排队时，列表不回退到英文预览
+    const summary = cardText((hasTr && tr.summary) ? tr.summary : ((hasTr && (item.summary || '').trim()) ? '' : item.summary));
+    const hasBodyTr = !!(tr.body || tr.blocks);
+    const hasOrigBody = !!(item.body || (item.blocks && item.blocks.length));
+    const bodyPending = !!(hasTr && hasOrigBody && !hasBodyTr) || !!tr.body_pending;
+    // 全文还没译好时，详情不要先铺英文长文；列表和详情都用已有的中文摘要
+    const body = hasBodyTr ? (tr.body || '') : (bodyPending ? summary : (item.body || ''));
+    const blocks = tr.blocks || null;
+    return {title, summary, body, blocks, bodyPending, translated: hasTr,
+      label: hasTr ? (tr.label || '机器翻译') : '',
+      orig: hasTr ? {title: item.title || '', summary: item.summary || '', body: item.body || '', blocks: item.blocks || null} : null};
   }
   /** 列表小图：有地址就显示。宽高限制只用于挑 banner，不挡住信息流里的图。 */
   function thumbOk(image) {
@@ -227,7 +236,7 @@
   }
   function itemHash(id) { return '#/item/' + encodeURIComponent(id); }
 
-  const Lib = {TZ, NO_SUMMARY, NO_BODY, HOT_FAIL, esc, beijingDate, fmtTime, fmtDay, fmtRefreshed, fmtN, display, thumbOk,
+  const Lib = {TZ, NO_SUMMARY, NO_BODY, BODY_PENDING, HOT_FAIL, esc, beijingDate, fmtTime, fmtDay, fmtRefreshed, fmtN, display, thumbOk,
     tgStatsHTML, quoteCardHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, tweetCardHTML, rowHTML, parseItemHash, itemHash, ICO};
   if (typeof module !== 'undefined' && module.exports) module.exports = Lib;
   else root.RebangLib = Lib;

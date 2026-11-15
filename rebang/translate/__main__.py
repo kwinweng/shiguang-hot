@@ -1,5 +1,5 @@
 """译文缓存维护：
-  python3 -m rebang.translate pending [--cache PATH]              # 打印待译原文（JSON）
+  python3 -m rebang.translate pending [--cache PATH] [--limit N]  # 打印待译原文（JSON，标题和摘要优先）
   python3 -m rebang.translate fill FILE --engine NAME [--cache PATH]
 FILE 为 JSON 数组 [{"src": 原文, "src_lang": "en", "zh": 译文}]，或 {key: 译文}（key 来自 pending）。
 engine 写实际做翻译的东西（例如 grok-bot）。原文必须与 pending 里逐字一致才会入缓存。
@@ -8,7 +8,7 @@ import argparse
 import json
 import sys
 
-from . import Cache, text_key
+from . import Cache, list_pending, text_key
 
 
 def main(argv=None):
@@ -17,10 +17,11 @@ def main(argv=None):
     ap.add_argument('file', nargs='?')
     ap.add_argument('--engine')
     ap.add_argument('--cache')
+    ap.add_argument('--limit', type=int, default=None, help='pending 最多输出多少条；例程建议 150')
     args = ap.parse_args(argv)
     cache = Cache(args.cache)
     if args.cmd == 'pending':
-        json.dump([{'key': k, **v} for k, v in cache.pending.items()], sys.stdout, ensure_ascii=False, indent=1)
+        json.dump(list_pending(cache, args.limit), sys.stdout, ensure_ascii=False, indent=1)
         print()
         return 0
     if not args.file or not args.engine:
