@@ -75,4 +75,4 @@ journalctl -u news-sync.service -n 30 --no-pager
 
 验收应同时核对静态 public scope、非空 live、最新内容日、mail 路径不可访问，以及线上 v11 的 `data/meta.json` 时间。nginx 用 `try_files` 改写路径，不能把根路径的响应当成静态根 `index.html` 的内容。
 
-停止后续同步：`systemctl disable --now news-sync.timer`，再停止/等待正在运行的 service。协调者回退时须暂停 reader 导入，并在 Linux 上用 `renameat2(RENAME_EXCHANGE)` 原子交换静态根与同级 previous，不能用两次 `mv` 制造静态根缺失窗口；恢复 private 备份前须重新确认其暴露范围。reader 已导入的数据不会随静态树回退，须按已验证的 reader 恢复流程单独处理。
+停止后续同步：`systemctl disable --now news-sync.timer`，再停止/等待正在运行的 service。协调者回退时，在 Linux 上用 `renameat2(RENAME_EXCHANGE)` 原子交换静态根与同级 previous，不能用两次 `mv` 制造静态根缺失窗口。2026-11-16 已按确认删除旧阅读器/旧站/private 迁移备份；不要再按已删除的 `/var/backups/news-kwinweng-pre-public-20261107.tar.gz` 或 `/root/backup-shiguang-reader-*` 恢复。灵记仍只读线上 `/var/lib/shiguang-reader/topics.sqlite3`，此库保留。详见 [`docs/rebang-v1/OPERATIONS.md`](../docs/rebang-v1/OPERATIONS.md)。
