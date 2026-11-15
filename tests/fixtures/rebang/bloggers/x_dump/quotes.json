@@ -1,0 +1,59 @@
+{
+ "data": [
+  {
+   "author_id": "913314383526223872",
+   "created_at": "2026-11-15T10:10:56.000Z",
+   "edit_history_post_ids": [
+    "2121908804900270506"
+   ],
+   "id": "2121908804900270506",
+   "lang": "zh",
+   "text": "提示词的时代已经结束。\n\n“反复截图，直到每一个元素都达到 9 分，否则不要退出你的工作循环”\n\nLLM 知道什么是 9 分，也知道如何到达 9 分。之所以到不了，全是因为你在那儿瞎 Jb 指挥。",
+   "url": "https://x.com/chunxiangai/status/2121908804900270506"
+  },
+  {
+   "attachments": {
+    "media_keys": [
+     "13_2121290575877926913",
+     "3_2121290774297845760"
+    ]
+   },
+   "author_id": "1577241403",
+   "created_at": "2026-11-13T17:16:30.000Z",
+   "edit_history_post_ids": [
+    "2121291126803980696"
+   ],
+   "id": "2121291126803980696",
+   "lang": "en",
+   "note_tweet": {
+    "text": "More progress!\n\nInterior AI 3D works with \"just\" a floor plan now\n\nNot much information to work with and it has to imagine furniture etc. but it works\n\nSome weird things like the big I guess sliding windows to outdoor garden are missing, and bath tub is just a box, and I don't see a toilet seat etc. so we need it to become a bit more granular/specific/advanced\n\nBut it's very promising\n\nIt was really impossible until recently do to floor plan to 3d automatically and properly!"
+   },
+   "referenced_tweets": [
+    {
+     "id": "2121263608310948173",
+     "type": "quoted"
+    }
+   ],
+   "text": "More progress!\n\nInterior AI 3D works with \"just\" a floor plan now\n\nNot much information to work with and it has to imagine furniture etc. but it works\n\nSome weird things like the big I guess sliding windows to outdoor garden are missing, and bath tub is just a box, and I don't https://t.co/GzvLJX7Rvr https://t.co/2MGf0HDBH0",
+   "url": "https://x.com/levelsio/status/2121291126803980696"
+  }
+ ],
+ "includes": {
+  "users": [
+   {
+    "id": "913314383526223872",
+    "name": "赵纯想",
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2100601213226291200/rWK8IknA_normal.jpg",
+    "username": "chunxiangai",
+    "verified": false
+   },
+   {
+    "id": "1577241403",
+    "name": "@levelsio",
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2077111020305162240/PwddgOau_normal.jpg",
+    "username": "levelsio",
+    "verified": false
+   }
+  ]
+ }
+}
