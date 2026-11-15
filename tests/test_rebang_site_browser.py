@@ -133,8 +133,10 @@ class SiteBrowserTests(unittest.TestCase):
         self.open()
         page = self.page.locator('.page-b[data-ch=current]')
         self.assertEqual(page.locator('.feed-row').count(), 30)
-        self.assertEqual(page.locator('.feed-row:not(.noimg)').count(), 2, '只有合格图（banner 用剩的）显示左图；小图不合格与无图走标题+摘要')
-        self.assertIn('这条没有正文摘要', page.locator('.feed-row[data-id="tnews365:9"]').inner_text())
+        # banner 仍只挑合格大图；列表里凡是有图（含短边不够 banner 标准的 tnews365:8）都显示缩略图
+        self.assertEqual(page.locator('.feed-row:not(.noimg)').count(), 3, '有图的列表项都显示缩略图（含短边 < 240 的）')
+        self.assertEqual(page.locator('.feed-row[data-id="tnews365:8"]:not(.noimg)').count(), 1)
+        self.assertIn('这条没有正文摘要', page.locator('.feed-row[data-id="tnews365:9"]').inner_text(), '无图且无摘要才显示占位句')
         for _ in range(6):
             page.evaluate('e => e.scrollTop = e.scrollHeight')
             self.page.wait_for_timeout(300)

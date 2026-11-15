@@ -12,11 +12,13 @@ test('无图卡片：标题 + 3 行摘要 + 来源时间；没有摘要如实说
   assert.match(html, /<h3>标题<\/h3><p class="sum">摘要<\/p>/);
   assert.match(html, /竹新社<\/span><span>11月15日 19:00<\/span>/);
   assert.match(L.feedRowHTML({...base, summary: ''}), /<p class="sum none">这条没有正文摘要。<\/p>/);
+  assert.doesNotMatch(L.feedRowHTML({...base, summary: '', image: {url: 'https://i/a.jpg', width: 200, height: 100}}), /这条没有正文摘要/);
 });
 
-test('有图卡片左图右文；图尺寸不合格退回无图样式；宽高未知先显示', () => {
+test('有图卡片左图右文；有地址就显示，不再用短边限制挡住列表图', () => {
   assert.match(L.feedRowHTML({...base, image: {url: 'https://i/a.jpg', width: 1200, height: 675}}), /class="feed-row" .*<div class="thumb"><img src="https:\/\/i\/a.jpg"/);
-  assert.match(L.feedRowHTML({...base, image: {url: 'https://i/a.jpg', width: 200, height: 100}}), /feed-row noimg/);
+  assert.match(L.feedRowHTML({...base, image: {url: 'https://i/a.jpg', width: 200, height: 100}}), /class="feed-row" .*<div class="thumb"><img src="https:\/\/i\/a.jpg"/);
+  assert.doesNotMatch(L.feedRowHTML({...base, image: {url: 'https://i/a.jpg', width: 200, height: 100}}), /feed-row noimg/);
   assert.match(L.feedRowHTML({...base, image: {url: 'media/a.webp'}}), /<img src="media\/a.webp"/);
 });
 

@@ -158,6 +158,23 @@ def apply_translation(item, translator, fields=('title', 'summary', 'body')):
     return item
 
 
+def translate_comments(item, translator):
+    """英文回复译成中文，原文留在 text，译文放 text_zh。失败只保留原文，不编。中文回复不动。"""
+    if translator is None:
+        return
+    comments = (item.get('blogger') or {}).get('comments') or []
+    want = [c for c in comments if c.get('text') and detect_lang(c['text']) == 'en' and not c.get('text_zh')]
+    if not want:
+        return
+    result = translator.translate_detailed([c['text'] for c in want], 'en')
+    if result is None:
+        return
+    texts, _engine = result
+    for c, zh in zip(want, texts):
+        if isinstance(zh, str) and zh.strip():
+            c['text_zh'] = zh.strip()
+
+
 # ---------- 按原文顺序的正文块（公众号 / 博客文章页忠实还原：段落、标题、图片、引用、列表） ----------
 
 _SKIP_TAGS = {'script', 'style', 'noscript', 'iframe', 'svg', 'form', 'button', 'input', 'mp-common-profile',

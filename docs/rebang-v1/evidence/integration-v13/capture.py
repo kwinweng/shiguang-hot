@@ -115,6 +115,16 @@ def main():
         check('底栏 = 频道/博主/热搜/收藏', tabs == ['频道', '博主', '热搜', '收藏'], tabs=tabs)
         check('历史页已去掉', page.locator('#view-history').count() == 0)
         check('频道里没有热搜块', page.locator('#channelRoot .hot').count() == 0)
+        tb = page.locator('.tabbar').bounding_box()
+        check('底栏贴在视口最底部', tb and abs((tb['y'] + tb['height']) - 844) <= 1, box=tb)
+        page.add_style_tag(content=':root{--safe-bot:34px !important}')
+        page.wait_for_timeout(40)
+        tb2 = page.evaluate("""() => { const el = document.querySelector('.tabbar'), btn = el.querySelector('button');
+          const r = el.getBoundingClientRect(), b = btn.getBoundingClientRect();
+          return {bottom: r.bottom, height: r.height, btnBottom: b.bottom, vh: window.innerHeight}; }""")
+        check('模拟 home indicator 后底栏仍贴底，按钮在安全区上方',
+              abs(tb2['bottom'] - 844) <= 1 and tb2['btnBottom'] <= 844 - 33, **tb2)
+        page.evaluate("() => { [...document.querySelectorAll('style')].forEach(s => { if ((s.textContent||'').includes('--safe-bot:34px')) s.remove(); }); }")
         if page.locator('#previewNote').is_visible():
             page.locator('#previewNote button').tap()
         meta = get('meta.json')
@@ -374,8 +384,30 @@ def main():
         # ===== 博主：平台行吸顶、公众号正文、下拉刷新、双击回顶 =====
         page.locator('.tabbar [data-view=blogger]').tap()
         page.wait_for_selector('#platChips [data-plat]')
+        chip = page.locator('#platChips .chip').first.bounding_box()
+        check('博主平台图标左内边距不少于正文边距（16px）', chip and chip['x'] >= 16, left=round(chip['x']) if chip else None)
+        blog_txt = page.locator('#view-blogger').inner_text()
+        check('博主页已去掉平台标题和说明句', '已定的博主帖子' not in blog_txt and page.locator('#platName').count() == 0)
         page.locator('[data-plat=x]').tap()
         page.wait_for_selector('#bloggerList .tweet, #bloggerList .feed-row')
+        # 点 X 帖子里的图打开全屏查看，不打开详情、不触发频道横滑
+        zimg = page.locator('#bloggerList img[data-zoom]').first
+        if zimg.count():
+            zimg.scroll_into_view_if_needed()
+            page.wait_for_timeout(200)
+            zimg.tap()
+            page.wait_for_selector('#zoomView.on')
+            check('点博主图片打开全屏查看器', page.locator('#zoomView.on').count() == 1 and page.locator('#articleView.on').count() == 0)
+            shot('zoom-x')
+            page.locator('#zoomView').evaluate("e => e.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}))")
+            # close via JS in case key event is on document
+            page.evaluate("() => { const ev = new KeyboardEvent('keydown', {key:'Escape', bubbles:true}); document.dispatchEvent(ev); }")
+            page.wait_for_timeout(200)
+            if page.locator('#zoomView.on').count():
+                page.evaluate("() => { const v = document.querySelector('#zoomView'); v.hidden = true; v.classList.remove('on'); }")
+            check('关闭查看器后回到博主列表', page.locator('#zoomView.on').count() == 0 and page.locator('#view-blogger.on').count() == 1)
+        else:
+            check('点博主图片打开全屏查看器', False, reason='当前 X 列表没有可点的图')
         for _ in range(3):
             swipe(200, 720, 200, 220, ms=300)
         r, ok = sticky_ok('#view-blogger .sub', '#view-blogger .sticky-hd')
@@ -683,6 +715,29 @@ def main():
         more_btns = page.locator('.block-a .more-btn').count()
         check('上下模式「继续看」按钮保留', more_btns > 0, buttons=more_btns)
         page.locator('#modeLR').tap()
+        # 白天 / 暗黑跟随系统
+        def theme_bg(scheme):
+            page.emulate_media(color_scheme=scheme)
+            page.wait_for_timeout(150)
+            return page.evaluate("() => getComputedStyle(document.querySelector('.app')).backgroundColor")
+        dark_bg = theme_bg('dark')
+        page.locator('.tabbar [data-view=channels]').tap()
+        shot('theme-dark-channels')
+        light_bg = theme_bg('light')
+        shot('theme-light-channels')
+        page.locator('.tabbar [data-view=blogger]').tap(); page.wait_for_timeout(200); shot('theme-light-blogger')
+        page.locator('.tabbar [data-view=hot]').tap(); page.wait_for_timeout(200); shot('theme-light-hot')
+        page.locator('.tabbar [data-view=favorites]').tap(); page.wait_for_timeout(200); shot('theme-light-favorites')
+        theme_bg('dark')
+        check('白天和暗黑背景不同，并跟随 prefers-color-scheme', dark_bg != light_bg, dark=dark_bg, light=light_bg)
+        # 环球列表可见标题不应残留未翻译英文（已标翻译的卡片用中文标题）
+        page.locator('.tabbar [data-view=channels]').tap()
+        page.locator('#channelRoot').evaluate('e => e.scrollLeft = e.clientWidth')
+        page.wait_for_timeout(300)
+        titles = page.evaluate("""() => [...document.querySelectorAll('.page-b[data-ch=world] .feed-row:has(.mt-badge) h3')].map(e => e.innerText)""")
+        import re as _re
+        leftover = [x for x in titles if x and _re.search(r'[A-Za-z]{6,}', x) and not _re.search(r'[一-鿿]', x)]
+        check('环球已译卡片的标题是中文', not leftover, leftover=leftover[:5], n=len(titles))
         check('页面无脚本错误', not errors, errors=errors[:5])
         check('无 4xx/5xx 请求', not bad, bad=bad[:5])
         browser.close()

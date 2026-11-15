@@ -126,6 +126,57 @@ def test_x_dump_builds_real_cards():
     assert c['text'] and not c['text'].startswith('@') and c['url'].startswith('https://x.com/')
 
 
+
+def test_x_reply_store_merges_comments(tmp_path):
+    """持久回复缓存与 dump 分开放，刷新时仍能补到评论，不会只活在单次 dump 里。"""
+    import json, shutil
+    from rebang.bloggers.x import load_dump, merge_reply_store, x_posts
+    dump = tmp_path / 'x-dump' / 'run1'
+    dump.mkdir(parents=True)
+    src = FX / 'x_dump'
+    for f in src.iterdir():
+        if f.is_file():
+            shutil.copy2(f, dump / f.name)
+    # 先确认：不依赖 store 时已有的评论来自 dump 自身；再造一条只存在于 store 的回复
+    posts, users, media = load_dump(dump)
+    # 选一条主帖
+    main = next(p for p in posts.values() if p.get('_main'))
+    rid = '9000000000000000001'
+    uid = '9000000000000000002'
+    store = tmp_path / 'x-replies' / 'store.json'
+    store.parent.mkdir(parents=True)
+    store.write_text(json.dumps({
+        'schema': 'rebang.x-replies-store/1',
+        'posts': {
+            main['id']: {
+                'fetched_at': '2026-11-16T01:40:00+08:00',
+                'count': 1,
+                'response': {
+                    'data': [{
+                        'id': rid,
+                        'author_id': uid,
+                        'conversation_id': main['id'],
+                        'text': 'This is a cached top reply about the post.',
+                        'created_at': '2026-11-15T12:00:00.000Z',
+                        'public_metrics': {'like_count': 42, 'reply_count': 0, 'retweet_count': 0, 'quote_count': 0},
+                    }],
+                    'includes': {'users': [{'id': uid, 'name': 'Cache User', 'username': 'cacheuser',
+                                            'profile_image_url': 'https://pbs.twimg.com/profile_images/x_normal.jpg'}]},
+                },
+            }
+        },
+    }, ensure_ascii=False), encoding='utf-8')
+    posts, users, media = load_dump(dump)
+    assert rid in posts
+    assert users[uid]['username'] == 'cacheuser'
+    by = x_posts((posts, users, media), platform('x'), NOW.isoformat())
+    items = [i for v in by.values() for i in v]
+    target = next(i for i in items if i['id'].endswith(':' + main['id']) or i['url'].endswith(main['id']))
+    comments = target['blogger']['comments']
+    cached = [c for c in comments if c['handle'] == 'cacheuser']
+    assert cached and cached[0]['like'] == 42 and cached[0]['text'] == 'This is a cached top reply about the post.'
+
+
 def test_x_accounts_without_posts_are_empty_not_invented(tmp_path):
     env = run_all(tmp_path)
     x = next(p for p in env['platforms'] if p['id'] == 'x')

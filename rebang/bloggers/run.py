@@ -9,7 +9,7 @@ from rebang.contract.schema import ITEMS_SCHEMA, load_bloggers, validate_items_e
 
 from . import weibo as weibo_mod
 from . import x as x_mod
-from .common import apply_translation, iso, parse_time
+from .common import apply_translation, iso, parse_time, translate_comments
 from .feed import FeedError, feed_posts
 
 PRODUCER = 'bloggers'
@@ -232,6 +232,7 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
     for item in items:
         if item.get('fetched_at') == fetched_at:  # 只翻本次新抓的；沿用的旧条目保持原样
             apply_translation(item, translator, ('title', 'summary') if item['blogger']['platform'] == 'blog' else ('title', 'summary', 'body'))
+            translate_comments(item, translator)
     if translator is not None:
         translator.save()
     seen, unique = set(), []

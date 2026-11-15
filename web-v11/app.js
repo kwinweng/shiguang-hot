@@ -204,7 +204,6 @@
       return `<button type="button" class="chip logo${p.id === plat ? ' on' : ''}" data-plat="${p.id}" aria-label="${L.esc(p.name)}" title="${L.esc(p.name)}">${platIcon(p)}${n ? `<span class="unread" aria-label="${n} 条 24 小时内的新帖">${n}</span>` : ''}</button>`;
     }).join('');
     const p = platOf(plat);
-    $('#platName').textContent = p ? p.name : '';
     const mine = posts().filter(x => x.blogger.platform === plat);
     const avatarOf = h => (mine.find(x => x.blogger.handle === h && x.blogger.avatar) || {blogger: {}}).blogger.avatar;
     $('#peopleRow').innerHTML = p && p.accounts.length ? `<button type="button" class="ppl${person === 'all' ? ' on' : ''}" data-person="all"><span class="ph-av letter">全</span><span>全部</span></button>` +
@@ -402,12 +401,14 @@
     const slot = '<div class="fav-slot" data-fav-slot></div>';
     const open = it.url ? `<a class="primary" href="${L.esc(it.url)}" target="_blank" rel="noopener">打开原文</a>` : '';
     const isGrok = it.kind === 'post' && it.blogger && it.blogger.platform === 'grok';
-    if (it.kind === 'post' && !isGrok && it.blocks && it.blocks.length) {
-      // 公众号 / 博客文章：按原文顺序的段落、标题、图片、引用、列表；不另放封面和九宫格（避免重复）
+    const blocks = d.blocks || it.blocks;
+    if (blocks && blocks.length && !(it.kind === 'post' && isGrok)) {
+      // 公众号 / 博客 / 抽出的新闻正文：按原文顺序；有译文 blocks 时直接显示中文，原文可展开
       const b = it.blogger || {};
-      const trBox = d.translated ? `<div class="art-tr"><span class="mt-badge">${L.esc(d.label)}</span><p>${L.esc(d.summary)}</p><p class="cmt-note">下面是原文。</p></div>` : '';
-      return `<div class="src art-src"><span>${L.esc(b.display_name || it.source_name)} · ${L.esc(L.fmtTime(it.published_at))}</span></div>
-        <h3 class="art-title">${L.esc(d.title)}</h3>${trBox}<div class="art-blocks" data-blocks>${L.blocksHTML(it.blocks)}</div>
+      const who = (b.display_name || it.source_name);
+      const origBlocks = d.translated && it.blocks && d.blocks ? `<div class="art-tools"><button type="button" class="orig-btn" data-art-orig>看原文</button></div><div class="art-orig" data-art-orig-box><div class="art-blocks">${L.blocksHTML(it.blocks)}</div></div>` : '';
+      return `<div class="src art-src"><span>${L.esc(who)} · ${L.esc(L.fmtTime(it.published_at))}</span>${d.translated ? `<span class="mt-badge">${L.esc(d.label)}</span>` : ''}</div>
+        <h3 class="art-title">${L.esc(d.title)}</h3><div class="art-blocks" data-blocks>${L.blocksHTML(blocks)}</div>${origBlocks}
         <div class="actions">${slot}${open}</div>`;
     }
     if (it.kind === 'post' && !isGrok) return `${L.tweetCardHTML(it, false)}<div class="actions">${slot}${open}</div>`;
@@ -417,7 +418,8 @@
     if (first && first === d.title.replace(/[【】\s]/g, '')) text = text.slice(text.indexOf('\n') + 1 || text.length).trim();
     const orig = d.translated ? `<div class="art-tools"><button type="button" class="orig-btn" data-art-orig>看原文</button></div><div class="art-orig" data-art-orig-box><h4>${L.esc(d.orig.title)}</h4>${L.esc(d.orig.body || d.orig.summary)}</div>` : '';
     const bare = L.isBareForward(it);
-    const head = `${it.image && it.image.url ? `<img class="cover" src="${L.esc(it.image.url)}" alt="${L.esc(it.image.alt || '')}">` : ''}
+    const cover = it.image && it.image.url ? `<img class="cover" src="${L.esc(it.image.url)}" alt="${L.esc(it.image.alt || '')}" data-zoom="${L.esc(it.image.url)}">` : '';
+    const head = `${cover}
       <div class="src art-src"><span>${L.esc(it.source_name)} · ${L.esc(L.fmtTime(it.published_at))}</span>${it.highlight ? '<span class="t-badge">今日重点</span>' : ''}${d.translated ? `<span class="mt-badge">${L.esc(d.label)}</span>` : ''}</div>`;
     const main = bare ? '<div class="fwd-tag">转发</div>' :
       `<h3 class="art-title">${L.esc(d.title)}</h3>${text || !it.quote ? `<p class="art-text${text ? '' : ' none'}">${L.esc(text || L.NO_BODY)}</p>` : ''}${orig}`;
@@ -652,6 +654,7 @@
   function setPtr(show, txt, spin) { const ptr = $('#ptr'); ptr.style.top = $('.top').offsetHeight + 'px'; ptr.hidden = !show; ptr.classList.toggle('show', !!show); ptr.classList.toggle('spin', !!spin); if (txt) ptr.querySelector('.ptr-txt').textContent = txt; }
   function resetCard(card) { if (!card) return; card.style.transition = 'transform .22s cubic-bezier(.2,.8,.2,1)'; card.style.transform = ''; delete card.dataset.swipe; setTimeout(() => { card.style.transition = ''; card.classList.remove('swiping'); }, 230); }
   function onTouchStart(e) {
+    if (zoom.open || e.target.closest('#zoomView')) { g = null; return; }
     if (e.touches.length !== 1) { g = null; return; }
     const t = e.touches[0], target = e.target;
     const inArticle = !!target.closest('#articleView');
@@ -750,10 +753,112 @@
     else if (root._gAbort) { root._gAbort.abort(); root._gAbort = null; root.style.transform = ''; root.classList.remove('is-drag'); }   // 上下模式：频道横滑解绑，横滑留给卡片
   }
 
+  /* ---------- 图片全屏查看（现有栈，不另加依赖）：点开、左右滑、双指缩放、点空白或下滑关闭 ---------- */
+  const zoom = {urls: [], i: 0, open: false, scale: 1, tx: 0, ty: 0, start: null};
+  function zoomUrlsFrom(img) {
+    const grid = img.closest('[data-zoom-list]');
+    if (grid && grid.dataset.zoomList) {
+      const urls = grid.dataset.zoomList.split('|').filter(Boolean);
+      const i = Math.max(0, urls.indexOf(img.dataset.zoom || img.src));
+      return {urls, i: i < 0 ? 0 : i};
+    }
+    const scope = img.closest('.article-body, .tweet, .feed-row, .hero, .row-item, .more-body, .art-orig') || document;
+    const urls = [];
+    scope.querySelectorAll('img[data-zoom]').forEach(el => { const u = el.dataset.zoom || el.currentSrc || el.src; if (u && !urls.includes(u)) urls.push(u); });
+    const cur = img.dataset.zoom || img.currentSrc || img.src;
+    const i = Math.max(0, urls.indexOf(cur));
+    return {urls: urls.length ? urls : [cur], i: i < 0 ? 0 : i};
+  }
+  function zoomPaint() {
+    const stage = $('#zoomStage'), img = stage.querySelector('img');
+    if (!img) return;
+    img.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
+    $('#zoomCount').textContent = `${zoom.i + 1} / ${zoom.urls.length}`;
+    $('#zoomPrev').disabled = zoom.urls.length < 2;
+    $('#zoomNext').disabled = zoom.urls.length < 2;
+  }
+  function zoomGo(i) {
+    if (!zoom.urls.length) return;
+    zoom.i = (i + zoom.urls.length) % zoom.urls.length;
+    zoom.scale = 1; zoom.tx = 0; zoom.ty = 0;
+    const stage = $('#zoomStage');
+    stage.innerHTML = `<img src="${L.esc(zoom.urls[zoom.i])}" alt="">`;
+    zoomPaint();
+  }
+  function openZoom(img) {
+    const got = zoomUrlsFrom(img);
+    zoom.urls = got.urls; zoom.i = got.i; zoom.open = true; zoom.scale = 1; zoom.tx = 0; zoom.ty = 0;
+    const view = $('#zoomView'); view.hidden = false; view.classList.add('on');
+    zoomGo(zoom.i);
+  }
+  function closeZoom() {
+    zoom.open = false; zoom.start = null;
+    const view = $('#zoomView'); view.classList.remove('on'); view.hidden = true;
+    $('#zoomStage').innerHTML = '';
+  }
+  function bindZoom() {
+    const view = $('#zoomView'), stage = $('#zoomStage');
+    $('#zoomPrev').onclick = ev => { ev.stopPropagation(); zoomGo(zoom.i - 1); };
+    $('#zoomNext').onclick = ev => { ev.stopPropagation(); zoomGo(zoom.i + 1); };
+    view.addEventListener('click', ev => { if (ev.target === view || ev.target === stage || ev.target === stage.querySelector('img') && zoom.scale <= 1) { /* tap handled in touchend */ } });
+    view.addEventListener('touchstart', ev => {
+      ev.stopPropagation();
+      const pts = ev.touches;
+      if (pts.length === 2) {
+        const dx = pts[1].clientX - pts[0].clientX, dy = pts[1].clientY - pts[0].clientY;
+        zoom.start = {mode: 'pinch', dist: Math.hypot(dx, dy), scale: zoom.scale, x: (pts[0].clientX + pts[1].clientX) / 2, y: (pts[0].clientY + pts[1].clientY) / 2, tx: zoom.tx, ty: zoom.ty};
+      } else if (pts.length === 1) {
+        zoom.start = {mode: 'drag', x: pts[0].clientX, y: pts[0].clientY, tx: zoom.tx, ty: zoom.ty, t0: performance.now(), moved: false};
+      }
+    }, {passive: false});
+    view.addEventListener('touchmove', ev => {
+      ev.preventDefault(); ev.stopPropagation();
+      if (!zoom.start) return;
+      const pts = ev.touches;
+      if (zoom.start.mode === 'pinch' && pts.length === 2) {
+        const dist = Math.hypot(pts[1].clientX - pts[0].clientX, pts[1].clientY - pts[0].clientY);
+        zoom.scale = Math.max(1, Math.min(5, zoom.start.scale * (dist / (zoom.start.dist || 1))));
+        if (zoom.scale === 1) { zoom.tx = 0; zoom.ty = 0; }
+        zoomPaint();
+      } else if (zoom.start.mode === 'drag' && pts.length === 1) {
+        const dx = pts[0].clientX - zoom.start.x, dy = pts[0].clientY - zoom.start.y;
+        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) zoom.start.moved = true;
+        if (zoom.scale > 1) { zoom.tx = zoom.start.tx + dx; zoom.ty = zoom.start.ty + dy; }
+        else { zoom.tx = dx * 0.9; zoom.ty = dy * 0.9; }
+        zoomPaint();
+      }
+    }, {passive: false});
+    view.addEventListener('touchend', ev => {
+      ev.stopPropagation();
+      const s = zoom.start; zoom.start = null;
+      if (!s) return;
+      if (s.mode === 'drag' && zoom.scale <= 1) {
+        const dx = zoom.tx, dy = zoom.ty, dt = performance.now() - s.t0;
+        zoom.tx = 0; zoom.ty = 0; zoomPaint();
+        if (!s.moved || (Math.abs(dx) < 10 && Math.abs(dy) < 10 && dt < 350)) { closeZoom(); return; }
+        if (dy > 80 && Math.abs(dy) > Math.abs(dx)) { closeZoom(); return; }
+        if (Math.abs(dx) > 60 && zoom.urls.length > 1) zoomGo(zoom.i + (dx < 0 ? 1 : -1));
+        else zoomPaint();
+      }
+    });
+    view.addEventListener('touchcancel', () => { zoom.start = null; if (zoom.scale <= 1) { zoom.tx = 0; zoom.ty = 0; zoomPaint(); } });
+    document.addEventListener('keydown', ev => {
+      if (!zoom.open) return;
+      if (ev.key === 'Escape') closeZoom();
+      else if (ev.key === 'ArrowLeft') zoomGo(zoom.i - 1);
+      else if (ev.key === 'ArrowRight') zoomGo(zoom.i + 1);
+    });
+  }
+
   /* ---------- 事件 ---------- */
   function onClick(e) {
     const t = e.target;
     if (performance.now() < suppressClickUntil) { e.preventDefault(); e.stopPropagation(); return; }
+    const zhit = t.closest('img[data-zoom], .media-grid .cell, .post-cover, .feed-row .thumb, .b-img');
+    if (zhit && !zoom.open) {
+      const img = zhit.matches && zhit.matches('img') ? zhit : zhit.querySelector('img[data-zoom], img');
+      if (img && (img.dataset.zoom || img.src)) { e.preventDefault(); e.stopPropagation(); openZoom(img); return; }
+    }
     const nav = t.closest('[data-nav]'); if (nav) { step(Number(nav.dataset.nav)); return; }
     const orig = t.closest('[data-orig]');
     if (orig) { e.stopPropagation(); const box = $(`[data-orig-box="${CSS.escape(orig.dataset.orig)}"]`); if (box) { const on = box.classList.toggle('on'); orig.textContent = on ? '收起原文' : '看原文'; } return; }
@@ -779,6 +884,7 @@
     $('#when').textContent = L.fmtDay(new Date());
     $$('.tabbar button').forEach(b => b.addEventListener('click', () => onTab(b.dataset.view)));
     bindTouch();
+    bindZoom();
     $('#cardMenu').addEventListener('click', onMenu);
     // 收藏 / 搜索模块自己的列表（data-item-id）点开时，也带上「上一条/下一条」的列表
     document.addEventListener('click', e => {
