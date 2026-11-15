@@ -17,7 +17,7 @@ METRIC_MAP = {
     'reply_count': 'reply', 'retweet_count': 'repost', 'repost_count': 'repost', 'like_count': 'like',
     'quote_count': 'quote', 'bookmark_count': 'bookmark', 'impression_count': 'view',
 }
-MAX_COMMENTS = 3
+MAX_COMMENTS = 10
 REF_PREFIXES = ('quotes', 'replies', 'refs')
 _TCO = re.compile(r'\s*https://t\.co/\w+\s*$')
 
@@ -79,7 +79,56 @@ def load_dump(path):
                             merged[k] = v
     for pid in main_ids:
         posts[pid]['_main'] = True
+    store = reply_store_near(path)
+    if store:
+        merge_reply_store(posts, users, store)
     return posts, users, media
+
+
+def reply_store_near(dump):
+    """x-dump 根目录或某次子目录旁边的持久回复缓存：../x-replies/store.json。"""
+    p = Path(dump)
+    if p.is_file():
+        p = p.parent
+    for base in (p, p.parent):
+        cand = base.parent / 'x-replies' / 'store.json'
+        if cand.is_file():
+            return cand
+    return None
+
+
+def merge_reply_store(posts, users, path):
+    """把缓存里的原始搜索响应并进 posts/users（只补评论，不加 _main，不会变成博主卡片）。"""
+    path = Path(path)
+    if not path.is_file():
+        return posts, users
+    try:
+        data = json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return posts, users
+    blobs = []
+    if isinstance(data, dict) and isinstance(data.get('posts'), dict):
+        for entry in data['posts'].values():
+            if isinstance(entry, dict) and isinstance(entry.get('response'), dict):
+                blobs.append(entry['response'])
+    elif isinstance(data, list):
+        blobs = [b for b in data if isinstance(b, dict)]
+    elif isinstance(data, dict) and ('data' in data or 'includes' in data):
+        blobs = [data]
+    for blob in blobs:
+        inc = blob.get('includes') or {}
+        for u in inc.get('users') or []:
+            if isinstance(u, dict) and u.get('id'):
+                users.setdefault(u['id'], {}).update(u)
+        rows = list(blob.get('data') or []) + list(inc.get('posts') or []) + list(inc.get('tweets') or [])
+        for post in rows:
+            if not (isinstance(post, dict) and post.get('id')):
+                continue
+            merged = posts.setdefault(post['id'], {})
+            for k, v in post.items():
+                if k not in merged or (k == 'text' and len(str(v)) > len(str(merged.get(k) or ''))):
+                    merged[k] = v
+    return posts, users
 
 
 def _full_text(post):
@@ -161,10 +210,13 @@ def _comments(post, posts, users):
         text = re.sub(r'^(?:@\w+\s+)+', '', _full_text(r)).strip()
         if not (author.get('username') and text and moment):
             continue
-        out.append({'handle': author['username'], 'display_name': author.get('name', author['username']),
-                    'avatar': _avatar(author), 'text': text, 'published_at': iso(moment),
-                    'url': f'https://x.com/{author["username"]}/status/{r["id"]}',
-                    'like': (r.get('public_metrics') or {}).get('like_count')})
+        row = {'handle': author['username'], 'display_name': author.get('name', author['username']),
+               'avatar': _avatar(author), 'text': text, 'published_at': iso(moment),
+               'url': f'https://x.com/{author["username"]}/status/{r["id"]}'}
+        like = (r.get('public_metrics') or {}).get('like_count')
+        if isinstance(like, int) and like >= 0:
+            row['like'] = like
+        out.append(row)
     return out
 
 

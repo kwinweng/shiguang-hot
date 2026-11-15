@@ -484,10 +484,43 @@ def _translate_one(fn, texts):
     return [next(it) if t.strip() else '' for t in texts], engine
 
 
+def _blocks_texts(blocks):
+    """抽出 blocks 里待译文本，返回 (定位键, 文本列表)。定位键是 (下标, 'text' 或条目下标)。"""
+    keys, texts = [], []
+    for i, block in enumerate(blocks or []):
+        if block.get('type') in ('p', 'h', 'quote', 'pre') and block.get('text'):
+            keys.append((i, 'text'))
+            texts.append(block['text'])
+        elif block.get('type') in ('ul', 'ol'):
+            for j, line in enumerate(block.get('items') or []):
+                if line:
+                    keys.append((i, j))
+                    texts.append(line)
+    return keys, texts
+
+
+def _apply_block_texts(blocks, keys, texts):
+    import copy
+    out = copy.deepcopy(blocks)
+    for (i, field), zh in zip(keys, texts):
+        if field == 'text':
+            out[i]['text'] = zh
+        else:
+            out[i]['items'][field] = zh
+    return out
+
+
+def _summary_from_body(body, limit=300):
+    body = (body or '').strip()
+    if len(body) <= limit:
+        return body
+    return body[:limit].rstrip()
+
+
 def apply_translation(items, translator, cache=None):
-    """只翻非中文条目的标题 + 卡片摘要（GitHub Trending 仓库名不翻）。按条增量：
-    已译过的条目（cache/translations.json，按 id+标题+摘要）直接复用，不再调翻译；新条目才调。
-    默认翻译器只查 rebang.translate 缓存，缺的原文进 pending.json，等 Grok 补译后
+    """只翻非中文条目的标题、摘要和正文（GitHub Trending 仓库名不翻）。按条增量：
+    已译过的条目（cache/translations.json，按 id+标题+摘要+正文）直接复用；新条目或新抽出的
+    正文才调。默认翻译器只查 rebang.translate 缓存，缺的原文进 pending.json，等 Grok 补译后
     （python3 -m rebang.translate fill）下次生成即带上。"""
     if not translator:
         return 0
@@ -497,32 +530,74 @@ def apply_translation(items, translator, cache=None):
         store = json.loads(store_path.read_text(encoding='utf-8')) if store_path else {}
     except (OSError, ValueError):
         store = {}
-    key = lambda i: _sha(i['id'] + '\n' + i['title'] + '\n' + i['summary'])  # noqa: E731
+    key = lambda i: _sha(i['id'] + '\n' + i['title'] + '\n' + i['summary'] + '\n' + (i.get('body') or ''))  # noqa: E731
     done, changed = 0, False
     for item in items:
         if item['lang'].startswith('zh') or item['lang'] == 'und':
             continue
         hit = store.get(key(item))
-        if not hit:
+        body = (item.get('body') or '').strip()
+        derive_summary = bool(body and item.get('summary') and (item['summary'] == body or body.startswith(item['summary'])))
+        missing_body = bool(body) and not (hit and hit.get('body'))
+        missing_blocks = bool(item.get('blocks')) and not (hit and hit.get('blocks'))
+        if not hit or missing_body or missing_blocks:
             keep_title = item['source_id'] == 'github-trending'
-            texts = ([] if keep_title else [item['title']]) + [item['summary']]
-            result = _translate_one(fn, texts)
-            if not result:
-                continue
-            out, engine = result
-            title = item['title'] if keep_title else out[0]
-            if not (title or '').strip():
-                continue
-            hit = store[key(item)] = {'title': title, 'summary': out[-1], 'engine': engine or default_engine}
-            changed = True
+            texts, slots = [], []
+            if not hit:
+                if not keep_title:
+                    texts.append(item['title']); slots.append('title')
+                if not derive_summary:
+                    texts.append(item['summary']); slots.append('summary')
+                if body:
+                    texts.append(body); slots.append('body')
+            else:
+                # 标题摘要已有，只补正文 / 正文块
+                if missing_body:
+                    texts.append(body); slots.append('body')
+            bkeys, btexts = ([], [])
+            if missing_blocks or (not hit and item.get('blocks')):
+                bkeys, btexts = _blocks_texts(item.get('blocks'))
+                texts.extend(btexts)
+            result = _translate_one(fn, texts) if texts else None
+            if result:
+                out, engine = result
+                mapped = dict(zip(slots, out[:len(slots)]))
+                title = item['title'] if keep_title else mapped.get('title') or (hit or {}).get('title')
+                trans_body = mapped.get('body') or (hit or {}).get('body')
+                summary = mapped.get('summary')
+                if summary is None:
+                    if derive_summary and trans_body:
+                        summary = _summary_from_body(trans_body)
+                    else:
+                        summary = (hit or {}).get('summary')
+                if (title or '').strip() and summary is not None:
+                    hit = store[key(item)] = {
+                        'title': title, 'summary': summary,
+                        'engine': engine or ((hit or {}).get('engine')) or default_engine,
+                    }
+                    if trans_body:
+                        hit['body'] = trans_body
+                    if bkeys:
+                        hit['blocks'] = _apply_block_texts(item['blocks'], bkeys, out[len(slots):])
+                    elif hit and (store.get(key(item)) or {}).get('blocks'):
+                        pass
+                    changed = True
+        if not hit:
+            continue
         item['translated'] = True
-        item['translation'] = {'title': hit['title'], 'summary': hit['summary'], 'engine': hit['engine'], 'label': MT}
+        trans = {'title': hit['title'], 'summary': hit['summary'], 'engine': hit['engine'], 'label': MT}
+        if hit.get('body'):
+            trans['body'] = hit['body']
+        if hit.get('blocks'):
+            trans['blocks'] = hit['blocks']
+        item['translation'] = trans
         done += 1
     if changed and store_path:
         _write_json(store_path, store)
     if len(translator) > 2 and callable(translator[2]):
         translator[2]()
     return done
+
 
 
 # ---------- 入口 ----------
@@ -551,6 +626,9 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
     items += extra; statuses.append(hstatus)
     if translator == 'default':
         translator = default_translator()
+    from rebang.extract import apply_extraction
+    extract_cache = Path(cache) / 'extract' if cache else Path(DEFAULT_CACHE) / 'extract'
+    extracted = apply_extraction(items, extract_cache, fetch=fetch, http_get=http_get or default_http_get, now=now)
     translated = apply_translation(items, translator, cache)
     unique = {}
     for item in items:
@@ -558,7 +636,8 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
     ordered = sorted(unique.values(), key=lambda i: i['published_at'], reverse=True)
     return {'schema': ITEMS_SCHEMA, 'producer': PRODUCER, 'generated_at': _iso(now), 'items': ordered,
             'sources': statuses, 'translation': {'available': bool(translator), 'translated': translated,
-                                              'untranslated': sum(1 for i in ordered if not i['lang'].startswith('zh') and i['lang'] != 'und' and not i.get('translated'))}}
+                                              'untranslated': sum(1 for i in ordered if not i['lang'].startswith('zh') and i['lang'] != 'und' and not i.get('translated'))},
+            'extraction': extracted}
 
 
 def write_envelope(envelope, out):

@@ -54,17 +54,15 @@
   function cardText(t) { return String(t || '').replace(/^(?:\s*https?:\/\/\S+)+\s*/, ''); }
   function display(item) {
     const tr = item.translated && item.translation;
-    const shown = tr ? {title: tr.title || '', summary: cardText(tr.summary), body: tr.body || ''} :
-      {title: item.title || '', summary: cardText(item.summary), body: item.body || ''};
+    const shown = tr ? {title: tr.title || '', summary: cardText(tr.summary), body: tr.body || item.body || '',
+      blocks: tr.blocks || null} :
+      {title: item.title || '', summary: cardText(item.summary), body: item.body || '', blocks: null};
     return {...shown, translated: !!tr, label: tr ? (tr.label || '机器翻译') : '',
-      orig: tr ? {title: item.title || '', summary: item.summary || '', body: item.body || ''} : null};
+      orig: tr ? {title: item.title || '', summary: item.summary || '', body: item.body || '', blocks: item.blocks || null} : null};
   }
-  /** 卡片小图：有地址；已知宽高时须合格（短边≥240、比例 0.6–2.4），未知宽高先显示、坏图在前端退回无图 */
+  /** 列表小图：有地址就显示。宽高限制只用于挑 banner，不挡住信息流里的图。 */
   function thumbOk(image) {
-    if (!image || !image.url) return false;
-    const {width: w, height: h} = image;
-    if (w && h) return Math.min(w, h) >= 240 && w / h >= 0.6 && w / h <= 2.4;
-    return true;
+    return !!(image && image.url);
   }
   function metaLine(item, d) {
     const hl = item.highlight ? '<span class="hl">今日重点</span>' : '';
@@ -100,11 +98,12 @@
     if (isBareForward(item)) {
       body = `<div class="fwd-tag">转发</div>${quoteCardHTML(item, false)}${metaLine(item, d)}${tgStatsHTML(item, false)}`;
     } else {
-      const sum = d.summary.trim() ? `<p class="sum">${esc(d.summary)}</p>` : (item.quote ? '' : `<p class="sum none">${NO_SUMMARY}</p>`);
+      const sum = d.summary.trim() ? `<p class="sum">${esc(d.summary)}</p>` :
+        (item.quote || thumbOk(item.image) ? '' : `<p class="sum none">${NO_SUMMARY}</p>`);
       body = `<h3>${esc(d.title)}</h3>${sum}${quoteCardHTML(item, false)}${metaLine(item, d)}${tgStatsHTML(item, false)}`;
     }
     if (thumbOk(item.image)) {
-      return `<article class="feed-row" data-id="${esc(item.id)}"><div class="thumb"><img src="${esc(item.image.url)}" alt="" loading="lazy" decoding="async"></div><div>${body}</div></article>`;
+      return `<article class="feed-row" data-id="${esc(item.id)}"><div class="thumb"><img src="${esc(item.image.url)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(item.image.url)}"></div><div>${body}</div></article>`;
     }
     return `<article class="feed-row noimg" data-id="${esc(item.id)}">${body}</article>`;
   }
@@ -120,14 +119,14 @@
       if (b.type === 'img') {
         if (b.missing) return '<div class="b-img-missing" data-img-missing>这张图没存下来，点下方「打开原文」看。</div>';
         const dims = b.width && b.height ? ` width="${esc(b.width)}" height="${esc(b.height)}"` : '';
-        return `<figure class="b-img"><img src="${esc(b.src)}" alt="${esc(b.alt || '')}" loading="lazy" decoding="async"${dims}></figure>`;
+        return `<figure class="b-img"><img src="${esc(b.src)}" alt="${esc(b.alt || '')}" loading="lazy" decoding="async"${dims} data-zoom="${esc(b.src)}"></figure>`;
       }
       return '';
     }).join('');
   }
   function heroHTML(item) {
     const d = display(item);
-    return `<article class="hero" data-id="${esc(item.id)}"><img src="${esc(item.image.url)}" alt=""><div class="cap"><div class="src">${esc(item.source_name)}${d.translated ? ' · ' + esc(d.label) : ''}</div><h3>${esc(d.title)}</h3></div></article>`;
+    return `<article class="hero" data-id="${esc(item.id)}"><img src="${esc(item.image.url)}" alt="" data-zoom="${esc(item.image.url)}"><div class="cap"><div class="src">${esc(item.source_name)}${d.translated ? ' · ' + esc(d.label) : ''}</div><h3>${esc(d.title)}</h3></div></article>`;
   }
   function bannerHTML(slug, items) {
     if (!items || !items.length) return '';
@@ -169,10 +168,11 @@
     const show = media.slice(0, 4);
     const extra = media.length > 4 ? media.length - 4 : 0;
     const n = media.length >= 5 ? 5 : show.length;
-    return `<div class="media-grid n${n}">` + show.map((m, i) => {
+    const all = media.map(m => m.preview_url || m.url).filter(Boolean);
+    return `<div class="media-grid n${n}" data-zoom-list="${esc(all.join('|'))}">` + show.map((m, i) => {
       const vid = m.type === 'video' || m.type === 'gif';
       const src = m.preview_url || m.url;
-      return `<div class="cell"><img src="${esc(src)}" alt="" loading="lazy">${vid ? `<div class="vid-mark"><i>${ICO.play}</i></div>` : ''}${i === show.length - 1 && extra ? `<div class="more-ph">+${extra}</div>` : ''}</div>`;
+      return `<div class="cell"><img src="${esc(src)}" alt="" loading="lazy" data-zoom="${esc(src)}">${vid ? `<div class="vid-mark"><i>${ICO.play}</i></div>` : ''}${i === show.length - 1 && extra ? `<div class="more-ph">+${extra}</div>` : ''}</div>`;
     }).join('') + '</div>';
   }
   function avatar(src, cls = '') {
@@ -187,7 +187,13 @@
     const tools = d.translated ? `<div class="t-tools"><span class="t-badge">${esc(d.label)}</span><button type="button" class="orig-btn" data-orig="${esc(key)}">看原文</button></div><div class="orig" data-orig-box="${esc(key)}">${esc(d.orig.body || d.orig.summary)}</div>` : '';
     const q = b.quote;
     const quote = q ? `<div class="quote"><div class="hd">${avatar(q.avatar, 'av')}<div><div class="nm">${esc(q.display_name || q.handle)}</div><div class="meta">@${esc(q.handle)}${q.published_at ? ' · ' + esc(fmtTime(q.published_at)) : ''}</div></div></div><div class="t-body">${esc(q.text)}</div></div>` : '';
-    const cm = !clamp && (b.comments || []).length ? `<div class="comments"><h4>评论</h4><p class="cmt-note">只预览抓到的前几条，完整讨论请打开原文。</p>${b.comments.slice(0, 8).map(c => `<div class="comment">${avatar(c.avatar, 'av')}<div><div class="nm" style="font-size:13px">${esc(c.display_name || c.handle)} <span class="meta">@${esc(c.handle)}${c.published_at ? ' · ' + esc(fmtTime(c.published_at)) : ''}</span></div><div class="t-body">${esc(c.text)}</div></div></div>`).join('')}</div>` : '';
+    const comments = (b.comments || []).slice(0, 10);
+    const cm = !clamp && comments.length ? `<div class="comments"><h4>热门回复</h4><p class="cmt-note">按点赞排序，最多 10 条。完整讨论请打开原文。</p>${comments.map(c => {
+      const text = c.text_zh || c.text;
+      const like = Number.isInteger(c.like) ? `<span class="meta c-like">♥ ${esc(fmtN(c.like))}</span>` : '';
+      const mt = c.text_zh ? '<span class="mt-badge">机器翻译</span>' : '';
+      return `<div class="comment">${avatar(c.avatar, 'av')}<div><div class="nm" style="font-size:13px">${esc(c.display_name || c.handle)} <span class="meta">@${esc(c.handle)}${c.published_at ? ' · ' + esc(fmtTime(c.published_at)) : ''}</span>${like}${mt}</div><div class="t-body">${esc(text)}</div></div></div>`;
+    }).join('')}</div>` : '';
     const m = b.metrics || {};
     const metric = (k) => (Number.isInteger(m[k]) ? `<span>${ICO[k]}${fmtN(m[k])}</span>` : '');
     const metrics = ['reply', 'repost', 'like'].some(k => Number.isInteger(m[k])) ? `<div class="metrics">${metric('reply')}${metric('repost')}${metric('like')}</div>` : '';
@@ -195,7 +201,7 @@
     const title = d.title ? `<div class="b-title">${esc(d.title)}</div>` : '';
     if (clamp && item.blocks && item.blocks.length) {
       // 文章类帖子（公众号/博客）：列表里只放标题、摘要和一张封面，正文按原文顺序在详情里
-      const cover = item.image && item.image.url ? `<div class="post-cover"><img src="${esc(item.image.url)}" alt="" loading="lazy"></div>` : '';
+      const cover = item.image && item.image.url ? `<div class="post-cover"><img src="${esc(item.image.url)}" alt="" loading="lazy" data-zoom="${esc(item.image.url)}"></div>` : '';
       const sum = d.summary ? `<div class="t-body clamp">${esc(d.summary)}</div>` : '';
       return `<article class="tweet article-post" data-id="${esc(item.id)}"><div class="hd">${avatar(b.avatar)}<div style="flex:1;min-width:0"><div class="nm">${esc(b.display_name || b.handle)}</div><div class="meta">${esc(fmtTime(item.published_at))}${d.translated ? ' · ' + esc(d.label) : ''}</div></div></div>${title}${sum}${cover}</article>`;
     }
@@ -204,10 +210,11 @@
   /** 历史/收藏/搜索通用行 */
   function rowHTML(item) {
     const d = display(item);
-    const img = item.image && item.image.url ? item.image.url : (item.blogger && item.blogger.avatar) || '';
+    const real = item.image && item.image.url ? item.image.url : '';
+    const img = real || (item.blogger && item.blogger.avatar) || '';
     const who = item.kind === 'post' ? (item.blogger.display_name || item.blogger.handle) : item.source_name;
     const title = d.title || d.summary;
-    return `<article class="row-item${img ? '' : ' noimg'}" data-id="${esc(item.id)}">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : ''}<div><div class="src">${esc(who)} · ${esc(fmtTime(item.published_at))}</div><h3>${esc(title)}</h3></div></article>`;
+    return `<article class="row-item${img ? '' : ' noimg'}" data-id="${esc(item.id)}">${img ? `<img src="${esc(img)}" alt="" loading="lazy"${real ? ` data-zoom="${esc(real)}"` : ''}>` : ''}<div><div class="src">${esc(who)} · ${esc(fmtTime(item.published_at))}</div><h3>${esc(title)}</h3></div></article>`;
   }
   /** 深链：#/item/<urlencoded id>（push-0830 私聊稿）与旧式 #item-<id> */
   function parseItemHash(hash) {

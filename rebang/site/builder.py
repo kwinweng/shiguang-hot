@@ -239,6 +239,22 @@ def build_hot_archive(current, hot_in, data, report, archive_dir, today):
     report['hotsearch_archive'] = {'saved': saved, 'days': [d for d, _ in days]}
 
 
+def _resolve_local_path(local):
+    """相对 path 按仓库根目录或当前目录解析，避免在别的 worktree 建站时把图丢掉。"""
+    raw = Path(str((local or {}).get('path') or ''))
+    rel = str((local or {}).get('rel') or '').replace('\\', '/').lstrip('/')
+    candidates = [raw]
+    if not raw.is_absolute():
+        roots = [Path.cwd(), Path(__file__).resolve().parents[2]]
+        candidates += [root / raw for root in roots]
+        if rel and '..' not in rel.split('/'):
+            candidates += [root / rel for root in roots]
+    for cand in candidates:
+        if cand.is_file():
+            return cand
+    return raw
+
+
 def localize_images(items, site):
     """ingest 给的本地图（image_local{path, rel?, width, height}）复制进 site/media/，改写成站内相对地址 image。
     已有网络图 image.url 的不动；文件不在就当无图（不编图）。返回复制张数。"""
@@ -248,7 +264,7 @@ def localize_images(items, site):
             if block.get('type') != 'img':
                 continue
             local = block.pop('local', None)
-            src = Path(str((local or {}).get('path') or ''))
+            src = _resolve_local_path(local)
             rel = str((local or {}).get('rel') or '').replace('\\', '/').lstrip('/')
             if local and src.is_file() and rel and '..' not in rel.split('/'):
                 rel = rel if rel.startswith('media/') else 'media/' + rel
@@ -266,7 +282,7 @@ def localize_images(items, site):
         local = item.pop('image_local', None)
         if item.get('image') or not isinstance(local, dict):
             continue
-        src = Path(str(local.get('path') or ''))
+        src = _resolve_local_path(local)
         if not src.is_file():
             continue
         rel = str(local.get('rel') or '').replace('\\', '/').lstrip('/')
