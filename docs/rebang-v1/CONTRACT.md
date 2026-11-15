@@ -1,6 +1,6 @@
 # 拾光热榜 v1 数据契约
 
-集成分支 `feat/rebang-v1` 所有。各功能分支**只读**本契约；要改字段、频道或目录，先回集成分支改契约和 `tests/test_rebang_contract.py`，再让各分支 rebase。依据：`/workspace/deliverables/daily-site/docs/architecture-plan-v1-20261115.md`（2026-11-15）。
+要改字段、频道或目录，先改本契约和 `tests/test_rebang_contract.py`，再改生产者和前端。（11/15 开发期按功能分支划分，现已全部合入 main。）依据：`/workspace/deliverables/daily-site/docs/architecture-plan-v1-20261115.md`（2026-11-15）。
 
 ## 1. 唯一真相
 
@@ -11,7 +11,7 @@
 | `rebang/contract/bloggers.json` | 博主平台与名单：X 16、Grok bot 4（今日重点/推特爆款/环球要闻/GitHub 热门，`curated-inbox`，11/15 21:26 从主题频道移来）、博客 7、即刻 9、微博 6、公众号 6、知乎 0 |
 | `rebang/contract/schema.py` | 纯标准库校验：`validate_item` / `validate_items_envelope` / `validate_hotsearch` |
 
-旧 `sources.json` 和 `shiguang/` 继续驱动现有线上站与 TG 采集（写 `tg.db`），新版**复用**而不改它们的行为。
+旧 `sources.json` 和 `shiguang/` 继续驱动 TG 采集（写 `tg.db`）和旧站（现状见 `docs/LEGACY-SITE.md`），新版**复用**而不改它们的行为。
 
 ## 2. 统一条目（`rebang.items/1`）
 
@@ -52,24 +52,28 @@
 - 换提供方：改 `hotsearch.json` + 增删适配器文件，前端不动。
 - 归档：每次抓取后 `rebang/hotsearch/archive.py` 把至少一家 ok 的快照存成 `var/rebang/hotsearch-archive/<北京日期>.json`，同一天只留最后一次可用的，保留 60 天；全部失败的那次不覆盖当天已有的。
 
-## 4. 目录约定（按分支划地盘，减少冲突）
+## 4. 模块目录
 
-| 目录 | 归属分支 |
+| 模块 | 代码与测试 |
 |---|---|
-| `rebang/contract/`、`docs/rebang-v1/CONTRACT.md`、`tests/test_rebang_contract.py`、`HANDOFF.md` | 集成 `feat/rebang-v1` |
-| `rebang/ingest/`、`tests/test_rebang_ingest*.py`、`tests/fixtures/rebang/ingest/` | `feat/rebang-v1-sources-ingest` |
-| `rebang/hotsearch/`、`tests/test_rebang_hotsearch*.py`、`tests/fixtures/rebang/hotsearch/` | `feat/rebang-v1-hotsearch` |
-| `rebang/bloggers/`、`rebang/translate/`、`tests/test_rebang_bloggers*.py`、`tests/fixtures/rebang/bloggers/` | `feat/rebang-v1-bloggers` |
-| `rebang/site/`、`web-v11/`（除 `web-v11/features/`）、`tests/test_rebang_site*.py`、`tests/rebang_site*.test.js` | `feat/rebang-v1-frontend-v11` |
-| `rebang/archive/`、`web-v11/features/`、`tests/test_rebang_archive*.py`、`tests/rebang_features*.test.js` | `feat/rebang-v1-history-favorites-search` |
-| `rebang/push/`、`tests/test_rebang_push*.py` | `feat/rebang-v1-push-0830` |
+| 契约 | `rebang/contract/`、`tests/test_rebang_contract.py` |
+| 资讯来源 ingest | `rebang/ingest/`、`tests/test_rebang_ingest*.py`、`tests/fixtures/rebang/ingest/` |
+| TG 附加信息 tgmeta | `rebang/tgmeta/`、`tests/test_rebang_tgmeta*.py` |
+| 热搜 hotsearch | `rebang/hotsearch/`、`tests/test_rebang_hotsearch*.py`、`tests/fixtures/rebang/hotsearch/` |
+| 博主与翻译 | `rebang/bloggers/`、`rebang/translate/`、`tests/test_rebang_bloggers*.py`、`tests/fixtures/rebang/bloggers/` |
+| 建站与前端 | `rebang/site/`、`web-v11/`、`tests/test_rebang_site*.py`、`tests/rebang_site*.test.js` |
+| 归档、收藏、搜索 | `rebang/archive/`、`web-v11/features/`、`tests/test_rebang_archive*.py`、`tests/rebang_features*.test.js` |
+| 8:30 私聊稿 | `rebang/push/`、`tests/test_rebang_push*.py` |
+
+各模块入口命令见 [`MODULES.md`](MODULES.md)。
 
 运行产物（已 gitignore）：
 
 - `var/rebang/in/<producer>.json`：各生产者最新一次输出（items 信封或热搜）。producer ∈ `ingest` / `hotsearch` / `bloggers`。
-- `var/rebang/archive/YYYY-MM-DD.json`：按北京日期累积的条目，供搜索索引（生产里放哪儿上线时再定）。按日期翻旧资讯的「历史」页 11/15 21:26 已去掉。
+- `var/rebang/archive/YYYY-MM-DD.json`：按北京日期累积的条目，供搜索索引和 8:30 稿补漏（生产放在 `/workspace/shiguang-prod/var/rebang/`）。按日期翻旧资讯的「历史」页 11/15 21:26 已去掉。
 - `var/rebang/hotsearch-archive/YYYY-MM-DD.json`：热搜每日最后一份。
 - `var/rebang/translate/{cache,pending}.json`：译文缓存与待翻队列。
+- `var/rebang/cache/`（tgmeta、ingest 订阅缓存）、`var/rebang/x-dump/`（X 原始响应）、`var/rebang/media/`（公众号图片）、`var/rebang/logs/`（`tools/rebang_refresh.sh` 日志）。
 - `site-v11/`：新版静态站构建输出（`python3 -m rebang.site --out <dir> [--hot-archive DIR]`）。`<site>/data/` 下：
   - `meta.json`（`rebang.site-meta/1`）：`built_at`、`data_at`、`today`、`page_size`、`note`、`public_base`（8:30 私聊稿链接 = `public_base#/item/<id>`）、`counts`、`channels[{slug,name,order,desc,sources,unavailable,total,feed_total,pages,banner[≤5]}]`。
   - `channel/<slug>/page-<n>.json`（`rebang.page/1`）：每页 30 条，`has_more` 到最后一页为 false；「查看更多」整页按页往下加载到「没有更多了」。
@@ -79,19 +83,19 @@
   - `search-index.json`：搜索用。
   - `<site>/media/`：本地图；`<site>/icons/`：平台官方图标（来源与许可见 `web-v11/icons/README.md`）。
 
-旧 `site/`、`web/`、`pipeline.py`、`gh-pages` 发布脚本不动；新版切换上线在集成阶段另批。
+旧 `site/`、`web/`、`pipeline.py` 行为不改。`tools/publish_pages.sh` 把 `site-v11/` 放进 gh-pages 的 `rebang/`，服务器挂到根路径（见 `OPERATIONS.md`）。
 
 ## 5. 测试命令约定
 
 ```bash
 python3 -m pytest -q -p no:cacheprovider tests/test_rebang_contract.py        # 契约
-python3 -m pytest -q -p no:cacheprovider tests/test_rebang_<area>*.py         # 本分支
+python3 -m pytest -q -p no:cacheprovider tests/test_rebang_<area>*.py         # 单个模块
 python3 -m pytest -q -p no:cacheprovider                                       # 全量（基线见 HANDOFF）
 node --test tests/*.test.js                                                    # 前端单测
 NO_FETCH=1 python3 pipeline.py                                                 # 旧站构建不能被打破
 ```
 
-- 每个分支先写「可观察验收结果」（任务卡第一条），最终从用户实际入口（手机尺寸打开新站 / dry-run 终端输出）验证；单测只是辅助。
+- 改动先写「可观察验收结果」，最终从用户实际入口（手机尺寸打开站点 / dry-run 终端输出）验证；单测只是辅助。线上回归：`python3 docs/rebang-v1/evidence/integration-v13/capture.py <站点地址> <截图前缀>`（390x844 真触摸，76 项）。
 - 单测一律用 `tests/fixtures/rebang/<area>/` 下的合成或已脱敏的真实样本，**不联网**；真实抓取只在显式 `--live` 冒烟里跑，且只读、低频。
-- 依赖只用标准库 + 已有的 beautifulsoup4、Pillow；要加依赖写进任务卡并在集成时确认。
+- 依赖只用标准库 + 已有的 beautifulsoup4、Pillow；要加依赖先在 `HANDOFF.md` 写明并经确认。
 - 所有时间展示与日期分组用北京时间（Asia/Shanghai）。

@@ -1,8 +1,6 @@
-# 拾光热榜 · 架构
+# 拾光热榜 · 旧站架构
 
-PR B 覆盖下文旧首页导航说明：首页改为实时流，来源与历史回顾为独立页面视图。
-数据合同、离线预览、MOCK 日总结与北京时间 00:30 调度说明见 [PR B](docs/PR-B-news-modules.md)。
-真实 AI 总结未验证，等新 key。
+本文是旧站（`pipeline.py` + `shiguang/` + `web/` → `site/`）的架构。它仍负责 TG 采集（写 `tg.db`）和 gh-pages 根目录的旧站树，但 news.kwinweng.com 已改由 v11 提供，现状见 [`docs/LEGACY-SITE.md`](docs/LEGACY-SITE.md)；v11 见 [`docs/rebang-v1/`](docs/rebang-v1/)。
 
 一条线：**来源 → 条目 → 页面**。每个渠道先变成同一种条目（`Item`），再按时间（今日、热点）或按渠道、标签（栏目）去取；没有为某个来源单独写的页面。接新渠道只动第一层：在 `sources.json` 加一项，按 `INGEST.md` 投递。
 
@@ -22,7 +20,7 @@ PR B 覆盖下文旧首页导航说明：首页改为实时流，来源与历史
 | `shiguang/site/render.py` | 纯 HTML 组件，不读写文件；`icons.py` 图标；`light.py` 环境光 |
 | `shiguang/site/build.py` | 在临时目录建整站 → 公开版隐私检查 → 原子替换 `site/`；CSS/JS 用内容哈希命名 |
 | `web/` | `style.css`、`app.js`、`assets/`（图标、manifest） |
-| `tools/` | `validate_feed.py` 投递校验、`screenshot.py` 截图、`build_icons.py` 生成图标 |
+| `tools/` | `box_scrape.sh`/`box_scrape.py` 采集入口、`persist_action_data.sh` 提交 tg.db、`publish_pages.sh` 发布 gh-pages、`validate_feed.py` 投递校验、`screenshot.py` 截图、`build_icons.py` 生成图标、`trial_report.py` 试跑统计、`daily_summary.py` 回顾生成 |
 | `tests/` | `python3 -m unittest discover tests` |
 
 内网版的登录（登录页 + 180 天 Cookie，代替 Basic Auth）由 `tools/login_gate.py` 提供，接入 nginx/Caddy 的方法见 `PRIVATE_LOGIN.md`。
@@ -31,24 +29,9 @@ PR B 覆盖下文旧首页导航说明：首页改为实时流，来源与历史
 
 ## 页面
 
-底栏 4 格：今日 / 热点 / 栏目 / 收藏，公开版和内网版相同。
+现行页面是 2026-10-24 两模块版：底栏资讯 / 探索 / 我的，详见 [`docs/LEGACY-SITE.md`](docs/LEGACY-SITE.md)。构建产物里还有 `hot.html`、`columns.html`（按渠道/按标签）、`favorites.html`、`today.html`、各来源目录 `<id>/`、`archive/`、`history/` 和数据文件 `data/live.json`、`data/sources.json`、`data/explore.json`。
 
-| 页面 | 内容 |
-| --- | --- |
-| `index.html` 今日 | 只放今天：顶部时光机（最近 7 天的日期条 + 日历面板）；今日重点（摘要和前 3 条）；此刻要闻；当天信息流，话题胶囊和来源选择两种筛选，「展开这一天全部」；最后各栏目当天的摘要和前 3 条。早上 6 点前另附昨天的前 10 条。 |
-| `archive/<date>.html` | 时光机里的某一天，和今日同一个模板，首条是当天热度最高的 |
-| `hot.html` 热点 | 最近 3 天热度过线的消息，按时间倒序，按小时分段；顶部 0–24 点时间轴，每小时一根热度柱，左右拖动跳到对应时段，拖过 0 点到前一天；列表滚动时时间轴跟着走 |
-| `columns.html` 栏目 | 「按渠道 / 按标签」切换（记在本机）。按渠道：每日简报、X、YouTube、RSS、电邮订阅、GitHub、Telegram、邮件，按 `platform` 分组。按标签：每个标签最近 3 天的条数 |
-| `tag/<slug>.html` | 一个标签最近 3 天，按天分组，可按来源筛选 |
-| `<id>/index.html` | TG 频道或 RSS/YouTube 来源：最近 3 天（至少 30 条），按天分组；期刊来源：最新一期 |
-| `<id>/<date>.html` | 期刊来源的一期 |
-| `favorites.html` 收藏 | 本机收藏，由 app.js 从 localStorage 呈现 |
-
-来源页和标签页标亮「栏目」，日期页和今日重点的期刊页标亮「今日」。
-
-合并掉的旧地址保留为跳转页：`all.html`、`archive/index.html`、`hot-daily/index.html` → 今日。
-
-今日筛选：`?source=` 预选来源，`?topic=` 预选话题。信息流每个来源有上限（见下），当天其余条目标 `data-more` 并隐藏，选了筛选、搜索或点「展开这一天全部」时才显示。
+合并掉的旧地址保留为跳转页：`all.html`、`archive/index.html`、`hot-daily/index.html`。
 
 ## 规则
 
@@ -87,13 +70,13 @@ PR B 覆盖下文旧首页导航说明：首页改为实时流，来源与历史
 
 ## 两种模式与数据流
 
-公开版（Box bot routine 每小时 :07/:37 采集并发布 gh-pages；切换见 `docs/BOX-SCRAPER-CUTOVER.md`）：
+公开版（工头「热榜抓取发布」例程每小时 :07/:37 在 `/workspace/shiguang-prod` 跑 `tools/box_scrape.sh`；见 `docs/BOX-SCRAPER-CUTOVER.md`）：
 
 1. Box 抓取配置中 public 的 TG 频道和 RSS/YouTube 来源，写入 `tg.db`，配图进本机 `media/`；仅提交数据库并推送 main。
 2. 期刊只从仓库的 `public-feeds/<id>/<date>/feed.json` 读取。
-3. 数据持久化成功后，Box 将公开 `site/`（含本机配图）发布为 gh-pages 的单个无父提交。Pages 从该分支根目录部署；Actions 仅保留手动测试，不部署。检查不得出现 private 来源的目录、名称或正文，以及「邮件」字样。feed 更新在下一轮 bot routine 发布。
+3. 数据持久化成功后，Box 将公开 `site/`（含本机配图）连同 `site-v11/`（放进 `rebang/`）发布为 gh-pages 的单个无父提交。GitHub Pages 从该分支根目录部署，服务器 `news-sync` 每 20 分钟拉取；Actions 仅保留手动测试，不部署。检查不得出现 private 来源的目录、名称或正文，以及「邮件」字样。feed 更新在下一轮 bot routine 发布。
 
-内网版（`SITE_MODE=private`，兼容 `MAIL_DIGEST=1`），在本机 `/workspace/tg-local` 的脚本里运行：
+内网版（`SITE_MODE=private`，兼容 `MAIL_DIGEST=1`），在本机 `/workspace/tg-local` 的脚本里运行（`publish_public.py` 推送 `public-feeds/` 停在 2026-10-23；`sync.sh` 末尾调用的 rsync 部署脚本 11/15 起默认跳过）：
 
 1. `sync.sh` 取共用锁；工作区干净时 `pull --rebase --autostash`。
 2. `publish_public.py` 只处理 public 期刊：转换、压图、原子写 JSON，保留 14 天，有变化才提交推送 `public-feeds/`。
@@ -106,7 +89,7 @@ PR B 覆盖下文旧首页导航说明：首页改为实时流，来源与历史
 - **TG 频道**：加一项 `type: "telegram"`，填 `id`、`channel`、`name`、`visibility`。
 - **RSS / YouTube**：加一项 `type: "feed"`，填 `id`、`name`、`url`、`visibility`，YouTube 加 `"platform": "youtube"`。下一次构建开始抓取。
 - **电邮订阅（Newsletter）**：走期刊投递，`platform: "newsletter"`；本机把邮件整理成 feed.json 后投递。
-- **期刊**：加一项 `type: "inbox"`、`adapter: "native"`，按 `INGEST.md` 原子写入 feed.json 和图片。本机先跑 `python3 validate_feed.py <id>`，public 内容经 `publish_public.py` 进入仓库后，Actions 才能读到。
+- **期刊**：加一项 `type: "inbox"`、`adapter: "native"`，按 `INGEST.md` 原子写入 feed.json 和图片。本机先跑 `python3 validate_feed.py <id>`，public 内容经 `publish_public.py` 进入仓库后，公开构建才能读到。
 
 不需要改代码：有数据就自动进入今日、标签、栏目和菜单；没有数据不生成入口。
 
@@ -136,7 +119,9 @@ PR B 覆盖下文旧首页导航说明：首页改为实时流，来源与历史
 - `python3 tools/screenshot.py index.html`：手机整页截图到 `shots/`；`--desktop`、`--dark`、`--build` 见 `--help`。
 - `python3 -m unittest discover tests`：测试。
 
-## 视觉规范
+## 视觉规范（「光」，`web/style.css` 部分）
+
+两模块版页面的规范见 `DESIGN.md`（`web/news-tokens.css`、`web/news.css`）；以下「光」规范对应 `web/style.css` 里仍保留的 `g-*` 组件，哪些页面还在用未逐页核对。
 
 本站遵循「光」视觉规范：https://claude.ai/artifact/R2fskGqeaA8ozH9e7BHfNE 。颜色、字号、间距、圆角、阴影、时长都取自规范的 tokens（`web/style.css` 第 1 节），组件沿用规范的类名（`g-light`、`g-lead`、`g-card`、`g-sheet`、`g-wash`、`g-pill`、`g-btn`、`g-round`、`g-topbar`、`g-tabbar`、`g-seg`、`g-panel`）。和规范的对应：
 

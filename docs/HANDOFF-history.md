@@ -1,5 +1,14 @@
 # 交接记录
 
+## 2026-11-15 拾光热榜 v11 开发与上线（原 HANDOFF 内容）
+
+- 集成分支 `feat/rebang-v1`（基于 origin/main 8b5c6735e）先写数据契约 `rebang/contract/`，再依次合入 6 个功能分支（顺序做的，不是并行）：sources-ingest 4d7969412、hotsearch 4716f832b、bloggers 730dd665f、frontend-v11 25ab6022e、history-favorites-search 04b3652f3、push-0830 cd1110730。各模块现状见 `docs/rebang-v1/MODULES.md`。
+- 21:35 实抓：资讯 2584 条；热搜百度 51 / 知乎 30 / B 站 50；博主 151 条（英文 68/68 已译）。
+- 21:26 改版 5 处（历史→热搜、博主页 Grok bot、查看更多、官方图标、英文全部机器翻译）；22:10–22:11 v13 七处（含顶栏日期只显示一次、居左）。设计检查点预览 daily-site-mocks `/rebang-v12/`、`/rebang-v13/`（一次性快照）。
+- 测试基线：未改 origin/main 时 pytest 228 过 / 1 失败（`test_news_modules_browser` dark 子用例），node 13/13；v13 时 pytest 374 过 + 同一个基线失败，node 32/32，390x844 真触摸 76/76。
+- 23:13 起合并 PR #40/#41/#42，v11 先以 `/rebang/` 上线；11/16 00:08 改为根路径（PR #44），旧阅读器下线。
+- `f2e9c04` 不在 GitHub 远端（只在交接方本地），以 main 上的 `shiguang/ingest/telegram.py` 为复用基线。
+
 ## 2026-11-07 news 公开产物接收端
 
 - 原私有同步方案由负责人明确决定替换：默认无凭据下载 public gh-pages，允许移除 mail 和 private-only 历史；保持 reader、认证和 nginx 配置不变。每 20 分钟下载、独立 staging 校验、Linux renameat2 原子交换，保留一版 previous。
