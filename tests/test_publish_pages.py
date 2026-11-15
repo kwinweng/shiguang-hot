@@ -97,6 +97,24 @@ class PublishPagesTests(unittest.TestCase):
             self.assertNotEqual(self.publish().returncode, 0)
             path.write_text('fixture')
 
+    def test_rebang_site_published_under_subdirectory(self):
+        """v11（拾光热榜）site-v11/ 一并发到 gh-pages 的 rebang/；REBANG_PUBLISH=0 或没构建时不带。"""
+        rb = self.root / 'site-v11'
+        (rb / 'data').mkdir(parents=True)
+        (rb / 'index.html').write_text('rebang')
+        (rb / 'data/meta.json').write_text('{}')
+        files = lambda: self.git('--git-dir', str(self.remote), 'ls-tree', '-r', '--name-only', 'gh-pages').splitlines()
+        result = self.publish()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(files(), ['.nojekyll', 'build-info.json', 'index.html', 'rebang/data/meta.json', 'rebang/index.html'])
+        env = dict(os.environ, REBANG_PUBLISH='0')
+        env.pop('PAGES_CNAME', None)
+        result = subprocess.run(['sh', 'tools/publish_pages.sh', '--already-built'], cwd=self.root, env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(files(), ['.nojekyll', 'build-info.json', 'index.html'])
+        (rb / '.env').write_text('x')
+        self.assertIn('.env* found in rebang site', self.publish().stderr)
+
     def test_cname_only_from_environment(self):
         (self.root / 'site/CNAME').write_text('stale.example')
         self.assertEqual(self.publish().returncode, 0)

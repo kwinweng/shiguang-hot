@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>I'm TualatriX</title><link>http://imtx.me/</link><description>Hello! This is TualatriX's blog</description><atom:link href="https://imtx.me/feed/latest/" rel="self"/><language>en-us</language><lastBuildDate>Wed, 23 Jul 2025 02:37:04 +0000</lastBuildDate><item><title>记「乾坤大挪移」式使用双系统
+</title><link>https://imtx.me/blog/macos-dual-boot/</link><description>
+
+&lt;p&gt;我是在 WWDC25 期间直接把我的工作电脑 MacBook Pro &lt;a href="https://x.com/tualatrix/status/1932329756944396350"&gt;升级到 macOS 26 Beta &lt;/a&gt;的。当时人还在 Apple Park 参加活动，后面也基本以玩为主，因此没有被这个系统影响到工作。&lt;/p&gt;
+&lt;p&gt;回国后，从游玩状态中调整过来，准备好好干活。但真的高强度使用 macOS 26 Beta 时，觉得非常别扭。首先，我的 M3 Max 的整体 UI 响应速度，&lt;a href="https://x.com/tualatrix/status/1941861086309019896"&gt;就像回到了用一台 Intel 电脑&lt;/a&gt;；其次，Liquid Glass 非常不成熟，&lt;a href="https://x.com/tualatrix/status/1944947675260194999"&gt;过度的动画、透明和阴影&lt;/a&gt;，始终觉得内容重点被夺走了；最后让我无法忍受的是，&lt;a href="https://x.com/tualatrix/status/1946785188044063200"&gt;菜单上那些画蛇添足的图标&lt;/a&gt;，不再是原本干干净净的 macOS，让我有种在用 Windows 的感觉。于是我决定装双系统，回到 macOS 15 工作。&lt;/p&gt;
+&lt;p&gt;过去几年，基本每年我都会安装双系统开始我的 Beta 系统的体验，每年的原因都差不多，主要还是新系统无法跑最新 Xcode 稳定版本，虽然这个在今年被解决了，但在可用性方面却大大降低了。我相信（或期望）可用性问题在正式版本会解决（或者在 macOS 27、28）。但那是后话了，本篇我就简单介绍下我是如何进行「乾坤大挪移」式使用双系统。&lt;/p&gt;
+&lt;h3&gt;如何安装双系统&lt;/h3&gt;
+&lt;p&gt;昨天花了几小时装+配置好 macOS 15 环境后，整个立刻就感觉清爽、轻盈了起来。&lt;/p&gt;
+&lt;p&gt;在 Mac 上装双系统非常简单，只要打开 Disk Utility，新加一个 APFS 卷，然后去 App Store 下载最新 macOS 的稳定版本，然后把这个 macOS 装在新加卷上面就可以了。因为两个 macOS 可以互读硬盘，因此文件也可以共享，很快就可以把自己的需要的环境设置起来。&lt;/p&gt;
+&lt;p&gt;但是，今年我做了一些不一样的操作，我决定隔离两个系统的环境，进行「乾坤大挪移」。一个重要的出发点是，我的 macOS 26 Beta 的环境已经很乱了，我不想简单的把文档复制或链接过来，我想在使用过程中，把真正需要的文件挪过来，不要的文件就留在「老系统」，直到我不需要并抛弃它。&lt;/p&gt;
+&lt;h3&gt;禁止当前系统索引另外一个系统的文件&lt;/h3&gt;
+&lt;p&gt;默认情况下，双系统的 Mac 会挂载另一个系统的分区，Spotlight 也会自动去索引所有文件，于是你搜索的时候可能会出现重复的内容，这在我过去几年的双系统体验中是一个很烦恼的事情。而且即使在 Spotlight 中设置了排除项，重启以后依然会无效。&lt;/p&gt;
+&lt;p&gt;</description><pubDate>Wed, 23 Jul 2025 02:37:04 +0000</pubDate><guid>https://imtx.me/blog/macos-dual-boot/</guid></item><item><title>Now
+</title><link>https://imtx.me/now/</link><description>
+
+&lt;p&gt;最近正在做 &lt;a href="http://poptranslate.app"&gt;PopTranslate&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;六月将会去美国 Apple Park 参加 &lt;a href="https://developer.apple.com/wwdc25/"&gt;WWDC25&lt;/a&gt;.&lt;/p&gt;
+
+</description><pubDate>Thu, 24 Apr 2025 06:02:49 +0000</pubDate><guid>https://imtx.me/now/</guid></item>
+</channel></rss>

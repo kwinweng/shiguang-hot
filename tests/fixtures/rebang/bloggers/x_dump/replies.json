@@ -1,0 +1,136 @@
+{
+ "data": [
+  {
+   "author_id": "201204330",
+   "created_at": "2026-11-15T12:39:01.000Z",
+   "edit_history_tweet_ids": [
+    "2121946067776442839"
+   ],
+   "id": "2121946067776442839",
+   "in_reply_to_user_id": "39125788",
+   "public_metrics": {
+    "bookmark_count": 0,
+    "impression_count": 2,
+    "like_count": 0,
+    "quote_count": 0,
+    "reply_count": 0,
+    "retweet_count": 0
+   },
+   "referenced_tweets": [
+    {
+     "id": "2121751565845360769",
+     "type": "replied_to"
+    }
+   ],
+   "text": "@emollick If benchmarks saturate this fast, real-world evals inside each team's own work start to matter more. The useful question shifts from \"how smart\" to \"how reliable here.\"",
+   "url": "https://x.com/withincore/status/2121946067776442839"
+  },
+  {
+   "author_id": "2044640022058389504",
+   "created_at": "2026-11-15T12:36:30.000Z",
+   "edit_history_tweet_ids": [
+    "2121945434197545105"
+   ],
+   "id": "2121945434197545105",
+   "in_reply_to_user_id": "39125788",
+   "public_metrics": {
+    "bookmark_count": 0,
+    "impression_count": 4,
+    "like_count": 0,
+    "quote_count": 0,
+    "reply_count": 0,
+    "retweet_count": 0
+   },
+   "referenced_tweets": [
+    {
+     "id": "2121751565845360769",
+     "type": "replied_to"
+    }
+   ],
+   "text": "@emollick the models are graduating faster than anyone can write the final exam.",
+   "url": "https://x.com/tonychenAI/status/2121945434197545105"
+  },
+  {
+   "author_id": "2120545413539196928",
+   "created_at": "2026-11-15T12:35:22.000Z",
+   "edit_history_tweet_ids": [
+    "2121945152063152533"
+   ],
+   "id": "2121945152063152533",
+   "in_reply_to_user_id": "39125788",
+   "public_metrics": {
+    "bookmark_count": 0,
+    "impression_count": 1,
+    "like_count": 0,
+    "quote_count": 0,
+    "reply_count": 0,
+    "retweet_count": 0
+   },
+   "referenced_tweets": [
+    {
+     "id": "2121751565845360769",
+     "type": "replied_to"
+    }
+   ],
+   "text": "@emollick 63% saturated is a striking number. It makes me trust my own small tests more than headline scores. Giving two tools the same real task taught me more this week than any leaderboard.",
+   "url": "https://x.com/said_0027/status/2121945152063152533"
+  },
+  {
+   "author_id": "2116169733938757632",
+   "created_at": "2026-11-15T12:28:24.000Z",
+   "edit_history_tweet_ids": [
+    "2121943399246843936"
+   ],
+   "id": "2121943399246843936",
+   "in_reply_to_user_id": "39125788",
+   "public_metrics": {
+    "bookmark_count": 0,
+    "impression_count": 2,
+    "like_count": 0,
+    "quote_count": 0,
+    "reply_count": 0,
+    "retweet_count": 0
+   },
+   "referenced_tweets": [
+    {
+     "id": "2121751565845360769",
+     "type": "replied_to"
+    }
+   ],
+   "text": "@emollick The business read: if 63% of lab-cited benchmarks are saturated, public benchmarks stop being useful for procurement. What matters is a private eval set built from your own tasks, kept out of training data. That set is quietly turning into a company asset.",
+   "url": "https://x.com/ViCccuzi/status/2121943399246843936"
+  }
+ ],
+ "includes": {
+  "users": [
+   {
+    "id": "201204330",
+    "name": "Manan",
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1829221511862931458/if1xeFZ__normal.jpg",
+    "username": "withincore",
+    "verified": false
+   },
+   {
+    "id": "2044640022058389504",
+    "name": "Tony Chen",
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2062469796273561600/7osvyH9I_normal.jpg",
+    "username": "tonychenAI",
+    "verified": false
+   },
+   {
+    "id": "2120545413539196928",
+    "name": "Said Al kharusi",
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "username": "said_0027",
+    "verified": false
+   },
+   {
+    "id": "2116169733938757632",
+    "name": "ViC80 | AI Business, Visualized",
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2121423217986551808/rDqEUAKt_normal.jpg",
+    "username": "ViCccuzi",
+    "verified": false
+   }
+  ]
+ }
+}

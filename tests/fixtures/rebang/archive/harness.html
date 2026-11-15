@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>拾光热榜 · 历史收藏搜索验收</title>
+  <style>
+    :root{--bg:#101114;--ink:#f4f1ea;--mute:#a39e93;--line:#2a2c31;--gold:#d6b36a;--panel:#191b20;--bar:rgba(16,17,20,.92);--fav:#e15d5d;--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);--top:52px;--tab:58px}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,"PingFang SC","Noto Sans SC",sans-serif}
+    button,input{font:inherit;color:inherit}
+    .app{height:100%;display:flex;flex-direction:column;position:relative;background:var(--bg)}
+    .top{min-height:calc(var(--top) + var(--safe-top));padding:calc(var(--safe-top) + 4px) 6px 4px 16px;display:flex;align-items:center;gap:8px;background:var(--bg);z-index:6;flex-shrink:0}
+    .brand{font-size:12px;letter-spacing:.16em;color:var(--gold);font-weight:600}
+    .when-wrap{flex:1;text-align:center}
+    .when{font-size:12px;color:var(--mute)}
+    .icon-btn{border:0;background:none;color:var(--ink);width:40px;height:40px;display:grid;place-items:center;cursor:pointer}
+    .views{flex:1;min-height:0;position:relative}
+    .view{display:none;height:100%;overflow-y:auto}
+    .view.on{display:block}
+    .sub{padding:8px 16px 20px}
+    h2.ch{margin:0 0 8px;font-size:28px;letter-spacing:-.04em;font-weight:650}
+    .desc,.muted{color:var(--mute);font-size:13px;line-height:1.6}
+    .muted{font-size:14px;padding:16px 4px}
+    .list{display:flex;flex-direction:column;gap:8px}
+    .row-item{display:grid;grid-template-columns:84px 1fr;gap:10px;align-items:center;background:var(--panel);border-radius:14px;padding:8px;cursor:pointer}
+    .row-item.noimg{grid-template-columns:1fr}
+    .row-item img{width:84px;height:64px;object-fit:cover;border-radius:8px;background:#0c0d10}
+    .row-item .src{font-size:11px;color:var(--mute)}
+    .row-item h3{margin:4px 0 0;font-size:15px;line-height:1.35;font-weight:600}
+    .row-item .excerpt{margin:4px 0 0;font-size:12px;color:var(--mute);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+    .tabbar{height:calc(var(--tab) + var(--safe-bot));padding:0 4px var(--safe-bot);display:grid;grid-template-columns:repeat(4,1fr);background:var(--bar);border-top:1px solid var(--line);flex-shrink:0;z-index:6}
+    .tabbar button{border:0;background:none;color:#6e6a62;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;cursor:pointer}
+    .tabbar button.on{color:var(--gold)}
+    .tabbar svg{width:21px;height:21px}
+    .overlay{position:absolute;inset:0;background:#101114f2;z-index:8;display:none;flex-direction:column;padding:var(--safe-top) 0 var(--safe-bot)}
+    .overlay.on{display:flex}
+    .search-bar{display:flex;gap:8px;padding:8px 12px;align-items:center}
+    .search-bar input{flex:1;height:40px;border-radius:12px;border:1px solid var(--line);background:#191b20;padding:0 12px;outline:none}
+    .search-bar input:focus{border-color:var(--gold)}
+    .search-bar .cancel{border:0;background:none;color:var(--gold);padding:8px;cursor:pointer}
+    .article-view{position:absolute;inset:0;background:var(--bg);z-index:10;display:none;flex-direction:column}
+    .article-view.on{display:flex}
+    .article-bar{height:calc(44px + var(--safe-top));padding:var(--safe-top) 8px 0 4px;display:flex;align-items:center;gap:4px;border-bottom:1px solid var(--line)}
+    .article-bar .back{border:0;background:none;color:var(--ink);display:flex;align-items:center;padding:8px 10px;cursor:pointer}
+    .article-bar .ttl{flex:1;min-width:0;font-size:13px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .article-body{flex:1;min-height:0;overflow-y:auto;padding:16px}
+    .article-body h3.art-title{margin:0 0 8px;font-size:20px;line-height:1.3}
+    .article-body .src{font-size:12px;color:var(--mute);margin-bottom:12px}
+    .article-body .art-text{color:#d6d1c6;font-size:14px;line-height:1.7;margin:0}
+    .actions{display:flex;gap:8px;margin-top:16px}
+    .actions button{flex:1;text-align:center;border:0;border-radius:12px;padding:12px;background:#2a2c31;cursor:pointer}
+    .actions .fav.on{color:var(--fav)}
+    .dates{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:none}
+    .chip{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:7px 12px;font-size:12px;cursor:pointer}
+    .chip.on{background:var(--gold);color:#161409;border-color:var(--gold);font-weight:600}
+    .rebang-history-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0 8px}
+    .rebang-history-nav button{border:1px solid var(--line);background:transparent;color:var(--gold);border-radius:999px;padding:6px 10px;font-size:12px;cursor:pointer}
+    .rebang-history-nav button:disabled{opacity:.35;color:var(--mute)}
+    .rebang-history-current{font-size:16px;font-weight:600}
+    .toast{position:absolute;left:50%;bottom:calc(var(--tab) + var(--safe-bot) + 12px);transform:translateX(-50%) translateY(20px);background:#f4f1ea;color:#161409;font-size:12px;padding:8px 12px;border-radius:999px;opacity:0;pointer-events:none;transition:.25s;z-index:12;white-space:nowrap;max-width:90%}
+    .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="brand">拾光热榜</div>
+      <div class="when-wrap"><div class="when" id="topDate">11月15日</div></div>
+      <button class="icon-btn" id="btnSearch" type="button" aria-label="搜索">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.2-3.2"/></svg>
+      </button>
+    </header>
+    <div class="views">
+      <section class="view on" id="view-channels">
+        <div class="sub">
+          <h2 class="ch">时事</h2>
+          <p class="desc">点开一条正文后再收藏。这是对接历史/收藏/搜索模块的验收页，不是完整新站。</p>
+          <div class="list" id="channelList"></div>
+        </div>
+      </section>
+      <section class="view" id="view-blogger"><div class="sub"><h2 class="ch">博主</h2><p class="muted">博主栏由其他分支实现。</p></div></section>
+      <section class="view" id="view-favorites"></section>
+    </div>
+    <nav class="tabbar">
+      <button class="on" data-view="channels" type="button">频道</button>
+      <button data-view="blogger" type="button">博主</button>
+      <button data-view="favorites" type="button">收藏</button>
+    </nav>
+    <div class="overlay" id="search-panel"></div>
+    <div class="article-view" id="articleView">
+      <div class="article-bar">
+        <button type="button" class="back" id="btnBack">返回</button>
+        <div class="ttl" id="articleTitle"></div>
+      </div>
+      <div class="article-body">
+        <h3 class="art-title" id="articleHeading"></h3>
+        <div class="src" id="articleSource"></div>
+        <p class="art-text" id="articleText"></p>
+        <div class="actions" id="favorite-slot"></div>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+  <script>
+    window.Rebang = {
+      _mods: {},
+      register(name, mount) { this._mods[name] = mount; }
+    };
+  </script>
+  <script src="/features/favorites.js"></script>
+  <script src="/features/search.js"></script>
+  <script>
+    const TODAY = '2026-11-15T20:00:00+08:00';
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const toastEl = $('#toast');
+    function toast(text) {
+      toastEl.textContent = text;
+      toastEl.classList.add('on');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => toastEl.classList.remove('on'), 2400);
+    }
+    function displayTitle(item) {
+      if (item.display_title) return item.display_title;
+      if (item.translated && item.translation && item.translation.title) return item.translation.title;
+      return item.title || item.summary || '';
+    }
+    let currentItem = null;
+    function openItem(item) {
+      currentItem = item;
+      $('#articleView').classList.add('on');
+      const title = displayTitle(item);
+      $('#articleTitle').textContent = title;
+      $('#articleHeading').textContent = title;
+      $('#articleSource').textContent = item.source_name || '';
+      $('#articleText').textContent = (item.translated && item.translation && item.translation.summary) || item.summary || item.body || '无正文';
+      if (window.__favorites) {
+        window.__favorites.attachButton($('#favorite-slot'), item);
+      }
+    }
+    function closeArticle() { $('#articleView').classList.remove('on'); }
+    $('#btnBack').onclick = closeArticle;
+
+    const ctx = {
+      dataBase: 'data',
+      now: new Date(TODAY),
+      date: '2026-11-15',
+      openItem,
+      toast,
+    };
+    const favoritesApi = window.Rebang._mods.favorites($('#view-favorites'), { storage: localStorage, openItem, toast });
+    const searchApi = window.Rebang._mods.search($('#search-panel'), { dataBase: 'data', openItem, searchButton: $('#btnSearch') });
+    window.__favorites = favoritesApi;
+    window.__search = searchApi;
+
+    function showView(name) {
+      document.querySelectorAll('.view').forEach((el) => el.classList.toggle('on', el.id === 'view-' + name));
+      document.querySelectorAll('.tabbar button').forEach((btn) => btn.classList.toggle('on', btn.dataset.view === name));
+      if (name === 'favorites') favoritesApi.refresh();
+      closeArticle();
+    }
+    document.querySelectorAll('.tabbar button').forEach((btn) => {
+      btn.addEventListener('click', () => showView(btn.dataset.view));
+    });
+
+    // 历史页 2026-11-15 去掉了：频道列表改从搜索索引取当天条目
+    fetch('data/search-index.json').then((res) => res.json()).then((index) => {
+      const payload = {items: (index.entries || []).filter((it) => String(it.published_at || '').startsWith('2026-11-15'))};
+      const list = $('#channelList');
+      list.innerHTML = (payload.items || []).map((item) => {
+        const title = displayTitle(item);
+        return `<article class="row-item noimg" data-open-id="${item.id}"><div><div class="src">${item.source_name || ''}</div><h3>${title}</h3></div></article>`;
+      }).join('');
+      list.addEventListener('click', (event) => {
+        const row = event.target.closest('[data-open-id]');
+        if (!row) return;
+        const item = (payload.items || []).find((it) => it.id === row.getAttribute('data-open-id'));
+        if (item) openItem(item);
+      });
+    });
+
+    window.__showView = showView;
+    window.__ready = Promise.all([searchApi.ready]);
+  </script>
+</body>
+</html>

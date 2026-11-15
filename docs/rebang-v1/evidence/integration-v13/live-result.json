@@ -1,0 +1,696 @@
+{
+ "base": "https://daily-site-mocks.vercel.app/rebang-v13/",
+ "at": "2026-11-15 22:57:04 +0800",
+ "input": "CDP Input.dispatchTouchEvent / Playwright tap, 390x844 mobile",
+ "passed": 76,
+ "total": 76,
+ "checks": [
+  {
+   "check": "顶部说明不再有「英文还没接机器翻译」",
+   "ok": true,
+   "note": "设计检查点预览第 3 版：数据是今晚 22:20–22:40 真实抓取的一次快照，不会自动更新。"
+  },
+  {
+   "check": "底栏 = 频道/博主/热搜/收藏",
+   "ok": true,
+   "tabs": [
+    "频道",
+    "博主",
+    "热搜",
+    "收藏"
+   ]
+  },
+  {
+   "check": "历史页已去掉",
+   "ok": true
+  },
+  {
+   "check": "频道里没有热搜块",
+   "ok": true
+  },
+  {
+   "check": "7 顶栏日期居左（左边距 ≤ 20px，左对齐）",
+   "ok": true,
+   "left": {
+    "channels": 16,
+    "blogger": 16,
+    "hot": 16,
+    "favorites": 16
+   },
+   "align": "left"
+  },
+  {
+   "check": "7 顶栏日期只写一次（顶栏里「X月X日」只出现 1 次；刷新时间同一天只写时间）",
+   "ok": true,
+   "when": "11月15日 周日",
+   "refreshed": "刷新于 22:49",
+   "counts": {
+    "channels": [
+     1,
+     1
+    ],
+    "blogger": [
+     1,
+     1
+    ],
+    "hot": [
+     1,
+     1
+    ],
+    "favorites": [
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "check": "7 四个页面顶栏一致（同一个顶栏、同样文字和高度）",
+   "ok": true,
+   "heights": {
+    "channels": 52,
+    "blogger": 52,
+    "hot": 52,
+    "favorites": 52
+   }
+  },
+  {
+   "check": "1 频道（左右）下滑后频道名一行吸在顶上",
+   "ok": true,
+   "scrollTop": 1834,
+   "scTop": 52,
+   "hdTop": 52,
+   "hdH": 72,
+   "text": "1 / 6 左滑看下一频道 时事 查看更多 ›"
+  },
+  {
+   "check": "2 引用：卡片先是频道自己的话，下面是原帖引用卡（来源频道名）",
+   "ok": true,
+   "id": "zaihuapd:45134",
+   "own": "BLG 夺 S16 全球总决赛冠军，B站免费送7天大会员",
+   "quote_src": "在花 🎗️ 科技圈"
+  },
+  {
+   "check": "3 卡片上显示表情回应（最多 3 个 +N）和浏览数，数字与 t.me 抓到的一致",
+   "ok": true,
+   "reactions": 10,
+   "shown": 3,
+   "views": "16.7K"
+  },
+  {
+   "check": "2 转发且频道没写话：标「转发」+ 原帖引用卡（转发自 来源）",
+   "ok": true,
+   "id": "dps_build:731",
+   "src": "Parallel Experiments"
+  },
+  {
+   "check": "2 详情里点引用卡打开原帖",
+   "ok": true,
+   "href": "https://t.me/LinghaoCh/1016"
+  },
+  {
+   "check": "2 详情：频道自己的话在上，引用卡在下且链接原帖",
+   "ok": true,
+   "url": "https://t.me/zaihuapd/45130"
+  },
+  {
+   "check": "3 详情显示全部表情回应 + 浏览数",
+   "ok": true,
+   "shown": 10,
+   "data": 10
+  },
+  {
+   "check": "4 详情底部有小的上一条/下一条，位置 = 列表里第几条",
+   "ok": true,
+   "pos": "8 / 30",
+   "height": 34
+  },
+  {
+   "check": "4 点「下一条」到同一列表的下一条",
+   "ok": true,
+   "now": "xhqcankao:33117",
+   "want": "xhqcankao:33117"
+  },
+  {
+   "check": "4 正文左滑 → 下一条",
+   "ok": true,
+   "now": "zaihuapd:45133",
+   "want": "zaihuapd:45133"
+  },
+  {
+   "check": "4 正文右滑（不从边缘起） → 上一条",
+   "ok": true,
+   "now": "xhqcankao:33117",
+   "want": "xhqcankao:33117"
+  },
+  {
+   "check": "4 点「上一条」回到原条",
+   "ok": true
+  },
+  {
+   "check": "5 详情从左边缘右滑 → 返回原列表原位置（上一条/下一条用 replace，不多压历史）",
+   "ok": true,
+   "y0": 1696,
+   "y1": 1696
+  },
+  {
+   "check": "3 公开评论：只显示 t.me 讨论区公开可见的那几条 + 总数 + 去 Telegram 看全部",
+   "ok": true,
+   "id": "myBigCharacterPoster:1336",
+   "shown": 2,
+   "total": 2
+  },
+  {
+   "check": "3 没有公开评论的条目不显示评论区（不编）",
+   "ok": true,
+   "id": "OneMillion_AI:5942"
+  },
+  {
+   "check": "5 左右模式：在卡片上横滑 = 换频道，不触发卡片收藏",
+   "ok": true,
+   "index": 1
+  },
+  {
+   "check": "5 banner 上横滑只翻 banner，不换频道",
+   "ok": true,
+   "channel": "world",
+   "before": "1 / 5",
+   "after": "2 / 5",
+   "index": 1
+  },
+  {
+   "check": "5 长按卡片 → 菜单（收藏/分享/复制链接/打开原文），且不打开详情",
+   "ok": true,
+   "menu": [
+    "收藏",
+    "分享",
+    "复制链接",
+    "打开原文",
+    "取消"
+   ]
+  },
+  {
+   "check": "5 菜单「复制链接」复制这条的深链",
+   "ok": true,
+   "toast": "链接已复制。",
+   "clip": "ocks.vercel.app/rebang-v13/#/item/tnews365%3A35785"
+  },
+  {
+   "check": "5 菜单「收藏」收进收藏",
+   "ok": true,
+   "id": "tnews365:35785"
+  },
+  {
+   "check": "5 菜单再点「取消收藏」移出",
+   "ok": true
+  },
+  {
+   "check": "5 下拉刷新：频道（左右）",
+   "ok": true,
+   "ptr": "松开刷新",
+   "toast": "没有新内容，已是最新。刷新拿到的是最近一次发布的数据。"
+  },
+  {
+   "check": "5 双击底栏「频道」→ 当前频道回到顶部",
+   "ok": true,
+   "before": 1224,
+   "after": 0
+  },
+  {
+   "check": "1 频道（上下）下滑后当前频道名一行吸在顶上",
+   "ok": true,
+   "scrollTop": 2096,
+   "pinned": "2 / 6 左右滑顶部图，下滑看下一频道 环球 查看更多 ›"
+  },
+  {
+   "check": "5 卡片横滑过程中只有卡片在动（频道块不跟着移）",
+   "ok": true,
+   "block_left": [
+    0
+   ]
+  },
+  {
+   "check": "5 上下模式：卡片左滑 → 收藏（不打开详情），整页不横移",
+   "ok": true,
+   "id": "tnews365:35786",
+   "shift": [
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "check": "5 卡片右滑 → 分享（系统分享面板；本浏览器没有分享面板时复制链接）",
+   "ok": true,
+   "toast": "已复制这条的链接，可以粘贴分享。",
+   "clip": "ocks.vercel.app/rebang-v13/#/item/tnews365%3A35786",
+   "native_share": false
+  },
+  {
+   "check": "5 横滑不到 72px 松手不生效",
+   "ok": true
+  },
+  {
+   "check": "5 连续左滑收藏 9 条",
+   "ok": true,
+   "favs": 9
+  },
+  {
+   "check": "5 下拉刷新：频道（上下）",
+   "ok": true,
+   "ptr": "松开刷新",
+   "toast": "没有新内容，已是最新。刷新拿到的是最近一次发布的数据。"
+  },
+  {
+   "check": "1 博主：下滑后「博主」+ 平台行（X、Grok bot、即刻…）吸在顶上",
+   "ok": true,
+   "scrollTop": 2112,
+   "scTop": 52,
+   "hdTop": 52,
+   "hdH": 93,
+   "text": "博主 48 29 2"
+  },
+  {
+   "check": "5 双击底栏「博主」→ 回到顶部",
+   "ok": true,
+   "before": 2112,
+   "after": 0
+  },
+  {
+   "check": "5 下拉刷新：博主",
+   "ok": true,
+   "ptr": "松开刷新",
+   "toast": "没有新内容，已是最新。刷新拿到的是最近一次发布的数据。"
+  },
+  {
+   "check": "6 公众号文章：正文块与原文同序（段落/标题/图片/引用/列表）",
+   "ok": true,
+   "articles": [
+    {
+     "id": "wechat-夕小瑶科技说:d360a849c8a3911c",
+     "title": "Claude 被封号后我找到了新的办公搭子",
+     "blocks": 127,
+     "images": 32,
+     "loaded": 32,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:52fbc266a6c2d2fd",
+     "title": "刚刚，黄仁勋正式辞职！",
+     "blocks": 5,
+     "images": 1,
+     "loaded": 1,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:42866f01d8f01969",
+     "title": "Qwen控制机器人得分从1.9涨到31.4！清华伯克利开源统",
+     "blocks": 108,
+     "images": 17,
+     "loaded": 17,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:827ddcbbc7d6f5d1",
+     "title": "实测Seedream 5.5：100轮改图不崩，还能直出透明",
+     "blocks": 122,
+     "images": 25,
+     "loaded": 25,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:0ab3af8e3021eff4",
+     "title": "OpenAI 发布 GPT-6 Cyber，专攻网络安全",
+     "blocks": 72,
+     "images": 12,
+     "loaded": 12,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:add627780c3eca03",
+     "title": "AI4S首个开源大模型Hydrogen-1.0发布：跑赢GP",
+     "blocks": 94,
+     "images": 13,
+     "loaded": 13,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:7739a1385e2fba4d",
+     "title": "今日起，ChatGPT Pro额度翻倍，免费重置时代结束了！",
+     "blocks": 46,
+     "images": 10,
+     "loaded": 10,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:4aadefb0333d9e2b",
+     "title": "TRAE给开发者配了个人助理，终于不用挨个催进度了...",
+     "blocks": 167,
+     "images": 28,
+     "loaded": 28,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:b6b1c2366b7daa19",
+     "title": "Google 重磅发布 Genie 4：世界模型终于活了",
+     "blocks": 91,
+     "images": 9,
+     "loaded": 9,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:2e2d6160748a589d",
+     "title": "Anthropic正式交表IPO，7%收入来自违规账号。。",
+     "blocks": 85,
+     "images": 12,
+     "loaded": 12,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    }
+   ]
+  },
+  {
+   "check": "6 公众号文章：图片全部加载、没有缺图、没有重复",
+   "ok": true,
+   "images": 159,
+   "loaded": 159
+  },
+  {
+   "check": "5 博主列表卡片左滑 → 收藏",
+   "ok": true,
+   "id": "wechat-夕小瑶科技说:52fbc266a6c2d2fd"
+  },
+  {
+   "check": "1 热搜：下滑后「热搜」+ 日期条吸在顶上",
+   "ok": true,
+   "scrollTop": 1522,
+   "scTop": 52,
+   "hdTop": 52,
+   "hdH": 91,
+   "text": "热搜 今天 · 现在"
+  },
+  {
+   "check": "5 下拉刷新：热搜",
+   "ok": true,
+   "ptr": "松开刷新",
+   "toast": "没有新内容，已是最新。刷新拿到的是最近一次发布的数据。"
+  },
+  {
+   "check": "1 收藏：下滑后「收藏」标题吸在顶上",
+   "ok": true,
+   "favorites": 10,
+   "scrollTop": 540,
+   "scTop": 52,
+   "hdTop": 52,
+   "hdH": 45,
+   "text": "收藏"
+  },
+  {
+   "check": "5 下拉刷新：收藏",
+   "ok": true,
+   "ptr": "松开刷新",
+   "toast": "没有新内容，已是最新。刷新拿到的是最近一次发布的数据。"
+  },
+  {
+   "check": "5 收藏页卡片左滑 → 取消收藏（同一个开关）",
+   "ok": true,
+   "id": "wechat-夕小瑶科技说:52fbc266a6c2d2fd"
+  },
+  {
+   "check": "4 从收藏点进详情也有上一条/下一条",
+   "ok": true,
+   "pos": "2 / 9"
+  },
+  {
+   "check": "5 下拉刷新：查看更多",
+   "ok": true,
+   "ptr": "松开刷新",
+   "toast": "没有新内容，已是最新。刷新拿到的是最近一次发布的数据。"
+  },
+  {
+   "check": "热搜页默认当前三家 tab",
+   "ok": true,
+   "tabs": [
+    "百度热搜",
+    "知乎热榜",
+    "B 站热搜"
+   ],
+   "rows": {
+    "baidu": 51,
+    "zhihu": 30,
+    "bilibili": 50
+   }
+  },
+  {
+   "check": "日期切换条：今天·现在 + 归档里的往日",
+   "ok": true,
+   "chips": [
+    "今天 · 现在"
+   ],
+   "archived": [
+    "2026-11-15"
+   ]
+  },
+  {
+   "check": "往日热搜：归档里暂时只有今天（从今天起每天存一份，不编旧榜）",
+   "ok": true,
+   "archived_days": 1
+  },
+  {
+   "check": "博主平台含 Grok bot，与 X/即刻/微博/知乎/公众号并列",
+   "ok": true,
+   "plats": [
+    "x",
+    "grok",
+    "blog",
+    "jike",
+    "weibo",
+    "wechat",
+    "zhihu"
+   ]
+  },
+  {
+   "check": "平台图标都是本地官方图标文件且已加载",
+   "ok": true,
+   "icons": [
+    {
+     "src": "icons/x.svg",
+     "w": 150
+    },
+    {
+     "src": "icons/grok.svg",
+     "w": 512
+    },
+    {
+     "src": "icons/blog.svg",
+     "w": 150
+    },
+    {
+     "src": "icons/jike.svg",
+     "w": 38
+    },
+    {
+     "src": "icons/weibo.svg",
+     "w": 150
+    },
+    {
+     "src": "icons/wechat.svg",
+     "w": 150
+    },
+    {
+     "src": "icons/zhihu.svg",
+     "w": 150
+    }
+   ]
+  },
+  {
+   "check": "Grok bot 里 = 今日重点/推特爆款/环球要闻/GitHub 热门",
+   "ok": true,
+   "people": [
+    "全部",
+    "今日重点",
+    "推特爆款",
+    "环球要闻",
+    "GitHub 热门"
+   ]
+  },
+  {
+   "check": "4 类整理内容已离开主题频道",
+   "ok": true,
+   "leaked": 0
+  },
+  {
+   "check": "Grok bot 条数",
+   "ok": true,
+   "per_account": {
+    "今日重点": 108,
+    "推特爆款": 148,
+    "环球要闻": 188,
+    "GitHub 热门": 133
+   }
+  },
+  {
+   "check": "博主「查看更多」下滑到「没有更多了」",
+   "ok": true,
+   "rows": 133,
+   "total": 133
+  },
+  {
+   "check": "系统返回关掉「查看更多」回博主页",
+   "ok": true
+  },
+  {
+   "check": "频道「查看更多」= 整个频道全部条目，到「没有更多了」",
+   "ok": true,
+   "rows": 38,
+   "total": 38
+  },
+  {
+   "check": "从详情返回，「查看更多」页停在原位置",
+   "ok": true,
+   "y0": 4901,
+   "y1": 4901
+  },
+  {
+   "check": "「查看更多」返回回到频道",
+   "ok": true
+  },
+  {
+   "check": "新闻频道英文条目全部有中文译文（机器翻译）",
+   "ok": true,
+   "english": 159,
+   "translated": 159
+  },
+  {
+   "check": "博主英文帖子全部有中文译文（机器翻译）",
+   "ok": true,
+   "english": 68,
+   "translated": 68
+  },
+  {
+   "check": "环球卡片显示中文译文 + 「机器翻译」标",
+   "ok": true,
+   "sample": "利兹一辆被警方追赶的汽车撞上另一辆车，致两人死亡\n\n宝马与大众在 Gelderd Road 相撞后四人被捕，警方呼吁目击者提供线索。两名分别为 22 岁和 23"
+  },
+  {
+   "check": "深链地址 #/item/<id>",
+   "ok": true,
+   "url": "2026%2Fnov%2F15%2Fvaccine-policy-rfk-jr-trump-administration"
+  },
+  {
+   "check": "详情系统返回回到原频道原位置",
+   "ok": true,
+   "x": 1,
+   "y0": 1948,
+   "y1": 1948
+  },
+  {
+   "check": "收藏后刷新仍在",
+   "ok": true,
+   "id": "guardian-world:https://www.theguardian.com/us-news/2026/nov/15/vaccine-policy-rfk-jr-trump-administration"
+  },
+  {
+   "check": "搜索 OpenAI 有命中",
+   "ok": true,
+   "hits": 181
+  },
+  {
+   "check": "搜索结果点进详情再返回，回到搜索结果",
+   "ok": true
+  },
+  {
+   "check": "冷启动打开 #/item/<id> 直接到详情",
+   "ok": true,
+   "id": "tnews365:35783"
+  },
+  {
+   "check": "深链详情返回到首页频道",
+   "ok": true
+  },
+  {
+   "check": "上下模式「继续看」按钮保留",
+   "ok": true,
+   "buttons": 6
+  },
+  {
+   "check": "页面无脚本错误",
+   "ok": true,
+   "errors": []
+  },
+  {
+   "check": "无 4xx/5xx 请求",
+   "ok": true,
+   "bad": []
+  }
+ ],
+ "screenshots": [
+  "live-01-topbar-channels.png",
+  "live-02-topbar-blogger.png",
+  "live-03-topbar-hot.png",
+  "live-04-topbar-favorites.png",
+  "live-05-sticky-channel-lr.png",
+  "live-06-tg-reply-card.png",
+  "live-07-tg-forward-card.png",
+  "live-08-tg-forward-detail.png",
+  "live-09-tg-reply-detail.png",
+  "live-10-detail-next.png",
+  "live-11-tg-comments.png",
+  "live-12-banner-swipe.png",
+  "live-13-longpress-menu.png",
+  "live-14-pull-to-refresh.png",
+  "live-15-sticky-channel-ud.png",
+  "live-16-card-swipe-fav.png",
+  "live-17-sticky-blogger.png",
+  "live-18-wechat-article-top.png",
+  "live-19-wechat-article-mid.png",
+  "live-20-sticky-hot.png",
+  "live-21-sticky-favorites.png",
+  "live-22-hot-now.png",
+  "live-23-blogger-grok.png",
+  "live-24-more-blogger-end.png",
+  "live-25-more-channel-mid.png",
+  "live-26-world-translated.png",
+  "live-27-article-translated.png",
+  "live-28-favorites.png",
+  "live-29-search.png",
+  "live-30-deeplink.png"
+ ]
+}

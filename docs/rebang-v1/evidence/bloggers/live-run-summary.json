@@ -1,0 +1,93 @@
+{
+ "ok": true,
+ "out": "var/rebang/in/bloggers.json",
+ "items": 151,
+ "translated": "68/68",
+ "platforms": [
+  {
+   "id": "x",
+   "status": "ok",
+   "items": 78,
+   "accounts": {
+    "karpathy": "empty",
+    "simonw": "ok",
+    "swyx": "ok",
+    "emollick": "ok",
+    "AndrewYNg": "empty",
+    "sama": "empty",
+    "lennysan": "ok",
+    "paulg": "ok",
+    "levelsio": "ok",
+    "dotey": "ok",
+    "op7418": "ok",
+    "vista8": "ok",
+    "Gorden_Sun": "ok",
+    "tualatrix": "ok",
+    "lxfater": "ok",
+    "turingou": "ok"
+   }
+  },
+  {
+   "id": "blog",
+   "status": "ok",
+   "items": 63,
+   "accounts": {
+    "ruanyifeng": "ok",
+    "reorx": "ok",
+    "tualatrix": "ok",
+    "simonw": "ok",
+    "karpathy": "ok",
+    "emollick": "ok",
+    "lilianweng": "ok"
+   }
+  },
+  {
+   "id": "jike",
+   "status": "not_configured",
+   "items": 0,
+   "accounts": {
+    "7B1385A9-FCC9-4446-B8CE-472EAF6817B2": "not_configured(jike_rsshub_unset)",
+    "BB769515-C724-4652-8838-6AA32EC1A8DF": "not_configured(jike_rsshub_unset)",
+    "35224A78-8B11-469E-B307-16B58688FBEC": "not_configured(jike_rsshub_unset)",
+    "bb668784-6bbc-456d-989c-1f8e90f6fd95": "not_configured(jike_rsshub_unset)",
+    "C0052298-F57E-483F-9BBA-0C6BF17AB59E": "not_configured(jike_rsshub_unset)",
+    "2d619b75-fc6a-4151-8125-156762ab46dc": "not_configured(jike_rsshub_unset)",
+    "752D3103-1107-43A0-BA49-20EC29D09E36": "not_configured(jike_rsshub_unset)",
+    "160F8D03-E580-4799-8D02-B86B1A6FBF64": "not_configured(jike_rsshub_unset)",
+    "83F8C091-4C46-43B7-B7AC-B90CD72255E7": "not_configured(jike_rsshub_unset)"
+   }
+  },
+  {
+   "id": "weibo",
+   "status": "not_configured",
+   "items": 0,
+   "accounts": {
+    "linfcstmr": "not_configured(weibo_cookie_unset)",
+    "1560906700": "not_configured(weibo_cookie_unset)",
+    "1233486457": "not_configured(weibo_cookie_unset)",
+    "1577826897": "not_configured(weibo_cookie_unset)",
+    "5700099573": "not_configured(weibo_cookie_unset)",
+    "1906286443": "not_configured(weibo_cookie_unset)"
+   }
+  },
+  {
+   "id": "wechat",
+   "status": "ok",
+   "items": 10,
+   "accounts": {
+    "MacTalk": "not_configured(wechat_weread_qr)",
+    "独立开发变现周刊": "not_configured(wechat_weread_qr)",
+    "乱翻书": "not_configured(wechat_weread_qr)",
+    "caoz的梦呓": "not_configured(wechat_weread_qr)",
+    "夕小瑶科技说": "ok",
+    "王建硕": "not_configured(wechat_weread_qr)"
+   }
+  },
+  {
+   "id": "zhihu",
+   "status": "empty",
+   "items": 0,
+   "accounts": {}
+  }
+ ]
+}

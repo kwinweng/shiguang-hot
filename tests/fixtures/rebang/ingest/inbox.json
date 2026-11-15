@@ -1,0 +1,15 @@
+{"note": "合成样本：各成品 load_issues 之后的 shiguang.feed/1 形状（新→旧）。",
+ "x": [{"schema": "shiguang.feed/1", "source": "x", "date": "2026-11-14", "sections": [{"title": "推特爆款", "items": [
+   {"title": "某作者（@someone）", "body": "中文摘要\n♥ 1,000", "source": "X", "link": "https://x.com/someone/status/1", "date": "2026-11-14 07:12"}]}]}],
+ "world": [{"schema": "shiguang.feed/1", "source": "world", "date": "2026-11-14", "sections": [{"title": "国际时政", "items": [
+   {"title": "环球要闻条目", "body": "环球正文", "link": "https://www.bbc.co.uk/news/articles/abc", "images": [{"file": "img.png", "alt": "示意"}]},
+   {"title": "环球要闻条目重复链接", "body": "同链接只留一条", "link": "https://www.bbc.co.uk/news/articles/abc"}]}]}],
+ "github": [{"schema": "shiguang.feed/1", "source": "github", "date": "2026-11-15", "sections": [{"title": "新秀榜", "items": [
+   {"title": "owner/repo", "body": "仓库介绍", "link": "https://github.com/owner/repo", "date": "2026-11-15"}]}]},
+   {"schema": "shiguang.feed/1", "source": "github", "date": "2026-10-01", "sections": [{"title": "新秀榜", "items": [
+   {"title": "old/repo", "body": "窗口外", "link": "https://github.com/old/repo"}]}]}],
+ "hot-daily": [{"schema": "shiguang.feed/1", "source": "hot-daily", "date": "2026-11-14", "sections": [{"title": "今日重点", "items": [
+   {"title": "命中竹新社", "body": "已上站，只打标", "link": "https://t.me/s/tnews365/101", "sources": ["竹新社"], "date": "2026-11-14"},
+   {"title": "未上站但来源在表里", "body": "归科技与 AI", "link": "https://t.me/zaihuapd/99999", "sources": ["不认识的源", "在花科技圈"], "date": "2026-11-14"},
+   {"title": "来源都不认识", "body": "归时事", "link": "https://t.me/reorx_share/9", "sources": ["Reorx’s Forge"], "date": "2026-11-14"}]}]}]
+}

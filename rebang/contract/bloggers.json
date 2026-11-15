@@ -1,0 +1,59 @@
+{
+  "schema": "rebang.bloggers/1",
+  "note": "grok = 我们自己的 Grok bot 每日整理成品（今日重点/推特爆款/环球要闻/GitHub 热门，2026-11-15 21:26 阿欢定从频道移来），由 sources-ingest 读盒子投递目录产出 kind=post。其余名单以 docs/bloggers-candidates-v2-20261114.md 与 SPEC v0.10 第 7.4 节为准，本期不扩。博主不进 6 个资讯频道。登录类平台抓不到就保持真实空状态，不编帖子。",
+  "platforms": [
+    {"id": "x", "name": "X", "method": "existing-public-reader", "login": false, "accounts": [
+      {"handle": "karpathy", "name": "Andrej Karpathy"}, {"handle": "simonw", "name": "Simon Willison"},
+      {"handle": "swyx", "name": "swyx"}, {"handle": "emollick", "name": "Ethan Mollick"},
+      {"handle": "AndrewYNg", "name": "Andrew Ng"}, {"handle": "sama", "name": "Sam Altman"},
+      {"handle": "lennysan", "name": "Lenny Rachitsky"}, {"handle": "paulg", "name": "Paul Graham"},
+      {"handle": "levelsio", "name": "Pieter Levels"}, {"handle": "dotey", "name": "宝玉"},
+      {"handle": "op7418", "name": "歸藏"}, {"handle": "vista8", "name": "向阳乔木"},
+      {"handle": "Gorden_Sun", "name": "Gorden Sun"}, {"handle": "tualatrix", "name": "图拉鼎"},
+      {"handle": "lxfater", "name": "铁锤人"}, {"handle": "turingou", "name": "郭宇"}
+    ]},
+    {"id": "grok", "name": "Grok bot", "method": "curated-inbox", "login": false, "curated": true, "accounts": [
+      {"handle": "hot-daily", "name": "今日重点", "inbox": "/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json"},
+      {"handle": "x", "name": "推特爆款", "inbox": "/workspace/x-digest/YYYY-MM-DD.json"},
+      {"handle": "world", "name": "环球要闻", "inbox": "/workspace/world-brief/YYYY-MM-DD/brief.json"},
+      {"handle": "github", "name": "GitHub 热门", "inbox": "/workspace/feeds-inbox/github/YYYY-MM-DD/feed.json"}
+    ]},
+    {"id": "blog", "name": "博客", "method": "official-feed", "login": false, "accounts": [
+      {"handle": "ruanyifeng", "name": "阮一峰", "home": "https://www.ruanyifeng.com/blog/", "feed": "https://www.ruanyifeng.com/blog/atom.xml"},
+      {"handle": "reorx", "name": "Reorx", "home": "https://reorx.com/", "feed": "https://reorx.com/feed.xml"},
+      {"handle": "tualatrix", "name": "图拉鼎", "home": "https://imtx.me/", "feed": "https://imtx.me/feed/"},
+      {"handle": "simonw", "name": "Simon Willison", "home": "https://simonwillison.net/", "feed": "https://simonwillison.net/atom/everything/"},
+      {"handle": "karpathy", "name": "Andrej Karpathy", "home": "https://karpathy.bearblog.dev/", "feed": "https://karpathy.bearblog.dev/feed/"},
+      {"handle": "emollick", "name": "Ethan Mollick", "home": "https://www.oneusefulthing.org/", "feed": "https://www.oneusefulthing.org/feed"},
+      {"handle": "lilianweng", "name": "Lilian Weng", "home": "https://lilianweng.github.io/", "feed": "https://lilianweng.github.io/index.xml"}
+    ]},
+    {"id": "jike", "name": "即刻", "method": "self-hosted-rsshub-no-login", "login": false, "needs_approval": "自建 RSSHub 部署另批（约 258MB 内存峰值）", "accounts": [
+      {"handle": "7B1385A9-FCC9-4446-B8CE-472EAF6817B2", "name": "少楠Plidezus"},
+      {"handle": "BB769515-C724-4652-8838-6AA32EC1A8DF", "name": "刘飞Lufy"},
+      {"handle": "35224A78-8B11-469E-B307-16B58688FBEC", "name": "艾逗笔"},
+      {"handle": "bb668784-6bbc-456d-989c-1f8e90f6fd95", "name": "王帅真"},
+      {"handle": "C0052298-F57E-483F-9BBA-0C6BF17AB59E", "name": "修振"},
+      {"handle": "2d619b75-fc6a-4151-8125-156762ab46dc", "name": "王登科"},
+      {"handle": "752D3103-1107-43A0-BA49-20EC29D09E36", "name": "李继刚"},
+      {"handle": "160F8D03-E580-4799-8D02-B86B1A6FBF64", "name": "范冰_XDash"},
+      {"handle": "83F8C091-4C46-43B7-B7AC-B90CD72255E7", "name": "Barret李靖"}
+    ]},
+    {"id": "weibo", "name": "微博", "method": "weibo-crawler-secondary-account", "login": true, "secret": "Cookie 只放仓库外本机密钥文件（路径由运维提供），代码只接受路径参数，不读不打印内容", "accounts": [
+      {"handle": "linfcstmr", "name": "karminski-牙医", "home": "https://weibo.com/linfcstmr"},
+      {"handle": "1560906700", "name": "阑夕", "home": "https://weibo.com/u/1560906700"},
+      {"handle": "1233486457", "name": "高飞", "home": "https://weibo.com/u/1233486457"},
+      {"handle": "1577826897", "name": "Fenng（冯大辉）", "home": "https://weibo.com/u/1577826897"},
+      {"handle": "5700099573", "name": "数字生命卡兹克", "home": "https://weibo.com/u/5700099573"},
+      {"handle": "1906286443", "name": "钟文泽", "home": "https://weibo.com/u/1906286443"}
+    ]},
+    {"id": "wechat", "name": "公众号", "method": "weread-secondary-account-qr", "login": true, "secret": "盒子浏览器扫码，登录态不写文件", "accounts": [
+      {"handle": "MacTalk", "name": "MacTalk（池建强）"},
+      {"handle": "独立开发变现周刊", "name": "独立开发变现周刊（凯凯而谈）"},
+      {"handle": "乱翻书", "name": "乱翻书"},
+      {"handle": "caoz的梦呓", "name": "caoz的梦呓"},
+      {"handle": "夕小瑶科技说", "name": "夕小瑶科技说", "method": "wechat2rss-public-feed", "login": false, "feed": "https://wechat2rss.xlab.app/feed/a1cd365aa14ed7d64cabfc8aa086da40ecaba34d.xml"},
+      {"handle": "王建硕", "name": "王建硕"}
+    ]},
+    {"id": "zhihu", "name": "知乎", "method": "none", "login": false, "accounts": []}
+  ]
+}

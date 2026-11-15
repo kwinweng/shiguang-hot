@@ -1,0 +1,14 @@
+{
+  "schema": "rebang.hotsearch-config/1",
+  "note": "2026-11-15 20:41 阿欢确认：百度 + 知乎 + B 站，不要微博；21:26 定热搜放底栏「热搜」页（替换原历史页），可按北京日期回看每天最后一次抓取的榜单。每家独立适配器，失败当天就空着，不编排名，不用第三方榜/公共 RSSHub。换家只改本表 + 增删 rebang/hotsearch/providers/<id>.py。",
+  "view": "hot",
+  "archive": {"dir": "var/rebang/hotsearch-archive", "keep": "每个北京日期只留当天最后一次成功抓取（至少一家 ok）"},
+  "max_items_per_provider": 51,
+  "max_items_note": "百度 = 置顶 1 + 普通 50",
+  "providers": [
+    {"id": "baidu", "name": "百度热搜", "enabled": true, "order": 1, "endpoint": "https://top.baidu.com/api/board?tab=realtime", "stability": "mid"},
+    {"id": "zhihu", "name": "知乎热榜", "enabled": true, "order": 2, "endpoint": "https://api.zhihu.com/topstory/hot-lists/total?limit=50", "stability": "mid"},
+    {"id": "bilibili", "name": "B 站热搜", "enabled": true, "order": 3, "endpoint": "https://api.bilibili.com/x/web-interface/wbi/search/square?limit=50", "stability": "mid"}
+  ],
+  "disabled_reason": {"weibo": "无免登录可长期依赖的源（2026-11-15 实测），已建议去掉"}
+}
