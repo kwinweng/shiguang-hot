@@ -120,3 +120,20 @@ class RefreshTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class ForwardNameTests(unittest.TestCase):
+    EMPTY = ('<div class="tgme_widget_message" data-post="demo/7"><div class="tgme_widget_message_forwarded_from">Forwarded from '
+             '<span class="tgme_widget_message_forwarded_from_name"><span dir="auto"></span></span> '
+             '(<span class="tgme_widget_message_forwarded_from_author">作者甲</span>)</div>'
+             '<div class="tgme_widget_message_text">原帖</div><time datetime="2026-11-15T10:00:00+00:00"></time></div>')
+
+    def test_empty_name_falls_back_to_author(self):
+        self.assertEqual(parse_page(self.EMPTY)[7]['forward'], {'name': '作者甲', 'url': ''})
+
+    def test_refresh_keeps_known_name(self):
+        prev = {'text': '原帖', 'published_at': '2026-11-15T10:00:00+00:00', 'forward': {'name': '别的频道', 'url': 'https://t.me/o/1'}}
+        store = {'schema': 'rebang.tgmeta/1', 'channels': {}, 'messages': {'demo/7': prev}}
+        get = lambda url: '<html></html>' if ('before=' in url or 'discussion' in url) else self.EMPTY
+        store, _ = refresh(['demo'], now=datetime(2026, 11, 15, 21, 0, tzinfo=BJ), store=store, get=get, sleep=0)
+        self.assertEqual(store['messages']['demo/7']['forward'], {'name': '别的频道', 'url': 'https://t.me/o/1'})
