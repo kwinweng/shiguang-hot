@@ -8,6 +8,7 @@
 - 2026-11-15 阶段 0：集成分支 `feat/rebang-v1`（基于 origin/main 8b5c6735e）已写数据契约 `rebang/contract/` + 契约测试 20 项全绿。
 - 6 个功能分支与 worktree 已建（`/workspace/rebang-v1-wt/<name>`），任务卡在 `docs/rebang-v1/tasks/`。
 - 基线（未改动的 origin/main）：pytest 228 过 / 1 失败（`test_news_modules_browser` 主题切换 dark 子用例，原样复现，非本次引入）；node 13/13；`NO_FETCH=1 python3 pipeline.py` 成功（6527 TG，0 feed，4 inbox）。
+- push-0830：8:30「今日重点」私聊稿已可 `python3 -m rebang.push --site site-v11 --now <ISO> --dry-run [--output FILE]` 生成（只输出，不发送、不建定时）。单测 17 项全绿。现有今日重点仍由热点日报 bot 每晚 22:00 写到 `/workspace/feeds-inbox/hot-daily/`，资讯 bot 无 8:30 私聊例程。
 
 ## 下一步
 1. 做 6 个分支（目录互不重叠，可并行；实际是否并行以执行记录为准）：sources-ingest、hotsearch、bloggers、frontend-v11、history-favorites-search、push-0830（任务卡里有验收命令）。

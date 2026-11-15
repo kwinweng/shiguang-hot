@@ -1,0 +1,41 @@
+{
+  "schema": "rebang.items/1",
+  "producer": "push-fixture",
+  "generated_at": "2026-11-15T08:30:00+08:00",
+  "items": [
+    {
+      "id": "tnews365:101",
+      "kind": "news",
+      "channel": "current",
+      "source_id": "tnews365",
+      "source_name": "竹新社",
+      "title": "时事一条",
+      "summary": "时事摘要。",
+      "url": "https://t.me/tnews365/101",
+      "published_at": "2026-11-15T07:10:00+08:00",
+      "lang": "zh",
+      "translated": false,
+      "highlight": true
+    },
+    {
+      "id": "bbc-world:202",
+      "kind": "news",
+      "channel": "world",
+      "source_id": "bbc-world",
+      "source_name": "BBC World",
+      "title": "World story",
+      "summary": "World summary.",
+      "url": "https://www.bbc.co.uk/news/world-202",
+      "published_at": "2026-11-15T06:00:00+08:00",
+      "lang": "en",
+      "translated": true,
+      "highlight": false,
+      "translation": {
+        "title": "环球一条",
+        "summary": "环球摘要。",
+        "engine": "fixture",
+        "label": "机器翻译"
+      }
+    }
+  ]
+}
