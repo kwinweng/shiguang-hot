@@ -98,6 +98,9 @@ def parse_page(html):
             link = fwd.select_one('a.tgme_widget_message_forwarded_from_name, a[href]')
             name_node = fwd.select_one('.tgme_widget_message_forwarded_from_name') or fwd
             name = name_node.get_text(' ', strip=True).replace('Forwarded from', '').strip()
+            if not name:   # 名字为空时用页面上的作者名（如「Linghao Zhang」），仍是 t.me 页面原文
+                author = fwd.select_one('.tgme_widget_message_forwarded_from_author')
+                name = author.get_text(' ', strip=True) if author else ''
             meta['forward'] = {'name': name, 'url': link['href'] if link and link.get('href', '').startswith('https://') else ''}
         reply = msg.select_one('.tgme_widget_message_reply')
         if reply:
@@ -214,6 +217,11 @@ def refresh(channels, now=None, store=None, get=_get, days=14, sleep=0.25, log=N
                     old = msgs.get(key)
                     if old and 'comments' in old:
                         meta['comments'] = old['comments']
+                    # t.me 有时给出名字为空的转发/引用头（同一条在别的页里有名字）：不拿空的覆盖已知的
+                    for part in ('forward', 'reply'):
+                        new, prev = meta.get(part), (old or {}).get(part)
+                        if prev and (not new or (not new.get('name') and prev.get('name')) or (not new.get('url') and prev.get('url'))):
+                            meta[part] = prev
                     meta['fetched_at'] = stamp
                     msgs[key] = meta
                     stats['messages'] += 1
