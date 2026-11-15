@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+<channel><title>Synthetic World</title><link>https://example.com/</link>
+<item><title>Fresh headline</title><description><![CDATA[<p>Fresh summary text.</p>]]></description>
+<link>https://example.com/fresh</link><guid>https://example.com/fresh</guid>
+<pubDate>Sun, 15 Nov 2026 10:00:00 GMT</pubDate><media:thumbnail url="https://example.com/fresh.jpg" width="240" height="135"/></item>
+<item><title>Old headline</title><description>Old summary.</description>
+<link>https://example.com/old</link><guid>https://example.com/old</guid>
+<pubDate>Sun, 18 Oct 2026 10:00:00 GMT</pubDate><media:thumbnail url="https://example.com/old.jpg"/></item>
+</channel></rss>
