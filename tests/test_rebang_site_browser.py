@@ -92,7 +92,10 @@ class SiteBrowserTests(unittest.TestCase):
     def test_top_bar_tabs_and_six_channels(self):
         self.open()
         self.assertEqual(self.page.locator('#when').inner_text(), self.page.evaluate('RebangLib.fmtDay(new Date())'))
-        self.assertEqual(self.page.locator('#refreshed').inner_text(), '刷新于 11月15日 20:00')
+        # v13 第 7 条（阿欢 22:11）：日期只出现一次——同一个北京日只写时间，跨天才带日期。
+        expect = self.page.evaluate("'刷新于 ' + RebangLib.fmtRefreshed('2026-11-15T12:00:00Z', new Date())")
+        self.assertIn(expect, ('刷新于 20:00', '刷新于 11月15日 20:00'))
+        self.assertEqual(self.page.locator('#refreshed').inner_text(), expect)
         self.assertEqual(self.page.locator('.page-b h2.ch').all_inner_texts(), ['时事', '环球', '财经', '科技与 AI', '数码', '工具与项目'])
         self.assertEqual([t.strip() for t in self.page.locator('.tabbar button').all_inner_texts()], ['频道', '博主', '热搜', '收藏'])
         self.assertEqual(self.page.locator('#view-history').count(), 0, '历史页已改为热搜页')

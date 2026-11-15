@@ -6,8 +6,8 @@
  * 约定：window.Rebang.register('favorites', mount)；详情页调用 attachButton(slot, item, ctx)。
  */
 const STORAGE_KEY = 'rebang.favorites.v1';
-const DEVICE_NOTE = '收藏按钮只在打开正文之后才会出现。记录只存在这台设备的浏览器里，换手机或清理数据会消失。';
-const EMPTY_TEXT = '还没有收藏。打开一篇正文或一条推文，再点收藏。收藏只存在这台设备的浏览器里，换手机或清理数据会消失。';
+const DEVICE_NOTE = '在正文里点「收藏这条」，或在列表里把卡片往左滑、长按卡片选「收藏」。记录只存在这台设备的浏览器里，换手机或清理数据会消失。';
+const EMPTY_TEXT = '还没有收藏。打开一篇正文点「收藏这条」，或在列表里把卡片往左滑。收藏只存在这台设备的浏览器里，换手机或清理数据会消失。';
 
 function defaultStorage() {
   if (typeof localStorage !== 'undefined') return localStorage;
@@ -50,6 +50,7 @@ function snapshot(item) {
 }
 
 function load(storage) {
+  storage = storage || defaultStorage();   // v13：手势收藏（左滑 / 长按菜单）不传 storage 时用本机默认
   const raw = storage.getItem(STORAGE_KEY);
   if (!raw) return [];
   try {
@@ -66,6 +67,7 @@ function load(storage) {
 }
 
 function save(items, storage) {
+  storage = storage || defaultStorage();
   storage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, items }));
   return items;
 }

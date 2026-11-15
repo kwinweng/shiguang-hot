@@ -2,7 +2,10 @@
    交互以 v10 设计稿为准：两种翻法、频道顶部 banner、信息流、时事热搜块、整页正文 + 返回原位、无限加载、刷新/下拉刷新。
    收藏 / 搜索由 web-v11/features/*.js 通过 Rebang.register(name, mount) 挂到 #view-favorites / #search-panel。
    2026-11-15 21:26 阿欢改：底栏「历史」→「热搜」（当前热搜 + 按北京日期回看），时事频道不再嵌热搜；
-   博主页加「Grok bot」渠道（今日重点/推特爆款/环球要闻/GitHub 热门）；每个频道、每个博主都有「查看更多」整页。 */
+   博主页加「Grok bot」渠道（今日重点/推特爆款/环球要闻/GitHub 热门）；每个频道、每个博主都有「查看更多」整页。
+   2026-11-15 22:08–22:11 阿欢改（v13）：各页标题吸顶；TG 引用/转发卡、表情回应/浏览/公开评论；详情上一条/下一条；
+   卡片手势（左滑收藏、右滑分享、长按菜单）、详情左边缘右滑返回、所有列表下拉刷新、双击底栏回顶部；公众号正文按原文顺序；
+   顶栏日期居左只写一次。手势优先级见下方「手势」段注释。 */
 (function () {
   'use strict';
   const L = window.RebangLib;
@@ -45,11 +48,12 @@
   let articleOpen = false, articleId = null, returnState = null;
   let more = null;                // 「查看更多」整页：{key, title, type:'ch'|'bl', slug|plat+pkey, list, page, pages, total, loading, error}
   let idIndex = null;
+  let pendingList = null;         // 收藏/搜索模块点开条目时的同列表顺序（给详情的上一条/下一条）
 
   const ctx = {
     dataBase: DATA,
     get now() { return new Date(); },
-    openItem: (it) => openItem(it),
+    openItem: (it) => { const list = pendingList; pendingList = null; return openItem(it, {list}); },
     toast: (t) => toast(t),
     fetch: (u, o) => fetch(u, o),
     searchButton: null,
@@ -126,8 +130,8 @@
     const feed = visibleFeed(c.slug);
     const empty = !c.banner.length && !st.total ? '<p class="muted">这一频道暂时还没有内容。</p>' : '';
     const hint = mode === 'ud' ? '左右滑顶部图，下滑看下一频道' : (i < channels().length - 1 ? '左滑看下一频道' : '已经是最后一个频道');
-    return `<div class="ch-kicker"${mode === 'lr' ? ' style="padding:0"' : ''}><span class="idx">${i + 1} / ${channels().length}</span><span class="hint">${hint}</span></div>
-      <div class="ch-row"><h2 class="ch">${L.esc(c.name)}</h2>${c.total ? `<button type="button" class="see-more" data-see="ch:${L.esc(c.slug)}">查看更多<span aria-hidden="true">›</span></button>` : ''}</div>
+    return `<div class="ch-head"><div class="ch-kicker"${mode === 'lr' ? ' style="padding:0"' : ''}><span class="idx">${i + 1} / ${channels().length}</span><span class="hint">${hint}</span></div>
+      <div class="ch-row"><h2 class="ch">${L.esc(c.name)}</h2>${c.total ? `<button type="button" class="see-more" data-see="ch:${L.esc(c.slug)}">查看更多<span aria-hidden="true">›</span></button>` : ''}</div></div>
       <p class="desc">${L.esc(c.desc || '')}</p>
       ${unavailableNote(c)}
       ${L.bannerHTML(c.slug, c.banner)}
@@ -386,20 +390,38 @@
     };
     apply(); requestAnimationFrame(() => requestAnimationFrame(apply));
   }
+  function commentsHTML(it) {
+    const tg = it.tg || {};
+    const list = tg.comments || [];
+    if (!list.length) return '';   // 频道没开公开评论，或挂件里没有可见评论：不显示，不编
+    const total = tg.comments_total ? `共 ${L.esc(L.fmtN(tg.comments_total))} 条，` : '';
+    return `<section class="tg-comments" data-tg-comments><h4>评论</h4><p class="cmt-note">${total}这里只显示 Telegram 公开页面上能看到的最近 ${list.length} 条。<a href="${L.esc(it.url)}" target="_blank" rel="noopener">在 Telegram 看全部</a></p>${list.map(c => `<div class="comment"><span class="av letter">${L.esc((c.display_name || '?').trim()[0] || '?')}</span><div><div class="nm" style="font-size:13px">${L.esc(c.display_name)}${c.reply_to ? ` <span class="meta">回复 ${L.esc(c.reply_to)}</span>` : ''}${c.published_at ? ` <span class="meta">· ${L.esc(L.fmtTime(c.published_at))}</span>` : ''}</div><div class="t-body">${L.esc(c.text)}</div></div></div>`).join('')}</section>`;
+  }
   function articleHTML(it) {
     const d = L.display(it);
     const slot = '<div class="fav-slot" data-fav-slot></div>';
     const open = it.url ? `<a class="primary" href="${L.esc(it.url)}" target="_blank" rel="noopener">打开原文</a>` : '';
-    if (it.kind === 'post' && !(it.blogger && it.blogger.platform === 'grok')) return `${L.tweetCardHTML(it, false)}<div class="actions">${slot}${open}</div>`;
+    const isGrok = it.kind === 'post' && it.blogger && it.blogger.platform === 'grok';
+    if (it.kind === 'post' && !isGrok && it.blocks && it.blocks.length) {
+      // 公众号 / 博客文章：按原文顺序的段落、标题、图片、引用、列表；不另放封面和九宫格（避免重复）
+      const b = it.blogger || {};
+      const trBox = d.translated ? `<div class="art-tr"><span class="mt-badge">${L.esc(d.label)}</span><p>${L.esc(d.summary)}</p><p class="cmt-note">下面是原文。</p></div>` : '';
+      return `<div class="src art-src"><span>${L.esc(b.display_name || it.source_name)} · ${L.esc(L.fmtTime(it.published_at))}</span></div>
+        <h3 class="art-title">${L.esc(d.title)}</h3>${trBox}<div class="art-blocks" data-blocks>${L.blocksHTML(it.blocks)}</div>
+        <div class="actions">${slot}${open}</div>`;
+    }
+    if (it.kind === 'post' && !isGrok) return `${L.tweetCardHTML(it, false)}<div class="actions">${slot}${open}</div>`;
     let text = (d.body || d.summary || '').trim();
     // TG 正文第一行常是「【标题】」，标题已单独显示，正文里不再重复
     const first = text.split('\n')[0].replace(/[【】\s]/g, '');
     if (first && first === d.title.replace(/[【】\s]/g, '')) text = text.slice(text.indexOf('\n') + 1 || text.length).trim();
     const orig = d.translated ? `<div class="art-tools"><button type="button" class="orig-btn" data-art-orig>看原文</button></div><div class="art-orig" data-art-orig-box><h4>${L.esc(d.orig.title)}</h4>${L.esc(d.orig.body || d.orig.summary)}</div>` : '';
-    return `${it.image && it.image.url ? `<img class="cover" src="${L.esc(it.image.url)}" alt="${L.esc(it.image.alt || '')}">` : ''}
-      <div class="src art-src"><span>${L.esc(it.source_name)} · ${L.esc(L.fmtTime(it.published_at))}</span>${it.highlight ? '<span class="t-badge">今日重点</span>' : ''}${d.translated ? `<span class="mt-badge">${L.esc(d.label)}</span>` : ''}</div>
-      <h3 class="art-title">${L.esc(d.title)}</h3>
-      <p class="art-text${text ? '' : ' none'}">${L.esc(text || L.NO_BODY)}</p>${orig}
+    const bare = L.isBareForward(it);
+    const head = `${it.image && it.image.url ? `<img class="cover" src="${L.esc(it.image.url)}" alt="${L.esc(it.image.alt || '')}">` : ''}
+      <div class="src art-src"><span>${L.esc(it.source_name)} · ${L.esc(L.fmtTime(it.published_at))}</span>${it.highlight ? '<span class="t-badge">今日重点</span>' : ''}${d.translated ? `<span class="mt-badge">${L.esc(d.label)}</span>` : ''}</div>`;
+    const main = bare ? '<div class="fwd-tag">转发</div>' :
+      `<h3 class="art-title">${L.esc(d.title)}</h3>${text || !it.quote ? `<p class="art-text${text ? '' : ' none'}">${L.esc(text || L.NO_BODY)}</p>` : ''}${orig}`;
+    return `${head}${main}${L.quoteCardHTML(it, true)}${L.tgStatsHTML(it, true)}${commentsHTML(it)}
       <div class="actions">${slot}${open}</div>`;
   }
   function attachFav(slot, it) {
@@ -408,11 +430,40 @@
     if (window.RebangFavorites && window.RebangFavorites.attachButton) return window.RebangFavorites.attachButton(slot, it, {toast});
     slot.remove();
   }
+  /* 详情里的「上一条 / 下一条」：在打开它的那个列表里按顺序走（频道信息流、banner、查看更多、博主、收藏、搜索结果） */
+  let navList = null;   // {ids, at}
+  const LIST_SCOPE = '.feed-list, .banner-rail, .more-list, #bloggerList, [data-favorites-list], #search-panel';
+  function listContext(card) {
+    const scope = card && card.closest(LIST_SCOPE);
+    if (!scope) return null;
+    const ids = [];
+    scope.querySelectorAll('[data-id], [data-item-id]').forEach(el => { const id = el.dataset.id || el.dataset.itemId; if (id && !ids.includes(id)) ids.push(id); });
+    return ids.length > 1 ? ids : null;
+  }
+  function navHTML() {
+    const at = navList ? navList.ids.indexOf(articleId) : -1;
+    const prev = at > 0, next = at >= 0 && at < navList.ids.length - 1;
+    return `<button type="button" class="art-nav-btn" data-nav="-1" aria-label="上一条"${prev ? '' : ' disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>` +
+      (at >= 0 ? `<span class="art-nav-pos">${at + 1} / ${navList.ids.length}</span>` : '') +
+      `<button type="button" class="art-nav-btn" data-nav="1" aria-label="下一条"${next ? '' : ' disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`;
+  }
+  function renderNav() { const el = $('#artNav'); el.hidden = !(navList && navList.ids.includes(articleId)); el.innerHTML = el.hidden ? '' : navHTML(); }
+  async function step(dir) {
+    if (!navList || !articleOpen) return false;
+    const at = navList.ids.indexOf(articleId), to = navList.ids[at + dir];
+    if (at < 0 || !to) { toast(dir > 0 ? '已经是这个列表的最后一条。' : '已经是这个列表的第一条。'); return false; }
+    await openItem(to, {replace: true, keepNav: true});
+    return true;
+  }
   async function openItem(ref, opts = {}) {
     const id = typeof ref === 'string' ? ref : ref && ref.id;
     if (!id) return;
     let it = items.get(id) || (typeof ref === 'object' && ref.kind ? ref : null) || await findItem(id) || (typeof ref === 'object' ? ref : null);
-    if (!it) { toast('这条已经不在最近一次发布的数据里了。'); return; }
+    if (!it) {
+      const fav = window.RebangFavorites && window.RebangFavorites.load ? window.RebangFavorites.load().find(x => x.id === id) : null;
+      if (fav) it = fav; else { toast('这条已经不在最近一次发布的数据里了。'); return; }
+    }
+    if (!opts.keepNav && !opts.fromPop) navList = opts.list ? {ids: opts.list} : null;
     if (!opts.fromPop && !(articleOpen && articleId === id)) returnState = articleOpen ? returnState : captureScroll();
     $('#search-panel').classList.remove('on');
     const grok = it.kind === 'post' && it.blogger && it.blogger.platform === 'grok';
@@ -424,12 +475,15 @@
     $('#articleView').classList.add('on');
     body.scrollTop = 0;
     articleOpen = true; articleId = id;
-    if (!opts.fromPop) history.pushState({article: id}, '', L.itemHash(id));
+    renderNav();
+    if (opts.replace && history.state && history.state.article) history.replaceState({article: id}, '', L.itemHash(id));
+    else if (!opts.fromPop) history.pushState({article: id}, '', L.itemHash(id));
   }
   function closeArticle(opts = {}) {
     if (!articleOpen) return;
     articleOpen = false; articleId = null;
     $('#articleView').classList.remove('on');
+    $('#articleView').style.transform = '';
     restoreScroll(returnState);
     if (!opts.fromPop && history.state && history.state.article) history.back();
   }
@@ -449,7 +503,7 @@
   });
 
   /* ---------- 刷新 ---------- */
-  function stampRefresh(d) { $('#refreshed').textContent = `刷新于 ${L.fmtTime(d)}`; }
+  function stampRefresh(d) { $('#refreshed').textContent = `刷新于 ${L.fmtRefreshed(d)}`; }
   async function doRefresh() {
     const btn = $('#btnRefresh');
     btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin'); setTimeout(() => btn.classList.remove('spin'), 450);
@@ -527,32 +581,162 @@
     scroller.addEventListener('touchend', end, opt); scroller.addEventListener('touchcancel', end, opt);
     scroller.addEventListener('scroll', () => updateHInd(scroller), opt);
   }
-  function bindPullRefresh() {
-    const targets = mode === 'lr' ? $$('.page-b') : [$('#channelRoot')];
-    const ptr = $('#ptr');
-    targets.forEach(el => {
-      if (el._pAbort) el._pAbort.abort();
-      const ac = new AbortController(); el._pAbort = ac;
-      let sy, sx, axis, pull = 0;
-      const setPtr = (show, txt, spin) => { ptr.style.top = $('.top').offsetHeight + 'px'; ptr.hidden = !show; ptr.classList.toggle('show', !!show); ptr.classList.toggle('spin', !!spin); if (txt) ptr.querySelector('.ptr-txt').textContent = txt; };
-      el.addEventListener('touchstart', e => { const t = e.touches[0]; sy = t.clientY; sx = t.clientX; axis = null; pull = 0; }, {signal: ac.signal, passive: true});
-      el.addEventListener('touchmove', e => {
-        const t = e.touches[0]; const dy = t.clientY - sy, dx = t.clientX - sx;
-        if (axis == null && (Math.abs(dy) > 8 || Math.abs(dx) > 8)) axis = (el.scrollTop <= 0 && dy > 0 && dy > Math.abs(dx) + 4) ? 'pull' : 'y';
-        if (axis !== 'pull') return;
-        if (e.cancelable) e.preventDefault();
-        pull = Math.max(0, dy * 0.42); el.style.transform = 'translateY(' + Math.min(72, pull) + 'px)';
-        setPtr(true, pull > 56 ? '松开刷新' : '下拉刷新', false);
-      }, {signal: ac.signal, passive: false});
-      const end = () => {
-        if (axis == null && pull === 0) return;
-        const go = axis === 'pull' && pull > 56; axis = null; pull = 0;
-        el.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1)'; el.style.transform = 'translateY(0)';
-        setTimeout(() => { el.style.transition = ''; el.style.transform = ''; }, 300);
-        if (go) { setPtr(true, '正在刷新', true); doRefresh(); } else setPtr(false);
-      };
-      el.addEventListener('touchend', end, {signal: ac.signal, passive: true}); el.addEventListener('touchcancel', end, {signal: ac.signal, passive: true});
-    });
+  /* ---------- 手势总表（2026-11-15 22:08 阿欢要求「定好优先级并测试」）----------
+     一次触摸只归一种手势，先按「从哪里开始」判，再按「先往哪个方向动」判（动 8px 后锁定方向）：
+       1. 详情页：从屏幕左边缘 24px 内开始往右滑 → 返回；其余横滑 → 上一条 / 下一条（详情页里没有频道和 banner 横滑）。
+       2. banner 区域里横滑 → 只翻 banner（bindHSwipe，换频道不接手）。
+       3. 横向可滚的条（平台图标、日期、人物、热搜 tab）→ 原生横滚，谁也不接手。
+       4. 「左右」模式的频道页 → 横滑只换频道；这里卡片不做左滑收藏/右滑分享（用长按菜单收藏/分享）。
+       5. 其余列表里的卡片（上下模式频道、查看更多、博主、收藏、搜索结果）→ 横滑是卡片动作：左滑收藏，右滑分享（拉过 72px 松手才生效）。
+       6. 竖向：列表已在最顶上且往下拉 → 下拉刷新；否则正常滚动。
+       7. 长按卡片 0.5 秒且手指几乎没动（< 8px）→ 卡片菜单（收藏/分享/复制链接/打开原文）；之后的点击不再打开详情。
+       8. 底栏同一个按钮 0.35 秒内点两下 → 当前页回到顶部（点一下照常切页）。 */
+  const EDGE = 24, LOCK = 8, CARD_ACT = 72, PULL_GO = 56, LONG_MS = 500;
+  const CARD_SEL = '.feed-row, .tweet, .row-item, .hero';
+  const HSCROLL_SEL = '.chips, .dates, .people, .hot-tabs, .banner-rail, .banner-wrap, pre, .b-pre';
+  const SCROLLER_SEL = '.page-b, .pager-a, .sub, .more-body, .article-body';
+  let g = null, suppressClickUntil = 0;
+  function cardItem(card) {
+    const id = card && (card.dataset.id || card.dataset.itemId);
+    if (!id) return null;
+    if (items.get(id)) return items.get(id);
+    const fav = window.RebangFavorites && window.RebangFavorites.load ? window.RebangFavorites.load().find(x => x.id === id) : null;
+    return fav || {id};
+  }
+  function linkOf(it) { return location.origin + location.pathname + L.itemHash(it.id); }
+  async function copyText(t) {
+    try { await navigator.clipboard.writeText(t); return true; } catch (e) {
+      const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e2) { ok = false; } ta.remove(); return ok;
+    }
+  }
+  async function shareItem(it) {
+    const url = linkOf(it), title = L.display(it).title || it.title || '拾光热榜';
+    if (navigator.share) { try { await navigator.share({title, url}); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+    toast(await copyText(url) ? '已复制这条的链接，可以粘贴分享。' : '没能复制链接，请长按卡片选「复制链接」再试。');
+  }
+  function toggleFav(it) {
+    const F = window.RebangFavorites;
+    if (!F || !F.toggle) { toast('收藏功能还没接入。'); return; }
+    const full = items.get(it.id) || it;
+    const res = F.toggle(full);
+    if (mounted.favorites && mounted.favorites.refresh) mounted.favorites.refresh();
+    const btn = $('#articleBody [data-favorite-button]');
+    if (btn && articleId === it.id) { btn.classList.toggle('on', res.on); btn.textContent = res.on ? '取消收藏' : '收藏这条'; btn.setAttribute('aria-pressed', String(res.on)); }
+    toast(res.on ? '已收藏，只存在这台设备的浏览器里。' : '已取消收藏。');
+  }
+  function openMenu(card) {
+    const it = cardItem(card); if (!it) return;
+    const F = window.RebangFavorites;
+    const on = F && F.isFavorite ? F.isFavorite(it.id) : false;
+    const full = items.get(it.id) || it;
+    const menu = $('#cardMenu');
+    menu.querySelector('.box').innerHTML = `<div class="handle"></div><div class="menu-ttl">${L.esc(L.display(full).title || full.title || '')}</div>
+      <button type="button" data-menu="fav">${on ? '取消收藏' : '收藏'}</button><button type="button" data-menu="share">分享</button>
+      <button type="button" data-menu="copy">复制链接</button>${full.url ? '<button type="button" data-menu="open">打开原文</button>' : ''}<button type="button" data-menu="cancel" class="cancel">取消</button>`;
+    menu._item = full; menu.classList.add('on'); menu.setAttribute('aria-hidden', 'false');
+  }
+  function closeMenu() { const m = $('#cardMenu'); m.classList.remove('on'); m.setAttribute('aria-hidden', 'true'); m._item = null; }
+  async function onMenu(e) {
+    const m = $('#cardMenu');
+    if (performance.now() < suppressClickUntil) return;   // 长按松手时浏览器补发的那次点击会落在菜单遮罩上，不能当成「点空白关闭」
+    const b = e.target.closest('[data-menu]');
+    if (!b) { if (e.target === m) closeMenu(); return; }
+    const it = m._item; const act = b.dataset.menu; closeMenu();
+    if (!it || act === 'cancel') return;
+    if (act === 'fav') toggleFav(it);
+    else if (act === 'share') shareItem(it);
+    else if (act === 'copy') toast(await copyText(linkOf(it)) ? '链接已复制。' : '没能复制链接。');
+    else if (act === 'open' && it.url) window.open(it.url, '_blank', 'noopener');
+  }
+  function setPtr(show, txt, spin) { const ptr = $('#ptr'); ptr.style.top = $('.top').offsetHeight + 'px'; ptr.hidden = !show; ptr.classList.toggle('show', !!show); ptr.classList.toggle('spin', !!spin); if (txt) ptr.querySelector('.ptr-txt').textContent = txt; }
+  function resetCard(card) { if (!card) return; card.style.transition = 'transform .22s cubic-bezier(.2,.8,.2,1)'; card.style.transform = ''; delete card.dataset.swipe; setTimeout(() => { card.style.transition = ''; card.classList.remove('swiping'); }, 230); }
+  function onTouchStart(e) {
+    if (e.touches.length !== 1) { g = null; return; }
+    const t = e.touches[0], target = e.target;
+    const inArticle = !!target.closest('#articleView');
+    const card = !inArticle ? target.closest(CARD_SEL) : null;
+    g = {x0: t.clientX, y0: t.clientY, x: t.clientX, y: t.clientY, t0: performance.now(), axis: null, target, card,
+      inArticle, edge: inArticle && t.clientX <= EDGE, hscroll: !!target.closest(HSCROLL_SEL),
+      lrChannels: !!target.closest('.pager-b'), scroller: target.closest(SCROLLER_SEL), kind: null, long: null};
+    if (card) g.long = setTimeout(() => { if (g && !g.axis) { g.kind = 'menu'; suppressClickUntil = performance.now() + 60000; if (navigator.vibrate) navigator.vibrate(10); openMenu(card); } }, LONG_MS);
+  }
+  function onTouchMove(e) {
+    if (!g) return;
+    const t = e.touches[0]; g.x = t.clientX; g.y = t.clientY;
+    const dx = g.x - g.x0, dy = g.y - g.y0;
+    if (!g.axis) {
+      if (Math.abs(dx) < LOCK && Math.abs(dy) < LOCK) return;
+      clearTimeout(g.long);
+      if (g.kind === 'menu') return;
+      g.axis = Math.abs(dx) > Math.abs(dy) + 4 ? 'x' : 'y';
+      if (g.axis === 'x') {
+        if (g.inArticle) g.kind = g.edge && dx > 0 ? 'back' : (g.hscroll ? null : 'step');                       // 规则 1
+        else if (g.hscroll || g.lrChannels) g.kind = null;                                                         // 规则 2–4
+        else if (g.card && g.card.closest('.pager-a, .more-list, #bloggerList, [data-favorites-list], #search-panel')) g.kind = 'card';  // 规则 5
+      } else if (dy > 0 && g.scroller && g.scroller.scrollTop <= 0 && !g.inArticle) g.kind = 'pull';            // 规则 6
+    }
+    if (!g.kind || g.kind === 'menu') return;
+    if (e.cancelable) e.preventDefault();
+    if (g.kind === 'back') { $('#articleView').style.transform = `translateX(${Math.max(0, dx)}px)`; }
+    else if (g.kind === 'step') { $('#articleBody').style.transform = `translateX(${dx * 0.35}px)`; }
+    else if (g.kind === 'card') {
+      const c = g.card; c.classList.add('swiping');
+      const x = Math.max(-120, Math.min(120, dx)); c.style.transform = `translateX(${x}px)`;
+      c.dataset.swipe = x < -CARD_ACT ? 'fav-go' : x < 0 ? 'fav' : x > CARD_ACT ? 'share-go' : 'share';
+    } else if (g.kind === 'pull') {
+      g.pull = Math.max(0, dy * 0.42); g.scroller.style.transform = `translateY(${Math.min(72, g.pull)}px)`;
+      setPtr(true, g.pull > PULL_GO ? '松开刷新' : '下拉刷新', false);
+    }
+  }
+  function onTouchEnd() {
+    if (!g) return;
+    clearTimeout(g.long);
+    const s0 = g; g = null;
+    const dx = s0.x - s0.x0;
+    if (s0.kind === 'menu') { suppressClickUntil = performance.now() + 250; return; }   // 只吞掉松手时补发的那一下点击
+    if (s0.kind === 'back') {
+      const av = $('#articleView');
+      if (dx > 80) { av.style.transition = 'transform .18s ease-out'; av.style.transform = 'translateX(100%)'; setTimeout(() => { av.style.transition = ''; closeArticle(); }, 180); }
+      else { av.style.transition = 'transform .2s'; av.style.transform = ''; setTimeout(() => { av.style.transition = ''; }, 200); }
+    } else if (s0.kind === 'step') {
+      const body = $('#articleBody'); body.style.transform = '';
+      if (Math.abs(dx) > 60) step(dx < 0 ? 1 : -1);
+    } else if (s0.kind === 'card') {
+      const c = s0.card, it = cardItem(c);
+      suppressClickUntil = performance.now() + 400;
+      if (dx <= -CARD_ACT && it) toggleFav(it);
+      else if (dx >= CARD_ACT && it) shareItem(it);
+      resetCard(c);
+    } else if (s0.kind === 'pull') {
+      const el = s0.scroller; const go = (s0.pull || 0) > PULL_GO;
+      el.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1)'; el.style.transform = 'translateY(0)';
+      setTimeout(() => { el.style.transition = ''; el.style.transform = ''; }, 300);
+      if (go) { setPtr(true, '正在刷新', true); doRefresh(); } else setPtr(false);
+    }
+  }
+  function bindTouch() {
+    const app = $('.app');
+    app.addEventListener('touchstart', onTouchStart, {passive: true});
+    app.addEventListener('touchmove', onTouchMove, {passive: false});
+    app.addEventListener('touchend', onTouchEnd, {passive: true});
+    app.addEventListener('touchcancel', onTouchEnd, {passive: true});
+    app.addEventListener('contextmenu', e => { if (e.target.closest(CARD_SEL)) e.preventDefault(); });
+  }
+  function scrollTopOf(view) {
+    if (view === 'channels') { const r = $('#channelRoot'); return mode === 'lr' ? $$('.page-b')[currentChannelIndex()] : r; }
+    if (view === 'favorites') return $('#view-favorites .sub');
+    return $(`#view-${view} .sub`);
+  }
+  let lastTab = {view: null, t: 0};
+  function onTab(view) {
+    const now = performance.now();
+    if (lastTab.view === view && now - lastTab.t < 350 && currentView() === view) {
+      const el = scrollTopOf(view); if (el) el.scrollTo({top: 0, behavior: 'smooth'});
+      lastTab = {view: null, t: 0}; return;
+    }
+    lastTab = {view, t: now};
+    showView(view);
   }
   function updateBannerPager(rail) {
     const pager = rail.closest('.banner-wrap').querySelector('.banner-pager');
@@ -561,13 +745,16 @@
   }
   function bindGestures() {
     $$('.banner-rail').forEach(rail => { bindHSwipe(rail); rail.addEventListener('scroll', () => updateBannerPager(rail), {passive: true}); updateBannerPager(rail); });
-    if (mode === 'lr') bindHSwipe($('#channelRoot'));
-    bindPullRefresh();
+    const root = $('#channelRoot');
+    if (mode === 'lr') bindHSwipe(root);
+    else if (root._gAbort) { root._gAbort.abort(); root._gAbort = null; root.style.transform = ''; root.classList.remove('is-drag'); }   // 上下模式：频道横滑解绑，横滑留给卡片
   }
 
   /* ---------- 事件 ---------- */
   function onClick(e) {
     const t = e.target;
+    if (performance.now() < suppressClickUntil) { e.preventDefault(); e.stopPropagation(); return; }
+    const nav = t.closest('[data-nav]'); if (nav) { step(Number(nav.dataset.nav)); return; }
     const orig = t.closest('[data-orig]');
     if (orig) { e.stopPropagation(); const box = $(`[data-orig-box="${CSS.escape(orig.dataset.orig)}"]`); if (box) { const on = box.classList.toggle('on'); orig.textContent = on ? '收起原文' : '看原文'; } return; }
     const artOrig = t.closest('[data-art-orig]');
@@ -585,12 +772,20 @@
     const pe = t.closest('[data-person]'); if (pe) { person = pe.dataset.person; renderBloggers(); return; }
     if (t.closest('a,button')) return;
     const card = t.closest('[data-id]');
-    if (card && !card.closest('#articleBody')) openItem(card.dataset.id);
+    if (card && !card.closest('#articleBody')) openItem(card.dataset.id, {list: listContext(card)});
   }
 
   async function boot() {
     $('#when').textContent = L.fmtDay(new Date());
-    $$('.tabbar button').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
+    $$('.tabbar button').forEach(b => b.addEventListener('click', () => onTab(b.dataset.view)));
+    bindTouch();
+    $('#cardMenu').addEventListener('click', onMenu);
+    // 收藏 / 搜索模块自己的列表（data-item-id）点开时，也带上「上一条/下一条」的列表
+    document.addEventListener('click', e => {
+      const row = e.target.closest('[data-item-id]');
+      if (row && performance.now() >= suppressClickUntil) pendingList = listContext(row);
+      else if (row) { e.preventDefault(); e.stopImmediatePropagation(); }
+    }, true);
     $('#modeLR').onclick = () => { if (mode !== 'lr') { mode = 'lr'; localStorage.setItem(MKEY, mode); renderChannels(); } };
     $('#modeUD').onclick = () => { if (mode !== 'ud') { mode = 'ud'; localStorage.setItem(MKEY, mode); channels().forEach(c => { ch[c.slug].shown = Math.max(UD_FIRST, Math.min(ch[c.slug].shown, ch[c.slug].list.length)); }); renderChannels(); } };
     $('#btnRefresh').onclick = doRefresh;

@@ -1,0 +1,208 @@
+{
+ "feed": "https://wechat2rss.xlab.app/feed/a1cd365aa14ed7d64cabfc8aa086da40ecaba34d.xml",
+ "note": "mp.weixin.qq.com 原文页从本机抓取被反爬拦（空页），这里对照的是 Wechat2RSS 订阅源里的全文副本。",
+ "articles": 10,
+ "ok": 10,
+ "rows": [
+  {
+   "id": "wechat-夕小瑶科技说:d360a849c8a3911c",
+   "title": "Claude 被封号后我找到了新的办公搭子",
+   "source_images": 32,
+   "block_images": 32,
+   "images_same_order": true,
+   "dup_images": 0,
+   "source_text_parts": 112,
+   "text_found": 112,
+   "text_in_order": 112,
+   "text_missing": [],
+   "dup_paragraphs": 0,
+   "block_text_not_in_source": [],
+   "site_images_local": true,
+   "removed_wechat2rss_header": [
+    "原创 夕小瑶编辑部 2026-11-13 20:05 山东"
+   ],
+   "removed_wechat2rss_cover": true,
+   "ok": true
+  },
+  {
+   "id": "wechat-夕小瑶科技说:52fbc266a6c2d2fd",
+   "title": "刚刚，黄仁勋正式辞职！",
+   "source_images": 1,
+   "block_images": 1,
+   "images_same_order": true,
+   "dup_images": 0,
+   "source_text_parts": 4,
+   "text_found": 4,
+   "text_in_order": 4,
+   "text_missing": [],
+   "dup_paragraphs": 0,
+   "block_text_not_in_source": [],
+   "site_images_local": true,
+   "removed_wechat2rss_header": [
+    "夕小瑶科技说 2026-11-12 22:29 法国"
+   ],
+   "removed_wechat2rss_cover": false,
+   "ok": true
+  },
+  {
+   "id": "wechat-夕小瑶科技说:42866f01d8f01969",
+   "title": "Qwen控制机器人得分从1.9涨到31.4！清华伯克利开源统一具身Agent Harness",
+   "source_images": 17,
+   "block_images": 17,
+   "images_same_order": true,
+   "dup_images": 0,
+   "source_text_parts": 157,
+   "text_found": 157,
+   "text_in_order": 157,
+   "text_missing": [],
+   "dup_paragraphs": 0,
+   "block_text_not_in_source": [],
+   "site_images_local": true,
+   "removed_wechat2rss_header": [
+    "夕小瑶科技说 2026-11-12 11:54 北京"
+   ],
+   "removed_wechat2rss_cover": true,
+   "ok": true
+  },
+  {
+   "id": "wechat-夕小瑶科技说:827ddcbbc7d6f5d1",
+   "title": "实测Seedream 5.5：100轮改图不崩，还能直出透明图",
+   "source_images": 25,
+   "block_images": 25,
+   "images_same_order": true,
+   "dup_images": 0,
+   "source_text_parts": 101,
+   "text_found": 101,
+   "text_in_order": 101,
+   "text_missing": [],
+   "dup_paragraphs": 0,
+   "block_text_not_in_source": [],
+   "site_images_local": true,
+   "removed_wechat2rss_header": [
+    "原创 夕小瑶编辑部 2026-11-10 13:21 北京"
+   ],
+   "removed_wechat2rss_cover": true,
+   "ok": true
+  },
+  {
+   "id": "wechat-夕小瑶科技说:0ab3af8e3021eff4",
+   "title": "OpenAI 发布 GPT-6 Cyber，专攻网络安全",
+   "source_images": 12,
+   "block_images": 12,
+   "images_same_order": true,
+   "dup_images": 0,
+   "source_text_parts": 98,
+   "text_found": 98,
+   "text_in_order": 98,
+   "text_missing": [],
+   "dup_paragraphs": 0,
+   "block_text_not_in_source": [],
+   "site_images_local": true,
+   "removed_wechat2rss_header": [
+    "原创 阿雅 2026-11-06 09:50 北京"
+   ],
+   "removed_wechat2rss_cover": true,
+   "ok": true
+  },
+  {
+   "id": "wechat-夕小瑶科技说:add627780c3eca03",
+   "title": "AI4S首个开源大模型Hydrogen-1.0发布：跑赢GPT-6-Astra，让AI自己做科研",
+   "source_images": 13,
+   "block_images": 13,
+   "images_same_order": true,
+   "dup_images": 0,
+   "source_text_parts": 97,
+   "text_found": 97,
+   "text_in_order": 97,
+   "text_missing": [],
+   "dup_paragraphs": 0,
+   "block_text_not_in_source": [],
+   "site_images_local": true,
+   "removed_wechat2rss_header": [
+    "原创 夕小瑶编辑部 2026-11-04 20:17 北京"
+   ],
+   "removed_wechat2rss_cover": true,
+   "ok": true
+  },
+  {
+   "id": "wechat-夕小瑶科技说:7739a1385e2fba4d",
+   "title": "今日起，ChatGPT Pro额度翻倍，免费重置时代结束了！",
+   "source_images": 10,
+   "block_images": 10,
+   "images_same_order": true,
+   "dup_images": 0,
+   "source_text_parts": 37,
+   "text_found": 37,
+   "text_in_order": 37,
+   "text_missing": [],
+   "dup_paragraphs": 0,
+   "block_text_not_in_source": [],
+   "site_images_local": true,
+   "removed_wechat2rss_header": [
+    "原创 丸美小沐 2026-10-30 08:14 北京"
+   ],
+   "removed_wechat2rss_cover": true,
+   "ok": true
+  },
+  {
+   "id": "wechat-夕小瑶科技说:4aadefb0333d9e2b",
+   "title": "TRAE给开发者配了个人助理，终于不用挨个催进度了...",
+   "source_images": 28,
+   "block_images": 28,
+   "images_same_order": true,
+   "dup_images": 0,
+   "source_text_parts": 143,
+   "text_found": 143,
+   "text_in_order": 143,
+   "text_missing": [],
+   "dup_paragraphs": 0,
+   "block_text_not_in_source": [],
+   "site_images_local": true,
+   "removed_wechat2rss_header": [
+    "原创 夕小瑶编辑部 2026-10-29 14:43 北京"
+   ],
+   "removed_wechat2rss_cover": true,
+   "ok": true
+  },
+  {
+   "id": "wechat-夕小瑶科技说:b6b1c2366b7daa19",
+   "title": "Google 重磅发布 Genie 4：世界模型终于活了",
+   "source_images": 9,
+   "block_images": 9,
+   "images_same_order": true,
+   "dup_images": 0,
+   "source_text_parts": 114,
+   "text_found": 114,
+   "text_in_order": 114,
+   "text_missing": [],
+   "dup_paragraphs": 0,
+   "block_text_not_in_source": [],
+   "site_images_local": true,
+   "removed_wechat2rss_header": [
+    "原创 阿雅 2026-10-28 18:11 北京"
+   ],
+   "removed_wechat2rss_cover": true,
+   "ok": true
+  },
+  {
+   "id": "wechat-夕小瑶科技说:2e2d6160748a589d",
+   "title": "Anthropic正式交表IPO，7%收入来自违规账号。。",
+   "source_images": 12,
+   "block_images": 12,
+   "images_same_order": true,
+   "dup_images": 0,
+   "source_text_parts": 89,
+   "text_found": 89,
+   "text_in_order": 89,
+   "text_missing": [],
+   "dup_paragraphs": 0,
+   "block_text_not_in_source": [],
+   "site_images_local": true,
+   "removed_wechat2rss_header": [
+    "原创 丸美小沐 2026-10-27 07:29 北京"
+   ],
+   "removed_wechat2rss_cover": true,
+   "ok": true
+  }
+ ]
+}

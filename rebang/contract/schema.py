@@ -133,6 +133,62 @@ def _image_local(value, errors, where):
             errors.append(f'{where}: image_local.{dim} 必须是正整数')
 
 
+QUOTE_KINDS = ('reply', 'forward')
+BLOCK_TYPES = ('p', 'h', 'quote', 'ul', 'ol', 'img', 'pre', 'hr')
+
+
+def _nonneg_int(v):
+    return isinstance(v, int) and not isinstance(v, bool) and v >= 0
+
+
+def _news_quote(value, errors, where):
+    """TG 引用（回复）/转发：{kind, source_name, url, text}。只写页面上真有的原帖。"""
+    if value is None:
+        return
+    if not isinstance(value, dict) or value.get('kind') not in QUOTE_KINDS or not isinstance(value.get('text'), str) \
+            or not isinstance(value.get('source_name'), str) or not _is_url(value.get('url', '')):
+        errors.append(f'{where}: quote 必须是 {{kind∈{QUOTE_KINDS}, source_name, url(http(s)/空), text}}')
+
+
+def _tg(value, errors, where):
+    """TG 公开页面上的互动：views(+views_label)、reactions[{emoji,count,label}]、comments_total、comments[{display_name,text}]。"""
+    if value is None:
+        return
+    if not isinstance(value, dict):
+        errors.append(f'{where}: tg 必须是对象')
+        return
+    if 'views' in value and not _nonneg_int(value['views']):
+        errors.append(f'{where}: tg.views 必须是非负整数')
+    for i, r in enumerate(value.get('reactions') or []):
+        if not (isinstance(r, dict) and isinstance(r.get('emoji'), str) and r['emoji'] and _nonneg_int(r.get('count'))):
+            errors.append(f'{where}: tg.reactions[{i}] 需 emoji + 非负整数 count')
+    if 'comments_total' in value and not _nonneg_int(value['comments_total']):
+        errors.append(f'{where}: tg.comments_total 必须是非负整数')
+    for i, c in enumerate(value.get('comments') or []):
+        if not (isinstance(c, dict) and isinstance(c.get('display_name'), str) and isinstance(c.get('text'), str) and c['text']):
+            errors.append(f'{where}: tg.comments[{i}] 需 display_name + text')
+
+
+def _blocks(value, errors, where):
+    """按原文顺序的正文块（公众号/博客）：p/h/quote/pre 带 text；ul/ol 带 items；img 带 http(s) src；hr 无内容。"""
+    if value is None:
+        return
+    if not isinstance(value, list):
+        errors.append(f'{where}: blocks 必须是数组')
+        return
+    for i, b in enumerate(value):
+        t = b.get('type') if isinstance(b, dict) else None
+        ok = t in BLOCK_TYPES
+        if ok and t in ('p', 'h', 'quote', 'pre'):
+            ok = isinstance(b.get('text'), str) and bool(b['text'].strip())
+        elif ok and t in ('ul', 'ol'):
+            ok = isinstance(b.get('items'), list) and all(isinstance(x, str) for x in b['items']) and bool(b['items'])
+        elif ok and t == 'img':
+            ok = _is_url(b.get('src', ''), allow_empty=False)
+        if not ok:
+            errors.append(f'{where}: blocks[{i}] 不合格（type∈{BLOCK_TYPES}）')
+
+
 def validate_item(item, where='item'):
     errors = []
     if not isinstance(item, dict):
@@ -166,10 +222,13 @@ def validate_item(item, where='item'):
             errors.append(f'{where}: news 必须有标题')
         if 'blogger' in item:
             errors.append(f'{where}: news 不能带 blogger')
+        _news_quote(item.get('quote'), errors, where)
+        _tg(item.get('tg'), errors, where)
     if kind == 'post':
         if item.get('channel') is not None:
             errors.append(f'{where}: 博主帖子不进资讯频道，channel 必须为 null 或不写')
         _blogger(item.get('blogger'), errors, where)
+    _blocks(item.get('blocks'), errors, where)
     _image(item.get('image'), errors, where)
     _image_local(item.get('image_local'), errors, where)
     translated = item.get('translated', False)

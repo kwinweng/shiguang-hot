@@ -30,6 +30,7 @@ def main(argv=None):
     ap.add_argument('--limit', type=int, default=10, help='每个账号最多条数')
     ap.add_argument('--pause', type=float, default=1.0, help='同平台账号之间的间隔秒数')
     ap.add_argument('--translate-engine', default=None, help='none|cache|openai-compatible（默认读 REBANG_TRANSLATE_ENGINE，否则 cache）')
+    ap.add_argument('--no-media', action='store_true', help='不下载公众号正文图片到本地（默认下载，见 rebang/bloggers/media.py）')
     args = ap.parse_args(argv)
     platforms = tuple(p.strip() for p in args.platform.split(',') if p.strip())
     unknown = set(platforms) - set(ALL_PLATFORMS)
@@ -38,6 +39,7 @@ def main(argv=None):
     opts = Options(x_dump=args.x_dump, jike_rsshub=args.jike_rsshub, weibo_cookie_file=args.weibo_cookie_file,
                    weibo_output=args.weibo_output, limit=args.limit, pause=args.pause,
                    translator=Translator(engine=args.translate_engine))
+    opts.localize_media = not args.no_media
     envelope = run(platforms, previous=load_previous(args.out), opts=opts)
     errors = validate_items_envelope(envelope)
     if errors:
@@ -50,6 +52,7 @@ def main(argv=None):
     print(json.dumps({
         'ok': True, 'out': args.out, 'items': len(envelope['items']),
         'translated': f'{translated}/{foreign}',
+        'wechat_media': getattr(opts, 'media_stats', None),
         'platforms': [{'id': p['id'], 'status': p['status'], 'items': count.get(p['id'], 0),
                        'accounts': {a['handle']: a['status'] + (f"({a['error']})" if a.get('error') else '') for a in p['accounts']}}
                       for p in envelope['platforms']],

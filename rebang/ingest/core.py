@@ -166,8 +166,44 @@ def split_tg_text(text):
     return first[:60] + '…', text
 
 
-def telegram_items(db_path, media_root, sources, now, floor):
-    """sources: [(channel, cfg)]。只读打开，不迁移、不写。"""
+QUOTE_CHARS = 1500
+
+
+def _tg_clean(handle, text):
+    """与旧采集同一套频道文案清理（freechinese 去引流尾巴/广告）；旧模块不在时原样返回。"""
+    try:
+        from shiguang.ingest.telegram import channel_text
+    except Exception:  # pragma: no cover - 旧模块缺依赖时
+        return text
+    out = channel_text(handle, text)
+    return text if out is None else out
+
+
+def _tg_parts(handle, text, meta):
+    """tg.db 原文 + tgmeta → (标题, 摘要原文, 正文, quote, tg)。
+    tg.db 遇到回复/引用消息存的是被引用的原文，这里改用公开页面上频道自己写的话；
+    转发消息频道自己没写话：正文留空，原帖放进 quote（kind=forward），标题取自原帖，前端标「转发」。"""
+    from rebang.tgmeta import merge_meta
+    extra = merge_meta(meta)
+    quote = extra.get('quote')
+    if quote:
+        quote = dict(quote, text=_plain(quote['text'], QUOTE_CHARS) if len(quote['text']) > QUOTE_CHARS else quote['text'])
+    own = _tg_clean(handle, extra.get('own_text') or '').strip() if extra else ''
+    if quote and quote['kind'] == 'forward':
+        title, _ = split_tg_text(quote['text'] or text)
+        return title, '', '', quote, extra.get('tg')
+    if own:
+        title, rest = split_tg_text(own)
+        return title, rest, own, quote, extra.get('tg')
+    if quote:   # 回复但自己只发了图：标题取被引用原文，正文空
+        title, _ = split_tg_text(quote['text'])
+        return title, '', '', quote, extra.get('tg')
+    title, rest = split_tg_text(text)
+    return title, rest, str(text).strip(), None, extra.get('tg')
+
+
+def telegram_items(db_path, media_root, sources, now, floor, tgmeta=None):
+    """sources: [(channel, cfg)]。只读打开，不迁移、不写。tgmeta：rebang.tgmeta 缓存里的 messages（<频道>/<消息号> → meta）。"""
     items, statuses = [], []
     db_path = Path(db_path)
     media_root = Path(media_root) if media_root else db_path.resolve().parent
@@ -189,7 +225,7 @@ def telegram_items(db_path, media_root, sources, now, floor):
                 published = _parse_when(ts)
                 if published is None or published < floor:
                     continue
-                title, rest = split_tg_text(text)
+                title, rest, body, quote, tg = _tg_parts(handle, text, (tgmeta or {}).get(f'{handle}/{msg_id}'))
                 if not title:
                     continue
                 image_local = None
@@ -197,9 +233,14 @@ def telegram_items(db_path, media_root, sources, now, floor):
                     image_local = _local_image(media_root / rel, published, now, media_root)
                     if image_local:
                         break
-                items.append(_news(cfg, channel, str(msg_id), title, _plain(rest, SUMMARY_CHARS),
-                                   f'https://t.me/{handle}/{msg_id}', published, now, body=str(text).strip(),
-                                   image_local=image_local))
+                item = _news(cfg, channel, str(msg_id), title, _plain(rest, SUMMARY_CHARS),
+                             f'https://t.me/{handle}/{msg_id}', published, now, body=body,
+                             image_local=image_local)
+                if quote:
+                    item['quote'] = quote
+                if tg:
+                    item['tg'] = tg
+                items.append(item)
                 count += 1
             ok, err, at = last_status.get(handle, (None, None, None))
             status = 'ok' if count else 'empty'
@@ -487,7 +528,7 @@ def apply_translation(items, translator, cache=None):
 # ---------- 入口 ----------
 
 def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, days=14, http_get=None,
-            inbox_loader=None, translator='default'):
+            inbox_loader=None, translator='default', tgmeta=None):
     now = _aware(now).astimezone(BEIJING)
     floor = now - timedelta(days=days)
     table = source_table()
@@ -496,7 +537,10 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
         by_type.setdefault(cfg['type'], []).append((slug, cfg))
     loader = inbox_loader or default_inbox_loader
     items, statuses = [], []
-    got, st = telegram_items(db or ROOT / 'tg.db', media_root, by_type.get('telegram', []), now, floor)
+    if isinstance(tgmeta, (str, Path)):
+        from rebang.tgmeta import load_store
+        tgmeta = load_store(tgmeta).get('messages', {})
+    got, st = telegram_items(db or ROOT / 'tg.db', media_root, by_type.get('telegram', []), now, floor, tgmeta)
     items += got; statuses += st
     got, st = remote_items(by_type.get('feed', []) + by_type.get('page', []), now, floor, fetch=fetch, cache=cache,
                            http_get=http_get or default_http_get)

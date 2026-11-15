@@ -109,3 +109,43 @@ test('推文详情：评论预览只在详情显示，引用带发布时间', ()
   assert.ok(detail.includes('评论内容&lt;b&gt;'));
   assert.ok(detail.includes('11月14日 20:00'));
 });
+
+// ---- v13（阿欢 2026-11-15 22:08–22:11）----
+test('v13 顶栏：刷新时间同一天只写时间，跨天才带日期', () => {
+  const now = new Date('2026-11-15T14:00:00Z');
+  assert.equal(L.fmtRefreshed('2026-11-15T13:40:00Z', now), '21:40');
+  assert.equal(L.fmtRefreshed('2026-11-14T13:40:00Z', now), '11月14日 21:40');
+});
+
+test('v13 TG 引用：频道自己的话在上，原帖在引用卡里；转发且没写话 → 标「转发」', () => {
+  const base = {id: 'demo:1', kind: 'news', source_id: 'demo', source_name: '演示', url: 'https://t.me/demo/1', published_at: '2026-11-15T10:00:00+08:00', lang: 'zh'};
+  const reply = L.feedRowHTML({...base, title: '频道的话', summary: '频道的评论', body: '频道的话\n频道的评论', quote: {kind: 'reply', source_name: '原频道', url: 'https://t.me/o/9', text: '原帖原文'}});
+  assert.ok(reply.indexOf('频道的话') < reply.indexOf('原帖原文'));
+  assert.match(reply, /class="q-card"/);
+  assert.doesNotMatch(reply, /fwd-tag/);
+  const fwd = L.feedRowHTML({...base, title: '原帖原文', summary: '', quote: {kind: 'forward', source_name: '别的频道', url: 'https://t.me/o/9', text: '原帖原文'}});
+  assert.match(fwd, /<div class="fwd-tag">转发<\/div>/);
+  assert.match(fwd, /转发自<\/span>别的频道/);
+  assert.doesNotMatch(fwd, /<h3>/);
+  const detail = L.quoteCardHTML({...base, quote: {kind: 'forward', source_name: '别的频道', url: 'https://t.me/o/9', text: 'x'}}, true);
+  assert.match(detail, /<a class="q-card fwd" href="https:\/\/t.me\/o\/9"/, '详情里引用卡点开原帖');
+});
+
+test('v13 TG 互动：只显示页面上抓到的表情/浏览/评论数，没有就不显示', () => {
+  const it = {tg: {views: 20200, views_label: '20.2K', reactions: [{emoji: '😁', count: 34, label: '34'}, {emoji: '👍', count: 1200, label: '1.2K'}, {emoji: '❤', count: 2, label: '2'}, {emoji: '🔥', count: 1, label: '1'}], comments_total: 12}};
+  const card = L.tgStatsHTML(it, false);
+  assert.ok(card.indexOf('👍') < card.indexOf('😁'), '按数量从多到少');
+  assert.match(card, /\+1<\/span>/);
+  assert.match(card, /20\.2K/);
+  assert.match(card, /评论 12 条/);
+  assert.equal(L.tgStatsHTML({}, true), '');
+  assert.equal(L.tgStatsHTML({tg: {}}, true), '');
+});
+
+test('v13 公众号正文块：按原文顺序渲染；没存下的图如实说明', () => {
+  const html = L.blocksHTML([{type: 'p', text: '一'}, {type: 'img', src: 'media/wechat/a.webp', width: 10, height: 5}, {type: 'h', level: 2, text: '二'},
+    {type: 'quote', text: '三'}, {type: 'ul', items: ['四', '五']}, {type: 'img', src: 'https://mmbiz.qpic.cn/x', missing: true}]);
+  const order = ['>一<', 'media/wechat/a.webp', '>二<', '>三<', '<li>四</li>', 'data-img-missing'].map(s => html.indexOf(s));
+  assert.ok(order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), order.join(','));
+  assert.doesNotMatch(html, /mmbiz\.qpic\.cn/, '公众号图床不外链');
+});

@@ -2,8 +2,8 @@
 import re
 import xml.etree.ElementTree as ET
 
-from .common import (BODY_CHARS, clip, detect_lang, html_images, html_to_text, iso, native_id,
-                     parse_time, source_id, summary_of)
+from .common import (BODY_CHARS, blocks_text, clip, detect_lang, html_blocks, html_images, html_to_text, iso,
+                     native_id, parse_time, source_id, summary_of, unwrap_image_url)
 
 ATOM = '{http://www.w3.org/2005/Atom}'
 CONTENT = '{http://purl.org/rss/1.0/modules/content/}encoded'
@@ -93,13 +93,18 @@ def feed_posts(body, platform, account, fetched_at, limit=10):
         if moment is None or not (entry['title'] or entry['html'] or entry['summary_html']):
             continue
         html = entry['html'] or entry['summary_html']
-        body_text = html_to_text(html)
-        if platform['id'] == 'wechat':
+        wechat = platform['id'] == 'wechat'
+        # 文章页按原文顺序渲染（段落/标题/图片/引用/列表），不再「整段纯文本 + 前 4 张图拼九宫格」
+        blocks = html_blocks(html, url or account.get('home', ''), wechat=wechat)
+        body_text = blocks_text(blocks) if blocks else html_to_text(html)
+        if wechat and not blocks:
             body_text = _strip_wechat_header(body_text)
         summary_text = html_to_text(entry['summary_html']) if entry['summary_html'] and platform['id'] != 'wechat' else body_text
         images = html_images(html, url or account.get('home', ''))
         if entry['enclosure'] and entry['enclosure'] not in [m['url'] for m in images]:
             images.insert(0, {'url': entry['enclosure']})
+        if wechat:
+            images = [dict(m, url=unwrap_image_url(m['url'])) for m in images]
         item = {
             'id': f'{sid}:{native_id(entry["guid"], url)}',
             'kind': 'post',
@@ -118,10 +123,13 @@ def feed_posts(body, platform, account, fetched_at, limit=10):
                 'platform': platform['id'],
                 'handle': handle,
                 'display_name': account['name'],
-                'media': [{'type': 'image', 'url': m['url']} for m in images],
+                # 公众号图只走本地副本（blocks / image_local），不放外链九宫格
+                'media': [] if wechat and blocks else [{'type': 'image', 'url': m['url']} for m in images],
                 'quote': None,
             },
         }
+        if blocks and (len(blocks) > 1 or blocks[0]['type'] != 'p'):
+            item['blocks'] = blocks
         out.append((moment, item))
     out.sort(key=lambda pair: pair[0], reverse=True)
     return [item for _, item in out[:limit]]

@@ -156,3 +156,170 @@ def apply_translation(item, translator, fields=('title', 'summary', 'body')):
     item['translated'] = True
     item['translation'] = translation
     return item
+
+
+# ---------- 按原文顺序的正文块（公众号 / 博客文章页忠实还原：段落、标题、图片、引用、列表） ----------
+
+_SKIP_TAGS = {'script', 'style', 'noscript', 'iframe', 'svg', 'form', 'button', 'input', 'mp-common-profile',
+              'mpprofile', 'mp-common-videosnap', 'video', 'audio'}
+_INLINE_TAGS = {'span', 'strong', 'b', 'em', 'i', 'a', 'code', 'sup', 'sub', 'u', 's', 'font', 'mark', 'small',
+                'big', 'abbr', 'cite', 'q', 'del', 'ins', 'label', 'time', 'mp-style-type', 'tt', 'var'}
+_HEADING = {'h1', 'h2', 'h3', 'h4', 'h5', 'h6'}
+MAX_BLOCKS = 600
+
+
+def unwrap_image_url(src):
+    """Wechat2RSS 的 img-proxy/?u=<原图> 拆回公众号原图地址（img-proxy 在 Cloudflare 后面，手机上常打不开）。"""
+    from urllib.parse import parse_qs
+    parts = urlsplit(src)
+    if parts.path.rstrip('/').endswith('img-proxy'):
+        inner = (parse_qs(parts.query).get('u') or [''])[0]
+        if urlsplit(inner).scheme in ('http', 'https'):
+            return inner
+    return src
+
+
+def _img_block(img, base_url):
+    src = (img.get('data-src') or img.get('src') or '').strip()
+    src = urljoin(base_url, src) if src else ''
+    if urlsplit(src).scheme not in ('http', 'https'):
+        return None
+    dims = {}
+    for key in ('width', 'height'):
+        raw = str(img.get(key) or '').strip()
+        if raw.isdigit() and int(raw) > 0:
+            dims[key] = int(raw)
+    if dims.get('width', 99) <= 2 or dims.get('height', 99) <= 2:
+        return None      # 1px 追踪图
+    block = {'type': 'img', 'src': unwrap_image_url(src)}
+    ratio = img.get('data-ratio')
+    w = img.get('data-w')
+    if w and str(w).isdigit():
+        block['width'] = int(w)
+        try:
+            block['height'] = max(1, round(int(w) * float(ratio)))
+        except (TypeError, ValueError):
+            pass
+    if img.get('alt') and img.get('alt').strip():
+        block['alt'] = img['alt'].strip()
+    return block
+
+
+WECHAT_TAIL = ('跳转微信打开', '阅读原文')
+
+
+def html_blocks(html, base_url='', wechat=False):
+    """HTML → [{type:p|h|quote|ul|ol|img|pre|hr, ...}]，严格按文档顺序；一张图只在它原来的位置出现一次。
+    wechat=True：去掉 Wechat2RSS 在开头加的「原创 / 作者 / 日期 / 属地」行和它额外插的封面图（原文正文里没有）。"""
+    if not html:
+        return []
+    soup = BeautifulSoup(html, 'html.parser')
+    blocks, buf = [], []
+
+    def flush():
+        text = normalize_text(''.join(buf))
+        buf.clear()
+        if text:
+            blocks.append({'type': 'p', 'text': text})
+
+    def inline_text(node):
+        node = BeautifulSoup(str(node), 'html.parser')
+        for br in node.find_all('br'):
+            br.replace_with('\n')
+        for tag in node(list(_SKIP_TAGS)):
+            tag.decompose()
+        return normalize_text(node.get_text(''))
+
+    def walk(node):
+        for child in node.children:
+            name = getattr(child, 'name', None)
+            if name is None:
+                if type(child).__name__ in ('Comment', 'Doctype', 'Declaration', 'ProcessingInstruction'):
+                    continue
+                buf.append(str(child))
+                continue
+            if name in _SKIP_TAGS:
+                continue
+            if name == 'br':
+                buf.append('\n')
+            elif name == 'img':
+                flush()
+                block = _img_block(child, base_url)
+                if block:
+                    blocks.append(block)
+            elif name in _HEADING:
+                flush()
+                text = inline_text(child)
+                if text:
+                    blocks.append({'type': 'h', 'level': int(name[1]), 'text': text})
+                for img in child.find_all('img'):
+                    block = _img_block(img, base_url)
+                    if block:
+                        blocks.append(block)
+            elif name == 'blockquote':
+                flush()
+                parts = []
+                for p in child.find_all(['p', 'section'], recursive=True) or [child]:
+                    if p.find(['p', 'section']):
+                        continue
+                    t = inline_text(p)
+                    if t:
+                        parts.append(t)
+                text = '\n'.join(parts) if parts else inline_text(child)
+                if text:
+                    blocks.append({'type': 'quote', 'text': text})
+                for img in child.find_all('img'):
+                    block = _img_block(img, base_url)
+                    if block:
+                        blocks.append(block)
+            elif name in ('ul', 'ol'):
+                flush()
+                items = [inline_text(li) for li in child.find_all('li', recursive=False)]
+                items = [t for t in items if t]
+                if items:
+                    blocks.append({'type': name, 'items': items})
+                for img in child.find_all('img'):
+                    block = _img_block(img, base_url)
+                    if block:
+                        blocks.append(block)
+            elif name == 'pre':
+                flush()
+                text = child.get_text('').strip('\n')
+                if text.strip():
+                    blocks.append({'type': 'pre', 'text': text})
+            elif name == 'hr':
+                flush()
+                blocks.append({'type': 'hr'})
+            elif name in _INLINE_TAGS:
+                walk(child)
+            else:            # p / section / div / figure / table …：块级，前后断段
+                flush()
+                walk(child)
+                flush()
+    walk(soup)
+    flush()
+    if wechat:
+        # 开头：Wechat2RSS 插入的「原创 作者 日期 属地」行
+        while blocks and blocks[0]['type'] == 'p' and len(blocks[0]['text']) <= 60 and (
+                blocks[0]['text'].startswith('原创') or re.search(r'\d{4}-\d{2}-\d{2}', blocks[0]['text'])):
+            blocks.pop(0)
+        # 紧接着的一张图若不是正文图（公众号正文图都带 data-w/rich_pages），是 Wechat2RSS 加的封面
+        first_imgs = soup.find_all('img', limit=1)
+        if blocks and blocks[0]['type'] == 'img' and first_imgs and not first_imgs[0].get('data-w') \
+                and 'rich_pages' not in (first_imgs[0].get('class') or []):
+            blocks.pop(0)
+        # 结尾：Wechat2RSS 追加的「跳转微信打开」链接（原文正文里没有）
+        while blocks and blocks[-1]['type'] == 'p' and blocks[-1]['text'].strip() in WECHAT_TAIL:
+            blocks.pop()
+    return blocks[:MAX_BLOCKS]
+
+
+def blocks_text(blocks):
+    """正文块 → 纯文本（搜索、翻译、摘要用），图片不进文本。"""
+    out = []
+    for b in blocks or []:
+        if b['type'] in ('p', 'h', 'quote', 'pre'):
+            out.append(b['text'])
+        elif b['type'] in ('ul', 'ol'):
+            out.extend(('• ' if b['type'] == 'ul' else f'{i}. ') + t for i, t in enumerate(b['items'], 1))
+    return '\n\n'.join(out)

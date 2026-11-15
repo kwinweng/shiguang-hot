@@ -30,6 +30,12 @@
     const p = parts(d);
     return `${p.month}月${p.day}日 ${p.hour}:${p.minute}`;
   }
+  /** 顶栏「刷新于」：同一天只写时间（日期左上角已经写了），跨天才带日期 */
+  function fmtRefreshed(v, now) {
+    const d = toDate(v); if (!d) return '';
+    const p = parts(d);
+    return beijingDate(d) === beijingDate(now || new Date()) ? `${p.hour}:${p.minute}` : `${p.month}月${p.day}日 ${p.hour}:${p.minute}`;
+  }
   /** 「11月15日 周日」 */
   function fmtDay(v) {
     const d = toDate(v); if (!d) return '';
@@ -65,14 +71,59 @@
     const mt = d.translated ? `<span class="mt-badge">${esc(d.label)}</span>` : '';
     return `<div class="f-meta"><span class="src">${esc(item.source_name)}</span><span>${esc(fmtTime(item.published_at))}</span>${hl}${mt}</div>`;
   }
+  /** TG 互动：表情回应 + 浏览数 + 评论数（都来自 t.me 公开页面；没有就不显示，不编） */
+  function tgStatsHTML(item, full) {
+    const tg = item.tg; if (!tg) return '';
+    const rs = (tg.reactions || []).slice().sort((a, b) => b.count - a.count);
+    const show = full ? rs : rs.slice(0, 3);
+    const parts = show.map(r => `<span class="rx" title="${esc(r.emoji)} ${esc(r.label || r.count)}">${esc(r.emoji)}<b>${esc(r.label || fmtN(r.count))}</b></span>`);
+    if (!full && rs.length > 3) parts.push(`<span class="rx more">+${rs.length - 3}</span>`);
+    const views = tg.views != null ? `<span class="tv" aria-label="浏览 ${esc(tg.views_label || tg.views)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg>${esc(tg.views_label || fmtN(tg.views))}</span>` : '';
+    const cmt = tg.comments_total ? `<span class="tc" aria-label="评论 ${tg.comments_total} 条">${ICO.reply}${esc(fmtN(tg.comments_total))}</span>` : '';
+    if (!parts.length && !views && !cmt) return '';
+    return `<div class="tg-stats${full ? ' full' : ''}">${parts.join('')}${views}${cmt}</div>`;
+  }
+  /** TG 引用/转发卡：频道自己的话在上，原帖在卡里；转发且频道没写话 → 卡上方标「转发」。
+      列表里整张卡点开详情；详情里引用卡是链接，点开 Telegram 原帖。 */
+  function quoteCardHTML(item, inDetail) {
+    const q = item.quote; if (!q) return '';
+    const fwd = q.kind === 'forward';
+    const head = `<div class="q-src"><span class="q-kind">${fwd ? '转发自' : '引用'}</span>${esc(q.source_name || '原帖')}</div>`;
+    const text = q.text ? `<p class="q-text${inDetail ? '' : ' clamp'}">${esc(q.text)}</p>` : '<p class="q-text none">原帖没有文字（可能只有图片或视频）。</p>';
+    if (inDetail && q.url) return `<a class="q-card${fwd ? ' fwd' : ''}" href="${esc(q.url)}" target="_blank" rel="noopener" data-quote-link>${head}${text}<span class="q-open">打开原帖 ›</span></a>`;
+    return `<div class="q-card${fwd ? ' fwd' : ''}">${head}${text}</div>`;
+  }
+  function isBareForward(item) { return !!(item.quote && item.quote.kind === 'forward' && !String(item.summary || '').trim() && !String(item.body || '').trim()); }
   function feedRowHTML(item) {
     const d = display(item);
-    const sum = d.summary.trim() ? `<p class="sum">${esc(d.summary)}</p>` : `<p class="sum none">${NO_SUMMARY}</p>`;
-    const body = `<h3>${esc(d.title)}</h3>${sum}${metaLine(item, d)}`;
+    let body;
+    if (isBareForward(item)) {
+      body = `<div class="fwd-tag">转发</div>${quoteCardHTML(item, false)}${metaLine(item, d)}${tgStatsHTML(item, false)}`;
+    } else {
+      const sum = d.summary.trim() ? `<p class="sum">${esc(d.summary)}</p>` : (item.quote ? '' : `<p class="sum none">${NO_SUMMARY}</p>`);
+      body = `<h3>${esc(d.title)}</h3>${sum}${quoteCardHTML(item, false)}${metaLine(item, d)}${tgStatsHTML(item, false)}`;
+    }
     if (thumbOk(item.image)) {
       return `<article class="feed-row" data-id="${esc(item.id)}"><div class="thumb"><img src="${esc(item.image.url)}" alt="" loading="lazy" decoding="async"></div><div>${body}</div></article>`;
     }
     return `<article class="feed-row noimg" data-id="${esc(item.id)}">${body}</article>`;
+  }
+  /** 正文块（公众号/博客）：严格按原文顺序；没存下的公众号图如实说，不顶替 */
+  function blocksHTML(blocks) {
+    return (blocks || []).map(b => {
+      if (b.type === 'p') return `<p class="b-p">${esc(b.text)}</p>`;
+      if (b.type === 'h') return `<h4 class="b-h l${esc(b.level || 2)}">${esc(b.text)}</h4>`;
+      if (b.type === 'quote') return `<blockquote class="b-q">${esc(b.text)}</blockquote>`;
+      if (b.type === 'pre') return `<pre class="b-pre">${esc(b.text)}</pre>`;
+      if (b.type === 'hr') return '<hr class="b-hr">';
+      if (b.type === 'ul' || b.type === 'ol') return `<${b.type} class="b-list">${b.items.map(t => `<li>${esc(t)}</li>`).join('')}</${b.type}>`;
+      if (b.type === 'img') {
+        if (b.missing) return '<div class="b-img-missing" data-img-missing>这张图没存下来，点下方「打开原文」看。</div>';
+        const dims = b.width && b.height ? ` width="${esc(b.width)}" height="${esc(b.height)}"` : '';
+        return `<figure class="b-img"><img src="${esc(b.src)}" alt="${esc(b.alt || '')}" loading="lazy" decoding="async"${dims}></figure>`;
+      }
+      return '';
+    }).join('');
   }
   function heroHTML(item) {
     const d = display(item);
@@ -142,6 +193,12 @@
     const metrics = ['reply', 'repost', 'like'].some(k => Number.isInteger(m[k])) ? `<div class="metrics">${metric('reply')}${metric('repost')}${metric('like')}</div>` : '';
     const extra = !clamp ? ['view', 'bookmark', 'quote'].filter(k => Number.isInteger(m[k]) && m[k]).map(k => ({view: '浏览 ', bookmark: '收藏 ', quote: '引用 '}[k] + fmtN(m[k]))) : [];
     const title = d.title ? `<div class="b-title">${esc(d.title)}</div>` : '';
+    if (clamp && item.blocks && item.blocks.length) {
+      // 文章类帖子（公众号/博客）：列表里只放标题、摘要和一张封面，正文按原文顺序在详情里
+      const cover = item.image && item.image.url ? `<div class="post-cover"><img src="${esc(item.image.url)}" alt="" loading="lazy"></div>` : '';
+      const sum = d.summary ? `<div class="t-body clamp">${esc(d.summary)}</div>` : '';
+      return `<article class="tweet article-post" data-id="${esc(item.id)}"><div class="hd">${avatar(b.avatar)}<div style="flex:1;min-width:0"><div class="nm">${esc(b.display_name || b.handle)}</div><div class="meta">${esc(fmtTime(item.published_at))}${d.translated ? ' · ' + esc(d.label) : ''}</div></div></div>${title}${sum}${cover}</article>`;
+    }
     return `<article class="tweet" data-id="${esc(item.id)}"><div class="hd">${avatar(b.avatar)}<div style="flex:1;min-width:0"><div class="nm">${esc(b.display_name || b.handle)} ${b.verified ? `<span class="blue" title="认证">${ICO.check}</span>` : ''}</div><div class="meta">@${esc(b.handle)} · ${esc(fmtTime(item.published_at))}</div></div></div>${title}<div class="t-body${clamp ? ' clamp' : ''}">${esc(text)}</div>${tools}${mediaGrid(b.media)}${quote}${metrics}${extra.length ? `<div class="detail-meta">${extra.map(esc).join(' · ')}</div>` : ''}${cm}</article>`;
   }
   /** 历史/收藏/搜索通用行 */
@@ -163,8 +220,8 @@
   }
   function itemHash(id) { return '#/item/' + encodeURIComponent(id); }
 
-  const Lib = {TZ, NO_SUMMARY, NO_BODY, HOT_FAIL, esc, beijingDate, fmtTime, fmtDay, fmtN, display, thumbOk,
-    feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, tweetCardHTML, rowHTML, parseItemHash, itemHash, ICO};
+  const Lib = {TZ, NO_SUMMARY, NO_BODY, HOT_FAIL, esc, beijingDate, fmtTime, fmtDay, fmtRefreshed, fmtN, display, thumbOk,
+    tgStatsHTML, quoteCardHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, tweetCardHTML, rowHTML, parseItemHash, itemHash, ICO};
   if (typeof module !== 'undefined' && module.exports) module.exports = Lib;
   else root.RebangLib = Lib;
 })(typeof window !== 'undefined' ? window : globalThis);

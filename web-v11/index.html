@@ -36,19 +36,23 @@
     <section class="view on" id="view-channels"><div id="channelRoot"></div></section>
     <section class="view" id="view-blogger">
       <div class="sub">
-        <h2 class="ch" style="margin:0 0 6px">博主</h2>
-        <p class="desc" style="margin:0 0 10px">已定的博主帖子，和我们 Grok bot 每天整理的内容。官方资讯在「频道」里。</p>
-        <div class="chips" id="platChips"></div>
+        <div class="sticky-hd" data-sticky="blogger">
+          <h2 class="ch">博主</h2>
+          <div class="chips" id="platChips"></div>
+        </div>
         <div class="plat-name" id="platName"></div>
+        <p class="desc" style="margin:0 0 10px">已定的博主帖子，和我们 Grok bot 每天整理的内容。官方资讯在「频道」里。</p>
         <div class="people" id="peopleRow"></div>
         <div class="list" id="bloggerList"></div>
       </div>
     </section>
     <section class="view" id="view-hot">
       <div class="sub" id="hotSub">
-        <h2 class="ch" style="margin:0 0 6px">热搜</h2>
+        <div class="sticky-hd" data-sticky="hot">
+          <h2 class="ch">热搜</h2>
+          <div class="dates" id="hotDates" role="tablist" aria-label="选日期"></div>
+        </div>
         <p class="desc" style="margin:0 0 10px">百度、知乎、B 站实时热搜。切日期看那天最后一次抓到的榜单。</p>
-        <div class="dates" id="hotDates" role="tablist" aria-label="选日期"></div>
         <div id="hotHost"></div>
       </div>
     </section>
@@ -93,7 +97,9 @@
       <div class="ttl" id="articleTitle"></div>
     </div>
     <div class="article-body" id="articleBody"></div>
+    <nav class="art-nav" id="artNav" aria-label="同一列表里的上一条 / 下一条" hidden></nav>
   </div>
+  <div class="sheet" id="cardMenu" role="dialog" aria-label="卡片菜单" aria-hidden="true"><div class="box menu-box"></div></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 <script src="lib.js"></script>

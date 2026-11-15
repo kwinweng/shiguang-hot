@@ -222,6 +222,12 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
         if reasons and status != 'ok':
             entry['reason'] = '；'.join(REASONS[r] for r in reasons)
         platforms.append(entry)
+    if 'wechat' in platform_ids and getattr(opts, 'localize_media', False):
+        from . import media as media_mod
+        fresh = [i for i in items if i.get('fetched_at') == fetched_at]
+        opts.media_stats = media_mod.localize(fresh, getattr(opts, 'media_dir', None) or media_mod.MEDIA_DIR,
+                                              **({'get': opts.media_get} if getattr(opts, 'media_get', None) else {}))
+        media_mod.prune(items, getattr(opts, 'media_dir', None) or media_mod.MEDIA_DIR)
     translator = opts.translator
     for item in items:
         if item.get('fetched_at') == fetched_at:  # 只翻本次新抓的；沿用的旧条目保持原样

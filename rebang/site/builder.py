@@ -244,6 +244,25 @@ def localize_images(items, site):
     已有网络图 image.url 的不动；文件不在就当无图（不编图）。返回复制张数。"""
     copied = 0
     for item in items:
+        for block in item.get('blocks') or []:
+            if block.get('type') != 'img':
+                continue
+            local = block.pop('local', None)
+            src = Path(str((local or {}).get('path') or ''))
+            rel = str((local or {}).get('rel') or '').replace('\\', '/').lstrip('/')
+            if local and src.is_file() and rel and '..' not in rel.split('/'):
+                rel = rel if rel.startswith('media/') else 'media/' + rel
+                dest = site / rel
+                if not dest.exists():
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(src, dest)
+                    copied += 1
+                block['src'] = rel
+                for dim in ('width', 'height'):
+                    if isinstance(local.get(dim), int) and local[dim] > 0:
+                        block[dim] = local[dim]
+            elif 'mmbiz.qpic.cn' in str(block.get('src')):
+                block['missing'] = True     # 公众号图床拒绝外站引用，没存下本地副本就如实说没有
         local = item.pop('image_local', None)
         if item.get('image') or not isinstance(local, dict):
             continue
