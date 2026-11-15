@@ -24,7 +24,7 @@
 
 - 独立执行会先跑 `SITE_MODE=public MAIL_DIGEST=0 TZ=Asia/Shanghai python pipeline.py` 和 `tools/write_build_info.py`；`--already-built` 跳过构建，要求现有 `site/index.html` 和 `site/build-info.json`。
 - 在临时 worktree 里把 `site/` 放根目录、`site-v11/` 放 `rebang/`（`REBANG_PUBLISH=0` 不带，但线上根路径会因此 404），加 `.nojekyll`，默认不写 CNAME（`PAGES_CNAME` 非空才写）。拒绝缺入口、缺元数据或含 `.env*` 的树。
-- `git push --force origin <commit>:refs/heads/gh-pages`：gh-pages 每次只有一个无父提交，没有历史；需要回退时另建备份分支（例如 `gh-pages-pre-rebang-20261115`）。
+- `git push --force origin <commit>:refs/heads/gh-pages`：gh-pages 每次只有一个无父提交，没有历史；需要回退时另建备份分支。2026-11-16 已删除旧站回滚分支 `gh-pages-pre-rebang-20261115`；站点内容回退改用服务器 `/var/www/news.kwinweng.com.news-sync-previous` 或 box 上的 `site-v11.prev`，见 `docs/rebang-v1/OPERATIONS.md`。
 - `--dry-run` 只准备提交并打印文件数和 SHA，不推送。
 
 ## 检查与隔离运行
