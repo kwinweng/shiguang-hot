@@ -1,0 +1,12 @@
+{
+  "schema": "rebang.hotsearch/1",
+  "generated_at": "2026-11-15T20:00:00+08:00",
+  "note": "合成测试数据。",
+  "providers": [
+    {"id": "baidu", "name": "百度热搜", "status": "ok", "fetched_at": "2026-11-15T19:59:00+08:00",
+     "items": [{"rank": 1, "title": "合成热搜", "url": "https://www.baidu.com/s?wd=x", "pinned": true, "hot_score": 4900000,
+                "summary": "合成摘要", "image": "https://example.com/b.jpg"}]},
+    {"id": "zhihu", "name": "知乎热榜", "status": "error", "fetched_at": "2026-11-15T19:59:00+08:00", "error": "http_403", "items": []},
+    {"id": "bilibili", "name": "B 站热搜", "status": "empty", "fetched_at": null, "items": []}
+  ]
+}

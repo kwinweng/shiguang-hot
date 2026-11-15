@@ -25,3 +25,8 @@ tg.db-journal
 /.box-scrape.lock
 private-feeds/
 web/assets/icon-preview.png
+
+# 拾光热榜 v1（feat/rebang-v1）运行产物
+/var/rebang/
+/site-v11/
+/site-v11.tmp-*/

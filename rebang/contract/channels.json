@@ -1,0 +1,52 @@
+{
+  "schema": "rebang.channels/1",
+  "note": "2026-11-15 阿欢确认的 6 个频道与来源划分。一个来源只进一个频道，第一期不按条拆源。改这里须回集成分支 feat/rebang-v1。",
+  "channels": [
+    {"slug": "current", "name": "时事", "order": 1, "hotsearch": true, "sources": [
+      {"id": "tnews365", "name": "竹新社", "type": "telegram", "handle": "tnews365", "stability": "mid"},
+      {"id": "myBigCharacterPoster", "name": "我的一张大字报", "type": "telegram", "handle": "myBigCharacterPoster", "stability": "mid"},
+      {"id": "x", "name": "推特爆款", "type": "inbox", "stability": "mid"}
+    ]},
+    {"slug": "world", "name": "环球", "order": 2, "sources": [
+      {"id": "bbc-world", "name": "BBC World", "type": "feed", "url": "https://feeds.bbci.co.uk/news/world/rss.xml", "stability": "stable"},
+      {"id": "guardian-world", "name": "卫报 World", "type": "feed", "url": "https://www.theguardian.com/world/rss", "stability": "stable"},
+      {"id": "world", "name": "环球要闻", "type": "inbox", "stability": "mid"},
+      {"id": "freechinese", "name": "FREE 中文", "type": "telegram", "handle": "freechinese", "stability": "mid"},
+      {"id": "shuangyunews_rss", "name": "看新闻 学英语 双语新闻", "type": "telegram", "handle": "shuangyunews_rss", "stability": "mid"}
+    ]},
+    {"slug": "finance", "name": "财经", "order": 3, "sources": [
+      {"id": "FinanceNewsDaily", "name": "华尔街见闻·财经时讯", "type": "telegram", "handle": "FinanceNewsDaily", "stability": "mid"},
+      {"id": "TimeHorizonX", "name": "Time经济观察", "type": "telegram", "handle": "TimeHorizonX", "stability": "mid"},
+      {"id": "HuaErJie1", "name": "华尔街日报", "type": "telegram", "handle": "HuaErJie1", "stability": "mid"},
+      {"id": "pelosi3", "name": "敏感经济信息分享", "type": "telegram", "handle": "pelosi3", "stability": "mid"}
+    ]},
+    {"slug": "tech-ai", "name": "科技与 AI", "order": 4, "sources": [
+      {"id": "google-blog", "name": "Google Blog", "type": "feed", "url": "https://blog.google/rss/", "stability": "stable"},
+      {"id": "openai-blog", "name": "OpenAI Blog", "type": "feed", "url": "https://openai.com/news/rss.xml", "stability": "stable"},
+      {"id": "github-blog", "name": "GitHub Blog", "type": "feed", "url": "https://github.blog/feed/", "stability": "stable"},
+      {"id": "zaihuapd", "name": "在花科技圈", "type": "telegram", "handle": "zaihuapd", "stability": "mid"},
+      {"id": "OneMillion_AI", "name": "动察Beating AI News", "type": "telegram", "handle": "OneMillion_AI", "stability": "mid"},
+      {"id": "AwesomeChatGPT", "name": "ChatGPT 精选", "type": "telegram", "handle": "AwesomeChatGPT", "stability": "mid"},
+      {"id": "xhqcankao", "name": "风向旗参考快讯", "type": "telegram", "handle": "xhqcankao", "stability": "mid"},
+      {"id": "scitech_fans", "name": "科技爱好者周刊", "type": "telegram", "handle": "scitech_fans", "stability": "mid"},
+      {"id": "NewlearnerChannel", "name": "Newlearnerの自留地", "type": "telegram", "handle": "NewlearnerChannel", "stability": "mid"}
+    ]},
+    {"slug": "digital", "name": "数码", "order": 5, "sources": [
+      {"id": "apple-newsroom", "name": "Apple Newsroom", "type": "feed", "url": "https://www.apple.com/newsroom/rss-feed.rss", "stability": "stable"},
+      {"id": "CE_Observe", "name": "每日消费电子观察", "type": "telegram", "handle": "CE_Observe", "stability": "mid"},
+      {"id": "se7enw", "name": "All Is Well", "type": "telegram", "handle": "se7enw", "stability": "mid"}
+    ]},
+    {"slug": "tools", "name": "工具与项目", "order": 6, "sources": [
+      {"id": "github", "name": "GitHub 热门", "type": "inbox", "stability": "mid"},
+      {"id": "github-trending", "name": "GitHub Trending", "type": "page", "url": "https://github.com/trending", "stability": "stable"},
+      {"id": "dps_build", "name": "DPS Build", "type": "telegram", "handle": "dps_build", "stability": "mid"},
+      {"id": "yxzbp", "name": "严选君综合福利社", "type": "telegram", "handle": "yxzbp", "stability": "mid"}
+    ]}
+  ],
+  "excluded_sources": ["reorx_share", "mail", "liangjiahepost", "titan_pain"],
+  "highlights": {
+    "source_id": "hot-daily",
+    "name": "今日重点",
+    "rule": "不单开频道。每条按 link 找到已上站条目则只打 highlight 标；找不到则按其 sources 里第一个能在本表找到的来源（按 id 或 name）归频道；都找不到归 current。"
+  }
+}
