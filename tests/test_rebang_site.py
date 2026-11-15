@@ -69,6 +69,33 @@ class SiteBuildTests(unittest.TestCase):
         self.assertEqual([c['slug'] for c in meta['channels']], schema.channel_slugs())
         self.assertTrue((out / 'index.html').exists() and (out / 'app.js').exists() and (out / 'lib.js').exists())
 
+    def test_brand_icons_copied_and_head_tags_present(self):
+        out, _ = self.build()
+        html = (out / 'index.html').read_text(encoding='utf-8')
+        self.assertIn('noindex,nofollow', html)
+        self.assertIn('favicon-32x32.png', html)
+        self.assertIn('apple-touch-icon.png', html)
+        self.assertIn('manifest.webmanifest', html)
+        self.assertIn('https://news.kwinweng.com/og-image.png', html)
+        self.assertIn('class="brand-logo"', html)
+        self.assertIn('src="logo.png"', html)
+        for name in ('favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png',
+                     'icon-192.png', 'icon-512.png', 'icon-192-maskable.png', 'icon-512-maskable.png',
+                     'logo.png', 'og-image.png', 'manifest.webmanifest',
+                     'apple-splash-1170x2532.png', 'apple-splash-1179x2556.png', 'apple-splash-1290x2796.png'):
+            self.assertTrue((out / name).is_file(), name)
+        from PIL import Image
+        self.assertEqual(Image.open(out / 'favicon-32x32.png').size, (32, 32))
+        self.assertEqual(Image.open(out / 'apple-touch-icon.png').size, (180, 180))
+        self.assertEqual(Image.open(out / 'icon-192.png').size, (192, 192))
+        self.assertEqual(Image.open(out / 'icon-512.png').size, (512, 512))
+        self.assertEqual(Image.open(out / 'og-image.png').size, (1200, 630))
+        manifest = json.loads((out / 'manifest.webmanifest').read_text(encoding='utf-8'))
+        self.assertEqual(manifest['name'], '拾光热榜')
+        purposes = {(icon['src'], icon['purpose']) for icon in manifest['icons']}
+        self.assertEqual(purposes, {('icon-192.png', 'any'), ('icon-512.png', 'any'),
+                                    ('icon-192-maskable.png', 'maskable'), ('icon-512-maskable.png', 'maskable')})
+
     def test_full_build_pages_banner_feed_hotsearch_and_id_index(self):
         self.write('ingest.json', envelope(site_items()))
         self.write('hotsearch.json', hotsearch())
