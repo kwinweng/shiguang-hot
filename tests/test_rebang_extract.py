@@ -77,3 +77,16 @@ class ExtractTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+def test_extract_nested_nav_does_not_crash():
+    """分解祖先节点后，后代再调用 tag.get 不能 AttributeError（BBC 页就会撞上）。"""
+    from rebang.extract import extract_html
+    html = """<html><head><title>Story</title></head><body>
+    <article><div class="story-body">
+      <p>""" + ("This is a sufficiently long paragraph about the news. " * 20) + """</p>
+      <nav class="share"><div class="share-tools"><span>Share</span></div></nav>
+      <p>""" + ("Another long paragraph continues the article so we keep enough text. " * 20) + """</p>
+    </div></article></body></html>"""
+    got = extract_html(html, 'https://www.bbc.co.uk/news/articles/example')
+    assert got and len(got['body']) >= 400
