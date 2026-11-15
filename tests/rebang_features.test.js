@@ -7,7 +7,6 @@ const { dirname, join } = require('node:path');
 const root = join(dirname(__filename), '..');
 const Favorites = require(join(root, 'web-v11/features/favorites.js'));
 const Search = require(join(root, 'web-v11/features/search.js'));
-const History = require(join(root, 'web-v11/features/history.js'));
 
 function memoryStorage(initial) {
   const data = { ...(initial || {}) };
@@ -92,10 +91,6 @@ test('搜索命中中文标题、英文原文与译文', () => {
   assert.ok(!JSON.stringify(searchEntries).includes('ai_summary'));
 });
 
-test('北京日期在 00:00 边界切换，空日期文案固定', () => {
-  assert.equal(History.beijingDate('2026-11-14T15:59:59Z'), '2026-11-14');
-  assert.equal(History.beijingDate('2026-11-14T16:00:00Z'), '2026-11-15');
-  assert.equal(History.shiftDate('2026-11-15', -1), '2026-11-14');
-  assert.equal(History.EMPTY_MESSAGE, '这天没有内容');
-  assert.equal(History.emptyPayload('2026-11-14').message, '这天没有内容');
+test('历史模块已去掉（底栏改为热搜）', () => {
+  assert.equal(require('node:fs').existsSync(join(root, 'web-v11/features/history.js')), false);
 });

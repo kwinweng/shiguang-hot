@@ -88,14 +88,13 @@ class HistoryFavoritesSearchBrowserTests(unittest.TestCase):
         self.page.goto('https://offline.test/index.html')
         self.page.evaluate('() => window.__ready')
         self.page.wait_for_selector('#channelList [data-open-id]')
-        self.page.wait_for_selector('#view-history[data-history-date]', state='attached')
 
     def shot(self, name):
         path = EVIDENCE / name
         self.page.screenshot(path=str(path), full_page=False)
         return path
 
-    def test_favorites_persist_search_hits_and_history_by_date(self):
+    def test_favorites_persist_and_search_hits(self):
         self.open()
 
         self.page.locator('#channelList [data-open-id="tnews365:1001"]').click()
@@ -127,22 +126,7 @@ class HistoryFavoritesSearchBrowserTests(unittest.TestCase):
         self.page.wait_for_selector('[data-search-hit="bbc-world:abc123"]')
         self.page.locator('[data-search-close]').click()
 
-        self.page.locator('.tabbar button[data-view="history"]').click()
-        self.page.wait_for_selector('#view-history[data-history-date="2026-11-15"]')
-        self.assertIn('合成标题一', self.page.locator('#view-history [data-item-id="tnews365:1001"]').inner_text())
-        self.shot('04-history-day-with-items.png')
-
-        self.page.locator('[data-history-prev]').click()
-        self.page.wait_for_selector('#view-history[data-history-date="2026-11-14"]')
-        self.page.wait_for_selector('p[data-history-empty]')
-        self.assertIn(EMPTY_MESSAGE, self.page.locator('p[data-history-empty]').inner_text())
-        self.shot('05-history-empty-day.png')
-
-        self.page.locator('[data-history-prev]').click()
-        self.page.wait_for_selector('#view-history[data-history-date="2026-11-13"]')
-        self.page.wait_for_selector('#view-history [data-item-id="tnews365:1301"]')
-        self.assertIn('十三日旧闻', self.page.locator('#view-history [data-item-id="tnews365:1301"]').inner_text())
-        self.shot('06-history-prev-day.png')
+        self.assertFalse(self.page.locator('#view-history').count(), '历史页已去掉（2026-11-15 改为热搜页）')
 
         self.assertEqual(self.errors, [])
 

@@ -1,0 +1,238 @@
+{
+ "base": "http://127.0.0.1:8812/",
+ "at": "2026-11-15 21:50:38 +0800",
+ "passed": 30,
+ "total": 30,
+ "checks": [
+  {
+   "check": "顶部说明不再有「英文还没接机器翻译」",
+   "ok": true,
+   "note": "设计检查点预览第 2 版：数据是今晚 21:35 真实抓取的一次快照，不会自动更新。"
+  },
+  {
+   "check": "底栏 = 频道/博主/热搜/收藏",
+   "ok": true,
+   "tabs": [
+    "频道",
+    "博主",
+    "热搜",
+    "收藏"
+   ]
+  },
+  {
+   "check": "历史页已去掉",
+   "ok": true
+  },
+  {
+   "check": "频道里没有热搜块（时事 banner 区）",
+   "ok": true
+  },
+  {
+   "check": "热搜页默认当前三家 tab",
+   "ok": true,
+   "tabs": [
+    "百度热搜",
+    "知乎热榜",
+    "B 站热搜"
+   ],
+   "rows": {
+    "baidu": 51,
+    "zhihu": 30,
+    "bilibili": 50
+   }
+  },
+  {
+   "check": "日期切换条：今天·现在 + 归档里的往日",
+   "ok": true,
+   "chips": [
+    "今天 · 现在"
+   ],
+   "archived": [
+    "2026-11-15"
+   ]
+  },
+  {
+   "check": "往日热搜：归档里暂时只有今天（从今天起每天存一份，不编旧榜）",
+   "ok": true,
+   "archived_days": 1
+  },
+  {
+   "check": "博主平台含 Grok bot，与 X/即刻/微博/知乎/公众号并列",
+   "ok": true,
+   "plats": [
+    "x",
+    "grok",
+    "blog",
+    "jike",
+    "weibo",
+    "wechat",
+    "zhihu"
+   ]
+  },
+  {
+   "check": "平台图标都是本地官方图标文件且已加载",
+   "ok": true,
+   "icons": [
+    {
+     "src": "icons/x.svg",
+     "w": 150
+    },
+    {
+     "src": "icons/grok.svg",
+     "w": 512
+    },
+    {
+     "src": "icons/blog.svg",
+     "w": 150
+    },
+    {
+     "src": "icons/jike.svg",
+     "w": 38
+    },
+    {
+     "src": "icons/weibo.svg",
+     "w": 150
+    },
+    {
+     "src": "icons/wechat.svg",
+     "w": 150
+    },
+    {
+     "src": "icons/zhihu.svg",
+     "w": 150
+    }
+   ]
+  },
+  {
+   "check": "Grok bot 里 = 今日重点/推特爆款/环球要闻/GitHub 热门",
+   "ok": true,
+   "people": [
+    "全部",
+    "今日重点",
+    "推特爆款",
+    "环球要闻",
+    "GitHub 热门"
+   ]
+  },
+  {
+   "check": "4 类整理内容已离开主题频道",
+   "ok": true,
+   "leaked": 0
+  },
+  {
+   "check": "Grok bot 条数",
+   "ok": true,
+   "per_account": {
+    "今日重点": 98,
+    "推特爆款": 148,
+    "环球要闻": 188,
+    "GitHub 热门": 133
+   }
+  },
+  {
+   "check": "博主「查看更多」下滑到「没有更多了」",
+   "ok": true,
+   "rows": 133,
+   "total": 133
+  },
+  {
+   "check": "系统返回关掉「查看更多」回博主页",
+   "ok": true
+  },
+  {
+   "check": "频道「查看更多」= 整个频道全部条目，到「没有更多了」",
+   "ok": true,
+   "rows": 38,
+   "total": 38
+  },
+  {
+   "check": "从详情返回，「查看更多」页停在原位置",
+   "ok": true,
+   "y0": 3164,
+   "y1": 3164
+  },
+  {
+   "check": "「查看更多」返回回到频道",
+   "ok": true
+  },
+  {
+   "check": "新闻频道英文条目全部有中文译文（机器翻译）",
+   "ok": true,
+   "english": 157,
+   "translated": 157
+  },
+  {
+   "check": "博主英文帖子全部有中文译文（机器翻译）",
+   "ok": true,
+   "english": 68,
+   "translated": 68
+  },
+  {
+   "check": "环球卡片显示中文译文 + 「机器翻译」标",
+   "ok": true,
+   "sample": "海湾地区打击重启，伊朗瞄准巴林空军基地——中东危机实时报道\n\n巴林与伊朗隔波斯湾相望，是美国海军第五舰队驻地。官方的巴林通讯社也刊载了地区各国对伊朗今晨针对其海"
+  },
+  {
+   "check": "深链地址 #/item/<id>",
+   "ok": true,
+   "url": "%3A%2F%2Fwww.bbc.co.uk%2Fnews%2Farticles%2Fcr4gnz0lv2vlo%230"
+  },
+  {
+   "check": "详情系统返回回到原频道原位置",
+   "ok": true,
+   "x": 1,
+   "y0": 1953,
+   "y1": 1953
+  },
+  {
+   "check": "收藏后刷新仍在",
+   "ok": true,
+   "id": "bbc-world:https://www.bbc.co.uk/news/articles/cr4gnz0lv2vlo#0"
+  },
+  {
+   "check": "搜索 OpenAI 有命中",
+   "ok": true,
+   "hits": 182
+  },
+  {
+   "check": "搜索结果点进详情再返回，回到搜索结果",
+   "ok": true
+  },
+  {
+   "check": "冷启动打开 #/item/<id> 直接到详情",
+   "ok": true,
+   "id": "tnews365:35783"
+  },
+  {
+   "check": "深链详情返回到首页频道",
+   "ok": true
+  },
+  {
+   "check": "上下模式「继续看」按钮保留",
+   "ok": true,
+   "buttons": 6
+  },
+  {
+   "check": "页面无脚本错误",
+   "ok": true,
+   "errors": []
+  },
+  {
+   "check": "无 4xx/5xx 请求",
+   "ok": true,
+   "bad": []
+  }
+ ],
+ "screenshots": [
+  "local-01-home-current.png",
+  "local-02-hot-now.png",
+  "local-03-blogger-grok.png",
+  "local-04-more-blogger-end.png",
+  "local-05-more-channel-mid.png",
+  "local-06-world-translated.png",
+  "local-07-article-translated.png",
+  "local-08-favorites.png",
+  "local-09-search.png",
+  "local-10-deeplink.png"
+ ]
+}

@@ -87,11 +87,14 @@ class IngestTests(unittest.TestCase):
     def test_envelope_valid_and_every_item_in_its_configured_channel(self):
         env = self.run_collect(fetch=True, http_get=fake_http())
         self.assertEqual(validate_items_envelope(env), [])
-        for item in env['items']:
-            if item['source_id'] != 'hot-daily':
-                self.assertEqual(item['channel'], source_channel(item['source_id']), item['id'])
-        self.assertEqual({i['channel'] for i in env['items']},
-                         {'current', 'world', 'finance', 'tech-ai', 'digital', 'tools'})
+        news = [i for i in env['items'] if i['kind'] == 'news']
+        for item in news:
+            self.assertEqual(item['channel'], source_channel(item['source_id']), item['id'])
+        self.assertEqual({i['channel'] for i in news}, {'current', 'world', 'finance', 'tech-ai', 'digital', 'tools'})
+        # 4 份 Grok bot 成品（2026-11-15 21:26 阿欢定）只作博主页帖子，不进频道
+        posts = [i for i in env['items'] if i['kind'] == 'post']
+        self.assertEqual({i['source_id'] for i in posts}, {'x', 'world', 'github', 'hot-daily'})
+        self.assertTrue(all(i['channel'] is None and i['blogger']['platform'] == 'grok' for i in posts))
 
     def test_all_18_telegram_sources_reported_and_reorx_excluded(self):
         env = self.run_collect()
@@ -166,19 +169,26 @@ class IngestTests(unittest.TestCase):
         self.assertEqual(len(items['world']), 1)
         self.assertEqual([i['title'] for i in items['github']], ['owner/repo'])
         self.assertEqual(items['x'][0]['published_at'], '2026-11-14T07:12:00+08:00')
-        self.assertEqual(items['x'][0]['channel'], 'current')
+        self.assertIsNone(items['x'][0]['channel'])
+        self.assertEqual(items['x'][0]['blogger'], {'platform': 'grok', 'handle': 'x', 'display_name': '推特爆款', 'media': []})
 
     def test_highlight_rule(self):
         env = self.run_collect()
         items = {i['id']: i for i in env['items']}
         self.assertTrue(items['tnews365:101']['highlight'])
         self.assertEqual(items['tnews365:101']['highlight_date'], '2026-11-14')
-        extra = [i for i in env['items'] if i['source_id'] == 'hot-daily']
-        self.assertEqual({i['title']: i['channel'] for i in extra},
-                         {'未上站但来源在表里': 'tech-ai', '来源都不认识': 'current'})
-        self.assertTrue(all(i['highlight'] for i in extra))
-        hot = next(s for s in env['sources'] if s['id'] == 'hot-daily')
-        self.assertEqual((hot['marked'], hot['count']), (1, 2))
+        # 今日重点不再拆进频道：整份是 Grok bot 渠道帖子，没命中的也不造频道条目
+        hot_posts = [i for i in env['items'] if i['source_id'] == 'hot-daily']
+        self.assertTrue(hot_posts and all(i['kind'] == 'post' and i['channel'] is None for i in hot_posts))
+        self.assertFalse(any(i.get('highlight') for i in hot_posts))
+        self.assertFalse(any(i['kind'] == 'news' and i['source_id'] == 'hot-daily' for i in env['items']))
+        hot = next(s for s in env['sources'] if s['id'] == 'hot-daily' and s.get('role') == 'highlight-marks')
+        self.assertEqual((hot['marked'], hot['unmatched']), (1, 2))
+
+    def test_leading_bare_urls_stripped_from_summary_only(self):
+        from rebang.ingest.core import strip_leading_urls
+        self.assertEqual(strip_leading_urls('https://a.b/c  http://d.e 正文开始 https://x.y'), '正文开始 https://x.y')
+        self.assertEqual(strip_leading_urls('正文 https://a.b'), '正文 https://a.b')
 
     def test_translation_interface(self):
         calls = []

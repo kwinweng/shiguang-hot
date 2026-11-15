@@ -149,8 +149,9 @@ function mount(el, ctx) {
     if (!row) return;
     const item = entries.find((it) => it.id === row.getAttribute('data-item-id'));
     if (item) {
-      close();
+      // 不清空搜索词和结果：详情里返回时外壳会把搜索层连同结果、滚动位置一起恢复
       openItem(item);
+      el.classList.remove('on');
     }
   });
 

@@ -58,6 +58,20 @@ class Cache:
         self.pending.setdefault(text_key(text, src_lang), {'src': text, 'src_lang': src_lang})
 
     def save(self):
+        """先并入盘上最新内容再写（ingest 与 bloggers 共用一份缓存，先后或同时跑都不互相覆盖）。"""
+        disk = Cache.__new__(Cache)
+        disk.path, disk.pending_path = self.path, self.pending_path
+        disk.entries, disk.pending = {}, {}
+        try:
+            disk.entries = json.loads(self.path.read_text(encoding='utf-8')).get('entries', {})
+        except (ValueError, OSError):
+            pass
+        try:
+            disk.pending = json.loads(self.pending_path.read_text(encoding='utf-8')).get('pending', {})
+        except (ValueError, OSError):
+            pass
+        self.entries = {**disk.entries, **self.entries}
+        self.pending = {k: v for k, v in {**disk.pending, **self.pending}.items() if k not in self.entries}
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.path.write_text(json.dumps({'schema': 'rebang.translate-cache/1', 'entries': self.entries},
                                         ensure_ascii=False, indent=1), encoding='utf-8')

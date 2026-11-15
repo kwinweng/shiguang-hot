@@ -270,3 +270,25 @@ html,body{margin:0;height:100%;background:#07080a;color:var(--ink);font-family:u
 .rebang-fav-btn.on{color:var(--fav)}
 .fav-slot{flex:1;display:flex}
 .fav-slot:empty{display:none}
+
+/* ---- 2026-11-15 21:26 改版：查看更多、热搜页、平台官方图标 ---- */
+.ch-row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:0 16px 4px}
+.ch-row h2.ch{margin:0}
+.page-b .ch-row{margin:0 0 4px}
+.see-more{flex:0 0 auto;border:1px solid #d6b36a66;background:none;color:var(--gold);border-radius:999px;padding:5px 10px 5px 12px;font-size:12px;letter-spacing:.04em;cursor:pointer;display:inline-flex;align-items:center;gap:2px;margin-bottom:3px}
+.see-more span{font-size:15px;line-height:1}
+.see-more-bl{width:100%;margin:12px 0 0}
+.more-view{position:absolute;inset:0;background:var(--bg);z-index:9;display:none;flex-direction:column}
+.more-view.on{display:flex}
+.more-body{flex:1;min-height:0;overflow-y:auto;padding:14px 16px calc(18px + var(--safe-bot));-webkit-overflow-scrolling:touch}
+.more-body h2.more-h{margin:0 0 4px}
+.more-body .more-desc{margin:0 0 10px}
+.more-list{display:flex;flex-direction:column;gap:0}
+.more-list .tweet{margin-bottom:10px}
+
+.chip.logo{background:#0c0d10}
+.chip.logo .plat-ico{width:22px;height:22px;display:block;border-radius:6px}
+.chip.logo.on{background:#0c0d10;box-shadow:0 0 0 2px var(--gold)}
+.plat-name{font-size:12px;color:var(--gold);letter-spacing:.06em;margin:-4px 0 10px}
+.hot-day-note{margin:0 0 8px;color:var(--mute);font-size:12px;line-height:1.5}
+#view-hot .hot{margin-top:0}

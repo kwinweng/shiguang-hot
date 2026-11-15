@@ -80,13 +80,11 @@
         </div>
       </section>
       <section class="view" id="view-blogger"><div class="sub"><h2 class="ch">博主</h2><p class="muted">博主栏由其他分支实现。</p></div></section>
-      <section class="view" id="view-history"></section>
       <section class="view" id="view-favorites"></section>
     </div>
     <nav class="tabbar">
       <button class="on" data-view="channels" type="button">频道</button>
       <button data-view="blogger" type="button">博主</button>
-      <button data-view="history" type="button">历史</button>
       <button data-view="favorites" type="button">收藏</button>
     </nav>
     <div class="overlay" id="search-panel"></div>
@@ -110,7 +108,6 @@
       register(name, mount) { this._mods[name] = mount; }
     };
   </script>
-  <script src="/features/history.js"></script>
   <script src="/features/favorites.js"></script>
   <script src="/features/search.js"></script>
   <script>
@@ -151,10 +148,8 @@
       openItem,
       toast,
     };
-    const historyApi = window.Rebang._mods.history($('#view-history'), ctx);
     const favoritesApi = window.Rebang._mods.favorites($('#view-favorites'), { storage: localStorage, openItem, toast });
     const searchApi = window.Rebang._mods.search($('#search-panel'), { dataBase: 'data', openItem, searchButton: $('#btnSearch') });
-    window.__history = historyApi;
     window.__favorites = favoritesApi;
     window.__search = searchApi;
 
@@ -168,7 +163,9 @@
       btn.addEventListener('click', () => showView(btn.dataset.view));
     });
 
-    fetch('data/history/2026-11-15.json').then((res) => res.json()).then((payload) => {
+    // 历史页 2026-11-15 去掉了：频道列表改从搜索索引取当天条目
+    fetch('data/search-index.json').then((res) => res.json()).then((index) => {
+      const payload = {items: (index.entries || []).filter((it) => String(it.published_at || '').startsWith('2026-11-15'))};
       const list = $('#channelList');
       list.innerHTML = (payload.items || []).map((item) => {
         const title = displayTitle(item);
@@ -183,7 +180,7 @@
     });
 
     window.__showView = showView;
-    window.__ready = Promise.all([historyApi.ready, searchApi.ready]);
+    window.__ready = Promise.all([searchApi.ready]);
   </script>
 </body>
 </html>

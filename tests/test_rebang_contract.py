@@ -39,8 +39,14 @@ class ChannelConfigTests(unittest.TestCase):
         self.assertFalse(set(inbox) - existing)
         self.assertIn(load_channels()['highlights']['source_id'], existing)
 
-    def test_only_current_has_hotsearch(self):
-        self.assertEqual([c['slug'] for c in load_channels()['channels'] if c.get('hotsearch')], ['current'])
+    def test_no_channel_embeds_hotsearch_and_curated_inbox_left_channels(self):
+        # 2026-11-15 21:26：热搜去底栏「热搜」页；推特爆款/环球要闻/GitHub 热门进博主页 Grok bot
+        self.assertEqual([c['slug'] for c in load_channels()['channels'] if c.get('hotsearch')], [])
+        self.assertEqual(load_hotsearch()['view'], 'hot')
+        for sid in ('x', 'world', 'github', 'hot-daily'):
+            self.assertIsNone(source_channel(sid))
+        self.assertEqual(load_hotsearch()['max_items_per_provider'], 51)
+        self.assertNotIn('尚未最终确认', load_hotsearch()['note'])
 
     def test_apple_in_digital(self):
         self.assertEqual(source_channel('apple-newsroom'), 'digital')
@@ -69,7 +75,7 @@ class HotsearchConfigTests(unittest.TestCase):
 class BloggerConfigTests(unittest.TestCase):
     def test_counts(self):
         counts = {p['id']: len(p['accounts']) for p in load_bloggers()['platforms']}
-        self.assertEqual(counts, {'x': 16, 'blog': 7, 'jike': 9, 'weibo': 6, 'wechat': 6, 'zhihu': 0})
+        self.assertEqual(counts, {'x': 16, 'grok': 4, 'blog': 7, 'jike': 9, 'weibo': 6, 'wechat': 6, 'zhihu': 0})
 
 
 class ItemTests(unittest.TestCase):
@@ -125,3 +131,37 @@ class ItemTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class IntegrationContractTests(unittest.TestCase):
+    """集成阶段并入的契约变更（INTEGRATION-NOTES 各分支请求）。"""
+
+    def base_post(self):
+        return {'id': 'x:1', 'kind': 'post', 'channel': None, 'source_id': 'x', 'source_name': '推特爆款',
+                'title': 't', 'summary': '', 'url': '', 'published_at': '2026-11-15T08:00:00+08:00', 'lang': 'und',
+                'blogger': {'platform': 'grok', 'handle': 'x', 'display_name': '推特爆款', 'media': []}}
+
+    def test_grok_platform_post_and_lang_und_valid(self):
+        self.assertEqual(validate_item(self.base_post()), [])
+        self.assertEqual([a['name'] for a in next(p for p in load_bloggers()['platforms'] if p['id'] == 'grok')['accounts']],
+                         ['今日重点', '推特爆款', '环球要闻', 'GitHub 热门'])
+
+    def test_image_local_and_comments_and_quote_extras(self):
+        item = self.base_post()
+        item['image_local'] = {'path': '/x/a.webp', 'rel': 'media/a.webp', 'width': 640, 'height': 360, 'alt': ''}
+        item['blogger']['comments'] = [{'handle': 'a', 'text': 'hi', 'display_name': 'A'}]
+        item['blogger']['quote'] = {'handle': 'b', 'text': 'q', 'display_name': 'B', 'url': 'https://x.com/b/1'}
+        self.assertEqual(validate_item(item), [])
+        item['image_local']['rel'] = '../etc/passwd'
+        self.assertTrue(validate_item(item))
+        item['image_local'] = {'path': '/x/a.webp'}
+        item['blogger']['comments'] = [{'text': 'no handle'}]
+        self.assertTrue(validate_item(item))
+
+    def test_envelope_sources_and_platforms(self):
+        env = {'schema': 'rebang.items/1', 'producer': 'ingest', 'generated_at': '2026-11-15T08:00:00+08:00',
+               'items': [self.base_post()], 'sources': [{'id': 'bbc-world', 'status': 'ok', 'count': 1}],
+               'platforms': [{'id': 'x', 'status': 'ok'}]}
+        self.assertEqual(validate_items_envelope(env), [])
+        env['sources'] = [{'id': 'bbc-world'}]
+        self.assertTrue(validate_items_envelope(env))

@@ -40,7 +40,7 @@ class SiteBrowserTests(unittest.TestCase):
         (root / 'in' / 'hotsearch.json').write_text(json.dumps(hotsearch()), encoding='utf-8')
         cls.out = root / 'site'
         with mock.patch.object(site, '_run_archive', lambda items, out, report: None):
-            site.build(cls.out, root / 'in', now=NOW)
+            site.build(cls.out, root / 'in', now=NOW, hot_archive_dir=root / 'hot')
         cls.pw = sync_playwright().start()
         cls.browser = cls.pw.chromium.launch()
 
@@ -65,6 +65,8 @@ class SiteBrowserTests(unittest.TestCase):
             if url.netloc != 'rebang.test':
                 return route.abort()
             path = self.out / (unquote(url.path).lstrip('/') or 'index.html')
+            if getattr(self, 'stub_features', False) and unquote(url.path).startswith('/features/'):
+                return route.fulfill(status=200, body=b'', content_type='application/javascript')  # 只测桩，不让真模块覆盖
             route.fulfill(status=200 if path.is_file() else 404, body=path.read_bytes() if path.is_file() else b'missing',
                           content_type=mimetypes.guess_type(str(path))[0] or 'application/octet-stream')
         self.page.route('**/*', serve)
@@ -92,8 +94,9 @@ class SiteBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.locator('#when').inner_text(), self.page.evaluate('RebangLib.fmtDay(new Date())'))
         self.assertEqual(self.page.locator('#refreshed').inner_text(), '刷新于 11月15日 20:00')
         self.assertEqual(self.page.locator('.page-b h2.ch').all_inner_texts(), ['时事', '环球', '财经', '科技与 AI', '数码', '工具与项目'])
-        self.assertEqual([t.strip() for t in self.page.locator('.tabbar button').all_inner_texts()], ['频道', '博主', '历史', '收藏'])
-        for mount in ('#view-history', '#view-favorites', '#search-panel'):
+        self.assertEqual([t.strip() for t in self.page.locator('.tabbar button').all_inner_texts()], ['频道', '博主', '热搜', '收藏'])
+        self.assertEqual(self.page.locator('#view-history').count(), 0, '历史页已改为热搜页')
+        for mount in ('#view-hot', '#view-favorites', '#search-panel'):
             self.assertEqual(self.page.locator(mount).count(), 1)
 
     def test_swipe_changes_channel_but_banner_swipe_does_not(self):
@@ -110,17 +113,18 @@ class SiteBrowserTests(unittest.TestCase):
         self.assertEqual(self.channel_index(), 0, 'banner 内横滑只滑 banner')
         self.assertEqual(self.page.locator('.page-b[data-ch=current] .banner-pager').inner_text(), '2 / 5')
 
-    def test_hotsearch_block_tabs_and_failure_state(self):
+    def test_hotsearch_view_tabs_and_failure_state(self):
+        # 2026-11-15 21:26：热搜从时事频道移到底栏「热搜」页，频道里不再有热搜块
         self.open()
-        hot = self.page.locator('.page-b[data-ch=current] .hot')
+        self.assertEqual(self.page.locator('#channelRoot .hot').count(), 0)
+        self.page.locator('.tabbar [data-view=hot]').click()
+        hot = self.page.locator('#view-hot .hot')
+        hot.wait_for()
         self.assertEqual(hot.locator('[role=tab]').all_inner_texts(), ['百度热搜', '知乎热榜', 'B 站热搜'])
-        self.assertEqual(hot.locator('.hot-list li').count(), 10)
-        self.assertEqual(self.page.locator('.page-b:not([data-ch=current]) .hot').count(), 0, '热搜只在时事')
+        self.assertEqual(hot.locator('.hot-list li').count(), 12, '热搜页直接列全部')
+        self.assertEqual(self.page.locator('#hotDates .chip').all_inner_texts(), ['今天 · 现在'])
         hot.locator('[data-hot=zhihu]').click()
-        self.assertIn('暂时取不到', self.page.locator('.page-b[data-ch=current] .hot-empty').inner_text())
-        self.page.locator('.page-b[data-ch=current] [data-hot=baidu]').click()
-        self.page.locator('.page-b[data-ch=current] .hot-more').click()
-        self.assertEqual(self.page.locator('.page-b[data-ch=current] .hot-list li').count(), 12)
+        self.assertIn('暂时取不到', self.page.locator('#view-hot .hot-empty').inner_text())
 
     def test_feed_cards_and_infinite_load_to_end(self):
         self.open()
@@ -200,6 +204,7 @@ class SiteBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.locator('#channelRoot > .end-hint').inner_text(), '没有更多了')
 
     def test_feature_queue_ctx_and_favorite_slot_only_in_article(self):
+        self.stub_features = True
         self.page.add_init_script(STUB)
         self.open()
         self.assertEqual(self.page.locator('.page-b [data-favorite-button], .page-b .fav').count(), 0, '列表里没有收藏按钮')
@@ -211,8 +216,6 @@ class SiteBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.locator('#articleBody #stub-fav-btn').count(), 1)
         self.assertEqual(self.page.evaluate('window.__attached'), 'tnews365:5')
         self.page.locator('#btnBack').click()
-        self.page.locator('.tabbar [data-view=history]').click()
-        self.assertIn('历史功能还没接入', self.page.locator('#view-history').inner_text())
 
     def test_blogger_tab_real_empty_states(self):
         self.open()

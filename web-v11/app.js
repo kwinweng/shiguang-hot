@@ -1,6 +1,8 @@
 /* 拾光热榜 v1 新版前端（纯静态、无框架、无第三方依赖）。
    交互以 v10 设计稿为准：两种翻法、频道顶部 banner、信息流、时事热搜块、整页正文 + 返回原位、无限加载、刷新/下拉刷新。
-   历史 / 收藏 / 搜索由 web-v11/features/*.js 通过 Rebang.register(name, mount) 挂到 #view-history / #view-favorites / #search-panel。 */
+   收藏 / 搜索由 web-v11/features/*.js 通过 Rebang.register(name, mount) 挂到 #view-favorites / #search-panel。
+   2026-11-15 21:26 阿欢改：底栏「历史」→「热搜」（当前热搜 + 按北京日期回看），时事频道不再嵌热搜；
+   博主页加「Grok bot」渠道（今日重点/推特爆款/环球要闻/GitHub 热门）；每个频道、每个博主都有「查看更多」整页。 */
 (function () {
   'use strict';
   const L = window.RebangLib;
@@ -9,6 +11,7 @@
   const NOTE_KEY = 'rebang-v11-note-closed';
   const UD_FIRST = 6;     // 上下看频道：每个频道先放几条
   const UD_STEP = 20;     // 「继续看」每次加几条
+  const BL_PREVIEW = 10;  // 博主页每个平台 / 每个人先放几条，其余点「查看更多」
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
@@ -30,7 +33,9 @@
   let meta = null;
   let hot = null;
   let hotActive = null;
-  let hotExpanded = false;
+  let hotDay = null;              // null = 现在（data/hotsearch.json），否则 YYYY-MM-DD
+  let hotIndex = null;
+  const hotDays = {};
   let bloggers = null;
   let plat = 'x';
   let person = 'all';
@@ -38,6 +43,7 @@
   const items = new Map();        // id → 完整条目
   const ch = {};                  // slug → {list, page, pages, total, shown, loading, error}
   let articleOpen = false, articleId = null, returnState = null;
+  let more = null;                // 「查看更多」整页：{key, title, type:'ch'|'bl', slug|plat+pkey, list, page, pages, total, loading, error}
   let idIndex = null;
 
   const ctx = {
@@ -121,11 +127,10 @@
     const empty = !c.banner.length && !st.total ? '<p class="muted">这一频道暂时还没有内容。</p>' : '';
     const hint = mode === 'ud' ? '左右滑顶部图，下滑看下一频道' : (i < channels().length - 1 ? '左滑看下一频道' : '已经是最后一个频道');
     return `<div class="ch-kicker"${mode === 'lr' ? ' style="padding:0"' : ''}><span class="idx">${i + 1} / ${channels().length}</span><span class="hint">${hint}</span></div>
-      <h2 class="ch">${L.esc(c.name)}</h2>
+      <div class="ch-row"><h2 class="ch">${L.esc(c.name)}</h2>${c.total ? `<button type="button" class="see-more" data-see="ch:${L.esc(c.slug)}">查看更多<span aria-hidden="true">›</span></button>` : ''}</div>
       <p class="desc">${L.esc(c.desc || '')}</p>
       ${unavailableNote(c)}
       ${L.bannerHTML(c.slug, c.banner)}
-      ${c.hotsearch ? `<div class="hot-host">${L.hotsearchHTML(hot, hotActive, hotExpanded)}</div>` : ''}
       <div class="feed" data-ch="${c.slug}">${empty}<div class="feed-list">${feed.map(L.feedRowHTML).join('')}</div><div class="feed-foot">${feedFooter(c.slug)}</div></div>`;
   }
   function renderChannels() {
@@ -181,14 +186,7 @@
   }
 
   /* ---------- 博主 ---------- */
-  const PLAT_SVG = {
-    x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2H21.5l-7.5 8.57L22.5 22h-6.2l-4.86-6.35L6.1 22H2.84l8.03-9.17L1.5 2h6.36l4.4 5.82L18.244 2Zm-1.09 18.2h1.74L6.93 3.7H5.06l12.09 16.5Z"/></svg>',
-    blog: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-width="1.7" d="M6 4.5h9l3 3V19.5H6z"/><path stroke="currentColor" stroke-width="1.5" d="M9 11h6M9 14.5h6M9 8h3"/></svg>',
-    jike: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="currentColor" d="M13.2 6.5l-5 6.2h3.1L10.8 17.5l5-6.2h-3.1L13.2 6.5z"/></svg>',
-    weibo: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="13" r="2.6" fill="currentColor"/><circle cx="16.6" cy="7.2" r="1.5" fill="currentColor"/></svg>',
-    zhihu: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-width="1.7" d="M7 4.5h10v2H13.2l.5 3.2H17v8.2c0 1.2-1.2 2.2-2.7 2.2H9.7C8.2 20.1 7 19.1 7 17.9V4.5z"/><path stroke="currentColor" stroke-width="1.5" d="M9 11.5h6"/></svg>',
-    wechat: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.1 4.4c-3.9 0-7 2.7-7 6.1 0 2.1 1.2 3.9 3.1 5.1L4.5 18l2.6-1.4c.6.2 1.3.3 2 .3.3 0 .6 0 .9-.1-.2-.5-.3-1.1-.3-1.7 0-3.2 2.9-5.8 6.5-5.8.2 0 .5 0 .7.1C16.4 6.3 13.1 4.4 9.1 4.4z"/><path fill="currentColor" d="M20.7 12.5c0-2.8-2.6-5.1-5.8-5.1s-5.8 2.3-5.8 5.1 2.6 5.1 5.8 5.1c.5 0 1-.1 1.5-.2l2.2 1.2-.6-2.1c1.6-1 2.7-2.5 2.7-4z"/></svg>',
-  };
+  function platIcon(p) { return `<img class="plat-ico" src="${L.esc(p.icon || `icons/${p.id}.svg`)}" alt="" width="22" height="22">`; }
   function posts() { return (bloggers && bloggers.items) || []; }
   function platOf(id) { return ((bloggers && bloggers.platforms) || []).find(p => p.id === id); }
   function recentCount(id) {
@@ -199,9 +197,10 @@
     if (!bloggers) { $('#bloggerList').innerHTML = '<p class="muted">正在加载…</p>'; return; }
     $('#platChips').innerHTML = bloggers.platforms.map(p => {
       const n = recentCount(p.id);
-      return `<button type="button" class="chip logo${p.id === plat ? ' on' : ''}" data-plat="${p.id}" aria-label="${L.esc(p.name)}" title="${L.esc(p.name)}">${PLAT_SVG[p.id] || L.esc(p.name[0])}${n ? `<span class="unread" aria-label="${n} 条 24 小时内的新帖">${n}</span>` : ''}</button>`;
+      return `<button type="button" class="chip logo${p.id === plat ? ' on' : ''}" data-plat="${p.id}" aria-label="${L.esc(p.name)}" title="${L.esc(p.name)}">${platIcon(p)}${n ? `<span class="unread" aria-label="${n} 条 24 小时内的新帖">${n}</span>` : ''}</button>`;
     }).join('');
     const p = platOf(plat);
+    $('#platName').textContent = p ? p.name : '';
     const mine = posts().filter(x => x.blogger.platform === plat);
     const avatarOf = h => (mine.find(x => x.blogger.handle === h && x.blogger.avatar) || {blogger: {}}).blogger.avatar;
     $('#peopleRow').innerHTML = p && p.accounts.length ? `<button type="button" class="ppl${person === 'all' ? ' on' : ''}" data-person="all"><span class="ph-av letter">全</span><span>全部</span></button>` +
@@ -220,8 +219,15 @@
       else empty = '这一栏暂时还没有帖子。';
       empty = empty.replace(/。。/g, '。');
     }
-    $('#bloggerList').innerHTML = empty ? `<div class="empty-plat">${L.esc(empty)}</div>` : list.map(x => L.tweetCardHTML(x, true)).join('');
+    const acc = p && person !== 'all' ? p.accounts.find(a => a.handle === person) : null;
+    const total = acc ? (acc.total || 0) : (p ? p.count : 0);
+    const key = acc ? acc.key : 'all';
+    const who = acc ? acc.name : (p ? p.name : '');
+    const moreBtn = total ? `<button type="button" class="more-btn see-more-bl" data-see="bl:${L.esc(plat)}:${L.esc(key)}">查看更多「${L.esc(who)}」（共 ${total} 条）</button>` : '';
+    $('#bloggerList').innerHTML = empty ? `<div class="empty-plat">${L.esc(empty)}</div>` : list.slice(0, BL_PREVIEW).map(postCardHTML).join('') + moreBtn;
   }
+  /** Grok bot 渠道是我们整理的成品（有标题、摘要、配图），按资讯卡显示；其余平台按推文卡 */
+  function postCardHTML(x) { return x.blogger && x.blogger.platform === 'grok' ? L.feedRowHTML(x) : L.tweetCardHTML(x, true); }
   async function ensureBloggers() {
     if (bloggers) return;
     try { bloggers = await getJSON('bloggers.json'); remember(bloggers.items); } catch (e) { bloggers = {platforms: [], items: []}; }
@@ -229,9 +235,108 @@
     renderBloggers();
   }
 
+  /* ---------- 热搜（底栏，替换原历史页） ---------- */
+  async function ensureHotIndex() {
+    if (hotIndex) return hotIndex;
+    try { hotIndex = await getJSON('hotsearch/index.json'); } catch (e) { hotIndex = {dates: []}; }
+    return hotIndex;
+  }
+  function hotPayload() { return hotDay ? hotDays[hotDay] : hot; }
+  function renderHotBody() {
+    const host = $('#hotHost');
+    const payload = hotPayload();
+    if (hotDay && payload === undefined) { host.innerHTML = '<p class="muted">正在加载…</p>'; return; }
+    if (!payload || !(payload.providers || []).length) { host.innerHTML = `<p class="muted">${hotDay ? '这天没有存下热搜。' : '热搜暂时没加载出来，稍后点右上角刷新再试。'}</p>`; return; }
+    const when = payload.generated_at ? (hotDay ? `这是 ${L.fmtDay(hotDay + 'T12:00:00+08:00')} 最后一次抓到的榜单（${L.fmtTime(payload.generated_at)}）。` : `抓取于 ${L.fmtTime(payload.generated_at)}。`) : '';
+    host.innerHTML = `${when ? `<p class="hot-day-note">${L.esc(when)}</p>` : ''}${L.hotsearchHTML(payload, hotActive, false, 1000)}`;
+  }
+  async function renderHot() {
+    const idx = await ensureHotIndex();
+    const today = (meta && meta.today) || L.beijingDate(new Date());
+    const past = (idx.dates || []).filter(d => d.date !== today);
+    const chips = [{date: null, label: '今天 · 现在'}].concat(past.map(d => ({date: d.date, label: L.fmtDay(d.date + 'T12:00:00+08:00')})));
+    $('#hotDates').innerHTML = chips.map(c => `<button type="button" role="tab" class="chip${(c.date || null) === hotDay ? ' on' : ''}" data-hot-day="${c.date || ''}" aria-selected="${(c.date || null) === hotDay}">${L.esc(c.label)}</button>`).join('');
+    $('#view-hot').dataset.hotDay = hotDay || 'now';
+    renderHotBody();
+  }
+  async function pickHotDay(day) {
+    hotDay = day || null;
+    renderHot();
+    if (hotDay && hotDays[hotDay] === undefined) {
+      try { hotDays[hotDay] = await getJSON(`hotsearch/${hotDay}.json`); } catch (e) { hotDays[hotDay] = null; }
+      if (hotDay === day) renderHotBody();
+    }
+  }
+
+  /* ---------- 查看更多（频道 / 博主整页，无限下滑到「没有更多了」） ---------- */
+  function moreSpec(key) {
+    const [type, a, b] = String(key).split(':');
+    if (type === 'ch') { const c = channels().find(x => x.slug === a); return c ? {key, type, slug: a, title: c.name, total: c.total, head: c.banner || []} : null; }
+    if (type === 'bl') {
+      const p = platOf(a); if (!p) return null;
+      const acc = b === 'all' ? null : p.accounts.find(x => x.key === b);
+      if (b !== 'all' && !acc) return null;
+      return {key, type, plat: a, pkey: b, title: acc ? `${acc.name} · ${p.name}` : p.name, total: acc ? acc.total : p.count, head: []};
+    }
+    return null;
+  }
+  function morePath(m, n) { return m.type === 'ch' ? `channel/${m.slug}/page-${n}.json` : `blogger/${m.plat}/${m.pkey}/page-${n}.json`; }
+  function moreRow(it) { return it.kind === 'post' ? postCardHTML(it) : L.feedRowHTML(it); }
+  function moreFoot() {
+    if (more.error) return `<div class="load-err">没加载出来。<button type="button" data-more-retry>再试一次</button></div>`;
+    if (more.page < more.pages) return '<div class="more-sentinel"></div><div class="load-hint">下滑加载更多</div>';
+    return more.list.length ? '<div class="end-hint" data-end="more">没有更多了</div>' : '<p class="muted" style="padding:16px">这里暂时还没有内容。</p>';
+  }
+  let moreObs = null;
+  function bindMoreLoader() {
+    if (moreObs) moreObs.disconnect();
+    const el = $('#moreBody .more-sentinel'); if (!el) return;
+    moreObs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) loadMorePage(); }), {root: $('#moreBody'), rootMargin: '600px 0px', threshold: 0});
+    moreObs.observe(el);
+  }
+  async function loadMorePage() {
+    const m = more; if (!m || m.loading || (m.page >= m.pages && m.page > 0)) return;
+    m.loading = true; m.error = null;
+    const before = m.list.length;
+    try {
+      const page = await getJSON(morePath(m, m.page + 1));
+      if (more !== m) return;
+      const seen = new Set(m.list.map(x => x.id));
+      m.list.push(...remember(page.items).filter(x => !seen.has(x.id)));
+      m.page = page.page; m.pages = page.pages;
+    } catch (e) { m.error = String(e.message || e); } finally { m.loading = false; }
+    if (more !== m) return;
+    const body = $('#moreBody');
+    body.querySelector('.more-list').insertAdjacentHTML('beforeend', m.list.slice(before).map(moreRow).join(''));
+    body.querySelector('.more-foot').innerHTML = moreFoot();
+    fixBrokenThumbs(body); bindMoreLoader();
+    if (m.page < m.pages && body.scrollHeight <= body.clientHeight + 40) loadMorePage();
+  }
+  async function openMore(key, opts = {}) {
+    if (key.startsWith('bl:')) await ensureBloggers();
+    const spec = moreSpec(key);
+    if (!spec) { toast('这一栏找不到了。'); return; }
+    more = {...spec, list: remember(spec.head.slice()), page: 0, pages: 1, loading: false, error: null};
+    $('#moreTitle').textContent = `${spec.title} · 全部 ${spec.total || 0} 条`;
+    const body = $('#moreBody');
+    body.innerHTML = `<h2 class="ch more-h">${L.esc(spec.title)}</h2><p class="desc more-desc">全部 ${spec.total || 0} 条，按时间从新到旧。</p><div class="more-list">${more.list.map(moreRow).join('')}</div><div class="more-foot"></div>`;
+    body.scrollTop = 0;
+    $('#moreView').classList.add('on');
+    $('#moreView').dataset.moreKey = key;
+    if (!opts.fromPop) history.pushState({more: key}, '', '#/more/' + encodeURIComponent(key));
+    await loadMorePage();
+  }
+  function closeMore(opts = {}) {
+    if (!more) return;
+    more = null; if (moreObs) moreObs.disconnect();
+    $('#moreView').classList.remove('on');
+    delete $('#moreView').dataset.moreKey;
+    if (!opts.fromPop && history.state && history.state.more) history.back();
+  }
+
   /* ---------- 视图与功能挂载 ---------- */
-  const MOUNT_EL = {history: '#view-history', favorites: '#view-favorites', search: '#search-panel'};
-  const PLACEHOLDER = {history: '历史功能还没接入。', favorites: '收藏功能还没接入。'};
+  const MOUNT_EL = {favorites: '#view-favorites', search: '#search-panel'};
+  const PLACEHOLDER = {favorites: '收藏功能还没接入。'};
   function mountFeature(name) {
     const el = $(MOUNT_EL[name]);
     if (!el) return null;
@@ -249,8 +354,10 @@
     $$('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + name));
     $$('.tabbar button').forEach(b => { b.classList.toggle('on', b.dataset.view === name); b.setAttribute('aria-current', b.dataset.view === name ? 'page' : 'false'); });
     if (name === 'blogger') ensureBloggers().then(renderBloggers);
-    if (name === 'history' || name === 'favorites') mountFeature(name);
+    if (name === 'hot') renderHot();
+    if (name === 'favorites') mountFeature(name);
     if (!keepArticle && articleOpen) closeArticle();
+    if (!keepArticle && more) closeMore();
   }
 
   /* ---------- 正文（整页）与返回原位 ---------- */
@@ -261,6 +368,7 @@
     if (mode === 'lr') { st.pagerX = root.scrollLeft; st.pagesY = $$('.page-b').map(p => p.scrollTop); } else st.pagerY = root.scrollTop;
     st.subY = $$('.view.on .sub, .view.on [class*="sub"]').map(s => s.scrollTop);
     st.searchY = $$('#search-panel .sub').map(s => s.scrollTop);
+    st.moreY = more ? $('#moreBody').scrollTop : null;
     return st;
   }
   function restoreScroll(st) {
@@ -274,6 +382,7 @@
       }
       const subs = $$('.view.on .sub, .view.on [class*="sub"]'); (st.subY || []).forEach((y, i) => { if (subs[i]) subs[i].scrollTop = y; });
       if (st.search) { $('#search-panel').classList.add('on'); const ss = $$('#search-panel .sub'); (st.searchY || []).forEach((y, i) => { if (ss[i]) ss[i].scrollTop = y; }); }
+      if (st.moreY != null && more) $('#moreBody').scrollTop = st.moreY;
     };
     apply(); requestAnimationFrame(() => requestAnimationFrame(apply));
   }
@@ -281,7 +390,7 @@
     const d = L.display(it);
     const slot = '<div class="fav-slot" data-fav-slot></div>';
     const open = it.url ? `<a class="primary" href="${L.esc(it.url)}" target="_blank" rel="noopener">打开原文</a>` : '';
-    if (it.kind === 'post') return `${L.tweetCardHTML(it, false)}<div class="actions">${slot}${open}</div>`;
+    if (it.kind === 'post' && !(it.blogger && it.blogger.platform === 'grok')) return `${L.tweetCardHTML(it, false)}<div class="actions">${slot}${open}</div>`;
     let text = (d.body || d.summary || '').trim();
     // TG 正文第一行常是「【标题】」，标题已单独显示，正文里不再重复
     const first = text.split('\n')[0].replace(/[【】\s]/g, '');
@@ -306,7 +415,8 @@
     if (!it) { toast('这条已经不在最近一次发布的数据里了。'); return; }
     if (!opts.fromPop && !(articleOpen && articleId === id)) returnState = articleOpen ? returnState : captureScroll();
     $('#search-panel').classList.remove('on');
-    $('#articleTitle').textContent = it.kind === 'post' ? ((it.blogger && it.blogger.display_name) || '帖子') : (L.display(it).title || '正文');
+    const grok = it.kind === 'post' && it.blogger && it.blogger.platform === 'grok';
+    $('#articleTitle').textContent = it.kind === 'post' && !grok ? ((it.blogger && it.blogger.display_name) || '帖子') : (L.display(it).title || '正文');
     const body = $('#articleBody');
     body.innerHTML = articleHTML(it);
     const slot = body.querySelector('[data-fav-slot]');
@@ -327,12 +437,15 @@
     const st = e.state || {};
     const hashId = !e.state ? L.parseItemHash(location.hash) : null;
     if (st.article) openItem(st.article, {fromPop: true});
-    else if (hashId) {
+    else if (st.more) {
+      if (articleOpen) closeArticle({fromPop: true});
+      if (!more || more.key !== st.more) openMore(st.more, {fromPop: true});
+    } else if (hashId) {
       // 已开着的页面里再点一次私聊稿链接（只改了 #/item/…）：直接打开详情，返回回到原来的位置
       if (!articleOpen) returnState = captureScroll();
       history.replaceState({article: hashId}, '', L.itemHash(hashId));
       openItem(hashId, {fromPop: true});
-    } else if (articleOpen) closeArticle({fromPop: true});
+    } else { if (articleOpen) closeArticle({fromPop: true}); if (more) closeMore({fromPop: true}); }
   });
 
   /* ---------- 刷新 ---------- */
@@ -347,9 +460,11 @@
     stampRefresh(new Date());
     if (fresh.built_at !== old) {
       const idx = currentChannelIndex();
-      items.clear(); idIndex = null; bloggers = null;
+      items.clear(); idIndex = null; bloggers = null; hotIndex = null; Object.keys(hotDays).forEach(k => delete hotDays[k]);
       await loadAll(true);
       renderChannels();
+      if (currentView() === 'hot') renderHot();
+      if (currentView() === 'blogger') ensureBloggers();
       if (mode === 'lr') $('#channelRoot').scrollLeft = idx * $('#channelRoot').clientWidth;
       toast('有新内容，已更新。' + NOTE);
     } else toast('没有新内容，已是最新。' + NOTE);
@@ -458,9 +573,12 @@
     const artOrig = t.closest('[data-art-orig]');
     if (artOrig) { const box = $('[data-art-orig-box]'); const on = box.classList.toggle('on'); artOrig.textContent = on ? '收起原文' : '看原文'; return; }
     const tab = t.closest('[data-hot]');
-    if (tab) { hotActive = tab.dataset.hot; hotExpanded = false; $$('.hot-host').forEach(h => { h.innerHTML = L.hotsearchHTML(hot, hotActive, hotExpanded); }); return; }
-    const more = t.closest('[data-hot-more]');
-    if (more) { hotExpanded = more.dataset.hotMore === '1'; $$('.hot-host').forEach(h => { h.innerHTML = L.hotsearchHTML(hot, hotActive, hotExpanded); }); return; }
+    if (tab) { hotActive = tab.dataset.hot; renderHotBody(); return; }
+    const day = t.closest('[data-hot-day]');
+    if (day) { pickHotDay(day.dataset.hotDay); return; }
+    const see = t.closest('[data-see]');
+    if (see) { openMore(see.dataset.see); return; }
+    if (t.closest('[data-more-retry]')) { if (more) { more.error = null; loadMorePage(); } return; }
     const m = t.closest('[data-more]'); if (m) { loadMore(m.dataset.more); return; }
     const r = t.closest('[data-retry]'); if (r) { ch[r.dataset.retry].error = null; loadMore(r.dataset.retry); return; }
     const pl = t.closest('[data-plat]'); if (pl) { plat = pl.dataset.plat; person = 'all'; renderBloggers(); return; }
@@ -477,8 +595,10 @@
     $('#modeUD').onclick = () => { if (mode !== 'ud') { mode = 'ud'; localStorage.setItem(MKEY, mode); channels().forEach(c => { ch[c.slug].shown = Math.max(UD_FIRST, Math.min(ch[c.slug].shown, ch[c.slug].list.length)); }); renderChannels(); } };
     $('#btnRefresh').onclick = doRefresh;
     $('#btnBack').onclick = () => closeArticle();
+    $('#btnMoreBack').onclick = () => closeMore();
     document.querySelector('.app').addEventListener('click', onClick);
     const deep = L.parseItemHash(location.hash);
+    const deepMore = (location.hash.match(/^#\/more\/(.+)$/) || [])[1];
     if (!history.state || !history.state.home) history.replaceState({home: true}, '', location.pathname + location.search);
     try { await loadAll(false); } catch (e) {
       $('#channelRoot').innerHTML = `<p class="muted" style="padding:16px">数据没加载出来（${L.esc(e.message)}）。稍后点右上角刷新再试。</p>`;
@@ -497,6 +617,7 @@
     else $('#btnSearch').onclick = () => toast('搜索功能还没接入。');
     $('#app').removeAttribute('aria-busy');
     if (deep) openItem(deep);
+    else if (deepMore) { try { openMore(decodeURIComponent(deepMore)); } catch (e) { /* 坏链接就留在首页 */ } }
   }
   window.Rebang.openItem = (x) => openItem(x);
   window.Rebang.ctx = ctx;

@@ -51,11 +51,17 @@ class IncrementalArchiveTests(unittest.TestCase):
     def _day(self, date):
         return json.loads((self.archive / f'{date}.json').read_text(encoding='utf-8'))
 
+    # 2026-11-15 21:26：按日期翻新闻的历史页去掉了，站点不再写 data/history/；按日归档本身照旧，从归档读
     def _history(self, date):
-        return json.loads((self.out / 'data/history' / f'{date}.json').read_text(encoding='utf-8'))
+        records = self._day(date)['items']
+        items = sorted(({**r['latest'], 'first_published_at': r['first']['published_at']} for r in records),
+                       key=lambda it: it['published_at'], reverse=True)
+        return {'count': len(items), 'items': items}
 
     def _index(self):
-        return json.loads((self.out / 'data/history/index.json').read_text(encoding='utf-8'))
+        self.assertFalse((self.out / 'data/history').exists())
+        dates = sorted((p.stem for p in self.archive.glob('20*.json')), reverse=True)
+        return {'dates': [{'date': d, 'count': len(self._day(d)['items'])} for d in dates]}
 
     def _search(self):
         return json.loads((self.out / 'data/search-index.json').read_text(encoding='utf-8'))
@@ -114,7 +120,7 @@ class IncrementalArchiveTests(unittest.TestCase):
         self._build([early, late])
         dates = [row['date'] for row in self._index()['dates']]
         self.assertEqual(dates, ['2026-11-15', '2026-11-13'])
-        self.assertFalse((self.out / 'data/history/2026-11-14.json').exists())
+        self.assertFalse((self.archive / '2026-11-14.json').exists())
         empty = empty_day_payload('2026-11-14')
         self.assertTrue(empty['empty'])
         self.assertEqual(empty['count'], 0)
@@ -165,8 +171,8 @@ class IncrementalArchiveTests(unittest.TestCase):
         text = (self.out / 'data/search-index.json').read_text(encoding='utf-8')
         self.assertNotIn('未上站草稿不应出现', text)
         self.assertIn('合成标题一', text)
-        self.assertIn('十三日旧闻', (self.out / 'data/history/2026-11-13.json').read_text(encoding='utf-8'))
-        self.assertFalse((self.out / 'data/history/2026-11-14.json').exists())
+        self.assertIn('十三日旧闻', (self.archive / '2026-11-13.json').read_text(encoding='utf-8'))
+        self.assertFalse((self.out / 'data/history').exists())
 
 
 if __name__ == '__main__':

@@ -4,8 +4,10 @@
   var/rebang/in/*.json；该目录没有可用文件时改读 tests/fixtures/rebang/contract/。
 输出（site-v11/）：
   index.html + 前端静态文件（拷自 web-v11/）
-  data/meta.json、data/channel/<slug>/page-<n>.json（每页 30）、data/hotsearch.json、data/bloggers.json
-  以及 rebang.archive.build(items, out_dir) 产出的 history / search-index（history 分支提供；未合入时跳过）。
+  data/meta.json、data/channel/<slug>/page-<n>.json（每页 30）、data/hotsearch.json（当前热搜）、
+  data/hotsearch/index.json + data/hotsearch/<北京日期>.json（底栏「热搜」页按日期回看，每天最后一次成功抓取）、
+  data/bloggers.json（平台/名单 + 每平台、每人最新几条）、data/blogger/<平台>/<all|h-xxxx>/page-<n>.json（「查看更多」全量分页）、
+  data/id-index.json，以及 rebang.archive.build(items, out_dir) 产出的 search-index。
 """
 import argparse
 import hashlib
@@ -26,7 +28,8 @@ BEIJING = timezone(timedelta(hours=8))
 PAGE_SIZE = 30
 BANNER_MAX = 5
 BANNER_WINDOW = timedelta(hours=36)  # 「当天最新」：只从本频道最新一条往前 36 小时内挑大图
-BLOGGER_POST_CAP = 400
+BLOGGER_PREVIEW = 10   # 博主页每个平台 / 每个人先放几条，其余进「查看更多」
+HOT_ARCHIVE_DIR = ROOT / 'var' / 'rebang' / 'hotsearch-archive'
 CHANNEL_DESC = {
     'current': '国内外正在发生的事',
     'world': '国际上正在发生的大事',
@@ -183,24 +186,57 @@ def build_hotsearch(hotsearch, report):
             'providers': providers}
 
 
-def build_bloggers(posts, status=None):
-    """status：bloggers 生产者信封里的 platforms[]（每平台/每人 status、reason），有就并进来给前端显示真实空状态。"""
-    status = {p.get('id'): p for p in (status or []) if isinstance(p, dict)}
-    platforms = []
+def blogger_key(handle):
+    """博主分页目录名：handle 里有中文、UUID 等，统一成 h-<sha1 前 10 位>；平台全部用 all。"""
+    return 'h-' + hashlib.sha1(str(handle).encode('utf-8')).hexdigest()[:10]
+
+
+def build_bloggers(posts, status=None, preview=BLOGGER_PREVIEW):
+    """status：bloggers 生产者信封里的 platforms[]（每平台/每人 status、reason），有就并进来给前端显示真实空状态。
+    返回 (bloggers.json 内容, 分页 {(平台, key): [帖子…]})。bloggers.json 只带每平台、每人最新 preview 条。"""
+    status = {p.get('id'): p for p in (status or []) if isinstance(p, dict) and p.get('id') != 'grok'}
+    platforms, pages, keep = [], {}, set()
     for platform in schema.load_bloggers()['platforms']:
         mine = [p for p in posts if p['blogger']['platform'] == platform['id']]
         got = status.get(platform['id'], {})
         acc_status = {a.get('handle'): a for a in got.get('accounts') or [] if isinstance(a, dict)}
+        pages[(platform['id'], 'all')] = mine
+        keep.update(p['id'] for p in mine[:preview])
+        accounts = []
+        for a in platform.get('accounts', []):
+            theirs = [p for p in mine if p['blogger']['handle'] == a['handle']]
+            key = blogger_key(a['handle'])
+            pages[(platform['id'], key)] = theirs
+            keep.update(p['id'] for p in theirs[:preview])
+            accounts.append({**{k: a[k] for k in ('handle', 'name', 'home') if k in a}, 'key': key, 'total': len(theirs),
+                             **{k: acc_status[a['handle']][k] for k in ('status', 'count', 'error', 'last_ok_at')
+                                if k in acc_status.get(a['handle'], {})}})
         platforms.append({
             'id': platform['id'], 'name': platform['name'], 'login': bool(platform.get('login')),
-            'connected': bool(mine), 'count': len(mine), 'status': got.get('status'), 'reason': got.get('reason'),
-            'last_ok_at': got.get('last_ok_at'),
-            'accounts': [{**{k: a[k] for k in ('handle', 'name', 'home') if k in a},
-                          **{k: acc_status[a['handle']][k] for k in ('status', 'count', 'error', 'last_ok_at')
-                             if k in acc_status.get(a['handle'], {})}}
-                         for a in platform.get('accounts', [])],
+            'curated': bool(platform.get('curated')), 'icon': f'icons/{platform["id"]}.svg',
+            'connected': bool(mine), 'count': len(mine), 'status': got.get('status') or ('ok' if mine else None),
+            'reason': got.get('reason'), 'last_ok_at': got.get('last_ok_at'), 'accounts': accounts,
         })
-    return {'schema': 'rebang.site-bloggers/1', 'platforms': platforms, 'items': posts[:BLOGGER_POST_CAP]}
+    return ({'schema': 'rebang.site-bloggers/1', 'preview': preview, 'platforms': platforms,
+             'items': [p for p in posts if p['id'] in keep]}, pages)
+
+
+def build_hot_archive(current, hot_in, data, report, archive_dir, today):
+    """把这次的热搜快照按北京日期入档，再写出 data/hotsearch/index.json 与每天一份。"""
+    from rebang.hotsearch import archive as hot_archive
+    saved = hot_archive.save_snapshot(hot_in[1], archive_dir) if (hot_in and archive_dir) else None
+    days = hot_archive.load_days(archive_dir, today=today) if archive_dir else []
+    index = []
+    for day, payload in days:
+        shown = build_hotsearch(('archive', payload), {})
+        _write(data / 'hotsearch' / f'{day}.json', {**shown, 'date': day})
+        index.append({'date': day, 'generated_at': shown['generated_at'],
+                      'providers': [{'id': p['id'], 'name': p['name'], 'status': p['status'], 'count': len(p['items'])}
+                                    for p in shown['providers']]})
+    _write(data / 'hotsearch' / 'index.json', {'schema': 'rebang.hotsearch-index/1', 'timezone': 'Asia/Shanghai',
+                                               'today': today, 'current_at': current.get('generated_at'),
+                                               'dates': index})
+    report['hotsearch_archive'] = {'saved': saved, 'days': [d for d, _ in days]}
 
 
 def localize_images(items, site):
@@ -265,7 +301,8 @@ def _inject_features(site):
 
 def _run_archive(items, out_dir, report):
     try:
-        from rebang import archive  # history 分支提供
+        import importlib
+        archive = importlib.import_module('rebang.archive')  # history 分支提供
     except ImportError:
         report['archive'] = 'skipped: rebang.archive 未合入'
         return
@@ -277,7 +314,8 @@ def _run_archive(items, out_dir, report):
     report['archive'] = 'ok'
 
 
-def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web_dir=WEB_DIR, public_base=None):
+def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web_dir=WEB_DIR, public_base=None,
+          hot_archive_dir=HOT_ARCHIVE_DIR):
     """构建到 out（先写临时目录再替换）。返回构建报告 dict。"""
     out = Path(out).resolve()
     now = (now or datetime.now(timezone.utc)).astimezone(BEIJING)
@@ -314,14 +352,24 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
                    {'schema': 'rebang.page/1', 'channel': channel['slug'], **page})
         channels_meta.append({
             'slug': channel['slug'], 'name': channel['name'], 'order': channel['order'],
-            'desc': CHANNEL_DESC.get(channel['slug'], ''), 'hotsearch': bool(channel.get('hotsearch')),
+            'desc': CHANNEL_DESC.get(channel['slug'], ''),
             'sources': [s['name'] for s in channel['sources']],
             'unavailable': bad_sources.get(channel['slug'], []),
             'total': len(mine), 'feed_total': len(feed), 'pages': len(pages), 'banner': banner,
         })
-    _write(data / 'hotsearch.json', build_hotsearch(hotsearch, report))
+    current_hot = build_hotsearch(hotsearch, report)
+    _write(data / 'hotsearch.json', current_hot)
+    build_hot_archive(current_hot, hotsearch if not report['hotsearch']['errors'] else None, data, report,
+                      None if use_fixture else hot_archive_dir, now.date().isoformat())
     blogger_status = [p for _, e in envelopes for p in (e.get('platforms') or [])]
-    bloggers = build_bloggers(posts, blogger_status)
+    bloggers, blogger_pages = build_bloggers(posts, blogger_status)
+    for (platform_id, key), mine in blogger_pages.items():
+        for page in paginate(mine):
+            rel = f'blogger/{platform_id}/{key}/page-{page["page"]}.json'
+            if key == 'all':
+                for item in page['items']:
+                    id_index.setdefault(item['id'], rel)
+            _write(data / rel, {'schema': 'rebang.page/1', 'platform': platform_id, 'key': key, **page})
     _write(data / 'bloggers.json', bloggers)
     for item in bloggers['items']:
         id_index[item['id']] = 'bloggers.json'
@@ -361,10 +409,11 @@ def main(argv=None):
     parser.add_argument('--note', default=None, help='页面顶部说明条（预览用）')
     parser.add_argument('--public-base', default=None, help='公开站地址（写进 meta.json，私聊稿深链用）')
     parser.add_argument('--now', default=None, help='构建时间（ISO，测试用）')
+    parser.add_argument('--hot-archive', default=str(HOT_ARCHIVE_DIR), help='热搜按日归档目录（每天留最后一次成功抓取）')
     args = parser.parse_args(argv)
     now = parse_time(args.now) if args.now else None
     report = build(args.out, args.in_dir, now=now, use_fixture=args.fixture, note=args.note,
-                   public_base=args.public_base)
+                   public_base=args.public_base, hot_archive_dir=args.hot_archive)
     print(json.dumps(report, ensure_ascii=False, indent=1))
     return 0
 

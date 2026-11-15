@@ -31,6 +31,7 @@ class SiteBuildTests(unittest.TestCase):
 
     def build(self, **kw):
         out = self.dir / 'site'
+        kw.setdefault('hot_archive_dir', self.dir / 'hot-archive')  # 不写仓库 var/
         report = site.build(out, self.inp, now=NOW, **kw)
         return out, report
 
@@ -126,10 +127,13 @@ class SiteBuildTests(unittest.TestCase):
         b = news('tnews365', 'current', 2, minutes=1)
         b['image_local'] = {'path': str(self.dir / 'missing.webp'), 'rel': 'media/x.webp', 'width': 1200, 'height': 700}
         c = news('tnews365', 'current', 3, minutes=2, image=img(3))
-        c['image_local'] = {'path': str(pic), 'rel': '../../etc/passwd', 'width': 1, 'height': 1}
-        self.write('ingest.json', envelope([a, b, c]))
+        c['image_local'] = {'path': str(pic), 'rel': 'media/tnews365/1_1.webp', 'width': 1, 'height': 1}
+        d = news('tnews365', 'current', 4, minutes=3)
+        d['image_local'] = {'path': str(pic), 'rel': '../../etc/passwd', 'width': 1, 'height': 1}
+        self.write('ingest.json', envelope([a, b, c, d]))
         out, report = self.build()
         self.assertEqual(report['media_copied'], 1)
+        self.assertEqual(report['files'][0]['dropped'], 1, '契约拒收带 .. 的 image_local.rel')
         self.assertEqual((out / 'media/tnews365/1_1.webp').read_bytes(), b'RIFFfakewebp')
         meta = self.read(out, 'meta.json')
         banner = {i['id']: i for i in meta['channels'][0]['banner']}
@@ -191,10 +195,73 @@ class RealInputBuildTests(unittest.TestCase):
     def test_real_inputs_build(self):
         with tempfile.TemporaryDirectory() as tmp, \
                 mock.patch.object(site, '_run_archive', lambda items, out, report: None):
-            report = site.build(Path(tmp) / 'site', site.DEFAULT_IN)
+            report = site.build(Path(tmp) / 'site', site.DEFAULT_IN, hot_archive_dir=Path(tmp) / 'hot')
         self.assertFalse(report['fallback_fixture'])
         self.assertGreater(report['news'], 0)
 
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class RevisionBuildTests(unittest.TestCase):
+    """2026-11-15 21:26 阿欢改版：热搜按日归档、博主「查看更多」分页、Grok bot 渠道、频道不再嵌热搜。"""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.dir = Path(self.tmp.name)
+        self.inp = self.dir / 'in'
+        self.inp.mkdir()
+        patcher = mock.patch.object(site, '_run_archive', lambda items, out, report: None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def post(self, platform, handle, name, n, **extra):
+        item = {'id': f'{handle}:{n}', 'kind': 'post', 'channel': None, 'source_id': handle, 'source_name': name,
+                'title': f'标题{n}', 'summary': '摘要', 'url': '', 'lang': 'zh',
+                'published_at': f'2026-11-15T{10 + n // 60:02d}:{n % 60:02d}:00+08:00',
+                'blogger': {'platform': platform, 'handle': handle, 'display_name': name, 'media': []}}
+        item.update(extra)
+        return item
+
+    def test_blogger_preview_pages_and_grok_platform(self):
+        posts = [self.post('grok', 'world', '环球要闻', n) for n in range(45)] + [self.post('grok', 'x', '推特爆款', 1)]
+        (self.inp / 'ingest.json').write_text(json.dumps(envelope([news('tnews365', 'current', 1)] + posts)), encoding='utf-8')
+        (self.inp / 'hotsearch.json').write_text(json.dumps(hotsearch()), encoding='utf-8')
+        out = self.dir / 'site'
+        site.build(out, self.inp, now=NOW, hot_archive_dir=self.dir / 'hot')
+        data = out / 'data'
+        bl = json.loads((data / 'bloggers.json').read_text(encoding='utf-8'))
+        grok = next(p for p in bl['platforms'] if p['id'] == 'grok')
+        self.assertEqual((grok['name'], grok['count'], grok['curated'], grok['icon']), ('Grok bot', 46, True, 'icons/grok.svg'))
+        world = next(a for a in grok['accounts'] if a['handle'] == 'world')
+        self.assertEqual((world['total'], world['key']), (45, site.blogger_key('world')))
+        self.assertLessEqual(sum(1 for i in bl['items'] if i['blogger']['handle'] == 'world'), site.BLOGGER_PREVIEW)
+        p1 = json.loads((data / 'blogger/grok' / world['key'] / 'page-1.json').read_text(encoding='utf-8'))
+        p2 = json.loads((data / 'blogger/grok' / world['key'] / 'page-2.json').read_text(encoding='utf-8'))
+        self.assertEqual((len(p1['items']), p1['has_more'], len(p2['items']), p2['has_more']), (30, True, 15, False))
+        allp = json.loads((data / 'blogger/grok/all/page-2.json').read_text(encoding='utf-8'))
+        self.assertEqual(allp['total'], 46)
+        idx = json.loads((data / 'id-index.json').read_text(encoding='utf-8'))
+        oldest = 'world:0'
+        self.assertEqual(idx[oldest], 'blogger/grok/all/page-2.json', '不在预览里的帖子深链也能找到')
+        meta = json.loads((data / 'meta.json').read_text(encoding='utf-8'))
+        self.assertFalse(any('hotsearch' in c for c in meta['channels']))
+
+    def test_hotsearch_archive_written_per_day(self):
+        (self.inp / 'ingest.json').write_text(json.dumps(envelope([news('tnews365', 'current', 1)])), encoding='utf-8')
+        hot_dir = self.dir / 'hot'
+        hot_dir.mkdir()
+        old = hotsearch()
+        old['generated_at'] = '2026-11-14T22:00:00+08:00'
+        (hot_dir / '2026-11-14.json').write_text(json.dumps(old), encoding='utf-8')
+        (self.inp / 'hotsearch.json').write_text(json.dumps(hotsearch()), encoding='utf-8')
+        out = self.dir / 'site'
+        report = site.build(out, self.inp, now=NOW, hot_archive_dir=hot_dir)
+        index = json.loads((out / 'data/hotsearch/index.json').read_text(encoding='utf-8'))
+        dates = [d['date'] for d in index['dates']]
+        self.assertIn('2026-11-14', dates)
+        self.assertEqual(report['hotsearch_archive']['days'], dates)
+        day = json.loads((out / 'data/hotsearch/2026-11-14.json').read_text(encoding='utf-8'))
+        self.assertEqual((day['date'], day['generated_at']), ('2026-11-14', '2026-11-14T22:00:00+08:00'))

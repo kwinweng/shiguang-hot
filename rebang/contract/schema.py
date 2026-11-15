@@ -107,6 +107,30 @@ def _blogger(value, errors, where):
     quote = value.get('quote')
     if quote is not None and not (isinstance(quote, dict) and quote.get('text') and quote.get('handle')):
         errors.append(f'{where}: blogger.quote 只有拿到完整引用（handle+text）才写，否则为 null')
+    # quote 允许附带 display_name/avatar/published_at/url/media 等字段，不校验多出来的键
+    comments = value.get('comments')
+    if comments is not None:
+        if not isinstance(comments, list):
+            errors.append(f'{where}: blogger.comments 必须是数组')
+        else:
+            for index, comment in enumerate(comments):
+                if not (isinstance(comment, dict) and isinstance(comment.get('text'), str) and comment.get('handle')):
+                    errors.append(f'{where}: blogger.comments[{index}] 需 handle + text')
+
+
+def _image_local(value, errors, where):
+    """ingest 的本地图：{path, rel?, width?, height?, alt?}。站点构建时复制进 site/media/，改写成相对地址 image.url。"""
+    if value is None:
+        return
+    if not isinstance(value, dict) or not isinstance(value.get('path'), str) or not value['path']:
+        errors.append(f'{where}: image_local 必须是 {{path, rel?, width?, height?, alt?}}')
+        return
+    rel = value.get('rel')
+    if rel is not None and (not isinstance(rel, str) or rel.startswith('/') or '..' in rel.split('/')):
+        errors.append(f'{where}: image_local.rel 必须是不含 .. 的相对路径')
+    for dim in ('width', 'height'):
+        if dim in value and not (isinstance(value[dim], int) and value[dim] > 0):
+            errors.append(f'{where}: image_local.{dim} 必须是正整数')
 
 
 def validate_item(item, where='item'):
@@ -147,6 +171,7 @@ def validate_item(item, where='item'):
             errors.append(f'{where}: 博主帖子不进资讯频道，channel 必须为 null 或不写')
         _blogger(item.get('blogger'), errors, where)
     _image(item.get('image'), errors, where)
+    _image_local(item.get('image_local'), errors, where)
     translated = item.get('translated', False)
     if not isinstance(translated, bool):
         errors.append(f'{where}: translated 必须是布尔')
@@ -173,6 +198,12 @@ def validate_items_envelope(envelope):
     _str(envelope, 'producer', errors, 'envelope')
     if not _is_aware_iso(envelope.get('generated_at')):
         errors.append('envelope: generated_at 必须带时区')
+    for key in ('sources', 'platforms'):
+        rows = envelope.get(key)
+        if rows is None:
+            continue
+        if not isinstance(rows, list) or not all(isinstance(r, dict) and r.get('id') and r.get('status') for r in rows):
+            errors.append(f'envelope: {key} 必须是 [{{id, status, ...}}]')
     items = envelope.get('items')
     if not isinstance(items, list):
         return errors + ['envelope: items 必须是数组']

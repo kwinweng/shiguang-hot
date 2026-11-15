@@ -1,6 +1,6 @@
 {
   "schema": "rebang.bloggers/1",
-  "note": "名单以 docs/bloggers-candidates-v2-20261114.md 与 SPEC v0.10 第 7.4 节为准，本期不扩。博主不进 6 个资讯频道。登录类平台抓不到就保持真实空状态，不编帖子。",
+  "note": "grok = 我们自己的 Grok bot 每日整理成品（今日重点/推特爆款/环球要闻/GitHub 热门，2026-11-15 21:26 阿欢定从频道移来），由 sources-ingest 读盒子投递目录产出 kind=post。其余名单以 docs/bloggers-candidates-v2-20261114.md 与 SPEC v0.10 第 7.4 节为准，本期不扩。博主不进 6 个资讯频道。登录类平台抓不到就保持真实空状态，不编帖子。",
   "platforms": [
     {"id": "x", "name": "X", "method": "existing-public-reader", "login": false, "accounts": [
       {"handle": "karpathy", "name": "Andrej Karpathy"}, {"handle": "simonw", "name": "Simon Willison"},
@@ -11,6 +11,12 @@
       {"handle": "op7418", "name": "歸藏"}, {"handle": "vista8", "name": "向阳乔木"},
       {"handle": "Gorden_Sun", "name": "Gorden Sun"}, {"handle": "tualatrix", "name": "图拉鼎"},
       {"handle": "lxfater", "name": "铁锤人"}, {"handle": "turingou", "name": "郭宇"}
+    ]},
+    {"id": "grok", "name": "Grok bot", "method": "curated-inbox", "login": false, "curated": true, "accounts": [
+      {"handle": "hot-daily", "name": "今日重点", "inbox": "/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json"},
+      {"handle": "x", "name": "推特爆款", "inbox": "/workspace/x-digest/YYYY-MM-DD.json"},
+      {"handle": "world", "name": "环球要闻", "inbox": "/workspace/world-brief/YYYY-MM-DD/brief.json"},
+      {"handle": "github", "name": "GitHub 热门", "inbox": "/workspace/feeds-inbox/github/YYYY-MM-DD/feed.json"}
     ]},
     {"id": "blog", "name": "博客", "method": "official-feed", "login": false, "accounts": [
       {"handle": "ruanyifeng", "name": "阮一峰", "home": "https://www.ruanyifeng.com/blog/", "feed": "https://www.ruanyifeng.com/blog/atom.xml"},

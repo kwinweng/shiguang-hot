@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from rebang.contract import ITEMS_SCHEMA, load_channels
+from rebang.contract import ITEMS_SCHEMA, load_bloggers, load_channels
 
 ROOT = Path(__file__).resolve().parents[2]
 BEIJING = ZoneInfo('Asia/Shanghai')
@@ -96,8 +96,30 @@ def source_table():
     return table
 
 
+_LEADING_URLS = re.compile(r'^(?:\s*https?://\S+)+\s*')
+_CJK = re.compile(r'[\u3400-\u9fff]')
+
+
+def strip_leading_urls(text):
+    """卡片摘要开头常是裸链接（TG 把原文链接放第一行）：入库时去掉，正文 body 保留原样。"""
+    return _LEADING_URLS.sub('', str(text or ''))
+
+
+def guess_lang(*texts):
+    return 'zh' if _CJK.search(' '.join(t or '' for t in texts)) else 'en'
+
+
+def grok_sources():
+    """博主页 Grok bot 渠道的 4 份每日成品（bloggers.json platforms[id=grok].accounts）。"""
+    for platform in load_bloggers()['platforms']:
+        if platform['id'] == 'grok':
+            return [{'id': a['handle'], 'name': a['name'], 'type': 'inbox'} for a in platform['accounts']]
+    return []
+
+
 def _news(source, channel, native_id, title, summary, url, published, now, lang='zh', body=None, image=None,
           image_local=None):
+    summary = strip_leading_urls(summary)
     item = {'id': f"{source['id']}:{native_id}", 'kind': 'news', 'channel': channel, 'source_id': source['id'],
             'source_name': source['name'], 'title': title, 'summary': summary, 'url': _http_url(url),
             'image': image, 'published_at': _iso(published), 'fetched_at': _iso(now), 'lang': lang,
@@ -323,6 +345,7 @@ def _issue_entries(issues, floor):
 
 
 def inbox_items(sources, now, floor, loader):
+    """Grok bot 每日成品 → kind=post（blogger.platform=grok，handle=成品 id），不进 6 个频道。"""
     items, statuses = [], []
     for channel, cfg in sources:
         try:
@@ -347,16 +370,19 @@ def inbox_items(sources, now, floor, loader):
                     if image_local:
                         image_local['alt'] = str(im.get('alt') or '')
                         break
-            items.append(_news(cfg, channel, native, title, _plain(body, SUMMARY_CHARS), url, published, now,
-                               body=body or None, image_local=image_local))
+            item = _news(cfg, None, native, title, _plain(body, SUMMARY_CHARS), url, published, now,
+                         lang=guess_lang(title, body), body=body or None, image_local=image_local)
+            item['kind'] = 'post'
+            item['blogger'] = {'platform': 'grok', 'handle': cfg['id'], 'display_name': cfg['name'], 'media': []}
+            items.append(item)
             count += 1
         latest = issues[0][0].get('date') if issues else None
         statuses.append(dict(_status(cfg, channel, 'ok' if count else 'empty', count), latest_issue=latest))
     return items, statuses
 
 
-def apply_highlights(items, now, floor, loader, table):
-    """channels.json.highlights.rule：link 命中已上站条目只打标；否则按 sources 第一个能匹配的来源归频道；都不行归 current。"""
+def apply_highlights(items, now, floor, loader, table=None):
+    """channels.json.highlights.rule：今日重点不进频道（整份是 Grok bot 渠道的帖子）；频道里同链接的条目只打 highlight 标。"""
     rule = load_channels()['highlights']
     hid = rule['source_id']
     cfg = {'id': hid, 'name': rule['name'], 'type': 'inbox'}
@@ -366,87 +392,95 @@ def apply_highlights(items, now, floor, loader, table):
         return [], _status(cfg, None, 'error', error=type(ex).__name__)
     by_url = {}
     for item in items:
-        if item['url']:
+        if item['kind'] == 'news' and item['url']:
             by_url.setdefault(_norm_url(item['url']), item)
-    by_key = {}
-    for sid, (slug, source) in table.items():
-        by_key.setdefault(sid, slug)
-        by_key.setdefault(source['name'], slug)
-    extra, marked, seen = [], 0, set()
+    marked = unmatched = 0
     for day, _base, entry in _issue_entries(issues, floor):
         url = _http_url(entry.get('link'))
         target = by_url.get(_norm_url(url)) if url else None
-        if target is not None:
-            if not target.get('highlight'):
-                marked += 1
-            target['highlight'] = True
-            target['highlight_date'] = max(day, target.get('highlight_date') or day)
+        if target is None:
+            unmatched += 1
             continue
-        title = _plain(entry.get('title'))
-        if not title:
-            continue
-        native = _sha(_norm_url(url)) if url else _sha(f'{day}|{title}')
-        if native in seen:
-            continue
-        seen.add(native)
-        names = [s for s in (entry.get('sources') or []) if isinstance(s, str)] or ([entry['source']] if isinstance(entry.get('source'), str) else [])
-        channel = next((by_key[n] for n in names if n in by_key), 'current')
-        body = str(entry.get('body') or '').strip()
-        published = _parse_when(entry.get('date'), day) or _parse_when(day)
-        item = _news(cfg, channel, native, title, _plain(body, SUMMARY_CHARS), url, published, now, body=body or None)
-        item.update(highlight=True, highlight_date=day)
-        extra.append(item)
+        if not target.get('highlight'):
+            marked += 1
+        target['highlight'] = True
+        target['highlight_date'] = max(day, target.get('highlight_date') or day)
     latest = issues[0][0].get('date') if issues else None
-    status = dict(_status(cfg, None, 'ok' if (marked or extra) else 'empty', len(extra)),
-                  marked=marked, latest_issue=latest)
-    return extra, status
+    status = dict(_status(cfg, None, 'ok' if marked else 'empty', 0), marked=marked, unmatched=unmatched,
+                  latest_issue=latest, role='highlight-marks')
+    return [], status
 
 
 # ---------- 翻译（rebang/translate 由 bloggers 分支提供；没有就留 translated=false） ----------
 
 def default_translator():
+    """共享 rebang.translate 的缓存（var/rebang/translate/cache.json + pending.json）。返回 (fn, engine, saver) 或 None。"""
     try:
-        from rebang import translate as module
+        from rebang.translate import Translator
     except ImportError:
         return None
-    fn = getattr(module, 'translate', None)
-    if not callable(fn):
+    translator = Translator()
+    if translator.engine == 'none':
         return None
-    engine = getattr(module, 'ENGINE', None) or 'rebang.translate'
-    return lambda texts, src: fn(texts, src), engine
+    return (lambda texts, src: translator.translate_detailed(texts, src)), translator.engine, translator.save
 
 
-def apply_translation(items, translator, cache):
+def _translate_one(fn, texts):
+    """逐条翻；缺一段就整条不标 translated（下次缓存补齐后再上）。返回 (译文列表, engine) 或 None。"""
+    want = [t for t in texts if t.strip()]
+    if not want:
+        return None
+    got = fn(want, 'en')
+    if isinstance(got, tuple):
+        out, engine = got
+    elif got is None:
+        return None
+    else:
+        out, engine = got, None
+    if not (isinstance(out, list) and len(out) == len(want)):
+        return None
+    it = iter(out)
+    return [next(it) if t.strip() else '' for t in texts], engine
+
+
+def apply_translation(items, translator, cache=None):
+    """只翻非中文条目的标题 + 卡片摘要（GitHub Trending 仓库名不翻）。按条增量：
+    已译过的条目（cache/translations.json，按 id+标题+摘要）直接复用，不再调翻译；新条目才调。
+    默认翻译器只查 rebang.translate 缓存，缺的原文进 pending.json，等 Grok 补译后
+    （python3 -m rebang.translate fill）下次生成即带上。"""
     if not translator:
         return 0
-    fn, engine = translator
-    store_path = Path(cache) / 'translations.json'
+    fn, default_engine = translator[0], translator[1]
+    store_path = Path(cache) / 'translations.json' if cache else None
     try:
-        store = json.loads(store_path.read_text(encoding='utf-8'))
+        store = json.loads(store_path.read_text(encoding='utf-8')) if store_path else {}
     except (OSError, ValueError):
         store = {}
-    todo = [i for i in items if not i['lang'].startswith('zh')]
     key = lambda i: _sha(i['id'] + '\n' + i['title'] + '\n' + i['summary'])  # noqa: E731
-    missing = [i for i in todo if key(i) not in store]
-    if missing:
-        titles = [i['title'] for i in missing if i['source_id'] != 'github-trending']
-        summaries = [i['summary'] for i in missing]
-        t_out = fn(titles, 'en') if titles else []
-        s_out = fn(summaries, 'en')
-        if isinstance(t_out, list) and isinstance(s_out, list) and len(t_out) == len(titles) and len(s_out) == len(summaries):
-            t_iter = iter(t_out)
-            for item, summary in zip(missing, s_out):
-                title = item['title'] if item['source_id'] == 'github-trending' else next(t_iter)
-                if isinstance(title, str) and isinstance(summary, str) and title.strip():
-                    store[key(item)] = {'title': title, 'summary': summary, 'engine': engine}
-            _write_json(store_path, store)
-    done = 0
-    for item in todo:
+    done, changed = 0, False
+    for item in items:
+        if item['lang'].startswith('zh') or item['lang'] == 'und':
+            continue
         hit = store.get(key(item))
-        if hit:
-            item['translated'] = True
-            item['translation'] = {'title': hit['title'], 'summary': hit['summary'], 'engine': hit['engine'], 'label': MT}
-            done += 1
+        if not hit:
+            keep_title = item['source_id'] == 'github-trending'
+            texts = ([] if keep_title else [item['title']]) + [item['summary']]
+            result = _translate_one(fn, texts)
+            if not result:
+                continue
+            out, engine = result
+            title = item['title'] if keep_title else out[0]
+            if not (title or '').strip():
+                continue
+            hit = store[key(item)] = {'title': title, 'summary': out[-1], 'engine': engine or default_engine}
+            changed = True
+        item['translated'] = True
+        item['translation'] = {'title': hit['title'], 'summary': hit['summary'], 'engine': hit['engine'], 'label': MT}
+        done += 1
+    if changed and store_path:
+        _write_json(store_path, store)
+    if len(translator) > 2 and callable(translator[2]):
+        translator[2]()
     return done
 
 
@@ -467,7 +501,7 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
     got, st = remote_items(by_type.get('feed', []) + by_type.get('page', []), now, floor, fetch=fetch, cache=cache,
                            http_get=http_get or default_http_get)
     items += got; statuses += st
-    got, st = inbox_items(by_type.get('inbox', []), now, floor, loader)
+    got, st = inbox_items([(None, cfg) for cfg in grok_sources()], now, floor, loader)
     items += got; statuses += st
     extra, hstatus = apply_highlights(items, now, floor, loader, table)
     items += extra; statuses.append(hstatus)
@@ -479,7 +513,8 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
         unique.setdefault(item['id'], item)
     ordered = sorted(unique.values(), key=lambda i: i['published_at'], reverse=True)
     return {'schema': ITEMS_SCHEMA, 'producer': PRODUCER, 'generated_at': _iso(now), 'items': ordered,
-            'sources': statuses, 'translation': {'available': bool(translator), 'translated': translated}}
+            'sources': statuses, 'translation': {'available': bool(translator), 'translated': translated,
+                                              'untranslated': sum(1 for i in ordered if not i['lang'].startswith('zh') and i['lang'] != 'und' and not i.get('translated'))}}
 
 
 def write_envelope(envelope, out):

@@ -1,4 +1,8 @@
-"""按北京日期增量归档，并写出站点历史页与搜索索引。"""
+"""按北京日期增量归档，并写出站点搜索索引。
+
+2026-11-15 21:26 阿欢定：底栏「历史」改成「热搜」，按日期翻新闻的历史页去掉，所以不再写 data/history/。
+归档本身（var/rebang/archive/）照旧保留，供搜索与 8:30 私聊稿补漏。
+"""
 from __future__ import annotations
 
 import json
@@ -173,10 +177,10 @@ def _history_item(record: dict) -> dict:
 
 
 def build(items, out_dir, archive_dir=None, generated_at=None):
-    """把已上站条目按北京日期合并进归档，并写出 history 与 search-index。
+    """把已上站条目按北京日期合并进归档，并写出 search-index（历史页已去掉，不写 data/history）。
 
     items: 条目列表，或 rebang.items/1 信封。
-    out_dir: 站点根目录（写出 data/history/* 与 data/search-index.json）。
+    out_dir: 站点根目录（写出 data/search-index.json）。
     archive_dir: 默认为仓库 var/rebang/archive/；测试请显式传入。
     只增量改动有新条目的日期文件，已有历史全部保留。
     同一 id 保留首次与最新版本。
@@ -245,10 +249,6 @@ def build(items, out_dir, archive_dir=None, generated_at=None):
 
     dates = []
     search_entries = []
-    history_root = out_dir / 'data' / 'history'
-    history_root.mkdir(parents=True, exist_ok=True)
-    live_dates = set()
-
     for path in _day_files(archive_dir):
         day = _load_json(path)
         if not day:
@@ -263,36 +263,14 @@ def build(items, out_dir, archive_dir=None, generated_at=None):
             records.append({'id': ident, 'first': record.get('first') or latest, 'latest': latest})
         if not records:
             continue
-        live_dates.add(date)
         items_out = sorted((_history_item(r) for r in records),
                            key=lambda it: it.get('published_at') or '', reverse=True)
-        history_payload = {
-            'schema': HISTORY_DAY_SCHEMA,
-            'date': date,
-            'timezone': TIMEZONE,
-            'count': len(items_out),
-            'empty': False,
-            'message': None,
-            'items': items_out,
-        }
-        _write_json(history_root / f'{date}.json', history_payload)
         dates.append({'date': date, 'count': len(items_out)})
         for item in items_out:
             search_entries.append(_search_entry(item))
 
-    # 站点若残留已空日期的文件，删掉，避免历史页读到过期数据。
-    if history_root.is_dir():
-        for path in history_root.iterdir():
-            if DAY_NAME.match(path.name) and path.stem not in live_dates:
-                path.unlink()
-
     dates.sort(key=lambda row: row['date'], reverse=True)
     search_entries.sort(key=lambda row: row.get('published_at') or '', reverse=True)
-    _write_json(history_root / 'index.json', {
-        'schema': HISTORY_INDEX_SCHEMA,
-        'timezone': TIMEZONE,
-        'dates': dates,
-    })
     _write_json(out_dir / 'data' / 'search-index.json', {
         'schema': SEARCH_INDEX_SCHEMA,
         'timezone': TIMEZONE,

@@ -99,7 +99,7 @@ class CollectIsolationTests(unittest.TestCase):
         ids = [p['id'] for p in payload['providers']]
         self.assertEqual(ids, ['baidu', 'zhihu', 'bilibili'])
         counts = {p['id']: (p['status'], len(p['items'])) for p in payload['providers']}
-        self.assertEqual(counts['baidu'], ('ok', 50))
+        self.assertEqual(counts['baidu'], ('ok', 51))  # 契约 51 = 置顶 1 + 普通 50（集成 11-15 定）
         self.assertEqual(counts['zhihu'], ('ok', 30))
         self.assertEqual(counts['bilibili'], ('ok', 50))
         self.assertEqual(payload['generated_at'], '2026-11-15T20:41:00+08:00')
@@ -179,3 +179,41 @@ class CliTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class HotsearchArchiveTests(unittest.TestCase):
+    """底栏「热搜」页按北京日期回看：每天只留最后一次成功抓取；失败/全空不入档、不覆盖。"""
+
+    def payload(self, at, status='ok'):
+        items = [{'rank': 1, 'title': '标题', 'url': 'https://top.baidu.com/x', 'pinned': False}] if status == 'ok' else []
+        return {'schema': 'rebang.hotsearch/1', 'generated_at': at,
+                'providers': [{'id': 'baidu', 'name': '百度热搜', 'status': status, 'fetched_at': at, 'items': items}]}
+
+    def test_keeps_latest_per_beijing_day_and_skips_failures(self):
+        import tempfile
+        from rebang.hotsearch import archive
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(archive.save_snapshot(self.payload('2026-11-14T15:30:00Z'), tmp), '2026-11-14')
+            self.assertEqual(archive.save_snapshot(self.payload('2026-11-14T16:10:00Z'), tmp), '2026-11-15')  # 北京已过零点
+            self.assertEqual(archive.save_snapshot(self.payload('2026-11-15T20:00:00+08:00'), tmp), '2026-11-15')
+            self.assertIsNone(archive.save_snapshot(self.payload('2026-11-15T19:00:00+08:00'), tmp))  # 更旧，不覆盖
+            self.assertIsNone(archive.save_snapshot(self.payload('2026-11-15T21:00:00+08:00', 'error'), tmp))
+            days = archive.load_days(tmp)
+            self.assertEqual([d for d, _ in days], ['2026-11-15', '2026-11-14'])
+            self.assertEqual(days[0][1]['generated_at'], '2026-11-15T20:00:00+08:00')
+            self.assertEqual([d for d, _ in archive.load_days(tmp, today='2026-11-14')], ['2026-11-14'])
+
+
+class HotsearchCliArchiveTests(unittest.TestCase):
+    def test_cli_archives_only_when_asked_with_fixtures(self):
+        import tempfile
+        from rebang.hotsearch import __main__ as cli
+        fixtures = Path(__file__).parent / 'fixtures' / 'rebang' / 'hotsearch'
+        with tempfile.TemporaryDirectory() as tmp, patch('sys.stderr'):
+            tmp = Path(tmp)
+            cli.main(['--out', str(tmp / 'a.json'), '--fixtures', str(fixtures)])
+            self.assertFalse((tmp / 'arc').exists(), 'fixtures 默认不归档')
+            cli.main(['--out', str(tmp / 'b.json'), '--fixtures', str(fixtures), '--archive', str(tmp / 'arc')])
+            files = list((tmp / 'arc').glob('*.json'))
+            self.assertEqual(len(files), 1)
+            self.assertEqual(json.loads(files[0].read_text())['generated_at'], json.loads((tmp / 'b.json').read_text())['generated_at'])
