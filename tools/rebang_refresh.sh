@@ -4,12 +4,12 @@
 #   → 翻译缓存回填（入库时自动查 var/rebang/translate/cache.json）→ 建站 site-v11/ → 发布 gh-pages（rebang/ 子目录）
 # 幂等、加锁，可每 30 分钟跑一次。任何一步失败：保留上一份数据继续往下走；建站失败则不替换 site-v11、不发布。
 # 用法：sh tools/rebang_refresh.sh [--no-publish] [--no-fetch]
-#   环境：BOX_PYTHON（默认 python3）、REBANG_PUBLIC_BASE（默认 https://news.kwinweng.com/rebang/）
+#   环境：BOX_PYTHON（默认 python3）、REBANG_PUBLIC_BASE（默认 https://news.kwinweng.com/，站点由 nginx 从 rebang/ 子目录挂在根路径）
 set -eu
 root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 cd "$root"
 PY=${BOX_PYTHON:-python3}
-BASE=${REBANG_PUBLIC_BASE:-https://news.kwinweng.com/rebang/}
+BASE=${REBANG_PUBLIC_BASE:-https://news.kwinweng.com/}
 publish=1
 fetch=1
 for option in "$@"; do
