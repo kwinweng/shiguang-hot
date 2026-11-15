@@ -1,0 +1,35 @@
+{
+  "schema": "rebang.items/1",
+  "producer": "push-fixture",
+  "generated_at": "2026-11-15T08:30:00+08:00",
+  "items": [
+    {
+      "id": "tnews365:old",
+      "kind": "news",
+      "channel": "current",
+      "source_id": "tnews365",
+      "source_name": "竹新社",
+      "title": "昨天更早",
+      "summary": "一句话摘要。",
+      "url": "https://t.me/tnews365/old",
+      "published_at": "2026-11-14T08:30:00+08:00",
+      "lang": "zh",
+      "translated": false,
+      "highlight": true
+    },
+    {
+      "id": "mail:1",
+      "kind": "news",
+      "channel": "current",
+      "source_id": "mail",
+      "source_name": "竹新社",
+      "title": "邮件不该出现",
+      "summary": "一句话摘要。",
+      "url": "https://t.me/mail/1",
+      "published_at": "2026-11-15T07:00:00+08:00",
+      "lang": "zh",
+      "translated": false,
+      "highlight": true
+    }
+  ]
+}

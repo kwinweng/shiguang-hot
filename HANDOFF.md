@@ -10,6 +10,7 @@
 - 分支 hotsearch（`feat/rebang-v1-hotsearch`）：三家独立适配器已落地；离线单测全绿；2026-11-15 20:45:32 北京时间 `--live` 冒烟为百度 50 / 知乎 30 / B 站 50，均为 ok，`validate_hotsearch` 无错误。证据见 `docs/rebang-v1/evidence/hotsearch/`。站上「时事」频道展示待前端分支。
 - history-favorites-search（`feat/rebang-v1-history-favorites-search`）：归档增量、搜索索引、历史/收藏/搜索模块已完成；手机尺寸实测通过，证据 `docs/rebang-v1/evidence/history-favorites-search/`。
 - 基线（未改动的 origin/main）：pytest 228 过 / 1 失败（`test_news_modules_browser` 主题切换 dark 子用例，原样复现，非本次引入）；node 13/13；`NO_FETCH=1 python3 pipeline.py` 成功（6527 TG，0 feed，4 inbox）。
+- push-0830：8:30「今日重点」私聊稿已可 `python3 -m rebang.push --site site-v11 --now <ISO> --dry-run [--output FILE]` 生成（只输出，不发送、不建定时）。单测 17 项全绿。现有今日重点仍由热点日报 bot 每晚 22:00 写到 `/workspace/feeds-inbox/hot-daily/`，资讯 bot 无 8:30 私聊例程。
 
 ## 下一步
 1. 做 6 个分支（目录互不重叠，可并行；实际是否并行以执行记录为准）：sources-ingest、hotsearch、bloggers、frontend-v11、history-favorites-search、push-0830（任务卡里有验收命令）。
