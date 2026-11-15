@@ -29,7 +29,8 @@ def display_text(item):
 
 def item_url(item, base_url=''):
     item_id = quote(item.get('id') or '', safe='')
-    base = (base_url or '').rstrip('/')
+    # 站点是目录（/ 或 /rebang/）：深链统一成 <base>/#/item/<id>，避免 /rebang#… 先跳一次 301
+    base = (base_url or '').rstrip('/') + '/' if base_url else ''
     fragment = f'#/item/{item_id}'
     return f'{base}{fragment}' if base else fragment
 

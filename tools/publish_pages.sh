@@ -37,6 +37,22 @@ trap 'exit 1' HUP INT TERM
 git worktree add --detach "$worktree" HEAD >/dev/null
 git -C "$worktree" rm -rf --ignore-unmatch . >/dev/null
 cp -R site/. "$worktree/"
+# 拾光热榜 v11（rebang）：已构建的 site-v11/ 一并发布到 gh-pages 的 rebang/ 子目录
+# （news.kwinweng.com/rebang/）。REBANG_PUBLISH=0 不带；回退：删掉/改名 site-v11 后再发布一次即可下线。
+rebang_site=${REBANG_SITE:-$root/site-v11}
+if [ "${REBANG_PUBLISH:-1}" != 0 ] && [ -f "$rebang_site/index.html" ] && [ -f "$rebang_site/data/meta.json" ]; then
+    if [ -e "$worktree/rebang" ]; then
+        echo 'publish refused: old site already has rebang/' >&2
+        exit 1
+    fi
+    if [ -n "$(find "$rebang_site" -name '.env*' -print)" ]; then
+        echo 'publish refused: .env* found in rebang site' >&2
+        exit 1
+    fi
+    mkdir "$worktree/rebang"
+    cp -R "$rebang_site/." "$worktree/rebang/"
+    printf 'Including rebang site from %s\n' "$rebang_site"
+fi
 rm -f "$worktree/CNAME"
 touch "$worktree/.nojekyll"
 if [ -n "${PAGES_CNAME:-}" ]; then

@@ -235,7 +235,7 @@ class RenderAndCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             site = write_site(Path(tmp) / 'site-v11', 'items-two.json')
             text = generate(str(site), NOW)
-            self.assertIn('https://news.example.test#/item/tnews365%3A101', text)
+            self.assertIn('https://news.example.test/#/item/tnews365%3A101', text)
 
     def test_platforms_loaded_from_site(self):
         with tempfile.TemporaryDirectory() as tmp:
