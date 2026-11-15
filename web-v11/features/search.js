@@ -124,8 +124,16 @@ function mount(el, ctx) {
     return hits;
   }
 
+  let loaded = false;
+
   function run() {
     const query = input.value.trim();
+    if (!loaded && query) {
+      // 索引还在下载：先给出加载提示，下载完成后自动按当前输入重新搜索
+      el.dataset.searchQuery = query;
+      listEl.innerHTML = '<p class="muted" data-search-loading>正在加载搜索索引…</p>';
+      return [];
+    }
     return render(query, search(entries, query));
   }
 
@@ -161,9 +169,10 @@ function mount(el, ctx) {
     button.addEventListener('click', open);
   }
 
-  const ready = loadIndex(ctx).then((loaded) => {
-    entries = loaded;
-    render('', []);
+  const ready = loadIndex(ctx).catch(() => []).then((list) => {
+    entries = list;
+    loaded = true;
+    run();
     return entries;
   });
 

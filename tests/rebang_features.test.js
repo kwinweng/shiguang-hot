@@ -94,3 +94,33 @@ test('搜索命中中文标题、英文原文与译文', () => {
 test('历史模块已去掉（底栏改为热搜）', () => {
   assert.equal(require('node:fs').existsSync(join(root, 'web-v11/features/history.js')), false);
 });
+
+test('search typed before the index loads re-runs once the index arrives', async () => {
+  function fakeNode() {
+    return { innerHTML: '', value: '', dataset: {}, listeners: {},
+      addEventListener(type, fn) { this.listeners[type] = fn; }, focus() {} };
+  }
+  const input = fakeNode();
+  const list = fakeNode();
+  const close = fakeNode();
+  const el = {
+    dataset: {}, innerHTML: '',
+    classList: { add() {}, remove() {} },
+    querySelector(sel) {
+      if (sel === '[data-search-input]') return input;
+      if (sel === '[data-search-list]') return list;
+      return close;
+    },
+  };
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  const fetchFn = async () => { await gate; return { ok: true, json: async () => ({ entries: searchEntries }) }; };
+  const api = Search.mount(el, { fetch: fetchFn, searchButton: fakeNode() });
+  input.value = 'SYNTHETIC HEADLINE';
+  input.listeners.input();
+  assert.match(list.innerHTML, /data-search-loading/);
+  release();
+  await api.ready;
+  assert.equal(el.dataset.searchCount, '1');
+  assert.match(list.innerHTML, new RegExp(`data-search-hit="${enItem.id}"`));
+});
