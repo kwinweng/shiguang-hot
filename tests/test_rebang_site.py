@@ -77,8 +77,8 @@ class SiteBuildTests(unittest.TestCase):
         self.assertIn('apple-touch-icon.png', html)
         self.assertIn('manifest.webmanifest', html)
         self.assertIn('https://news.kwinweng.com/og-image.png', html)
-        self.assertIn('class="brand-logo"', html)
-        self.assertIn('src="logo.png"', html)
+        self.assertNotIn('class="brand-logo"', html)
+        self.assertNotIn('src="logo.png"', html)
         for name in ('favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png',
                      'icon-192.png', 'icon-512.png', 'icon-192-maskable.png', 'icon-512-maskable.png',
                      'logo.png', 'og-image.png', 'manifest.webmanifest',
