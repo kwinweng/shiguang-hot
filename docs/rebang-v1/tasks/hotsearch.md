@@ -11,3 +11,11 @@
 - 接口：`python3 -m rebang.hotsearch --out var/rebang/in/hotsearch.json [--fixtures DIR]`；`collect(now, http=None) -> dict`。
 - 验收：单测覆盖三家正常样本、每家各自失败不影响别家、全失败输出合法空榜；`validate_hotsearch` 无错误；一次 `--live` 冒烟记录三家真实条数与状态。
 - 不许碰：契约、其它分支目录、旧站、线上。
+
+## 本轮结果（2026-11-15 20:45 北京时间）
+
+- 离线单测：`python3 -m pytest -q -p no:cacheprovider tests/test_rebang_hotsearch.py` 全绿。
+- 全量 pytest：262 通过 / 1 失败（`test_news_modules_browser` 主题切换 dark 子用例，基线已知，非本轮引入）。
+- node --test：13/13。
+- `--live` 冒烟（20:45:32 北京时间）：百度 ok 50、知乎 ok 30、B 站 ok 50，`validate_hotsearch` 无错误。记录在 `docs/rebang-v1/evidence/hotsearch/`。
+- 站上「时事」频道 banner 下展示，待前端分支接入本信封后验收。
