@@ -80,6 +80,7 @@ def main():
         page.wait_for_selector('#platChips [data-plat]')
         plats = page.eval_on_selector_all('#platChips [data-plat]', 'els => els.map(e => e.dataset.plat)')
         check('博主平台含 Grok bot，与 X/即刻/微博/知乎/公众号并列', 'grok' in plats and {'x', 'jike', 'weibo', 'zhihu', 'wechat'} <= set(plats), plats=plats)
+        page.wait_for_function('() => [...document.querySelectorAll("#platChips img.plat-ico")].every(i => i.complete)', timeout=15000)
         icons = page.eval_on_selector_all('#platChips img.plat-ico', 'els => els.map(e => ({src: e.getAttribute("src"), w: e.naturalWidth}))')
         check('平台图标都是本地官方图标文件且已加载', icons and all(i['w'] > 0 and i['src'].startswith('icons/') for i in icons), icons=icons)
         page.locator('[data-plat=grok]').click()
