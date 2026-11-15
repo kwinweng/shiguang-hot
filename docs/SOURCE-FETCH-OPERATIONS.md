@@ -25,7 +25,7 @@
 - 2026-10-21 阿欢确认：**总控负责 blocked 检查；解除 blocked、恢复采集须阿欢本人明确批准**。
 - 采集器向构建 stderr 输出 `fetch_status {JSON}`：正常轮次含 source、attempt_id、hour_key、result、error_code、last_checked、last_success、next_eligible_at、requests、cache_hits、new；跳过轮次含 skip_reason，blocked 源持续输出 `source_status=blocked`。时间为 UTC。
 - 检查方法：打开 box 采集日志筛 `fetch_status`，看 `result=blocked` 和 `result=skip` 且 `source_status=blocked`，另查 Pages 发布失败；不能只看退出码。日志不可读或没有状态行时报告「未取得源级健康证据」，不能记为健康。
-- 采集器只输出状态，**没有内建通知**。通知链路（复用巡检与消息通道、在 #16 记录 `[总控 状态]`）当时等「拾光热榜流程优化」会话回传验收证据，**是否已验收未确认**。
+- 采集器只输出状态，**没有内建通知**。通知链路（复用巡检与消息通道、在 #16 记录 `[总控 状态]`）当时等「拾光热榜流程优化」会话回传验收证据。issue [#16](https://github.com/kwinweng/shiguang-hot/issues/16) 仍开放，2026-10-21 的阶段记录是 `awaiting_notification_acceptance`，正文写「尚未验收通过」；之后没有新评论或关闭记录，**不能当成已验收**。采集日志在 `/workspace/shiguang-logs/`。
 
 ## 人工恢复与回滚
 

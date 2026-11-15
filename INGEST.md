@@ -1,6 +1,6 @@
 # 聚合平台投递规范（旧站期刊）
 
-> 适用于旧站的期刊来源（`shiguang/ingest/feeds.py`）。v11 不走这里：它直接读盒子上的 4 个每日成品原始目录（见 `docs/rebang-v1/MODULES.md`）。`public-feeds/` 的公开归一化发布停在 2026-10-23。
+> 适用于旧站的期刊来源（`shiguang/ingest/feeds.py`）。v11 不走这里：它直接读盒子上的 4 个每日成品原始目录（见 `docs/rebang-v1/MODULES.md`）。`public-feeds/` 的公开归一化发布停在 2026-10-23（`sync.sh` 改为 `--no-push`，见 `public-feeds/README.md`）。
 
 本文供投递内容的 bot 使用。先在 `sources.json` 注册来源，再写入数据。原生数据不直接进入 git。
 

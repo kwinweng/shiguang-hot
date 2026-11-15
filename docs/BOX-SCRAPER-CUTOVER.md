@@ -5,7 +5,7 @@
 ## 现状
 
 - 生产克隆：`/workspace/shiguang-prod`（迁移时文档写的 `/opt/shiguang` 在盒子上不存在）。
-- 调度：盒子没有 cron，由工头「热榜抓取发布」例程每小时 :07/:37（Asia/Shanghai）运行 `sh tools/box_scrape.sh`。必须只启用一个生产例程。例程实际传的 `--log-dir` 未在仓库记录；不传时日志写 `<checkout>/logs/box-scrape/`。
+- 调度：盒子没有 cron，由工头「热榜抓取发布」例程每小时 :07/:37（Asia/Shanghai）运行。必须只启用一个生产例程。2026-11 核过的命令是 `sh tools/box_scrape.sh --checkout /workspace/shiguang-prod --log-dir /workspace/shiguang-logs`（工头例程 `automation-1792760094684`，`CRON_TZ=Asia/Shanghai`，`7,37 * * * *`）；11/16 00:37 一轮日志仍写入该目录。不传 `--log-dir` 时日志写 `<checkout>/logs/box-scrape/`。
 - v11 刷新是另一个脚本 `tools/rebang_refresh.sh`（见 `docs/rebang-v1/OPERATIONS.md`），发布时会等 `.box-scrape.lock`，两者互斥。
 
 ## 每轮做什么

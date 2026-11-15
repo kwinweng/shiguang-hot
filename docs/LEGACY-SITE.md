@@ -4,7 +4,7 @@
 
 - `tools/box_scrape.sh`（工头「热榜抓取发布」例程，:07/:37）跑旧站流水线，把 TG 采集写进 `tg.db` 并提交 main；v11 的 TG 条目就读这个库。
 - `tools/publish_pages.sh` 把 `site/` 放在 gh-pages 根目录、`site-v11/` 放在 `rebang/`。服务器 `news-sync` 的校验仍按旧站格式检查（`index.html` 的 public 标记、归档 manifest、`data/live.json` 新鲜度、文件数下限，见 [`deploy/README.md`](../deploy/README.md)），旧站树缺了就整次不发布。
-- GitHub Pages（https://kwinweng.github.io/shiguang-hot/ ）仍从 gh-pages 根目录公开旧站。
+- GitHub Pages（https://kwinweng.github.io/shiguang-hot/ ）仍从 gh-pages 根目录公开旧站。阿欢已批准关闭，但 API 返回 422，需在仓库 Settings → Pages 把发布源改为 None；不要改 `gh-pages` 分支（见 `HANDOFF.md`）。
 
 架构与来源配置见 [`ARCHITECTURE.md`](../ARCHITECTURE.md)，视觉规范见 [`DESIGN.md`](../DESIGN.md)，期刊投递见 [`INGEST.md`](../INGEST.md)。
 
@@ -19,7 +19,7 @@
 ## 数据文件
 
 - `site/data/live.json`：最新在前的 TG 消息与北京时间小时分组（news-sync 要求非示例、非空、2 小时内更新）。`site/data/sources.json`：公开来源及当天/7 天计数。`site/data/explore.json`：探索条目（来自 `tg.db` 的 `trial_item`）。
-- `history/YYYY-MM-DD.json`（回顾）：`python3 tools/daily_summary.py` 生成，设计为北京时间 00:30 跑前一天；摘要是 **MOCK**（相同标题合并、摘取原文），没有真实 AI 总结；`FlashProvider` 是未实现的占位。是否有例程在跑：未确认。
+- `site/history/YYYY-MM-DD.json`（回顾）：每次 `pipeline.py` 建站时由 `shiguang/site/news.py` 写入（生产克隆没有根目录 `history/` 缓存）。摘要是 **MOCK**（相同标题合并、摘取原文），没有真实 AI 总结；`FlashProvider` 是未实现的占位。仓库里的 `python3 tools/daily_summary.py` 设计为北京时间 00:30 重跑前一天，盒子上未见调用它的例程、cron 或近期日志。
 - 离线预览：`NO_FETCH=1 SITE_MODE=public python3 pipeline.py`；`SAMPLE_DATA=1` 强制用合成样例（标题前缀 `[示例]`）。
 
 ## 已不再使用的旧方案
@@ -39,6 +39,6 @@
 | RB-010～011 | 10-22 | 沿用灵记视觉系统 v0.2、图标 Phosphor；主色正红，支持暗色 |
 | RB-012 | 10-22 | 信源调整：停 3 个、试接 13 个（`trial-sources.json`） |
 
-旧站上线两周复盘标准（10-24 定）：一周至少 5 天打开；热点每天 22:30 前更新、两周断更不超过 1 次；实时最多晚半小时；探索每天有新条目。是否做过复盘：未确认。
+旧站上线两周复盘标准（10-24 定）：一周至少 5 天打开；热点每天 22:30 前更新、两周断更不超过 1 次；实时最多晚半小时；探索每天有新条目。11/07 管家已写复盘（盒子 `/workspace/shiguang-rebang/plan/REVIEW-20261107.md`，不在本仓库；阿欢 11/03 批准接手）：打开次数缺数据；热点未达标；实时部分达标；探索供给达标、点开/收藏缺数据。本仓库未见阿欢对这份复盘的书面确认。
 
 已删除的旧规划/实现记录（Spec r1–r3、PR B 实现说明、两模块 Spec 与验收、旧 PLAN、Actions 定时方案）都在 Git 历史里，删除提交见 `docs/audit-20261116` 合并请求。

@@ -12,7 +12,7 @@ https://codeload.github.com/kwinweng/shiguang-hot/tar.gz/refs/heads/gh-pages
 
 - 服务器上安装的 `/usr/local/libexec/news-sync.sh` 与本目录 `news-sync.sh` 一致（11/15 核对 md5）。
 - 静态根里同时有旧站树（gh-pages 根目录）和 v11（`rebang/`）。nginx 用 `try_files /rebang$uri …` 只对外提供 v11，挂在 https://news.kwinweng.com/ 根路径；旧站文件不再对外，但**校验仍按旧站格式**，所以旧站树必须继续发布。nginx 配置与回退见 [`docs/rebang-v1/OPERATIONS.md`](../docs/rebang-v1/OPERATIONS.md)。
-- 登录阅读器 `shiguang-reader.service` 已停用（`disable --now`），`/mail/`、`/archive/`、`/__login/`、`/api/` 返回 404。`shiguang-reader-update.timer` 仍在把静态树导入阅读器数据库（灵记的只读桥接用这个库）。
+- 登录阅读器 `shiguang-reader.service` 已停用（`disable --now`），`/mail/`、`/archive/`、`/__login/`、`/api/` 返回 404。`shiguang-reader-update.timer` 已于 11/16 00:32 `disable --now`；灵记只读的阅读器库从此不再更新。回退命令见 [`docs/rebang-v1/OPERATIONS.md`](../docs/rebang-v1/OPERATIONS.md)。
 - 2026-11-07 首次从私有站迁到公开 gh-pages 的过程与验收记录在 [`docs/HANDOFF-history.md`](../docs/HANDOFF-history.md)。
 
 ## 接收、校验与发布

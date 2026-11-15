@@ -66,5 +66,5 @@ t.me 公开页 → tgmeta ──┼→ ingest → var/rebang/in/ingest.json ─�
 - 博主平台登录失效时，同一条稿子里提醒一次。创意雷达不在这里生成。
 
 ## 已知缺口
-- `public-feeds/` 只到 2026-10-23；4 个每日成品直接读盒子上的原始目录：推特爆款 `/workspace/x-digest/YYYY-MM-DD.json`、环球要闻 `/workspace/world-brief/YYYY-MM-DD/brief.json`、GitHub 热门 `/workspace/feeds-inbox/github/YYYY-MM-DD/feed.json`、今日重点 `/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json`（11/15 核对时的位置）。
+- `public-feeds/` 只到 2026-10-23（`/workspace/tg-local/sync.sh` 改为 `publish_public.py --no-push`）；4 个每日成品直接读盒子上的原始目录：推特爆款 `/workspace/x-digest/YYYY-MM-DD.json`、环球要闻 `/workspace/world-brief/YYYY-MM-DD/brief.json`、GitHub 热门 `/workspace/feeds-inbox/github/YYYY-MM-DD/feed.json`、今日重点 `/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json`（11/15 核对时的位置）。
 - 即刻、微博、5 个公众号未接通，站上显示真实空状态。
