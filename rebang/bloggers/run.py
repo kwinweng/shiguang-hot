@@ -7,6 +7,7 @@ from pathlib import Path
 
 from rebang.contract.schema import ITEMS_SCHEMA, load_bloggers, validate_items_envelope
 
+from . import jike as jike_mod
 from . import weibo as weibo_mod
 from . import x as x_mod
 from .common import apply_translation, iso, parse_time, translate_comments
@@ -17,8 +18,9 @@ ALL_PLATFORMS = ('blog', 'x', 'jike', 'weibo', 'wechat', 'zhihu')
 X_STALE_HOURS = 36
 
 REASONS = {
-    'jike_rsshub_unset': '即刻需要自建 RSSHub（部署另批），地址未配置',
-    'weibo_cookie_unset': '微博需要副号 Cookie 文件（仓库外、仅本机可读），未配置',
+    'jike_rsshub_unset': '即刻的公共 RSSHub 地址未配置',
+    'jike_mirrors_down': '公共 RSSHub 实例这次都没取到即刻',
+    'weibo_cookie_unset': '微博的公开方式（公共 RSSHub、免登录接口）都要登录或游客验证，取不到；要接需副号 Cookie 文件（待阿欢定）',
     'weibo_crawler_output_missing': '已有 Cookie 文件路径，但还没有 weibo-crawler 输出（安装/运行另批）',
     'wechat_weread_qr': '需要微信读书副号扫码登录（第一期不做）',
     'x_dump_missing': '还没有公开 X 读取工具写入的原始数据',
@@ -85,10 +87,27 @@ def _platform_blog(platform, http, fetched_at, opts, sleep):
 
 
 def _platform_jike(platform, http, fetched_at, opts, sleep):
-    if not opts.jike_rsshub:
+    roots = jike_mod.roots_of(opts.jike_rsshub, platform)
+    if not roots:
         return [_account(platform, a, 'not_configured', error='jike_rsshub_unset')[0] for a in platform['accounts']], []
-    return _fetch_feeds(platform, platform['accounts'], http, fetched_at, opts,
-                        lambda a: f'{opts.jike_rsshub}/jike/user/{a["handle"]}', sleep)
+    rows, items = [], []
+    for index, account in enumerate(platform['accounts']):
+        if index:
+            sleep(opts.pause)
+        try:
+            body, root = jike_mod.fetch_account(http, roots, account, start=index)   # 账号错开起点，分摊到各实例
+            posts = jike_mod.jike_posts(body, platform, account, fetched_at, opts.limit)
+        except FeedError as exc:
+            row, got = _account(platform, account, 'error', error='jike_mirrors_down')
+            row['detail'] = exc.code
+        except Exception:  # 解析器意外：记为 error，不中断其它账号
+            row, got = _account(platform, account, 'error', error='parse')
+        else:
+            row, got = _account(platform, account, 'ok' if posts else 'empty', posts)
+            row['via'] = root.split('://', 1)[-1]
+        rows.append(row)
+        items += got
+    return rows, items
 
 
 def _platform_wechat(platform, http, fetched_at, opts, sleep):

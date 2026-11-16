@@ -38,6 +38,9 @@ def fake_http(fail=()):
     for a in platform('wechat')['accounts']:
         if a.get('feed'):
             urls[a['feed']] = 'rss_wechat2rss.xml'
+    for root in platform('jike')['rsshub_mirrors']:
+        for a in platform('jike')['accounts']:
+            urls[f'{root}/jike/user/{a["handle"]}'] = 'rss_jike_rsshub.xml'
     calls = []
 
     def fetch(url):
@@ -210,10 +213,11 @@ def test_full_run_envelope_valid_and_login_platforms_not_configured(tmp_path):
     env = run_all(tmp_path)
     assert validate_items_envelope(env) == []
     status = {p['id']: p['status'] for p in env['platforms']}
-    assert status == {'x': 'ok', 'blog': 'ok', 'jike': 'not_configured', 'weibo': 'not_configured',
+    assert status == {'x': 'ok', 'blog': 'ok', 'jike': 'ok', 'weibo': 'not_configured',
                       'wechat': 'ok', 'zhihu': 'empty'}
-    for pid in ('jike', 'weibo'):
-        assert not [i for i in env['items'] if i['blogger']['platform'] == pid]
+    assert not [i for i in env['items'] if i['blogger']['platform'] == 'weibo']
+    jike = next(p for p in env['platforms'] if p['id'] == 'jike')
+    assert {a['status'] for a in jike['accounts']} == {'ok'} and len(jike['accounts']) == 9
     wechat = next(p for p in env['platforms'] if p['id'] == 'wechat')
     rows = {a['handle']: a['status'] for a in wechat['accounts']}
     assert rows.pop('夕小瑶科技说') == 'ok' and set(rows.values()) == {'not_configured'}
@@ -255,6 +259,51 @@ def test_jike_uses_configured_rsshub_route(tmp_path):
     env = runmod.run(('jike',), http=http, now=NOW, opts=opts(tmp_path, jike_rsshub='http://127.0.0.1:1200/'), sleep=lambda s: None)
     assert seen[0] == 'http://127.0.0.1:1200/jike/user/7B1385A9-FCC9-4446-B8CE-472EAF6817B2'
     assert next(p for p in env['platforms'] if p['id'] == 'jike')['status'] == 'ok'
+
+
+def test_jike_public_mirrors_rotate_and_fall_back(tmp_path):
+    mirrors = platform('jike')['rsshub_mirrors']
+    seen = []
+    body = (FX / 'rss_jike_rsshub.xml').read_bytes()
+
+    def http(url):
+        seen.append(url)
+        if url.startswith(mirrors[0]):
+            raise FeedError('http_5xx')          # 第一个实例挂了
+        if url.startswith(mirrors[1]):
+            return b'<html><title>Welcome to RSSHub</title></html>'   # 第二个回错误页
+        return body
+    env = runmod.run(('jike',), http=http, now=NOW, opts=opts(tmp_path), sleep=lambda s: None)
+    jike = next(p for p in env['platforms'] if p['id'] == 'jike')
+    assert jike['status'] == 'ok' and {a['status'] for a in jike['accounts']} == {'ok'}
+    assert seen[0].startswith(mirrors[0]) and seen[2].startswith(mirrors[2])   # 第一个账号：挂→错误页→成功
+    assert {a['via'] for a in jike['accounts']} <= {m.split('://')[1] for m in mirrors[2:]}
+    assert all('Cookie' not in u for u in seen)
+
+
+def test_jike_all_mirrors_down_is_error_not_fake(tmp_path):
+    def http(url):
+        raise FeedError('http_5xx')
+    env = runmod.run(('jike',), http=http, now=NOW, opts=opts(tmp_path), sleep=lambda s: None)
+    jike = next(p for p in env['platforms'] if p['id'] == 'jike')
+    assert jike['status'] == 'error' and not env['items']
+    assert {a['error'] for a in jike['accounts']} == {'jike_mirrors_down'}
+    assert '公共 RSSHub' in jike['reason']
+
+
+def test_jike_post_mapping_strips_prefix_and_splits_quote():
+    from rebang.bloggers.jike import jike_posts
+    acc = account('jike', 'C0052298-F57E-483F-9BBA-0C6BF17AB59E')
+    items = jike_posts((FX / 'rss_jike_rsshub.xml').read_bytes(), platform('jike'), acc, NOW.isoformat())
+    assert len(items) == 3 and all(validate_item(i) == [] for i in items)
+    assert all(i['title'] == '' and not i['summary'].startswith(('发布了', '转发了')) for i in items)
+    repost = next(i for i in items if '/reposts/' in i['url'])
+    q = repost['blogger']['quote']
+    assert q['display_name'] == '造App' and q['url'].startswith('https://m.okjike.com/users/') and '独立开发者' in q['text']
+    assert 'rsshub-quote' not in repost['body'] and '造App: 作为苹果' not in repost['body']
+    assert all(i['blogger']['avatar'].startswith('https://cdnv2.ruguoapp.com/') for i in items)
+    with_img = [i for i in items if i['blogger']['media']]
+    assert with_img and all(m['url'].startswith('https://cdnv2.ruguoapp.com/') for i in with_img for m in i['blogger']['media'])
 
 
 def test_weibo_cookie_path_only_checked_never_read(tmp_path):
