@@ -273,9 +273,24 @@
     return null;
   }
   function itemHash(id) { return '#/item/' + encodeURIComponent(id); }
+  /** iOS 主屏幕 web app（standalone）底部安全区。
+   *  iOS 26 的 standalone 里，WebKit 给页面的视口可能比屏幕矮一截（screen.height − innerHeight 那条带子归系统，
+   *  网页画不进去，只露出 html 背景）；这时 env(safe-area-inset-bottom) 还照样报 34px，底栏就会「垫两次」浮在半空。
+   *  返回要用的底部内边距（px），null = 不覆盖、照常用 env()。m = {standalone, ios, insetTop, insetBottom, screenW, screenH, innerW, innerH} */
+  function standaloneSafeBottom(m) {
+    if (!m || !m.standalone || !m.ios) return null;
+    const portrait = m.innerH >= m.innerW;
+    const long = Math.max(m.screenW || 0, m.screenH || 0), short = Math.min(m.screenW || 0, m.screenH || 0);
+    const fullH = portrait ? long : short, fullW = portrait ? short : long;
+    if (!fullH || Math.abs(fullW - m.innerW) > 2) return null;          // iPad 分屏/窗口：不是整屏，不猜
+    const gap = Math.round(fullH - m.innerH);
+    if (gap >= 2 && m.insetTop > 0) return Math.max(0, Math.round(m.insetBottom - gap));   // 视口顶到状态栏下，缺口在底部
+    if (gap < 2 && m.insetBottom === 0 && portrait && fullH >= 812) return 20;              // 有 Home 条却报 0（iOS 26.1 回归）
+    return null;
+  }
 
   const Lib = {TZ, NO_SUMMARY, NO_BODY, BODY_PENDING, HOT_FAIL, esc, beijingDate, fmtTime, fmtDay, fmtRefreshed, fmtN, display, thumbOk,
-    tgStatsHTML, quoteCardHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, tweetCardHTML, rowHTML, parseItemHash, itemHash, ICO, icon, mediaGrid, fmtDur};
+    tgStatsHTML, quoteCardHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, tweetCardHTML, rowHTML, parseItemHash, itemHash, ICO, icon, mediaGrid, fmtDur, standaloneSafeBottom};
   if (typeof module !== 'undefined' && module.exports) module.exports = Lib;
   else root.RebangLib = Lib;
 })(typeof window !== 'undefined' ? window : globalThis);

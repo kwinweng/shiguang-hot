@@ -1,0 +1,73 @@
+{
+ "base": "http://127.0.0.1:8766/",
+ "checks": [
+  {
+   "check": "safari-tab/dark：底栏下沿 = 视口高度",
+   "ok": true,
+   "bottom": 664,
+   "innerH": 664,
+   "height": 58
+  },
+  {
+   "check": "standalone-full/dark：底栏下沿 = 视口高度",
+   "ok": true,
+   "bottom": 844,
+   "innerH": 844,
+   "height": 92
+  },
+  {
+   "check": "standalone-ios26/dark：底栏下沿 = 视口高度",
+   "ok": true,
+   "bottom": 812,
+   "innerH": 812,
+   "height": 92
+  },
+  {
+   "check": "standalone-ios26/dark：不再垫两次安全区（底栏高 ≤ 61）",
+   "ok": false,
+   "height": 92,
+   "vp": null
+  },
+  {
+   "check": "desktop/dark：底栏下沿 = 视口高度",
+   "ok": true,
+   "bottom": 800,
+   "innerH": 800,
+   "height": 58
+  },
+  {
+   "check": "safari-tab/light：底栏下沿 = 视口高度",
+   "ok": true,
+   "bottom": 664,
+   "innerH": 664,
+   "height": 58
+  },
+  {
+   "check": "standalone-full/light：底栏下沿 = 视口高度",
+   "ok": true,
+   "bottom": 844,
+   "innerH": 844,
+   "height": 92
+  },
+  {
+   "check": "standalone-ios26/light：底栏下沿 = 视口高度",
+   "ok": true,
+   "bottom": 812,
+   "innerH": 812,
+   "height": 92
+  },
+  {
+   "check": "standalone-ios26/light：不再垫两次安全区（底栏高 ≤ 61）",
+   "ok": false,
+   "height": 92,
+   "vp": null
+  },
+  {
+   "check": "desktop/light：底栏下沿 = 视口高度",
+   "ok": true,
+   "bottom": 800,
+   "innerH": 800,
+   "height": 58
+  }
+ ]
+}
