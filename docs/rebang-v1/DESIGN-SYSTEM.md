@@ -1,6 +1,6 @@
 # v11 设计系统（web-v11/）
 
-2026-11-16 起。适用于新站 `web-v11/`（https://news.kwinweng.com/）；旧站 `web/` 仍按根目录 `DESIGN.md`。
+2026-11-16 起。适用于新站 `web-v11/`（https://news.kwinweng.com/）；旧站 `web/` 仍按 [`docs/legacy/DESIGN.md`](../legacy/DESIGN.md)。
 视觉方向不变：v10/v13 设计稿的深色杂志风、金色强调（`HANDOFF.md`「已定的决定」）。本文件规定**令牌、图标、动效**三件事，让全站只有一套写法。
 
 ## 和默认技术栈的对应

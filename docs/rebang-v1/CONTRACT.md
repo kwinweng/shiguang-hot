@@ -11,7 +11,7 @@
 | `rebang/contract/bloggers.json` | 博主平台与名单：X 16、Grok bot 4（今日重点/推特爆款/环球要闻/GitHub 热门，`curated-inbox`，11/15 21:26 从主题频道移来）、博客 7、即刻 9、微博 6、公众号 6、YouTube 0（名单待阿欢确认，候选见 `youtube-candidates.md`）、知乎 0 |
 | `rebang/contract/schema.py` | 纯标准库校验：`validate_item` / `validate_items_envelope` / `validate_hotsearch` |
 
-旧 `sources.json` 和 `shiguang/` 继续驱动 TG 采集（写 `tg.db`）和旧站（现状见 `docs/LEGACY-SITE.md`），新版**复用**而不改它们的行为。
+旧 `sources.json` 和 `shiguang/` 继续驱动 TG 采集（写 `tg.db`）和旧站（现状见 `docs/legacy/README.md`），新版**复用**而不改它们的行为。
 
 ## 2. 统一条目（`rebang.items/1`）
 
