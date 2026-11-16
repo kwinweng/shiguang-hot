@@ -105,15 +105,29 @@ def write_qr(text, png_path):
     return True
 
 
-def login(qr_png=None, wait=600, uid=None, otp='', session_path=DEFAULT_SESSION, get=http_json, log=print, clock=time.monotonic):
-    if not uid:
+def _log(line):
+    print(line, flush=True)     # 输出常被重定向到文件，不 flush 的话二维码链接要等进程退出才看得到
+
+
+def login(qr_png=None, wait=600, uid=None, otp='', session_path=DEFAULT_SESSION, get=http_json, log=_log, clock=time.monotonic):
+    """扫码登录。微信读书一个二维码只活一轮长轮询（约 60 秒，网页版同样在 LOGIN_TIMEOUT 时把二维码标成「已失效」），
+    所以过期后自动换新二维码（覆盖同一个 PNG、打印新的 confirm_url），一直等到 wait 秒用完。带 --otp 重试时不换。"""
+    fixed = bool(uid)
+
+    def new_qr(step):
+        nonlocal uid
         uid = (get(f'{BASE}/api/auth/getLoginUid') or {}).get('uid')
         if not uid:
             raise WereadError('no_uid')
-    url = confirm_url(uid)
-    made = write_qr(url, qr_png) if qr_png else False
-    log(json.dumps({'step': 'scan', 'uid': uid, 'confirm_url': url, 'qr_png': str(qr_png) if made else None,
-                    'how': '用微信扫二维码（或在微信里打开 confirm_url），在手机上点确认登录'}, ensure_ascii=False))
+        url = confirm_url(uid)
+        made = write_qr(url, qr_png) if qr_png else False
+        log(json.dumps({'step': step, 'uid': uid, 'confirm_url': url, 'qr_png': str(qr_png) if made else None,
+                        'how': '二维码约 1 分钟就失效：用微信扫二维码（或在微信里打开 confirm_url），在手机上点确认登录'}, ensure_ascii=False))
+
+    if fixed:
+        log(json.dumps({'step': 'otp', 'uid': uid}, ensure_ascii=False))
+    else:
+        new_qr('scan')
     deadline = clock() + wait
     while clock() < deadline:
         try:
@@ -131,6 +145,9 @@ def login(qr_png=None, wait=600, uid=None, otp='', session_path=DEFAULT_SESSION,
             log(json.dumps({'step': 'need_otp', 'uid': uid,
                             'how': f'手机上会显示验证码；拿到后运行 login --uid {uid} --otp <验证码>'}, ensure_ascii=False))
             return False
+        if code == 'LOGIN_TIMEOUT' and not fixed and clock() < deadline:
+            new_qr('refreshed')
+            continue
         if code in ('LOGIN_TIMEOUT', 'OTP_EXPIRED'):
             log(json.dumps({'step': 'expired', 'how': '二维码过期了，重新运行 login 生成新的'}, ensure_ascii=False))
             return False
