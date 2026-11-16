@@ -44,6 +44,10 @@ class ParseTests(unittest.TestCase):
         self.assertEqual([(c['display_name'], c['text']) for c in d['comments']], [('读者甲', '第一条评论'), ('读者乙', '回复甲')],
                          '只有图片的评论没有文字，跳过；回复里的引用不当评论正文')
         self.assertEqual(d['comments'][1]['reply_to'], '读者甲')
+        # 评论楼：楼号、被回复的楼号和原话都留下，前端用来画「回复 某人：…」
+        self.assertEqual(d['comments'][0]['id'], 1)
+        self.assertEqual((d['comments'][1]['id'], d['comments'][1]['reply_to_id'], d['comments'][1]['reply_text']), (2, 1, '第一条评论'))
+        self.assertNotIn('reply_to', d['comments'][0])
         off = parse_discussion((FIX / 'discussion-off.html').read_text(encoding='utf-8'))
         self.assertEqual(off, {'enabled': False, 'total': None, 'comments': []})
 
@@ -137,3 +141,10 @@ class ForwardNameTests(unittest.TestCase):
         get = lambda url: '<html></html>' if ('before=' in url or 'discussion' in url) else self.EMPTY
         store, _ = refresh(['demo'], now=datetime(2026, 11, 15, 21, 0, tzinfo=BJ), store=store, get=get, sleep=0)
         self.assertEqual(store['messages']['demo/7']['forward'], {'name': '别的频道', 'url': 'https://t.me/o/1'})
+
+
+class DiscussionUrlTest(unittest.TestCase):
+    def test_widget_url_asks_for_thread_not_default_five(self):
+        from rebang.tgmeta import COMMENT_PREVIEW, discussion_url
+        self.assertEqual(discussion_url('demo', 103), f'https://t.me/demo/103?embed=1&discussion=1&comments_limit={COMMENT_PREVIEW}')
+        self.assertGreaterEqual(COMMENT_PREVIEW, 30)
