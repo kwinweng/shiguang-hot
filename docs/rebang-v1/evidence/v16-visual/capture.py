@@ -100,7 +100,7 @@ def v16(p, tag, scheme, shot, cdp):
     # 博主
     p.locator('.tabbar button[data-view=blogger]').click(); p.wait_for_selector('#bloggerList .brow'); time.sleep(1); shot('v07-blogger-band')
     band = css('#blBand', 'backgroundImage') + ' ' + css('#blBand', 'backgroundColor')
-    check(f'{tag}：博主头部色带（暗黑青灰 / 白天暖灰黑字）', ('rgb(28, 44, 49)' in band or 'rgb(20, 32, 36)' in band or 'rgb(2' in band) if scheme == 'dark' else ('rgb(24' in band or 'rgb(23' in band), band=band[:160])
+    check(f'{tag}：博主头部色带（暗黑青灰 / 白天暖灰黑字）', ('rgb(34, 52, 58)' in band and 'rgb(14, 23, 26)' in band) if scheme == 'dark' else ('rgb(24' in band or 'rgb(23' in band), band=band[:160])
     if scheme == 'light': check(f'{tag}：白天色带上是黑字', css('#blBand h1', 'color') in ('rgb(0, 0, 0)', 'rgb(17, 17, 17)', 'rgb(10, 10, 10)', 'rgb(20, 20, 20)'), c=css('#blBand h1', 'color'))
     check(f'{tag}：博主头部没有「16」水印', '16' not in p.inner_text('#blBand').split('·')[0])
     ring = p.evaluate("(() => { const e = document.querySelector('#platChips .avb.on .avc'), s = getComputedStyle(e); return [s.borderTopWidth, s.outlineStyle, s.boxShadow]; })()")
@@ -261,7 +261,7 @@ def run(pw, engine, device, scheme):
     cell = p.locator('#bloggerList .bl-seg:not([hidden]) .brow .thumb').first
     if cell.count():
         cell.evaluate('e => e.scrollIntoView({block: "center"})'); time.sleep(0.3); cell.click(); time.sleep(0.6)
-        check(f'{tag}：博主长流里点图片打开全屏查看', p.locator('#zoomView.on').count() == 1)
+        check(f'{tag}：博主长流里点图片打开全屏查看', p.locator('#zoomView.on').count() == 1, id=cell.evaluate('e => e.closest("[data-id]").dataset.id'), html=cell.evaluate('e => e.outerHTML.slice(0, 300)'))
         shot('12-zoom'); p.keyboard.press('Escape'); time.sleep(0.3)
     # 7 热搜 / 收藏到底
     p.locator('.tabbar button[data-view=hot]').click(); time.sleep(1)
@@ -286,7 +286,9 @@ def run(pw, engine, device, scheme):
     p.goto(BASE + '#/item/' + iid.replace(':', '%3A')); p.wait_for_selector('#articleView.on', timeout=15000)
     check(f'{tag}：#/item 深链直达详情', p.locator('#articleView.on').count() == 1)
     # 9 v16 视觉（放在最后：它会留下「前进」历史，模拟器里横滑会被浏览器当成前进手势）
+    n0 = len(errs)
     p.goto(BASE); p.reload(); p.wait_for_selector('#app:not([aria-busy])'); time.sleep(1.0)
+    errs[n0:] = [e for e in errs[n0:] if 'access control checks' not in e]   # WebKit：重载时中断还在下的搜索索引会报这句（main 上一样），不是页面错误
     v16(p, tag, scheme, shot, cdp)
     check(f'{tag}：页面无报错', not errs, errs=errs[:3])
     c.close(); b.close()
