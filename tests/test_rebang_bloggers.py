@@ -758,3 +758,14 @@ def test_wechat_articles_2041_falls_back_to_cover_not_expired(tmp_path):
     assert item['title'] == '封面这篇' and item['url'] == 'https://mp.weixin.qq.com/s/TOKEN1'
     assert item['published_at'].startswith('2026-')
     assert not any('/api/store/search' in u for u in calls)   # book_id 已写在配置里
+
+
+def test_weibo_default_cookie_path_not_present_is_not_configured(tmp_path, monkeypatch):
+    """默认 ~/.config/rebang/weibo-cookie.txt 还不存在时，不抓、不报错。"""
+    from rebang.bloggers import weibo as weibo_mod
+    monkeypatch.setattr(weibo_mod, 'DEFAULT_COOKIE', tmp_path / 'missing-cookie.txt')
+    o = opts(tmp_path, weibo_cookie_file=str(weibo_mod.DEFAULT_COOKIE), weibo_output=str(tmp_path / 'out'))
+    env = runmod.run(('weibo',), http=fake_http(), now=NOW, opts=o, sleep=lambda s: None)
+    wb = next(p for p in env['platforms'] if p['id'] == 'weibo')
+    assert wb['status'] == 'not_configured'
+    assert not [i for i in env['items'] if i['blogger']['platform'] == 'weibo']

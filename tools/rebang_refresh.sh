@@ -43,8 +43,16 @@ bloggers() {
     platforms=blog,wechat,jike,youtube
     xdump=''
     if [ -d var/rebang/x-dump ] && [ -n "$(ls -A var/rebang/x-dump 2>/dev/null)" ]; then platforms=$platforms,x; xdump='--x-dump var/rebang/x-dump'; fi
+    weibo_cookie=${REBANG_WEIBO_COOKIE:-$HOME/.config/rebang/weibo-cookie.txt}
+    weibo_out=${REBANG_WEIBO_OUTPUT:-var/rebang/weibo-crawler}
+    # 有 Cookie 文件才把微博纳入刷新；文件本身只把路径传下去，这里不读取、不打印
+    if [ -f "$weibo_cookie" ]; then
+        platforms=$platforms,weibo
+        mkdir -p "$weibo_out"
+    fi
     # shellcheck disable=SC2086
-    "$PY" -m rebang.bloggers --out var/rebang/in/bloggers.json --platform "$platforms" $xdump --translate-engine cache
+    "$PY" -m rebang.bloggers --out var/rebang/in/bloggers.json --platform "$platforms" $xdump \
+        --weibo-cookie-file "$weibo_cookie" --weibo-output "$weibo_out" --translate-engine cache
 }
 build() {
     tmp=site-v11.tmp-$$
