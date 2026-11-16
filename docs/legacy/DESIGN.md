@@ -1,6 +1,6 @@
 # 拾光热榜视觉系统（旧站 `web/`）
 
-适用于旧站（`pipeline.py` 生成的 `site/`），现状见 `docs/LEGACY-SITE.md`。**v11（`web-v11/`）不按本文**：v11 是深色杂志风、金色 `#d6b36a`，以盒子上的设计稿 v10/v13（daily-site-mocks `/rebang-v10.html`、`/rebang-v13/`）和 `docs/rebang-v1/` 为准。
+适用于旧站（`pipeline.py` 生成的 `site/`），现状见 [`README.md`](README.md)。**v11（`web-v11/`）不按本文**：v11 是深色杂志风、金色 `#d6b36a`，以盒子上的设计稿 v10/v13（daily-site-mocks `/rebang-v10.html`、`/rebang-v13/`）和 [`docs/rebang-v1/DESIGN-SYSTEM.md`](../rebang-v1/DESIGN-SYSTEM.md) 为准。
 
 本节规范是 2026-10-24 两模块定稿（原型 `/workspace/proto-bot/rebang-visual/two-modules/`，在工头盒子上）。旧的设计预览工具链（`design/`、`tools/design_preview.py`、`web/ui/`）不在 main 上，相关说明和 10-21 前的评审记录已删除，见 Git 历史。
 

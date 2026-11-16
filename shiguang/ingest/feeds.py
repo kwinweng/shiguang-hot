@@ -1,6 +1,6 @@
 """Inbox feeds: find each source's issues on disk, adapt, validate and compress their images.
 
-Delivery format: INGEST.md. Public builds read only public-feeds/; private builds prefer the
+Delivery format: docs/legacy/INGEST.md. Public builds read only public-feeds/; private builds prefer the
 original directories on this machine.
 """
 import copy, hashlib, json, re

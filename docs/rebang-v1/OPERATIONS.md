@@ -14,7 +14,8 @@
 - GitHub Pages 上的公开旧站尚未关掉，见 `HANDOFF.md`「下一步」。
 
 ## 定时
-- 盒子没有 cron。`tools/rebang_refresh.sh` **尚未定时**；建议在工头「热榜抓取发布」例程里 `box_scrape.sh` 之后加一行 `sh tools/rebang_refresh.sh`（同样 30 分钟一次）。X 博主与翻译（每 2 小时）、8:30 私聊的例程草稿在盒子 `/workspace/rebang-v1-briefs/`，须阿欢批准后由工头创建。
+- 盒子没有 cron，定时都靠 bot 例程。现在 v11 由「X 博主 + 翻译」例程每 2 小时刷新并发布一次（提示词 `/workspace/rebang-v1-briefs/routine-x-translate.md`，翻译脚本 `/workspace/rebang-v1-briefs/tools/translate_deepseek.py`，每轮简报 `/workspace/rebang-v1-briefs/runs/`）；8:30 私聊例程的提示词是同目录的 `routine-0830.md`。
+- 30 分钟一次的刷新还没加：建议在工头「热榜抓取发布」例程里 `box_scrape.sh` 之后加一行 `sh tools/rebang_refresh.sh`，须阿欢批准。
 - 手动刷新：在 `/workspace/shiguang-prod` 跑 `sh tools/rebang_refresh.sh`（约 1–2 分钟）；有新英文条目时先 `python3 -m rebang.translate pending`，译好后 `fill`，再 `sh tools/rebang_refresh.sh --no-fetch`。
 
 ## 回退

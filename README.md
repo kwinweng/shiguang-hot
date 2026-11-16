@@ -8,7 +8,7 @@
 | 内容 | 6 频道（时事/环球/财经/科技与 AI/数码/工具与项目）+ 博主 + 热搜 + 收藏 + 搜索 | 资讯 / 探索 / 我的 |
 | 代码 | `rebang/`（采集适配、建站、推送稿）、`web-v11/`（前端） | `pipeline.py`、`shiguang/`、`web/` |
 | 产物 | `site-v11/`、`var/rebang/`（均不进 git） | `site/`（不进 git） |
-| 文档 | [`docs/rebang-v1/`](docs/rebang-v1/) | [`docs/LEGACY-SITE.md`](docs/LEGACY-SITE.md)、`ARCHITECTURE.md`、`DESIGN.md`、`INGEST.md` |
+| 文档 | [`docs/rebang-v1/`](docs/rebang-v1/) | [`docs/legacy/`](docs/legacy/)（现状、架构、视觉、期刊投递、内网登录） |
 
 ## 先读哪些
 

@@ -9,7 +9,7 @@ Caddy 用 forward_auth 向它确认。只用标准库。
   python3 tools/login_gate.py serve [--port 8780] [--days 180]
 
 账号和签名密钥存在 $LOGIN_GATE_DIR（默认 ~/.config/shiguang-login），不进 git。
-接入方法见 PRIVATE_LOGIN.md。
+接入方法见 docs/legacy/PRIVATE_LOGIN.md。
 """
 import argparse, base64, getpass, hashlib, hmac, html, json, os, secrets, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
