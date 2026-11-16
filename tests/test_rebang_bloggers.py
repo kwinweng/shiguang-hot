@@ -594,3 +594,33 @@ def test_jike_images_shrunk_on_cdn_only():
     u = 'https://cdnv2.ruguoapp.com/x.heic?imageMogr2/format/jpeg'
     assert sized(u) == u + '/thumbnail/1080x%3E' and sized(sized(u)) == sized(u)
     assert sized('https://example.com/a.jpg') == 'https://example.com/a.jpg'
+
+
+def test_weread_login_refreshes_qr_after_server_timeout(tmp_path):
+    """二维码只活一轮长轮询（约 60 秒）：LOGIN_TIMEOUT 时换新二维码接着等，而不是直接退出。"""
+    from rebang.bloggers import weread
+    logs, uids = [], iter(['u-a', 'u-b'])
+    polls = iter([{'logicCode': 'LOGIN_TIMEOUT'}, {'succeed': True, 'webLoginVid': 7, 'accessToken': 'S'}])
+    seen = []
+
+    def get(url, session=None, timeout=25):
+        if url.endswith('getLoginUid'):
+            return {'uid': next(uids)}
+        seen.append(url)
+        return next(polls)
+    assert weread.login(wait=300, session_path=tmp_path / 's.json', get=get, log=logs.append) is True
+    steps = [json.loads(x)['step'] for x in logs]
+    assert steps == ['scan', 'refreshed', 'done']
+    assert 'uid=u-a' in seen[0] and 'uid=u-b' in seen[1]
+    assert json.loads(logs[1])['confirm_url'].endswith('uid=u-b')
+
+
+def test_weread_login_with_otp_does_not_refresh(tmp_path):
+    from rebang.bloggers import weread
+    logs = []
+
+    def get(url, session=None, timeout=25):
+        assert 'getLoginUid' not in url
+        return {'logicCode': 'LOGIN_TIMEOUT'}
+    assert weread.login(wait=30, uid='u-9', otp='1234', session_path=tmp_path / 's.json', get=get, log=logs.append) is False
+    assert json.loads(logs[-1])['step'] == 'expired'
