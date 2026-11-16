@@ -124,7 +124,12 @@ class SiteBrowserTests(unittest.TestCase):
 
     def test_top_bar_tabs_and_six_channels(self):
         self.open()
-        self.assertEqual(self.page.locator('#when').inner_text(), self.page.evaluate('RebangLib.fmtDay(new Date())'))
+        # v16：顶栏只有「频道名 + 下拉」，没有 logo、没有日期；刷新时间收进下拉
+        self.assertEqual(self.page.locator('#chName').inner_text(), '时事')
+        self.assertEqual(self.page.locator('#when, .logo, .brand img').count(), 0)
+        self.page.locator('#chBtn').click()
+        self.assertTrue(self.page.locator('#drop.on').is_visible())
+        self.assertEqual(self.page.locator('#dropList [data-drop-ch]').count(), 6)
         # v13 第 7 条（阿欢 22:11）：日期只出现一次——同一个北京日只写时间，跨天才带日期。
         expect = self.page.evaluate("'刷新于 ' + RebangLib.fmtRefreshed('2026-11-15T12:00:00Z', new Date())")
         self.assertIn(expect, ('刷新于 20:00', '刷新于 11月15日 20:00'))
@@ -159,10 +164,10 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.locator('.tabbar [data-view=hot]').click()
         hot = self.page.locator('#view-hot .hot')
         hot.wait_for()
-        self.assertEqual(hot.locator('[role=tab]').all_inner_texts(), ['百度热搜', '知乎热榜', 'B 站热搜'])
+        self.assertEqual(hot.locator('[role=tab] b').all_inner_texts(), ['百度', '知乎', 'B站'])
         self.assertEqual(hot.locator('.hot-list li').count(), 12, '热搜页直接列全部')
         self.assertEqual(self.page.locator('#hotHost [data-end=hot]').inner_text(), '内容已结束')
-        self.assertEqual(self.page.locator('#hotDates .chip').all_inner_texts(), ['今天 · 现在'])
+        self.assertEqual(self.page.locator('#hotDates .chip').all_inner_texts(), ['今天'])
         hot.locator('[data-hot=zhihu]').click()
         self.assertIn('暂时取不到', self.page.locator('#view-hot .hot-empty').inner_text())
 
@@ -193,8 +198,8 @@ class SiteBrowserTests(unittest.TestCase):
               r.scrollTop += s.getBoundingClientRect().top - r.getBoundingClientRect().top + 40; }})()""")
             self.page.wait_for_timeout(150)
             self.assertEqual(self.page.locator('#channelRoot').get_attribute('data-cur'), slug)
-            head = self.page.locator(f'.ch-sec[data-ch="{slug}"] .ch-head')
-            self.assertLess(abs(head.bounding_box()['y'] - self.page.locator('#channelRoot').bounding_box()['y']), 2, '这一段的标题吸在顶上')
+            name = self.page.locator(f'.ch-sec[data-ch="{slug}"] h2.ch').inner_text()
+            self.assertEqual(self.page.locator('#chName').inner_text(), name, 'v16：顶栏频道名跟着当前这一段变')
 
     def test_article_full_page_and_back_restores_channel_and_scroll(self):
         self.open()
@@ -210,7 +215,8 @@ class SiteBrowserTests(unittest.TestCase):
         current.evaluate('e => e.scrollTop = 900')
         self.page.wait_for_timeout(300)
         row = self.page.locator('.ch-sec[data-ch=current] .feed-row').nth(12)
-        row.scroll_into_view_if_needed()
+        row.evaluate('e => e.scrollIntoView({block: "center"})')   # v16 底栏悬浮在内容上，别让点击点落在底栏下面
+        self.page.wait_for_timeout(200)
         before = current.evaluate('e => e.scrollTop')
         self.assertGreater(before, 500)
         row_id = row.get_attribute('data-id')
@@ -253,6 +259,7 @@ class SiteBrowserTests(unittest.TestCase):
 
     def test_vertical_mode_same_feed_no_swipe_and_remembered(self):
         self.open()
+        self.page.locator('#chBtn').click()
         self.page.locator('#modeUD').click()
         self.assertEqual(self.page.locator('#channelRoot').get_attribute('class'), 'feed-root ud')
         self.assertEqual(self.page.locator('.ch-sec[data-ch=current] .banner-slide').count(), 5)
@@ -263,12 +270,15 @@ class SiteBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.locator('.ch-sec[data-ch=current] .feed-row').count(), 65)
         self.page.reload()
         self.page.wait_for_selector('#app:not([aria-busy])')
+        self.assertFalse(self.page.locator('#drop').evaluate('e => e.classList.contains("on")'))
         self.assertTrue(self.page.locator('#modeUD').evaluate('e => e.classList.contains("on")'))
 
     def test_cards_have_no_swipe_actions_only_long_press_menu(self):
         """2026-11-16 22:47 阿欢：去掉左滑收藏 / 右滑分享；收藏、分享一律长按弹菜单（频道/博主/收藏/热搜一致）"""
         self.open()
+        self.page.locator('#chBtn').click()
         self.page.locator('#modeUD').click()
+        self.assertFalse(self.page.locator('#drop').evaluate('e => e.classList.contains("on")'), '选完模式下拉自动收起')
         row = self.page.locator('.ch-sec[data-ch=current] .feed-row').nth(1)
         row.scroll_into_view_if_needed()
         box = row.bounding_box()
@@ -295,6 +305,7 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.locator('.tabbar [data-view=hot]').click()
         li = self.page.locator('#view-hot .hot-list li').first
         li.wait_for()
+        self.assertEqual(self.page.locator('#app').evaluate('e => e.scrollTop'), 0, '整个外壳不会被挪位（面板藏在屏外不撑出滚动）')
         self.long_press(li)
         self.assertTrue(self.page.locator('#cardMenu.on').is_visible())
         self.page.locator('#cardMenu [data-menu=fav]').click()
@@ -369,6 +380,48 @@ class SiteBrowserTests(unittest.TestCase):
         cur = self.page.locator('#bloggerList').get_attribute('data-cur')
         self.assertEqual(self.page.locator(f'#bloggerList .bl-seg[data-seg="{cur}"]').get_attribute('data-handle'), handle)
 
+    def test_v16_read_grey_font_sheets_and_no_red_ring(self):
+        """2026-11-16 23:43 阿欢批 v16：读过变灰、详情字号可调、评论/分享底部半屏、博主 X 头像不加红圈"""
+        self.open()
+        row = self.page.locator('.ch-sec[data-ch=current] .feed-row').nth(1)
+        rid = row.get_attribute('data-id')
+        h3 = row.locator('h3')
+        unread = h3.evaluate('e => getComputedStyle(e).color')
+        row.click()
+        self.page.wait_for_selector('#articleView.on')
+        size = lambda: self.page.locator('#articleBody .art-text, #articleBody .t-body').first.evaluate('e => parseFloat(getComputedStyle(e).fontSize)')
+        self.assertEqual(size(), 18)
+        self.page.locator('#dFont').click()
+        self.page.locator('#fontRange').fill('22')
+        self.assertEqual(size(), 22)
+        self.page.locator('#actSheet [data-act=x]').click()
+        self.page.locator('#dCmt').click()
+        self.assertTrue(self.page.locator('#actSheet.on .act-box.half, #actSheet.on').first.is_visible())
+        self.assertEqual(self.page.locator('#actSheet').evaluate('e => e.classList.contains("on")'), True)
+        self.page.keyboard.press('Escape')
+        self.page.locator('#dShare').click()
+        self.assertEqual(self.page.locator('#actSheet [data-act]').all_inner_texts()[:2], ['系统分享', '复制链接'])
+        self.page.keyboard.press('Escape')
+        self.page.locator('#btnBack').click()
+        self.page.wait_for_timeout(300)
+        row = self.page.locator(f'.ch-sec[data-ch=current] .feed-row[data-id="{rid}"]')
+        self.assertTrue(row.evaluate('e => e.classList.contains("read")'), '读过的标记 read')
+        self.assertNotEqual(row.locator('h3').evaluate('e => getComputedStyle(e).color'), unread, '读过变灰')
+        self.page.reload()
+        self.page.wait_for_selector('#app:not([aria-busy])')
+        self.assertTrue(self.page.locator(f'.feed-row[data-id="{rid}"]').evaluate('e => e.classList.contains("read")'), '刷新后仍是已读')
+        self.assertEqual(self.page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--rfs').trim()"), '22px', '字号记住')
+        # 博主：选中的 X 头像不加红圈
+        self.page.locator('.tabbar [data-view=blogger]').click()
+        on = self.page.locator('#platChips .avb.on .avc')
+        on.wait_for()
+        ring = on.evaluate("e => { const s = getComputedStyle(e); return [s.borderTopWidth, s.borderTopStyle, s.outlineStyle, s.boxShadow]; }")
+        self.assertTrue(ring[0] == '0px' or ring[1] == 'none', ring)
+        self.assertEqual(ring[2], 'none', ring)
+        self.assertNotIn('rgb(2', ring[3].replace('rgba(0, 0, 0', ''), ring)
+        self.assertEqual(self.page.locator('#view-blogger .avall').inner_text().strip(), '全部')
+        self.assertRegex(self.page.locator('#bloggerList .dayh').first.inner_text().replace('\n', ' '), r'^\d+\.\d+ (今天|昨天|周.) 更新 \d+ 篇$')
+
     def video_state(self):
         return self.page.evaluate('''() => { const v = document.querySelector('#zoomStage video'); if (!v) return null;
           return {paused: v.paused, muted: v.muted, controls: v.controls, loop: v.loop, poster: v.poster, t: v.currentTime, rs: v.readyState}; }''')
@@ -378,9 +431,15 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.locator('.tabbar [data-view=blogger]').click()
         card = self.page.locator('#bloggerList .tweet[data-id="x-dotey:0"]')
         card.wait_for()
-        self.assertEqual(card.locator('.cell.is-vid .vid-mark').count(), 2)
-        self.assertIn('0:03', card.locator('.cell.is-vid').first.inner_text())
-        card.locator('.cell.is-vid').first.tap()
+        # v16：列表行只放一张缩略图（在右边）+「3 项」，全部图片和视频在全屏查看器里
+        thumb = card.locator('.thumb')
+        self.assertEqual(thumb.locator('.cell').count(), 1)
+        self.assertIn('3 项', thumb.inner_text())
+        self.assertLess(card.locator('.b-main').bounding_box()['x'], thumb.bounding_box()['x'], '缩略图在右边')
+        thumb.tap()
+        self.page.wait_for_selector('#zoomView.on #zoomStage > img')
+        self.assertEqual(self.page.inner_text('#zoomCount'), '1 / 3')
+        self.page.locator('#zoomNext').tap()
         self.page.wait_for_selector('#zoomView.on #zoomStage video')
         self.assertEqual(self.page.get_attribute('#zoomView', 'aria-label'), '查看图片和视频')
         self.assertEqual(self.page.inner_text('#zoomCount'), '2 / 3')
@@ -408,7 +467,7 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.locator('#zoomClose').tap()
         self.assertFalse(self.page.is_visible('#zoomView'))
         # 坏地址：保留封面，给原帖链接
-        bad = self.page.locator('#bloggerList .tweet[data-id="x-simonw:1"] .cell.is-vid')
+        bad = self.page.locator('#bloggerList .tweet[data-id="x-simonw:1"] .thumb .cell.is-vid')
         bad.scroll_into_view_if_needed()
         bad.tap()
         self.page.wait_for_selector('#zoomStage .zoom-fail a')

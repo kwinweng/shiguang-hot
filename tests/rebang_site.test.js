@@ -31,9 +31,10 @@ test('译文优先并标「机器翻译」，原文保留可展开', () => {
     translation: {title: '你好', summary: '世界', engine: 't', label: '机器翻译'}};
   const d = L.display(it);
   assert.deepEqual([d.title, d.summary, d.translated, d.orig.title], ['你好', '世界', true, 'Hello']);
-  assert.match(L.feedRowHTML(it), /<h3>你好<\/h3>.*<span class="mt-badge">机器翻译<\/span>/);
+  assert.match(L.feedRowHTML(it), /<h3>你好<\/h3>.*<span class="tag mt-badge" title="机器翻译">译<\/span>/);
   const post = {...it, kind: 'post', blogger: {platform: 'x', handle: 'a', display_name: 'A', media: [], quote: null}};
-  const card = L.tweetCardHTML(post, true);
+  assert.match(L.tweetCardHTML(post, true), /<h3 class="b-title">你好<\/h3>.*<span class="tag mt-badge" title="机器翻译">译<\/span>/);
+  const card = L.tweetCardHTML(post, false);
   assert.match(card, /<span class="t-badge">机器翻译<\/span><button type="button" class="orig-btn"/);
   assert.match(card, /<div class="orig" [^>]*>World<\/div>/);
 });
@@ -59,8 +60,11 @@ test('标题和摘要译文立刻生效，不必等正文；未译摘要不回�
 test('推文卡：没有互动数就不显示，不编数字', () => {
   const post = {...base, kind: 'post', blogger: {platform: 'x', handle: 'a', display_name: 'A', media: [], quote: null}};
   assert.doesNotMatch(L.tweetCardHTML(post, true), /class="metrics"/);
+  assert.doesNotMatch(L.tweetCardHTML(post, false), /class="metrics"/);
   const withM = {...post, blogger: {...post.blogger, metrics: {reply: 0, like: 12000}}};
-  assert.match(L.tweetCardHTML(withM, true), /class="metrics">.*0<\/span><span>.*1\.2万<\/span><\/div>/);
+  assert.match(L.tweetCardHTML(withM, true), /<span class="metrics"><span class="n">.*1\.2万<\/span><span class="n">.*0<\/span><\/span>/);
+  assert.match(L.tweetCardHTML(withM, false), /class="metrics">.*0<em>回复<\/em><\/span><span>.*1\.2万<em>点赞<\/em><\/span><\/div>/);
+  assert.doesNotMatch(L.tweetCardHTML(withM, false), /转发/);
 });
 
 const hot = {providers: [
@@ -74,11 +78,15 @@ test('热搜块：分家 tab，默认第一家成功的，前 10 条 + 展开', 
   assert.equal((html.match(/role="tab"/g) || []).length, 3);
   assert.match(html, /data-hot="baidu" aria-selected="true" class="on"/);
   assert.equal((html.match(/<li>/g) || []).length, 10);
-  assert.match(html, /<span class="rk">顶<\/span><span class="t">置顶条<\/span><span class="lbl pin">置顶<\/span>/);
+  assert.match(html, /<span class="rk pin-rk" aria-label="置顶"><svg class="lucide lucide-flame"[^]*?<\/svg><\/span><span class="t">置顶条<\/span><span class="lbl pin">置顶<\/span>/);
+  assert.match(html, /<span class="rk hi">2<\/span>/);
+  assert.match(html, /<span class="rk">4<\/span>/);
+  assert.match(html, /<b>百度<\/b><small>12 条<\/small>/);
+  assert.match(html, /<b>知乎<\/b><small>暂时取不到<\/small>/);
   assert.match(html, /780\.8万/);
   assert.match(html, /展开全部 12 条/);
   assert.equal((L.hotsearchHTML(hot, null, true).match(/<li>/g) || []).length, 12);
-  assert.match(html, /百度热搜 · 11月15日 20:45/);
+  assert.match(html, /class="hot-note">百度 · 抓取于 /);
 });
 
 test('热搜失败家显示「暂时取不到」，不编排名', () => {
@@ -223,4 +231,28 @@ test('standaloneGeometry：iOS 主屏幕 web app 外壳撑满整屏、底栏贴�
   // 浏览器标签页（Safari / iOS Chrome）、桌面、安卓：不覆盖
   assert.equal(L.standaloneGeometry({...base, standalone: false, innerH: 683}), null);
   assert.equal(L.standaloneGeometry({...base, ios: false, innerH: 800}), null);
+});
+
+test('v16：缩略图一律在右边（正文在前、图在后）', () => {
+  const row = L.feedRowHTML({...base, image: {url: 'https://i/a.jpg', width: 200, height: 100}});
+  assert.ok(row.indexOf('class="f-main"') < row.indexOf('class="thumb"'));
+  const post = {...base, kind: 'post', title: '', blogger: {platform: 'x', handle: 'a', display_name: 'A', avatar: 'https://i/av.jpg',
+    media: [{type: 'image', url: 'https://i/1.jpg'}, {type: 'image', url: 'https://i/2.jpg'}], quote: null}};
+  const b = L.postRowHTML(post);
+  assert.ok(b.indexOf('class="b-main"') < b.indexOf('class="thumb"'));
+  assert.match(b, /<p class="b-text">/);
+  assert.match(b, /<i class="cnt">2 图<\/i>/);
+  assert.match(L.postRowHTML({...post, blogger: {...post.blogger, media: []}}), /class="tweet brow noimg"/);
+});
+
+test('v16：相对时间只用在 24 小时内；日期头「今天/昨天/周X」；热搜短名', () => {
+  const now = Date.parse('2026-11-16T14:00:00Z');
+  assert.equal(L.fmtWhen('2026-11-16T13:59:40Z', now), '刚刚');
+  assert.equal(L.fmtWhen('2026-11-16T13:30:00Z', now), '30 分钟前');
+  assert.equal(L.fmtWhen('2026-11-16T09:00:00Z', now), '5 小时前');
+  assert.equal(L.fmtWhen('2026-11-14T13:35:00Z', now), L.fmtTime('2026-11-14T13:35:00Z'));
+  assert.equal(L.dayLabel('2026-11-16', '2026-11-16'), '11.16 今天');
+  assert.equal(L.dayLabel('2026-11-15', '2026-11-16'), '11.15 昨天');
+  assert.match(L.dayLabel('2026-11-12', '2026-11-16'), /^11\.12 周四$/);
+  assert.deepEqual(['百度热搜', '知乎热榜', 'B 站热搜'].map(L.hotShort), ['百度', '知乎', 'B站']);
 });
