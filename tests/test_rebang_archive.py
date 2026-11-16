@@ -150,6 +150,18 @@ class IncrementalArchiveTests(unittest.TestCase):
         self.assertEqual(bbc['translation_title'], '合成译文标题')
         self.assertEqual(bbc['display_title'], '合成译文标题')
 
+    def test_search_index_drops_local_images_missing_from_site(self):
+        (self.out / 'media/a').mkdir(parents=True)
+        (self.out / 'media/a/1.webp').write_bytes(b'x')
+        items = [make_item(id='tnews365:1', published_at='2026-11-15T19:00:00+08:00', image={'url': 'media/a/1.webp'}),
+                 make_item(id='tnews365:2', published_at='2026-11-15T18:00:00+08:00', image={'url': 'media/a/gone.webp'}),
+                 make_item(id='tnews365:3', published_at='2026-11-15T17:00:00+08:00', image={'url': 'https://img.test/x.jpg'})]
+        self._build(items)
+        got = {e['id']: e['image'] for e in self._search()['entries']}
+        self.assertEqual(got['tnews365:1'], {'url': 'media/a/1.webp'})
+        self.assertIsNone(got['tnews365:2'])
+        self.assertEqual(got['tnews365:3'], {'url': 'https://img.test/x.jpg'})
+
     def test_build_accepts_envelope_and_keeps_existing_history(self):
         envelope = contract_items()
         self.assertEqual(validate_items_envelope(envelope), [])

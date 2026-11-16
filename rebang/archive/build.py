@@ -267,7 +267,12 @@ def build(items, out_dir, archive_dir=None, generated_at=None):
                            key=lambda it: it.get('published_at') or '', reverse=True)
         dates.append({'date': date, 'count': len(items_out)})
         for item in items_out:
-            search_entries.append(_search_entry(item))
+            entry = _search_entry(item)
+            # 站内相对图（media/…）只保留这次站点里真有的文件：旧条目的本地图会被清掉，留着就是 404 的破图
+            url = ((entry.get('image') or {}).get('url') or '')
+            if url and not url.startswith(('http://', 'https://', '//', 'data:')) and not (Path(out_dir) / url).is_file():
+                entry['image'] = None
+            search_entries.append(entry)
 
     dates.sort(key=lambda row: row['date'], reverse=True)
     search_entries.sort(key=lambda row: row.get('published_at') or '', reverse=True)

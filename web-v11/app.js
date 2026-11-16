@@ -17,6 +17,13 @@
   const BL_PREVIEW = 10;  // 博主页每个平台 / 每个人先放几条，其余点「查看更多」
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  /* 动效令牌：与 app.css 的 --duration-* / --ease-out 一致（docs/rebang-v1/DESIGN-SYSTEM.md）。系统开了「减少动态效果」就全部归零 */
+  const REDUCE = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : {matches: false};
+  const MOTION = {
+    get fast() { return REDUCE.matches ? 0 : 150; }, get base() { return REDUCE.matches ? 0 : 200; }, get slow() { return REDUCE.matches ? 0 : 300; },
+    ease: 'cubic-bezier(.2,.8,.2,1)',
+    tr(prop, ms) { return ms ? `${prop} ${ms}ms ${this.ease}` : 'none'; }
+  };
 
   /* ---------- 功能模块注册（features 先到会进 _queue） ---------- */
   let booted = false;
@@ -405,8 +412,11 @@
     if (d.bodyPending && !(d.blocks && d.blocks.length) && !(it.kind === 'post' && !isGrok)) {
       const who = ((it.blogger || {}).display_name || it.source_name);
       const cover = it.image && it.image.url ? `<img class="cover" src="${L.esc(it.image.url)}" alt="${L.esc(it.image.alt || '')}" data-zoom="${L.esc(it.image.url)}">` : '';
+      // 全文译文没好时，原文照样能看（以前这里没有「看原文」，英文正文完全看不到）
+      const ob = d.orig ? (it.blocks && it.blocks.length ? `<div class="art-blocks">${L.blocksHTML(it.blocks)}</div>` : L.esc(d.orig.body || d.orig.summary || '')) : '';
+      const pendingOrig = d.translated && ob ? `<div class="art-tools"><button type="button" class="orig-btn" data-art-orig>看原文</button></div><div class="art-orig" data-art-orig-box><h4>${L.esc(d.orig.title || '')}</h4>${ob}</div>` : '';
       return `${cover}<div class="src art-src"><span>${L.esc(who)} · ${L.esc(L.fmtTime(it.published_at))}</span>${d.translated ? `<span class="mt-badge">${L.esc(d.label)}</span>` : ''}</div>
-        <h3 class="art-title">${L.esc(d.title)}</h3><p class="art-pending">${L.esc(L.BODY_PENDING)}</p>${d.summary ? `<p class="art-text">${L.esc(d.summary)}</p>` : ''}
+        <h3 class="art-title">${L.esc(d.title)}</h3><p class="art-pending">${L.esc(L.BODY_PENDING)}</p>${d.summary ? `<p class="art-text">${L.esc(d.summary)}</p>` : ''}${pendingOrig}
         <div class="actions">${slot}${open}</div>`;
     }
     if (blocks && blocks.length && !(it.kind === 'post' && isGrok)) {
@@ -453,9 +463,9 @@
   function navHTML() {
     const at = navList ? navList.ids.indexOf(articleId) : -1;
     const prev = at > 0, next = at >= 0 && at < navList.ids.length - 1;
-    return `<button type="button" class="art-nav-btn" data-nav="-1" aria-label="上一条"${prev ? '' : ' disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>` +
+    return `<button type="button" class="art-nav-btn" data-nav="-1" aria-label="上一条"${prev ? '' : ' disabled'}>${L.icon('chevron-left')}</button>` +
       (at >= 0 ? `<span class="art-nav-pos">${at + 1} / ${navList.ids.length}</span>` : '') +
-      `<button type="button" class="art-nav-btn" data-nav="1" aria-label="下一条"${next ? '' : ' disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`;
+      `<button type="button" class="art-nav-btn" data-nav="1" aria-label="下一条"${next ? '' : ' disabled'}>${L.icon('chevron-right')}</button>`;
   }
   function renderNav() { const el = $('#artNav'); el.hidden = !(navList && navList.ids.includes(articleId)); el.innerHTML = el.hidden ? '' : navHTML(); }
   async function step(dir) {
@@ -516,7 +526,7 @@
   function stampRefresh(d) { $('#refreshed').textContent = `刷新于 ${L.fmtRefreshed(d)}`; }
   async function doRefresh() {
     const btn = $('#btnRefresh');
-    btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin'); setTimeout(() => btn.classList.remove('spin'), 450);
+    btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin'); setTimeout(() => btn.classList.remove('spin'), MOTION.slow + 50);
     const NOTE = '刷新拿到的是最近一次发布的数据。';
     const old = meta && meta.built_at;
     let fresh;
@@ -548,7 +558,7 @@
   function animateScrollX(el, to, ms) {
     const from = el.scrollLeft, dist = to - from;
     if (Math.abs(dist) < 1) { el.scrollLeft = to; return; }
-    const dur = ms != null ? ms : Math.min(340, 180 + Math.abs(dist) * 0.25); const t0 = performance.now();
+    const dur = REDUCE.matches ? 1 : (ms != null ? ms : Math.min(MOTION.slow, MOTION.fast + Math.abs(dist) * 0.25)); const t0 = performance.now();
     el.style.scrollSnapType = 'none';
     (function frame(now) { const p = Math.min(1, (now - t0) / dur); el.scrollLeft = from + dist * (1 - Math.pow(1 - p, 3)); updateHInd(el); if (p < 1) requestAnimationFrame(frame); else { el.scrollLeft = to; el.style.scrollSnapType = 'x mandatory'; } })(t0);
   }
@@ -582,11 +592,11 @@
       if (skip) { skip = false; return; }
       if (!dragging && axis == null) { scroller.style.scrollSnapType = 'x mandatory'; return; }
       dragging = false; axis = null;
-      if (scroller.style.transform) { scroller.style.transition = 'transform .32s cubic-bezier(.2,.8,.2,1)'; scroller.style.transform = 'translateX(0)'; setTimeout(() => { scroller.style.transition = ''; scroller.style.transform = ''; }, 340); }
+      if (scroller.style.transform) { scroller.style.transition = MOTION.tr('transform', MOTION.slow); scroller.style.transform = 'translateX(0)'; setTimeout(() => { scroller.style.transition = ''; scroller.style.transform = ''; }, MOTION.slow + 20); }
       const w = scroller.clientWidth || 1, raw = scroller.scrollLeft, max = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
       let idx = Math.round(raw / w); if (Math.abs(vel) > 0.35) idx = vel < 0 ? Math.ceil(raw / w) : Math.floor(raw / w);
       animateScrollX(scroller, Math.max(0, Math.min(max, idx * w)));
-      setTimeout(() => scroller.classList.remove('is-drag'), 220);
+      setTimeout(() => scroller.classList.remove('is-drag'), MOTION.base + 20);
     };
     scroller.addEventListener('touchend', end, opt); scroller.addEventListener('touchcancel', end, opt);
     scroller.addEventListener('scroll', () => updateHInd(scroller), opt);
@@ -660,7 +670,7 @@
     else if (act === 'open' && it.url) window.open(it.url, '_blank', 'noopener');
   }
   function setPtr(show, txt, spin) { const ptr = $('#ptr'); ptr.style.top = $('.top').offsetHeight + 'px'; ptr.hidden = !show; ptr.classList.toggle('show', !!show); ptr.classList.toggle('spin', !!spin); if (txt) ptr.querySelector('.ptr-txt').textContent = txt; }
-  function resetCard(card) { if (!card) return; card.style.transition = 'transform .22s cubic-bezier(.2,.8,.2,1)'; card.style.transform = ''; delete card.dataset.swipe; setTimeout(() => { card.style.transition = ''; card.classList.remove('swiping'); }, 230); }
+  function resetCard(card) { if (!card) return; card.style.transition = MOTION.tr('transform', MOTION.base); card.style.transform = ''; delete card.dataset.swipe; setTimeout(() => { card.style.transition = ''; card.classList.remove('swiping'); }, MOTION.base + 10); }
   function onTouchStart(e) {
     if (zoom.open || e.target.closest('#zoomView')) { g = null; return; }
     if (e.touches.length !== 1) { g = null; return; }
@@ -708,8 +718,8 @@
     if (s0.kind === 'menu') { suppressClickUntil = performance.now() + 250; return; }   // 只吞掉松手时补发的那一下点击
     if (s0.kind === 'back') {
       const av = $('#articleView');
-      if (dx > 80) { av.style.transition = 'transform .18s ease-out'; av.style.transform = 'translateX(100%)'; setTimeout(() => { av.style.transition = ''; closeArticle(); }, 180); }
-      else { av.style.transition = 'transform .2s'; av.style.transform = ''; setTimeout(() => { av.style.transition = ''; }, 200); }
+      if (dx > 80) { av.style.transition = MOTION.tr('transform', MOTION.fast); av.style.transform = 'translateX(100%)'; setTimeout(() => { av.style.transition = ''; closeArticle(); }, MOTION.fast); }
+      else { av.style.transition = MOTION.tr('transform', MOTION.base); av.style.transform = ''; setTimeout(() => { av.style.transition = ''; }, MOTION.base); }
     } else if (s0.kind === 'step') {
       const body = $('#articleBody'); body.style.transform = '';
       if (Math.abs(dx) > 60) step(dx < 0 ? 1 : -1);
@@ -721,8 +731,8 @@
       resetCard(c);
     } else if (s0.kind === 'pull') {
       const el = s0.scroller; const go = (s0.pull || 0) > PULL_GO;
-      el.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1)'; el.style.transform = 'translateY(0)';
-      setTimeout(() => { el.style.transition = ''; el.style.transform = ''; }, 300);
+      el.style.transition = MOTION.tr('transform', MOTION.slow); el.style.transform = 'translateY(0)';
+      setTimeout(() => { el.style.transition = ''; el.style.transform = ''; }, MOTION.slow);
       if (go) { setPtr(true, '正在刷新', true); doRefresh(); } else setPtr(false);
     }
   }
@@ -733,6 +743,8 @@
     app.addEventListener('touchend', onTouchEnd, {passive: true});
     app.addEventListener('touchcancel', onTouchEnd, {passive: true});
     app.addEventListener('contextmenu', e => { if (e.target.closest(CARD_SEL)) e.preventDefault(); });
+    // 列表一滚动就取消长按计时：有的浏览器滚动开始后不再派发 touchmove，手指停住会被误判成长按弹菜单
+    app.addEventListener('scroll', () => { if (g && g.long && g.kind !== 'menu') { clearTimeout(g.long); g.long = null; } }, {passive: true, capture: true});
   }
   function scrollTopOf(view) {
     if (view === 'channels') { const r = $('#channelRoot'); return mode === 'lr' ? $$('.page-b')[currentChannelIndex()] : r; }
@@ -743,7 +755,7 @@
   function onTab(view) {
     const now = performance.now();
     if (lastTab.view === view && now - lastTab.t < 350 && currentView() === view) {
-      const el = scrollTopOf(view); if (el) el.scrollTo({top: 0, behavior: 'smooth'});
+      const el = scrollTopOf(view); if (el) el.scrollTo({top: 0, behavior: REDUCE.matches ? 'auto' : 'smooth'});
       lastTab = {view: null, t: 0}; return;
     }
     lastTab = {view, t: now};

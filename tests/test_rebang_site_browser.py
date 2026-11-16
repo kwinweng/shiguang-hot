@@ -74,6 +74,7 @@ class SiteBrowserTests(unittest.TestCase):
                 return route.fulfill(status=200, body=b'', content_type='application/javascript')  # 只测桩，不让真模块覆盖
             route.fulfill(status=200 if path.is_file() else 404, body=path.read_bytes() if path.is_file() else b'missing',
                           content_type=mimetypes.guess_type(str(path))[0] or 'application/octet-stream')
+        self.page_route = serve
         self.page.route('**/*', serve)
 
     def open(self, hash=''):
@@ -293,6 +294,43 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.locator('#zoomNext').tap()
         self.assertTrue(self.page.is_visible('#zoomView'))
         self.assertEqual(self.page.inner_text('#zoomCount'), '2 / 3')
+
+    def test_tab_switch_keeps_channel_scroll_and_hidden_views_are_inert(self):
+        self.open()
+        current = self.page.locator('.page-b[data-ch=current]')
+        current.evaluate('e => e.scrollTop = 700')
+        self.page.wait_for_timeout(100)
+        before = current.evaluate('e => e.scrollTop')
+        self.page.locator('.tabbar [data-view=hot]').tap()
+        self.assertFalse(self.page.locator('#view-channels').is_visible())
+        self.assertEqual(self.page.locator('#view-channels').evaluate('e => getComputedStyle(e).pointerEvents'), 'none')
+        self.page.locator('.tabbar [data-view=channels]').tap()
+        self.assertTrue(self.page.locator('#view-channels').is_visible())
+        self.assertEqual(current.evaluate('e => e.scrollTop'), before)
+
+    def test_one_icon_set_lucide_everywhere(self):
+        self.open()
+        self.page.locator('.tabbar [data-view=blogger]').click()
+        self.page.wait_for_selector('#bloggerList .tweet')
+        stray = self.page.evaluate("[...document.querySelectorAll('svg')].filter(s => !s.classList.contains('lucide')).map(s => s.outerHTML.slice(0, 80))")
+        self.assertEqual(stray, [])
+        self.assertGreater(self.page.locator('svg.lucide').count(), 10)
+
+    def test_refresh_icon_does_not_spin_backwards(self):
+        self.open()
+        svg = self.page.locator('#btnRefresh svg')
+        self.assertEqual(svg.evaluate('e => getComputedStyle(e).transitionDuration'), '0s')   # 平时没有过渡：去掉 .spin 不会倒转
+        self.page.locator('#btnRefresh').click()
+        self.assertEqual(svg.evaluate('e => getComputedStyle(e).transitionDuration'), '0.3s')
+
+    def test_reduced_motion_zeroes_durations(self):
+        ctx = self.browser.new_context(viewport={'width': 390, 'height': 844}, is_mobile=True, has_touch=True, reduced_motion='reduce')
+        self.addCleanup(ctx.close)
+        page = ctx.new_page()
+        page.route('**/*', self.page_route)
+        page.goto('https://rebang.test/index.html')
+        page.wait_for_selector('#app:not([aria-busy])')
+        self.assertEqual(page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--duration-slow').trim()"), '0ms')
 
 
 if __name__ == '__main__':
