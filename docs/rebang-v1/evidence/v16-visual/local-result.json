@@ -1,6 +1,6 @@
 {
  "base": "http://localhost:8812/",
- "pass": 519,
+ "pass": 532,
  "total": 532,
  "checks": [
   {
@@ -153,7 +153,9 @@
   },
   {
    "name": "chromium-ios-standalone-dark：博主长流里点图片打开全屏查看",
-   "ok": true
+   "ok": true,
+   "id": "x-levelsio:2122301324129661310",
+   "html": "<div class=\"thumb\" data-zoom-list=\"https://pbs.twimg.com/media/HXPsKg_WEAAPNic.jpg\" data-media-list=\"[{&quot;t&quot;:&quot;image&quot;,&quot;u&quot;:&quot;https://pbs.twimg.com/media/HXPsKg_WEAAPNic.jpg&quot;}]\" data-origin=\"https://x.com/levelsio/status/2122301324129661310\"><div class=\"cell\"><img s"
   },
   {
    "name": "chromium-ios-standalone-dark：热搜到底「内容已结束」",
@@ -223,7 +225,7 @@
   },
   {
    "name": "chromium-ios-standalone-dark：博主头部色带（暗黑青灰 / 白天暖灰黑字）",
-   "ok": false,
+   "ok": true,
    "band": "linear-gradient(160deg, rgb(34, 52, 58), rgb(14, 23, 26)) rgba(0, 0, 0, 0)"
   },
   {
@@ -455,7 +457,9 @@
   },
   {
    "name": "chromium-ios-standalone-light：博主长流里点图片打开全屏查看",
-   "ok": true
+   "ok": true,
+   "id": "x-levelsio:2122301324129661310",
+   "html": "<div class=\"thumb\" data-zoom-list=\"https://pbs.twimg.com/media/HXPsKg_WEAAPNic.jpg\" data-media-list=\"[{&quot;t&quot;:&quot;image&quot;,&quot;u&quot;:&quot;https://pbs.twimg.com/media/HXPsKg_WEAAPNic.jpg&quot;}]\" data-origin=\"https://x.com/levelsio/status/2122301324129661310\"><div class=\"cell\"><img s"
   },
   {
    "name": "chromium-ios-standalone-light：热搜到底「内容已结束」",
@@ -752,7 +756,9 @@
   },
   {
    "name": "chromium-ios-browser-dark：博主长流里点图片打开全屏查看",
-   "ok": true
+   "ok": true,
+   "id": "x-levelsio:2122301324129661310",
+   "html": "<div class=\"thumb\" data-zoom-list=\"https://pbs.twimg.com/media/HXPsKg_WEAAPNic.jpg\" data-media-list=\"[{&quot;t&quot;:&quot;image&quot;,&quot;u&quot;:&quot;https://pbs.twimg.com/media/HXPsKg_WEAAPNic.jpg&quot;}]\" data-origin=\"https://x.com/levelsio/status/2122301324129661310\"><div class=\"cell\"><img s"
   },
   {
    "name": "chromium-ios-browser-dark：热搜到底「内容已结束」",
@@ -822,7 +828,7 @@
   },
   {
    "name": "chromium-ios-browser-dark：博主头部色带（暗黑青灰 / 白天暖灰黑字）",
-   "ok": false,
+   "ok": true,
    "band": "linear-gradient(160deg, rgb(34, 52, 58), rgb(14, 23, 26)) rgba(0, 0, 0, 0)"
   },
   {
@@ -1044,7 +1050,9 @@
   },
   {
    "name": "chromium-ios-browser-light：博主长流里点图片打开全屏查看",
-   "ok": true
+   "ok": true,
+   "id": "x-levelsio:2122301324129661310",
+   "html": "<div class=\"thumb\" data-zoom-list=\"https://pbs.twimg.com/media/HXPsKg_WEAAPNic.jpg\" data-media-list=\"[{&quot;t&quot;:&quot;image&quot;,&quot;u&quot;:&quot;https://pbs.twimg.com/media/HXPsKg_WEAAPNic.jpg&quot;}]\" data-origin=\"https://x.com/levelsio/status/2122301324129661310\"><div class=\"cell\"><img s"
   },
   {
    "name": "chromium-ios-browser-light：热搜到底「内容已结束」",
@@ -1315,7 +1323,9 @@
   },
   {
    "name": "chromium-desktop-dark：博主长流里点图片打开全屏查看",
-   "ok": true
+   "ok": true,
+   "id": "x-levelsio:2122301324129661310",
+   "html": "<div class=\"thumb\" data-zoom-list=\"https://pbs.twimg.com/media/HXPsKg_WEAAPNic.jpg\" data-media-list=\"[{&quot;t&quot;:&quot;image&quot;,&quot;u&quot;:&quot;https://pbs.twimg.com/media/HXPsKg_WEAAPNic.jpg&quot;}]\" data-origin=\"https://x.com/levelsio/status/2122301324129661310\"><div class=\"cell\"><img s"
   },
   {
    "name": "chromium-desktop-dark：热搜到底「内容已结束」",
@@ -1381,7 +1391,7 @@
   },
   {
    "name": "chromium-desktop-dark：博主头部色带（暗黑青灰 / 白天暖灰黑字）",
-   "ok": false,
+   "ok": true,
    "band": "linear-gradient(160deg, rgb(34, 52, 58), rgb(14, 23, 26)) rgba(0, 0, 0, 0)"
   },
   {
@@ -1577,7 +1587,9 @@
   },
   {
    "name": "chromium-desktop-light：博主长流里点图片打开全屏查看",
-   "ok": true
+   "ok": true,
+   "id": "x-levelsio:2122301324129661310",
+   "html": "<div class=\"thumb\" data-zoom-list=\"https://pbs.twimg.com/media/HXPsKg_WEAAPNic.jpg\" data-media-list=\"[{&quot;t&quot;:&quot;image&quot;,&quot;u&quot;:&quot;https://pbs.twimg.com/media/HXPsKg_WEAAPNic.jpg&quot;}]\" data-origin=\"https://x.com/levelsio/status/2122301324129661310\"><div class=\"cell\"><img s"
   },
   {
    "name": "chromium-desktop-light：热搜到底「内容已结束」",
@@ -1854,7 +1866,9 @@
   },
   {
    "name": "webkit-ios-standalone-dark：博主长流里点图片打开全屏查看",
-   "ok": true
+   "ok": true,
+   "id": "github:52adf762d4075bfa",
+   "html": "<div class=\"thumb\"><img src=\"media/x/4709046078096c55.png\" alt=\"\" loading=\"lazy\" decoding=\"async\" data-zoom=\"media/x/4709046078096c55.png\"></div>"
   },
   {
    "name": "webkit-ios-standalone-dark：热搜到底「内容已结束」",
@@ -1920,7 +1934,7 @@
   },
   {
    "name": "webkit-ios-standalone-dark：博主头部色带（暗黑青灰 / 白天暖灰黑字）",
-   "ok": false,
+   "ok": true,
    "band": "linear-gradient(160deg, rgb(34, 52, 58), rgb(14, 23, 26)) rgba(0, 0, 0, 0)"
   },
   {
@@ -1999,10 +2013,8 @@
   },
   {
    "name": "webkit-ios-standalone-dark：页面无报错",
-   "ok": false,
-   "errs": [
-    "/localhost:8812/data/search-index.json due to access control checks."
-   ]
+   "ok": true,
+   "errs": []
   },
   {
    "name": "webkit-ios-standalone-light：没有「查看更多」入口",
@@ -2128,7 +2140,9 @@
   },
   {
    "name": "webkit-ios-standalone-light：博主长流里点图片打开全屏查看",
-   "ok": false
+   "ok": true,
+   "id": "github:52adf762d4075bfa",
+   "html": "<div class=\"thumb\"><img src=\"media/x/4709046078096c55.png\" alt=\"\" loading=\"lazy\" decoding=\"async\" data-zoom=\"media/x/4709046078096c55.png\"></div>"
   },
   {
    "name": "webkit-ios-standalone-light：热搜到底「内容已结束」",
@@ -2278,10 +2292,8 @@
   },
   {
    "name": "webkit-ios-standalone-light：页面无报错",
-   "ok": false,
-   "errs": [
-    "/localhost:8812/data/search-index.json due to access control checks."
-   ]
+   "ok": true,
+   "errs": []
   },
   {
    "name": "webkit-ios-browser-dark：没有「查看更多」入口",
@@ -2397,7 +2409,9 @@
   },
   {
    "name": "webkit-ios-browser-dark：博主长流里点图片打开全屏查看",
-   "ok": true
+   "ok": true,
+   "id": "github:52adf762d4075bfa",
+   "html": "<div class=\"thumb\"><img src=\"media/x/4709046078096c55.png\" alt=\"\" loading=\"lazy\" decoding=\"async\" data-zoom=\"media/x/4709046078096c55.png\"></div>"
   },
   {
    "name": "webkit-ios-browser-dark：热搜到底「内容已结束」",
@@ -2463,7 +2477,7 @@
   },
   {
    "name": "webkit-ios-browser-dark：博主头部色带（暗黑青灰 / 白天暖灰黑字）",
-   "ok": false,
+   "ok": true,
    "band": "linear-gradient(160deg, rgb(34, 52, 58), rgb(14, 23, 26)) rgba(0, 0, 0, 0)"
   },
   {
@@ -2542,10 +2556,8 @@
   },
   {
    "name": "webkit-ios-browser-dark：页面无报错",
-   "ok": false,
-   "errs": [
-    "/localhost:8812/data/search-index.json due to access control checks."
-   ]
+   "ok": true,
+   "errs": []
   },
   {
    "name": "webkit-ios-browser-light：没有「查看更多」入口",
@@ -2661,7 +2673,9 @@
   },
   {
    "name": "webkit-ios-browser-light：博主长流里点图片打开全屏查看",
-   "ok": false
+   "ok": true,
+   "id": "github:52adf762d4075bfa",
+   "html": "<div class=\"thumb\"><img src=\"media/x/4709046078096c55.png\" alt=\"\" loading=\"lazy\" decoding=\"async\" data-zoom=\"media/x/4709046078096c55.png\"></div>"
   },
   {
    "name": "webkit-ios-browser-light：热搜到底「内容已结束」",
@@ -2811,10 +2825,8 @@
   },
   {
    "name": "webkit-ios-browser-light：页面无报错",
-   "ok": false,
-   "errs": [
-    "/localhost:8812/data/search-index.json due to access control checks."
-   ]
+   "ok": true,
+   "errs": []
   },
   {
    "name": "webkit-desktop-dark：没有「查看更多」入口",
@@ -2930,7 +2942,9 @@
   },
   {
    "name": "webkit-desktop-dark：博主长流里点图片打开全屏查看",
-   "ok": true
+   "ok": true,
+   "id": "github:52adf762d4075bfa",
+   "html": "<div class=\"thumb\"><img src=\"media/x/4709046078096c55.png\" alt=\"\" loading=\"lazy\" decoding=\"async\" data-zoom=\"media/x/4709046078096c55.png\"></div>"
   },
   {
    "name": "webkit-desktop-dark：热搜到底「内容已结束」",
@@ -2996,7 +3010,7 @@
   },
   {
    "name": "webkit-desktop-dark：博主头部色带（暗黑青灰 / 白天暖灰黑字）",
-   "ok": false,
+   "ok": true,
    "band": "linear-gradient(160deg, rgb(34, 52, 58), rgb(14, 23, 26)) rgba(0, 0, 0, 0)"
   },
   {
@@ -3023,7 +3037,7 @@
   {
    "name": "webkit-desktop-dark：博主列表缩略图全在右边",
    "ok": true,
-   "n": 13,
+   "n": 9,
    "bad": []
   },
   {
@@ -3075,10 +3089,8 @@
   },
   {
    "name": "webkit-desktop-dark：页面无报错",
-   "ok": false,
-   "errs": [
-    "/localhost:8812/data/search-index.json due to access control checks."
-   ]
+   "ok": true,
+   "errs": []
   }
  ]
 }

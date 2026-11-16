@@ -1,0 +1,112 @@
+{
+ "label": "after",
+ "runs": {
+  "deep": [
+   {
+    "frames": 2053,
+    "janky": 30,
+    "max_frame": 4616.4,
+    "longtasks": 17,
+    "lt_ms": 2984,
+    "cls": 0,
+    "shifts": [],
+    "scroll_end": 42085,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1997,
+    "janky": 14,
+    "max_frame": 133.3,
+    "longtasks": 9,
+    "lt_ms": 587,
+    "cls": 0,
+    "shifts": [],
+    "scroll_end": 50832,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1978,
+    "janky": 13,
+    "max_frame": 133.4,
+    "longtasks": 7,
+    "lt_ms": 451,
+    "cls": 0,
+    "shifts": [],
+    "scroll_end": 52677,
+    "back_jumps": 0
+   }
+  ],
+  "blogger": [
+   {
+    "frames": 1349,
+    "janky": 14,
+    "max_frame": 333.3,
+    "longtasks": 5,
+    "lt_ms": 687,
+    "cls": 0.0002,
+    "shifts": [
+     [
+      0.0002,
+      "svg.[object SVGAnimatedString]"
+     ]
+    ],
+    "scroll_end": 17657,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1362,
+    "janky": 8,
+    "max_frame": 133.3,
+    "longtasks": 5,
+    "lt_ms": 372,
+    "cls": 0.0002,
+    "shifts": [
+     [
+      0.0002,
+      "svg.[object SVGAnimatedString]"
+     ]
+    ],
+    "scroll_end": 17546,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1355,
+    "janky": 6,
+    "max_frame": 100.0,
+    "longtasks": 3,
+    "lt_ms": 178,
+    "cls": 0.0002,
+    "shifts": [
+     [
+      0.0002,
+      "svg.[object SVGAnimatedString]"
+     ]
+    ],
+    "scroll_end": 16871,
+    "back_jumps": 0
+   }
+  ]
+ },
+ "summary": {
+  "deep": {
+   "frames": 1997,
+   "janky": 14,
+   "max_frame": 133.4,
+   "longtasks": 9,
+   "lt_ms": 587,
+   "cls": 0,
+   "scroll_end": 50832,
+   "back_jumps": 0
+  },
+  "blogger": {
+   "frames": 1355,
+   "janky": 8,
+   "max_frame": 133.3,
+   "longtasks": 5,
+   "lt_ms": 372,
+   "cls": 0.0002,
+   "scroll_end": 17546,
+   "back_jumps": 0
+  }
+ }
+}
