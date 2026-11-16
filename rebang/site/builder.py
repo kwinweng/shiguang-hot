@@ -209,7 +209,7 @@ def build_bloggers(posts, status=None, preview=BLOGGER_PREVIEW):
             pages[(platform['id'], key)] = theirs
             keep.update(p['id'] for p in theirs[:preview])
             accounts.append({**{k: a[k] for k in ('handle', 'name', 'home') if k in a}, 'key': key, 'total': len(theirs),
-                             **{k: acc_status[a['handle']][k] for k in ('status', 'count', 'error', 'last_ok_at')
+                             **{k: acc_status[a['handle']][k] for k in ('status', 'count', 'error', 'reason', 'last_ok_at')
                                 if k in acc_status.get(a['handle'], {})}})
         platforms.append({
             'id': platform['id'], 'name': platform['name'], 'login': bool(platform.get('login')),

@@ -584,6 +584,6 @@ def test_wechat_without_session_stays_not_configured(tmp_path):
         raise AssertionError('no network without session')
     env = runmod.run(('wechat',), http=fake_http(), now=NOW, opts=weread_opts(tmp_path, get, session=False), sleep=lambda s: None)
     wechat = next(p for p in env['platforms'] if p['id'] == 'wechat')
-    rows = {a['handle']: a['status'] for a in wechat['accounts']}
+    rows = {a['handle']: (a['status'], a.get('reason')) for a in wechat['accounts']}
     rows.pop('夕小瑶科技说')
-    assert set(rows.values()) == {'not_configured'}
+    assert set(rows.values()) == {('not_configured', runmod.REASONS['wechat_weread_qr'])}

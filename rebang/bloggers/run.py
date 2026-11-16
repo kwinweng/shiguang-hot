@@ -25,7 +25,7 @@ REASONS = {
     'jike_mirrors_down': '公共 RSSHub 实例这次都没取到即刻',
     'weibo_cookie_unset': '微博的公开方式（公共 RSSHub、免登录接口）都要登录或游客验证，取不到；要接需副号 Cookie 文件（待阿欢定）',
     'weibo_crawler_output_missing': '已有 Cookie 文件路径，但还没有 weibo-crawler 输出（安装/运行另批）',
-    'wechat_weread_qr': '需要微信读书扫码登录（已准备好，等扫码）',
+    'wechat_weread_qr': '需要微信读书扫码登录，已准备好、等扫码',
     'wechat_weread_expired': '微信读书登录已失效，待重新扫码',
     'wechat_book_not_found': '微信读书里没搜到这个公众号',
     'x_dump_missing': '还没有公开 X 读取工具写入的原始数据',
@@ -66,6 +66,8 @@ def _account(platform, account, status, items=(), error=None):
     row = {'handle': account['handle'], 'name': account['name'], 'status': status, 'count': len(items)}
     if error:
         row['error'] = error
+        if error in REASONS:
+            row['reason'] = REASONS[error]
     return row, list(items)
 
 

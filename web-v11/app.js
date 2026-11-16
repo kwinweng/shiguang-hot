@@ -224,7 +224,7 @@
       if (p && !p.accounts.length) empty = `${p.name}：${p.reason || '本期名单为空'}。`;
       else if (p && !p.connected && p.status && p.status !== 'ok') empty = `${p.name}暂时没有内容：${p.reason || p.status}。${last(p)}`;
       else if (p && !p.connected) empty = `${p.name}的内容还没接上。${last(p)}`;
-      else if (acc && acc.status && !['ok', 'empty'].includes(acc.status)) empty = `${acc.name}暂时没有内容（${acc.status === 'not_configured' ? '需要登录，第一期先不接' : '这次没抓到'}）。${last(acc)}`;
+      else if (acc && acc.status && !['ok', 'empty'].includes(acc.status)) empty = `${acc.name}暂时没有内容（${acc.reason || (acc.status === 'not_configured' ? '需要登录，还没接' : '这次没抓到')}）。${last(acc)}`;
       else if (acc) empty = `${acc.name}最近没有新帖。${last(acc)}`;
       else empty = '这一栏暂时还没有帖子。';
       empty = empty.replace(/。。/g, '。');
