@@ -642,3 +642,46 @@ def test_weread_login_keeps_same_qr_on_retryable_timeout(tmp_path):
     assert weread.login(wait=600, session_path=tmp_path / 's.json', get=get, log=logs.append) is True
     assert [json.loads(x)['step'] for x in logs] == ['scan', 'done']
     assert len(seen) == 4 and all('uid=u-same' in u for u in seen)
+
+
+def test_x_silent_account_keeps_last_posts_from_previous_run(tmp_path):
+    """dump 只搜 24 小时：这次没发帖的博主保留上次的帖子（不编新内容），新帖数记 new=0。"""
+    good = run_all(tmp_path)
+    lx = [i for i in good['items'] if i['source_id'] == 'x-lxfater']
+    assert lx
+    empty_dump = tmp_path / 'dump-empty'
+    empty_dump.mkdir()
+    (empty_dump / 'posts.json').write_text('{"data": [], "includes": {"users": []}}', encoding='utf-8')
+    (empty_dump / '_dump.json').write_text(json.dumps({'generated_at': NOW.isoformat()}), encoding='utf-8')
+    env = run_all(tmp_path, previous=good, x_dump=str(empty_dump))
+    assert validate_items_envelope(env) == []
+    row = next(a for a in next(p for p in env['platforms'] if p['id'] == 'x')['accounts'] if a['handle'] == 'lxfater')
+    assert row['status'] == 'ok' and row['new'] == 0 and row['count'] == len(lx)
+    assert [i['id'] for i in env['items'] if i['source_id'] == 'x-lxfater'] == [i['id'] for i in lx]
+    karpathy = next(a for a in next(p for p in env['platforms'] if p['id'] == 'x')['accounts'] if a['handle'] == 'karpathy')
+    assert karpathy['status'] == 'empty' and karpathy['count'] == 0
+
+
+def test_x_latest_dump_skips_dump_still_being_written(tmp_path):
+    from rebang.bloggers.x import latest_dump
+    done, writing = tmp_path / '20261116T1353', tmp_path / '20261116T1550'
+    done.mkdir(); writing.mkdir()
+    (done / 'posts.json').write_text('{}'); (done / '_dump.json').write_text('{}')
+    (writing / 'search-p1.json').write_text('{}')          # 例程还在写，没有 _dump.json
+    assert latest_dump(tmp_path) == done
+    (writing / '_dump.json').write_text('{}')
+    assert latest_dump(tmp_path) == writing
+
+
+def test_x_reads_older_complete_dumps_in_window(tmp_path):
+    import shutil
+    root = tmp_path / 'x-dump'
+    shutil.copytree(FX / 'x_dump', root / '20261116T0752')
+    newest = root / '20261116T1353'
+    newest.mkdir()
+    (newest / 'posts.json').write_text('{"data": [], "includes": {"users": []}}', encoding='utf-8')
+    (newest / '_dump.json').write_text(json.dumps({'generated_at': NOW.isoformat()}), encoding='utf-8')
+    base = run_all(tmp_path / 'a')
+    env = run_all(tmp_path / 'b', x_dump=str(root))
+    ids = lambda e: sorted(i['id'] for i in e['items'] if i['blogger']['platform'] == 'x')
+    assert ids(env) == ids(base) and ids(env)
