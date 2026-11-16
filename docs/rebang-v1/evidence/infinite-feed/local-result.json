@@ -1,0 +1,1603 @@
+{
+ "base": "http://localhost:8802/",
+ "pass": 219,
+ "total": 219,
+ "checks": [
+  {
+   "name": "chromium-ios-standalone-dark：没有「查看更多」入口",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：底栏仍贴底（PR #72 不回退）",
+   "ok": true,
+   "bottom": 874,
+   "h": 874
+  },
+  {
+   "name": "chromium-ios-standalone-dark：时事刷完出「下一个：环球」，环球紧接着",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：滚进环球后标题是环球",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：左滑跳到下一个频道开头",
+   "ok": true,
+   "cur": "world",
+   "top": 0
+  },
+  {
+   "name": "chromium-ios-standalone-dark：再左滑到财经",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：右滑回环球开头",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：上下模式卡片左滑不收藏、不换频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：长按卡片出菜单（收藏/分享/复制链接）",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：菜单里收藏成功",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：从第一个频道刷到最后一个，条数齐全、顺序对、没跳回顶部",
+   "ok": true,
+   "counts": [
+    [
+     "current",
+     35
+    ],
+    [
+     "world",
+     339
+    ],
+    [
+     "finance",
+     1056
+    ],
+    [
+     "tech-ai",
+     966
+    ],
+    [
+     "digital",
+     148
+    ],
+    [
+     "tools",
+     61
+    ]
+   ],
+   "back": 0
+  },
+  {
+   "name": "chromium-ios-standalone-dark：最后写「内容已结束」，标题是最后一个频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：点开详情再返回，回到原位置",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：博主 X 刷完出「下一个：Grok bot」",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：平台图标高亮跟着当前段",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：博主一路刷到最后「内容已结束」，各平台条数齐全",
+   "ok": true,
+   "segs": [
+    [
+     "x",
+     73
+    ],
+    [
+     "grok",
+     550
+    ],
+    [
+     "blog",
+     63
+    ],
+    [
+     "jike",
+     90
+    ],
+    [
+     "weibo",
+     60
+    ],
+    [
+     "wechat",
+     15
+    ],
+    [
+     "youtube",
+     130
+    ],
+    [
+     "zhihu",
+     0
+    ]
+   ]
+  },
+  {
+   "name": "chromium-ios-standalone-dark：点微博图标跳到微博开头",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：点微博第 2 个人，从这个人开始，刷完接下一个人",
+   "ok": true,
+   "cur": "5",
+   "h": "1560906700"
+  },
+  {
+   "name": "chromium-ios-standalone-dark：博主长流里点图片打开全屏查看",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：热搜到底「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：热搜长按出同一个菜单",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：收藏一直往下刷到「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：旧「查看更多」链接跳到长流里那个频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：#/item 深链直达详情",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-dark：页面无报错",
+   "ok": true,
+   "errs": []
+  },
+  {
+   "name": "chromium-ios-standalone-light：没有「查看更多」入口",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：底栏仍贴底（PR #72 不回退）",
+   "ok": true,
+   "bottom": 874,
+   "h": 874
+  },
+  {
+   "name": "chromium-ios-standalone-light：时事刷完出「下一个：环球」，环球紧接着",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：滚进环球后标题是环球",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：左滑跳到下一个频道开头",
+   "ok": true,
+   "cur": "world",
+   "top": 0
+  },
+  {
+   "name": "chromium-ios-standalone-light：再左滑到财经",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：右滑回环球开头",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：上下模式卡片左滑不收藏、不换频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：长按卡片出菜单（收藏/分享/复制链接）",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：菜单里收藏成功",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：从第一个频道刷到最后一个，条数齐全、顺序对、没跳回顶部",
+   "ok": true,
+   "counts": [
+    [
+     "current",
+     35
+    ],
+    [
+     "world",
+     339
+    ],
+    [
+     "finance",
+     1056
+    ],
+    [
+     "tech-ai",
+     966
+    ],
+    [
+     "digital",
+     148
+    ],
+    [
+     "tools",
+     61
+    ]
+   ],
+   "back": 0
+  },
+  {
+   "name": "chromium-ios-standalone-light：最后写「内容已结束」，标题是最后一个频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：点开详情再返回，回到原位置",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：博主 X 刷完出「下一个：Grok bot」",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：平台图标高亮跟着当前段",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：博主一路刷到最后「内容已结束」，各平台条数齐全",
+   "ok": true,
+   "segs": [
+    [
+     "x",
+     73
+    ],
+    [
+     "grok",
+     550
+    ],
+    [
+     "blog",
+     63
+    ],
+    [
+     "jike",
+     90
+    ],
+    [
+     "weibo",
+     60
+    ],
+    [
+     "wechat",
+     15
+    ],
+    [
+     "youtube",
+     130
+    ],
+    [
+     "zhihu",
+     0
+    ]
+   ]
+  },
+  {
+   "name": "chromium-ios-standalone-light：点微博图标跳到微博开头",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：点微博第 2 个人，从这个人开始，刷完接下一个人",
+   "ok": true,
+   "cur": "5",
+   "h": "1560906700"
+  },
+  {
+   "name": "chromium-ios-standalone-light：博主长流里点图片打开全屏查看",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：热搜到底「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：热搜长按出同一个菜单",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：收藏一直往下刷到「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：旧「查看更多」链接跳到长流里那个频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：#/item 深链直达详情",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-standalone-light：页面无报错",
+   "ok": true,
+   "errs": []
+  },
+  {
+   "name": "chromium-ios-browser-dark：没有「查看更多」入口",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：时事刷完出「下一个：环球」，环球紧接着",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：滚进环球后标题是环球",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：左滑跳到下一个频道开头",
+   "ok": true,
+   "cur": "world",
+   "top": 0
+  },
+  {
+   "name": "chromium-ios-browser-dark：再左滑到财经",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：右滑回环球开头",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：上下模式卡片左滑不收藏、不换频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：长按卡片出菜单（收藏/分享/复制链接）",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：菜单里收藏成功",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：从第一个频道刷到最后一个，条数齐全、顺序对、没跳回顶部",
+   "ok": true,
+   "counts": [
+    [
+     "current",
+     35
+    ],
+    [
+     "world",
+     339
+    ],
+    [
+     "finance",
+     1056
+    ],
+    [
+     "tech-ai",
+     966
+    ],
+    [
+     "digital",
+     148
+    ],
+    [
+     "tools",
+     61
+    ]
+   ],
+   "back": 0
+  },
+  {
+   "name": "chromium-ios-browser-dark：最后写「内容已结束」，标题是最后一个频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：点开详情再返回，回到原位置",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：博主 X 刷完出「下一个：Grok bot」",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：平台图标高亮跟着当前段",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：博主一路刷到最后「内容已结束」，各平台条数齐全",
+   "ok": true,
+   "segs": [
+    [
+     "x",
+     73
+    ],
+    [
+     "grok",
+     550
+    ],
+    [
+     "blog",
+     63
+    ],
+    [
+     "jike",
+     90
+    ],
+    [
+     "weibo",
+     60
+    ],
+    [
+     "wechat",
+     15
+    ],
+    [
+     "youtube",
+     130
+    ],
+    [
+     "zhihu",
+     0
+    ]
+   ]
+  },
+  {
+   "name": "chromium-ios-browser-dark：点微博图标跳到微博开头",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：点微博第 2 个人，从这个人开始，刷完接下一个人",
+   "ok": true,
+   "cur": "5",
+   "h": "1560906700"
+  },
+  {
+   "name": "chromium-ios-browser-dark：博主长流里点图片打开全屏查看",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：热搜到底「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：热搜长按出同一个菜单",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：收藏一直往下刷到「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：旧「查看更多」链接跳到长流里那个频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：#/item 深链直达详情",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-dark：页面无报错",
+   "ok": true,
+   "errs": []
+  },
+  {
+   "name": "chromium-ios-browser-light：没有「查看更多」入口",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：时事刷完出「下一个：环球」，环球紧接着",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：滚进环球后标题是环球",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：左滑跳到下一个频道开头",
+   "ok": true,
+   "cur": "world",
+   "top": 0
+  },
+  {
+   "name": "chromium-ios-browser-light：再左滑到财经",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：右滑回环球开头",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：上下模式卡片左滑不收藏、不换频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：长按卡片出菜单（收藏/分享/复制链接）",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：菜单里收藏成功",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：从第一个频道刷到最后一个，条数齐全、顺序对、没跳回顶部",
+   "ok": true,
+   "counts": [
+    [
+     "current",
+     35
+    ],
+    [
+     "world",
+     339
+    ],
+    [
+     "finance",
+     1056
+    ],
+    [
+     "tech-ai",
+     966
+    ],
+    [
+     "digital",
+     148
+    ],
+    [
+     "tools",
+     61
+    ]
+   ],
+   "back": 0
+  },
+  {
+   "name": "chromium-ios-browser-light：最后写「内容已结束」，标题是最后一个频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：点开详情再返回，回到原位置",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：博主 X 刷完出「下一个：Grok bot」",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：平台图标高亮跟着当前段",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：博主一路刷到最后「内容已结束」，各平台条数齐全",
+   "ok": true,
+   "segs": [
+    [
+     "x",
+     73
+    ],
+    [
+     "grok",
+     550
+    ],
+    [
+     "blog",
+     63
+    ],
+    [
+     "jike",
+     90
+    ],
+    [
+     "weibo",
+     60
+    ],
+    [
+     "wechat",
+     15
+    ],
+    [
+     "youtube",
+     130
+    ],
+    [
+     "zhihu",
+     0
+    ]
+   ]
+  },
+  {
+   "name": "chromium-ios-browser-light：点微博图标跳到微博开头",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：点微博第 2 个人，从这个人开始，刷完接下一个人",
+   "ok": true,
+   "cur": "5",
+   "h": "1560906700"
+  },
+  {
+   "name": "chromium-ios-browser-light：博主长流里点图片打开全屏查看",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：热搜到底「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：热搜长按出同一个菜单",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：收藏一直往下刷到「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：旧「查看更多」链接跳到长流里那个频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：#/item 深链直达详情",
+   "ok": true
+  },
+  {
+   "name": "chromium-ios-browser-light：页面无报错",
+   "ok": true,
+   "errs": []
+  },
+  {
+   "name": "chromium-desktop-dark：没有「查看更多」入口",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-dark：时事刷完出「下一个：环球」，环球紧接着",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-dark：滚进环球后标题是环球",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-dark：从第一个频道刷到最后一个，条数齐全、顺序对、没跳回顶部",
+   "ok": true,
+   "counts": [
+    [
+     "current",
+     35
+    ],
+    [
+     "world",
+     339
+    ],
+    [
+     "finance",
+     1056
+    ],
+    [
+     "tech-ai",
+     966
+    ],
+    [
+     "digital",
+     148
+    ],
+    [
+     "tools",
+     61
+    ]
+   ],
+   "back": 0
+  },
+  {
+   "name": "chromium-desktop-dark：最后写「内容已结束」，标题是最后一个频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-dark：点开详情再返回，回到原位置",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-dark：博主 X 刷完出「下一个：Grok bot」",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-dark：平台图标高亮跟着当前段",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-dark：博主一路刷到最后「内容已结束」，各平台条数齐全",
+   "ok": true,
+   "segs": [
+    [
+     "x",
+     73
+    ],
+    [
+     "grok",
+     550
+    ],
+    [
+     "blog",
+     63
+    ],
+    [
+     "jike",
+     90
+    ],
+    [
+     "weibo",
+     60
+    ],
+    [
+     "wechat",
+     15
+    ],
+    [
+     "youtube",
+     130
+    ],
+    [
+     "zhihu",
+     0
+    ]
+   ]
+  },
+  {
+   "name": "chromium-desktop-dark：点微博图标跳到微博开头",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-dark：点微博第 2 个人，从这个人开始，刷完接下一个人",
+   "ok": true,
+   "cur": "5",
+   "h": "1560906700"
+  },
+  {
+   "name": "chromium-desktop-dark：博主长流里点图片打开全屏查看",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-dark：热搜到底「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-dark：收藏一直往下刷到「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-dark：旧「查看更多」链接跳到长流里那个频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-dark：#/item 深链直达详情",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-dark：页面无报错",
+   "ok": true,
+   "errs": []
+  },
+  {
+   "name": "chromium-desktop-light：没有「查看更多」入口",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-light：时事刷完出「下一个：环球」，环球紧接着",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-light：滚进环球后标题是环球",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-light：从第一个频道刷到最后一个，条数齐全、顺序对、没跳回顶部",
+   "ok": true,
+   "counts": [
+    [
+     "current",
+     35
+    ],
+    [
+     "world",
+     339
+    ],
+    [
+     "finance",
+     1056
+    ],
+    [
+     "tech-ai",
+     966
+    ],
+    [
+     "digital",
+     148
+    ],
+    [
+     "tools",
+     61
+    ]
+   ],
+   "back": 0
+  },
+  {
+   "name": "chromium-desktop-light：最后写「内容已结束」，标题是最后一个频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-light：点开详情再返回，回到原位置",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-light：博主 X 刷完出「下一个：Grok bot」",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-light：平台图标高亮跟着当前段",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-light：博主一路刷到最后「内容已结束」，各平台条数齐全",
+   "ok": true,
+   "segs": [
+    [
+     "x",
+     73
+    ],
+    [
+     "grok",
+     550
+    ],
+    [
+     "blog",
+     63
+    ],
+    [
+     "jike",
+     90
+    ],
+    [
+     "weibo",
+     60
+    ],
+    [
+     "wechat",
+     15
+    ],
+    [
+     "youtube",
+     130
+    ],
+    [
+     "zhihu",
+     0
+    ]
+   ]
+  },
+  {
+   "name": "chromium-desktop-light：点微博图标跳到微博开头",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-light：点微博第 2 个人，从这个人开始，刷完接下一个人",
+   "ok": true,
+   "cur": "5",
+   "h": "1560906700"
+  },
+  {
+   "name": "chromium-desktop-light：博主长流里点图片打开全屏查看",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-light：热搜到底「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-light：收藏一直往下刷到「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-light：旧「查看更多」链接跳到长流里那个频道",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-light：#/item 深链直达详情",
+   "ok": true
+  },
+  {
+   "name": "chromium-desktop-light：页面无报错",
+   "ok": true,
+   "errs": []
+  },
+  {
+   "name": "webkit-ios-standalone-dark：没有「查看更多」入口",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-dark：底栏仍贴底（PR #72 不回退）",
+   "ok": true,
+   "bottom": 874,
+   "h": 874
+  },
+  {
+   "name": "webkit-ios-standalone-dark：时事刷完出「下一个：环球」，环球紧接着",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-dark：滚进环球后标题是环球",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-dark：从第一个频道刷到最后一个，条数齐全、顺序对、没跳回顶部",
+   "ok": true,
+   "counts": [
+    [
+     "current",
+     35
+    ],
+    [
+     "world",
+     339
+    ],
+    [
+     "finance",
+     1056
+    ],
+    [
+     "tech-ai",
+     966
+    ],
+    [
+     "digital",
+     148
+    ],
+    [
+     "tools",
+     61
+    ]
+   ],
+   "back": 0
+  },
+  {
+   "name": "webkit-ios-standalone-dark：最后写「内容已结束」，标题是最后一个频道",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-dark：点开详情再返回，回到原位置",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-dark：博主 X 刷完出「下一个：Grok bot」",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-dark：平台图标高亮跟着当前段",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-dark：博主一路刷到最后「内容已结束」，各平台条数齐全",
+   "ok": true,
+   "segs": [
+    [
+     "x",
+     73
+    ],
+    [
+     "grok",
+     550
+    ],
+    [
+     "blog",
+     63
+    ],
+    [
+     "jike",
+     90
+    ],
+    [
+     "weibo",
+     60
+    ],
+    [
+     "wechat",
+     15
+    ],
+    [
+     "youtube",
+     130
+    ],
+    [
+     "zhihu",
+     0
+    ]
+   ]
+  },
+  {
+   "name": "webkit-ios-standalone-dark：点微博图标跳到微博开头",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-dark：点微博第 2 个人，从这个人开始，刷完接下一个人",
+   "ok": true,
+   "cur": "5",
+   "h": "1560906700"
+  },
+  {
+   "name": "webkit-ios-standalone-dark：博主长流里点图片打开全屏查看",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-dark：热搜到底「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-dark：收藏一直往下刷到「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-dark：旧「查看更多」链接跳到长流里那个频道",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-dark：#/item 深链直达详情",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-dark：页面无报错",
+   "ok": true,
+   "errs": []
+  },
+  {
+   "name": "webkit-ios-standalone-light：没有「查看更多」入口",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-light：底栏仍贴底（PR #72 不回退）",
+   "ok": true,
+   "bottom": 874,
+   "h": 874
+  },
+  {
+   "name": "webkit-ios-standalone-light：时事刷完出「下一个：环球」，环球紧接着",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-light：滚进环球后标题是环球",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-light：从第一个频道刷到最后一个，条数齐全、顺序对、没跳回顶部",
+   "ok": true,
+   "counts": [
+    [
+     "current",
+     35
+    ],
+    [
+     "world",
+     339
+    ],
+    [
+     "finance",
+     1056
+    ],
+    [
+     "tech-ai",
+     966
+    ],
+    [
+     "digital",
+     148
+    ],
+    [
+     "tools",
+     61
+    ]
+   ],
+   "back": 0
+  },
+  {
+   "name": "webkit-ios-standalone-light：最后写「内容已结束」，标题是最后一个频道",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-light：点开详情再返回，回到原位置",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-light：博主 X 刷完出「下一个：Grok bot」",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-light：平台图标高亮跟着当前段",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-light：博主一路刷到最后「内容已结束」，各平台条数齐全",
+   "ok": true,
+   "segs": [
+    [
+     "x",
+     73
+    ],
+    [
+     "grok",
+     550
+    ],
+    [
+     "blog",
+     63
+    ],
+    [
+     "jike",
+     90
+    ],
+    [
+     "weibo",
+     60
+    ],
+    [
+     "wechat",
+     15
+    ],
+    [
+     "youtube",
+     130
+    ],
+    [
+     "zhihu",
+     0
+    ]
+   ]
+  },
+  {
+   "name": "webkit-ios-standalone-light：点微博图标跳到微博开头",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-light：点微博第 2 个人，从这个人开始，刷完接下一个人",
+   "ok": true,
+   "cur": "5",
+   "h": "1560906700"
+  },
+  {
+   "name": "webkit-ios-standalone-light：博主长流里点图片打开全屏查看",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-light：热搜到底「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-light：收藏一直往下刷到「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-light：旧「查看更多」链接跳到长流里那个频道",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-light：#/item 深链直达详情",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-standalone-light：页面无报错",
+   "ok": true,
+   "errs": []
+  },
+  {
+   "name": "webkit-ios-browser-dark：没有「查看更多」入口",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-dark：时事刷完出「下一个：环球」，环球紧接着",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-dark：滚进环球后标题是环球",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-dark：从第一个频道刷到最后一个，条数齐全、顺序对、没跳回顶部",
+   "ok": true,
+   "counts": [
+    [
+     "current",
+     35
+    ],
+    [
+     "world",
+     339
+    ],
+    [
+     "finance",
+     1056
+    ],
+    [
+     "tech-ai",
+     966
+    ],
+    [
+     "digital",
+     148
+    ],
+    [
+     "tools",
+     61
+    ]
+   ],
+   "back": 0
+  },
+  {
+   "name": "webkit-ios-browser-dark：最后写「内容已结束」，标题是最后一个频道",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-dark：点开详情再返回，回到原位置",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-dark：博主 X 刷完出「下一个：Grok bot」",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-dark：平台图标高亮跟着当前段",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-dark：博主一路刷到最后「内容已结束」，各平台条数齐全",
+   "ok": true,
+   "segs": [
+    [
+     "x",
+     73
+    ],
+    [
+     "grok",
+     550
+    ],
+    [
+     "blog",
+     63
+    ],
+    [
+     "jike",
+     90
+    ],
+    [
+     "weibo",
+     60
+    ],
+    [
+     "wechat",
+     15
+    ],
+    [
+     "youtube",
+     130
+    ],
+    [
+     "zhihu",
+     0
+    ]
+   ]
+  },
+  {
+   "name": "webkit-ios-browser-dark：点微博图标跳到微博开头",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-dark：点微博第 2 个人，从这个人开始，刷完接下一个人",
+   "ok": true,
+   "cur": "5",
+   "h": "1560906700"
+  },
+  {
+   "name": "webkit-ios-browser-dark：博主长流里点图片打开全屏查看",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-dark：热搜到底「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-dark：收藏一直往下刷到「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-dark：旧「查看更多」链接跳到长流里那个频道",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-dark：#/item 深链直达详情",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-dark：页面无报错",
+   "ok": true,
+   "errs": []
+  },
+  {
+   "name": "webkit-ios-browser-light：没有「查看更多」入口",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-light：时事刷完出「下一个：环球」，环球紧接着",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-light：滚进环球后标题是环球",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-light：从第一个频道刷到最后一个，条数齐全、顺序对、没跳回顶部",
+   "ok": true,
+   "counts": [
+    [
+     "current",
+     35
+    ],
+    [
+     "world",
+     339
+    ],
+    [
+     "finance",
+     1056
+    ],
+    [
+     "tech-ai",
+     966
+    ],
+    [
+     "digital",
+     148
+    ],
+    [
+     "tools",
+     61
+    ]
+   ],
+   "back": 0
+  },
+  {
+   "name": "webkit-ios-browser-light：最后写「内容已结束」，标题是最后一个频道",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-light：点开详情再返回，回到原位置",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-light：博主 X 刷完出「下一个：Grok bot」",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-light：平台图标高亮跟着当前段",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-light：博主一路刷到最后「内容已结束」，各平台条数齐全",
+   "ok": true,
+   "segs": [
+    [
+     "x",
+     73
+    ],
+    [
+     "grok",
+     550
+    ],
+    [
+     "blog",
+     63
+    ],
+    [
+     "jike",
+     90
+    ],
+    [
+     "weibo",
+     60
+    ],
+    [
+     "wechat",
+     15
+    ],
+    [
+     "youtube",
+     130
+    ],
+    [
+     "zhihu",
+     0
+    ]
+   ]
+  },
+  {
+   "name": "webkit-ios-browser-light：点微博图标跳到微博开头",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-light：点微博第 2 个人，从这个人开始，刷完接下一个人",
+   "ok": true,
+   "cur": "5",
+   "h": "1560906700"
+  },
+  {
+   "name": "webkit-ios-browser-light：博主长流里点图片打开全屏查看",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-light：热搜到底「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-light：收藏一直往下刷到「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-light：旧「查看更多」链接跳到长流里那个频道",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-light：#/item 深链直达详情",
+   "ok": true
+  },
+  {
+   "name": "webkit-ios-browser-light：页面无报错",
+   "ok": true,
+   "errs": []
+  },
+  {
+   "name": "webkit-desktop-dark：没有「查看更多」入口",
+   "ok": true
+  },
+  {
+   "name": "webkit-desktop-dark：时事刷完出「下一个：环球」，环球紧接着",
+   "ok": true
+  },
+  {
+   "name": "webkit-desktop-dark：滚进环球后标题是环球",
+   "ok": true
+  },
+  {
+   "name": "webkit-desktop-dark：从第一个频道刷到最后一个，条数齐全、顺序对、没跳回顶部",
+   "ok": true,
+   "counts": [
+    [
+     "current",
+     35
+    ],
+    [
+     "world",
+     339
+    ],
+    [
+     "finance",
+     1056
+    ],
+    [
+     "tech-ai",
+     966
+    ],
+    [
+     "digital",
+     148
+    ],
+    [
+     "tools",
+     61
+    ]
+   ],
+   "back": 0
+  },
+  {
+   "name": "webkit-desktop-dark：最后写「内容已结束」，标题是最后一个频道",
+   "ok": true
+  },
+  {
+   "name": "webkit-desktop-dark：点开详情再返回，回到原位置",
+   "ok": true
+  },
+  {
+   "name": "webkit-desktop-dark：博主 X 刷完出「下一个：Grok bot」",
+   "ok": true
+  },
+  {
+   "name": "webkit-desktop-dark：平台图标高亮跟着当前段",
+   "ok": true
+  },
+  {
+   "name": "webkit-desktop-dark：博主一路刷到最后「内容已结束」，各平台条数齐全",
+   "ok": true,
+   "segs": [
+    [
+     "x",
+     73
+    ],
+    [
+     "grok",
+     550
+    ],
+    [
+     "blog",
+     63
+    ],
+    [
+     "jike",
+     90
+    ],
+    [
+     "weibo",
+     60
+    ],
+    [
+     "wechat",
+     15
+    ],
+    [
+     "youtube",
+     130
+    ],
+    [
+     "zhihu",
+     0
+    ]
+   ]
+  },
+  {
+   "name": "webkit-desktop-dark：点微博图标跳到微博开头",
+   "ok": true
+  },
+  {
+   "name": "webkit-desktop-dark：点微博第 2 个人，从这个人开始，刷完接下一个人",
+   "ok": true,
+   "cur": "5",
+   "h": "1560906700"
+  },
+  {
+   "name": "webkit-desktop-dark：博主长流里点图片打开全屏查看",
+   "ok": true
+  },
+  {
+   "name": "webkit-desktop-dark：热搜到底「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "webkit-desktop-dark：收藏一直往下刷到「内容已结束」",
+   "ok": true
+  },
+  {
+   "name": "webkit-desktop-dark：旧「查看更多」链接跳到长流里那个频道",
+   "ok": true
+  },
+  {
+   "name": "webkit-desktop-dark：#/item 深链直达详情",
+   "ok": true
+  },
+  {
+   "name": "webkit-desktop-dark：页面无报错",
+   "ok": true,
+   "errs": []
+  }
+ ]
+}
