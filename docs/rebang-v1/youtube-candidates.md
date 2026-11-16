@@ -1,10 +1,9 @@
-# YouTube 候选频道（待阿欢确认）
+# YouTube 频道（2026-11-16 15:49 阿欢确认：「YouTube 13 个频道全部启用」）
 
 2026-11-16 按阿欢的兴趣挑（科技/AI、Apple 与数码、3D 打印、科幻、美食、风景旅行、观星、喜剧；兴趣面见 `/workspace/shiguang-haowan-haomai-clean/taste/round1.md`）。
 每个频道都在 14:40 左右（北京时间）打开过频道页核对：频道 id、名字、订阅数、视频数、最近一次更新都来自 YouTube 公开页面。
 
-**确认前一个都不抓**：`rebang/contract/bloggers.json` 里 `youtube.accounts` 现在是空的，站上 YouTube 这一栏显示「频道名单待确认」。
-阿欢确认后，把选中的行照下面格式填进 `accounts`（`handle` 用 UC 开头的频道 id），下一轮刷新就会出现：
+**已全部启用**：下表 13 个已写进 `rebang/contract/bloggers.json` 的 `youtube.accounts`（`handle` 用 UC 开头的频道 id），格式：
 `{"handle": "UCbfYPyITQ-7l4upoX8nvctg", "name": "Two Minute Papers", "home": "https://www.youtube.com/@TwoMinutePapers"}`
 
 | # | 频道 | 链接 | 频道 id | 订阅 / 视频数 | 最近更新 | 为什么 |

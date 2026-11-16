@@ -54,7 +54,21 @@
       {"handle": "夕小瑶科技说", "name": "夕小瑶科技说", "method": "wechat2rss-public-feed", "login": false, "feed": "https://wechat2rss.xlab.app/feed/a1cd365aa14ed7d64cabfc8aa086da40ecaba34d.xml"},
       {"handle": "王建硕", "name": "王建硕"}
     ]},
-    {"id": "youtube", "name": "YouTube", "method": "public-channel-feed", "login": false, "empty_reason": "youtube_pending_confirm", "note": "官方频道订阅 feeds/videos.xml?channel_id=UC…（不用 API 密钥），失败退到公开频道页；名单由阿欢确认后填 accounts（handle = UC 开头的频道 id，name、home 照填），候选见 docs/rebang-v1/youtube-candidates.md", "accounts": []},
+    {"id": "youtube", "name": "YouTube", "method": "public-channel-feed", "login": false, "note": "官方频道订阅 feeds/videos.xml?channel_id=UC…（不用 API 密钥），失败退到公开频道页；名单 2026-11-16 15:49 阿欢确认候选 13 个全部启用（handle = UC 开头的频道 id），候选说明见 docs/rebang-v1/youtube-candidates.md", "accounts": [
+      {"handle": "UCbfYPyITQ-7l4upoX8nvctg", "name": "Two Minute Papers", "home": "https://www.youtube.com/@TwoMinutePapers"},
+      {"handle": "UCXUPKJO5MZQN11PqgIvyuvQ", "name": "Andrej Karpathy", "home": "https://www.youtube.com/@AndrejKarpathy"},
+      {"handle": "UCBJycsmduvYEL83R_U4JriQ", "name": "MKBHD", "home": "https://www.youtube.com/@mkbhd"},
+      {"handle": "UCMiJRAwDNSNzuYeN2uWa0pA", "name": "Mrwhosetheboss", "home": "https://www.youtube.com/@Mrwhosetheboss"},
+      {"handle": "UCiczXOhGpvoQGhOL16EZiTg", "name": "CNC Kitchen", "home": "https://www.youtube.com/@CNCKitchen"},
+      {"handle": "UCsXVk37bltHxD1rDPwtNM8Q", "name": "Kurzgesagt – In a Nutshell", "home": "https://www.youtube.com/@kurzgesagt"},
+      {"handle": "UCZFipeZtQM5CKUjx6grh54g", "name": "Isaac Arthur", "home": "https://www.youtube.com/@isaacarthurSFIA"},
+      {"handle": "UCg0m_Ah8P_MQbnn77-vYnYw", "name": "美食作家王刚", "home": "https://www.youtube.com/@chefwang"},
+      {"handle": "UC54SLBnD5k5U3Q6N__UjbAw", "name": "Chinese Cooking Demystified", "home": "https://www.youtube.com/@ChineseCookingDemystified"},
+      {"handle": "UCpnuadQ_w3r6f4Q_NRlqd-w", "name": "Kraig Adams", "home": "https://www.youtube.com/@KraigAdams"},
+      {"handle": "UCYNbYGl89UUowy8oXkipC-Q", "name": "Dr. Becky", "home": "https://www.youtube.com/@DrBecky"},
+      {"handle": "UCn3npsPixgoi_xLdCg9J-LQ", "name": "AstroBackyard", "home": "https://www.youtube.com/@AstroBackyard"},
+      {"handle": "UCh9IfI45mmk59eDvSWtuuhQ", "name": "Ryan George", "home": "https://www.youtube.com/@RyanGeorge"}
+    ]},
     {"id": "zhihu", "name": "知乎", "method": "none", "login": false, "accounts": []}
   ]
 }

@@ -256,15 +256,15 @@ def _platform_x(platform, http, fetched_at, opts, sleep, now):
     return rows, items
 
 
-def _x_keep_recent(rows, got, prev_items, limit):
-    """X 的 dump 只搜最近 24 小时：一天没发帖的博主会被刷成空、旧帖从站上消失。
+def _keep_recent(pid, rows, got, prev_items, limit):
+    """X / YouTube：X 的 dump 只搜最近 24 小时：一天没发帖的博主会被刷成空、旧帖从站上消失。
     这里把上次的帖子并回来（同 id 用新抓的，按发布时间取最新 limit 条），有帖子就是 ok，`new` 记这次 dump 里的新帖数。只对 dump 正常读到的行做（status ok/empty）；stale/错误行由通用逻辑处理。"""
     fresh = {}
     for item in got:
         fresh.setdefault(item['source_id'], []).append(item)
     out = []
     for row in rows:
-        sid = f'x-{row["handle"]}'
+        sid = f'{pid}-{row["handle"]}'
         mine = fresh.get(sid, [])
         if row['status'] in ('ok', 'empty'):
             ids = {i['id'] for i in mine}
@@ -328,9 +328,11 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
                    'weibo': _platform_weibo, 'youtube': _platform_youtube}.get(pid)
         if pid == 'x':
             rows, got = _platform_x(platform, http, fetched_at, opts, sleep, now)
-            got = _x_keep_recent(rows, got, prev_items, opts.limit)
+            got = _keep_recent(pid, rows, got, prev_items, opts.limit)
         else:
             rows, got = handler(platform, http, fetched_at, opts, sleep)
+            if pid == 'youtube':   # 订阅挂掉走公开页时一轮只补得出几条：上次的视频留着，不被刷少
+                got = _keep_recent(pid, rows, got, prev_items, opts.limit)
         got_by_source = {}
         for item in got:
             got_by_source.setdefault(item['source_id'], []).append(item)
