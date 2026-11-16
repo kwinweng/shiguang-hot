@@ -9,6 +9,42 @@
 (function () {
   'use strict';
   const L = window.RebangLib;
+
+  /* ---------- iOS 主屏幕 web app：底栏贴底（见 lib.js standaloneSafeBottom）---------- */
+  function fitStandalone() {
+    const de = document.documentElement;
+    const standalone = navigator.standalone === true || !!(window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+    de.classList.toggle('is-standalone', standalone);
+    if (!standalone) { de.style.removeProperty('--safe-bot'); return null; }
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
+    document.body.appendChild(probe);
+    const cs = getComputedStyle(probe);
+    const fake = window.__rebangTestInsets;   // 只给验收脚本模拟真机安全区用（模拟器里 env() 恒为 0）
+    const m = {standalone, ios: typeof navigator.standalone === 'boolean', insetTop: fake ? fake.top : parseFloat(cs.paddingTop) || 0,
+      insetBottom: fake ? fake.bottom : parseFloat(cs.paddingBottom) || 0, screenW: screen.width, screenH: screen.height,
+      innerW: window.innerWidth, innerH: window.innerHeight};
+    probe.remove();
+    const pad = L.standaloneSafeBottom(m);
+    if (pad === null) de.style.removeProperty('--safe-bot'); else de.style.setProperty('--safe-bot', pad + 'px');
+    m.pad = pad;
+    window.__rebangViewport = m;
+    return m;
+  }
+  fitStandalone();
+  ['resize', 'orientationchange', 'pageshow'].forEach(ev => window.addEventListener(ev, () => setTimeout(fitStandalone, 60)));
+  /* ?diag=1：手机上看实测几何，排查底栏位置用 */
+  if (/[?&]diag=1/.test(location.search)) {
+    const show = () => {
+      const m = fitStandalone() || {standalone: false};
+      const bar = document.querySelector('.tabbar'), r = bar ? bar.getBoundingClientRect() : null;
+      let box = document.getElementById('diagBox');
+      if (!box) { box = document.createElement('pre'); box.id = 'diagBox'; box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:99;margin:0;padding:8px;font:11px/1.4 ui-monospace,monospace;background:#000c;color:#0f0;border-radius:8px;white-space:pre-wrap;pointer-events:none'; document.body.appendChild(box); }
+      box.textContent = JSON.stringify({...m, vv: window.visualViewport ? Math.round(visualViewport.height) : null,
+        tabbarTop: r && Math.round(r.top), tabbarBottom: r && Math.round(r.bottom), dpr: devicePixelRatio, ua: navigator.userAgent.slice(0, 90)}, null, 1);
+    };
+    window.addEventListener('load', show); window.addEventListener('resize', () => setTimeout(show, 80)); setTimeout(show, 300);
+  }
   const DATA = 'data';
   const MKEY = 'rebang-v11-mode';
   const NOTE_KEY = 'rebang-v11-note-closed';
