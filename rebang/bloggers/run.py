@@ -230,6 +230,23 @@ def _platform_x(platform, http, fetched_at, opts, sleep, now):
         by_handle = x_mod.x_posts(x_mod.load_dump(dump), platform, fetched_at, opts.limit)
     except (ValueError, OSError, KeyError, TypeError):
         return [_account(platform, a, 'error', error='parse')[0] for a in platform['accounts']], []
+    # 同目录下其它已写完、未过期的旧 dump 也读进来补：例程每 2 小时只搜最近 24 小时，旧 dump 里还有一天前的帖
+    root = dump.parent if opts.x_dump and Path(opts.x_dump).is_dir() and dump != Path(opts.x_dump) else None
+    for older in sorted(root.iterdir()) if root else []:
+        if older == dump or not older.is_dir() or not (older / '_dump.json').exists():
+            continue
+        made_old = x_mod.dump_time(older)
+        if made_old is None or now - made_old > timedelta(hours=X_STALE_HOURS):
+            continue
+        try:
+            extra = x_mod.x_posts(x_mod.load_dump(older), platform, fetched_at, opts.limit)
+        except (ValueError, OSError, KeyError, TypeError):
+            continue
+        for handle, posts in extra.items():
+            have = {i['id'] for i in by_handle.get(handle, [])}
+            by_handle[handle] = by_handle.get(handle, []) + [i for i in posts if i['id'] not in have]
+    for handle, posts in by_handle.items():
+        by_handle[handle] = sorted(posts, key=lambda i: i.get('published_at') or '', reverse=True)[:opts.limit]
     rows, items = [], []
     for account in platform['accounts']:
         got = by_handle.get(account['handle'], [])
@@ -237,6 +254,28 @@ def _platform_x(platform, http, fetched_at, opts, sleep, now):
         rows.append(row)
         items += got
     return rows, items
+
+
+def _x_keep_recent(rows, got, prev_items, limit):
+    """X 的 dump 只搜最近 24 小时：一天没发帖的博主会被刷成空、旧帖从站上消失。
+    这里把上次的帖子并回来（同 id 用新抓的，按发布时间取最新 limit 条），有帖子就是 ok，`new` 记这次 dump 里的新帖数。只对 dump 正常读到的行做（status ok/empty）；stale/错误行由通用逻辑处理。"""
+    fresh = {}
+    for item in got:
+        fresh.setdefault(item['source_id'], []).append(item)
+    out = []
+    for row in rows:
+        sid = f'x-{row["handle"]}'
+        mine = fresh.get(sid, [])
+        if row['status'] in ('ok', 'empty'):
+            ids = {i['id'] for i in mine}
+            old = [i for i in prev_items.get(sid, []) if i['id'] not in ids]
+            merged = sorted(mine + old, key=lambda i: i.get('published_at') or '', reverse=True)[:limit]
+            row['new'] = len(mine)
+            row['count'] = len(merged)
+            row['status'] = 'ok' if merged else 'empty'
+            mine = merged
+        out += mine
+    return out
 
 
 def _aggregate(rows):
@@ -289,6 +328,7 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
                    'weibo': _platform_weibo, 'youtube': _platform_youtube}.get(pid)
         if pid == 'x':
             rows, got = _platform_x(platform, http, fetched_at, opts, sleep, now)
+            got = _x_keep_recent(rows, got, prev_items, opts.limit)
         else:
             rows, got = handler(platform, http, fetched_at, opts, sleep)
         got_by_source = {}

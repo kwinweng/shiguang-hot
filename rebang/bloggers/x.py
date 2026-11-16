@@ -283,12 +283,14 @@ def x_posts(dump, platform, fetched_at, limit=10):
 
 
 def latest_dump(root):
-    """dump 根目录下最新的子目录（按名字排序，名字用 YYYYMMDDTHHMM）；没有返回 None。"""
+    """dump 根目录下最新的已写完子目录（有 _dump.json；按名字排序，名字用 YYYYMMDDTHHMM）；都没写完就取最新的；没有返回 None。"""
     root = Path(root)
     if not root.is_dir():
         return None
     subdirs = sorted(d for d in root.iterdir() if d.is_dir() and (any(d.glob('*.json')) or any(d.glob('*.txt'))))
-    return subdirs[-1] if subdirs else None
+    # 例程最后一步才写 _dump.json：有它的才算写完。正在写的目录（比如只有 search-p1.json）不用，免得半份数据把博主刷空
+    done = [d for d in subdirs if (d / '_dump.json').exists()]
+    return (done or subdirs)[-1] if subdirs else None
 
 
 def dump_time(path):
