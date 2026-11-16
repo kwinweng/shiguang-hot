@@ -143,7 +143,8 @@ def _platform_wechat(platform, http, fetched_at, opts, sleep):
             continue
         sleep(max(opts.pause, 2.0))   # 微信读书有频率限制，号与号之间至少隔 2 秒
         try:
-            posts = weread_mod.wechat_posts(account, platform, fetched_at, session, get=get, limit=opts.limit, cache=books)
+            posts, via = weread_mod.wechat_posts(account, platform, fetched_at, session, get=get,
+                                            get_text=getattr(opts, 'weread_get_text', None), limit=opts.limit, cache=books)
         except weread_mod.WereadError as exc:
             if exc.code == 'login_expired':
                 expired = True
@@ -159,7 +160,7 @@ def _platform_wechat(platform, http, fetched_at, opts, sleep):
             rows.append(_account(platform, account, 'error', error='parse')[0])
             continue
         row, got = _account(platform, account, 'ok' if posts else 'empty', posts)
-        row['via'] = 'weread'
+        row['via'] = via
         rows.append(row)
         items += got
     if session is not None:
@@ -331,7 +332,7 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
             got = _keep_recent(pid, rows, got, prev_items, opts.limit)
         else:
             rows, got = handler(platform, http, fetched_at, opts, sleep)
-            if pid == 'youtube':   # 订阅挂掉走公开页时一轮只补得出几条：上次的视频留着，不被刷少
+            if pid in ('youtube', 'wechat'):   # YouTube 公开页一轮只补得出几条；公众号 cover 兜底每次只有最新一篇：上次的留着
                 got = _keep_recent(pid, rows, got, prev_items, opts.limit)
         got_by_source = {}
         for item in got:

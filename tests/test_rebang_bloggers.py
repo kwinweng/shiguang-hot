@@ -559,12 +559,9 @@ def test_wechat_weread_articles_mapping(tmp_path):
     assert {a['status'] for a in wechat['accounts']} == {'ok'}
     mac = [i for i in env['items'] if i['source_id'] == 'wechat-MacTalk']
     assert [i['title'] for i in mac] == ['合成样例：最新一篇', '合成样例：第二篇']
-    assert mac[0]['url'] == 'https://mp.weixin.qq.com/s/bbbb' and mac[1]['url'] == ''
+    assert mac[0]['url'] == 'https://mp.weixin.qq.com/s/bbbb' and mac[1]['url'] == 'https://mp.weixin.qq.com/s/aaaa'
     assert mac[0]['image'] == {'url': 'https://mmbiz.qpic.cn/fake/cover1.jpg'}
-    assert json.loads((tmp_path / 'books.json').read_text(encoding='utf-8'))['MacTalk'] == 'MP_WXS_123'
-    calls.clear()
-    runmod.run(('wechat',), http=fake_http(), now=NOW, opts=weread_opts(tmp_path, get), sleep=lambda s: None)
-    assert not [u for u in calls if '/api/store/search' in u]       # bookId 已缓存，不再搜
+    assert not [u for u in calls if '/api/store/search' in u]       # book_id 已写在配置里，不再搜
 
 
 def _kw(url):
@@ -718,3 +715,46 @@ def test_youtube_keeps_previous_videos_when_page_fallback_returns_fewer(tmp_path
     assert set(before) <= set(after) and len(after) > len(before)
     row = next(a for p in env['platforms'] if p['id'] == 'youtube' for a in p['accounts'] if a['handle'] == 'UCpnuadQ_w3r6f4Q_NRlqd-w')
     assert row['via'] == 'page' and row['new'] >= 1
+
+
+
+def test_weread_content_meta_reads_time_and_url():
+    from rebang.bloggers import weread
+    html = """<meta property="og:url" content="https://mp.weixin.qq.com/s?__biz=MjM5MDczODM3Mw==&amp;mid=1#rd">
+               ori_create_time: '1794670399' * 1"""
+    meta = weread.content_meta(html)
+    assert meta['published'] == 1794670399
+    assert meta['url'].startswith('https://mp.weixin.qq.com/s?__biz=MjM5MDczODM3Mw==')
+    assert weread.content_meta('nope')['published'] is None
+
+
+def test_wechat_articles_2041_falls_back_to_cover_not_expired(tmp_path):
+    """真实会话上 /web/mp/articles 回 -2041，但 cover + 正文页可用，不能把登录判死。"""
+    from rebang.bloggers import weread
+    calls = []
+
+    def get(url, session=None, timeout=25):
+        calls.append(url)
+        if '/web/mp/articles' in url:
+            return {'errCode': -2041, 'errMsg': '-2041'}
+        if '/api/mp/cover' in url:
+            return {'name': 'MacTalk', 'title': '封面这篇', 'pic': 'https://mmbiz.qpic.cn/fake/c.jpg',
+                    'reviewId': 'MP_WXS_2398460220_TOKEN1'}
+        raise AssertionError(url)
+
+    def get_text(url, session=None, timeout=40):
+        calls.append(url)
+        assert 'reviewId=MP_WXS_2398460220_TOKEN1' in url
+        return 'ori_create_time: \'1794495217\'  <meta property="og:url" content="https://mp.weixin.qq.com/s/TOKEN1">'
+
+    o = weread_opts(tmp_path, get)
+    o.weread_get_text = get_text
+    env = runmod.run(('wechat',), http=fake_http(), now=NOW, opts=o, sleep=lambda s: None)
+    assert validate_items_envelope(env) == []
+    wechat = next(p for p in env['platforms'] if p['id'] == 'wechat')
+    mac = next(a for a in wechat['accounts'] if a['handle'] == 'MacTalk')
+    assert mac['status'] == 'ok' and mac['via'] == 'cover' and mac['count'] >= 1
+    item = next(i for i in env['items'] if i['source_id'] == 'wechat-MacTalk')
+    assert item['title'] == '封面这篇' and item['url'] == 'https://mp.weixin.qq.com/s/TOKEN1'
+    assert item['published_at'].startswith('2026-')
+    assert not any('/api/store/search' in u for u in calls)   # book_id 已写在配置里
