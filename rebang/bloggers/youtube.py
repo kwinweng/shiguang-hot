@@ -10,6 +10,7 @@
 播放：站内查看器用 youtube-nocookie 的嵌入播放器（media.type = "youtube"），播不了就给原视频链接。
 """
 import json
+from datetime import datetime
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -131,9 +132,20 @@ def duration_ms(text):
 def parse_watch_page(html):
     """视频页 → {published, description, duration_ms?}；没有发布时间返回 None。"""
     m = re.search(r'"publishDate":"([^"]+)"', html) or re.search(r'itemprop="datePublished" content="([^"]+)"', html)
-    if not m:
-        return None
-    out = {'published': m.group(1), 'description': ''}
+    if m:
+        published = m.group(1)
+    else:
+        # 机房 IP 常被要求「登录确认不是机器人」，页面没有 microformat，只剩 dateText（如 "Nov 14, 2026"，YouTube 按太平洋时间给日期）。
+        # 只有日期没有时刻：取当天太平洋时间中午，卡片上的时刻因此是近似值（日期是真的）。
+        d = re.search(r'"dateText":\{"simpleText":"(?:[^"]*?\s)?([A-Z][a-z]{2} \d{1,2}, \d{4})"', html)
+        if not d:
+            return None
+        try:
+            day = datetime.strptime(d.group(1), '%b %d, %Y')
+        except ValueError:
+            return None
+        published = day.strftime('%Y-%m-%dT12:00:00-08:00')
+    out = {'published': published, 'description': ''}
     d = re.search(r'"shortDescription":"((?:[^"\\]|\\.)*)"', html)
     if d:
         try:

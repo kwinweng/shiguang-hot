@@ -41,6 +41,8 @@ def fake_http(fail=()):
     for root in platform('jike')['rsshub_mirrors']:
         for a in platform('jike')['accounts']:
             urls[f'{root}/jike/user/{a["handle"]}'] = 'rss_jike_rsshub.xml'
+    for a in platform('youtube')['accounts']:
+        urls[f'https://www.youtube.com/feeds/videos.xml?channel_id={a["handle"]}'] = 'youtube_feed.xml'
     calls = []
 
     def fetch(url):
@@ -57,7 +59,9 @@ def fake_http(fail=()):
 def opts(tmp_path, **kw):
     base = dict(x_dump=str(FX / 'x_dump'), pause=0, translator=Translator(engine='cache', cache=Cache(tmp_path / 'cache.json')))
     base.update(kw)
-    return runmod.Options(**base)
+    o = runmod.Options(**base)
+    o.youtube_cache = tmp_path / 'yt-watch.json'   # 不写到仓库里的 var/
+    return o
 
 
 def run_all(tmp_path, previous=None, http=None, **kw):
@@ -214,12 +218,13 @@ def test_full_run_envelope_valid_and_login_platforms_not_configured(tmp_path):
     assert validate_items_envelope(env) == []
     status = {p['id']: p['status'] for p in env['platforms']}
     assert status == {'x': 'ok', 'blog': 'ok', 'jike': 'ok', 'weibo': 'not_configured',
-                      'wechat': 'ok', 'youtube': 'empty', 'zhihu': 'empty'}
+                      'wechat': 'ok', 'youtube': 'ok', 'zhihu': 'empty'}
     assert not [i for i in env['items'] if i['blogger']['platform'] == 'weibo']
     jike = next(p for p in env['platforms'] if p['id'] == 'jike')
     assert {a['status'] for a in jike['accounts']} == {'ok'} and len(jike['accounts']) == 9
     yt = next(p for p in env['platforms'] if p['id'] == 'youtube')
-    assert yt['reason'] == runmod.REASONS['youtube_pending_confirm'] and yt['accounts'] == []
+    assert len(yt['accounts']) == 13 and {a['status'] for a in yt['accounts']} == {'ok'}
+    assert {a['via'] for a in yt['accounts']} == {'rss'}
     wechat = next(p for p in env['platforms'] if p['id'] == 'wechat')
     rows = {a['handle']: a['status'] for a in wechat['accounts']}
     assert rows.pop('夕小瑶科技说') == 'ok' and set(rows.values()) == {'not_configured'}
@@ -685,3 +690,31 @@ def test_x_reads_older_complete_dumps_in_window(tmp_path):
     env = run_all(tmp_path / 'b', x_dump=str(root))
     ids = lambda e: sorted(i['id'] for i in e['items'] if i['blogger']['platform'] == 'x')
     assert ids(env) == ids(base) and ids(env)
+
+
+def test_youtube_watch_page_without_microformat_uses_date_text():
+    from rebang.bloggers import youtube as yt
+    html = '"playabilityStatus":{"status":"LOGIN_REQUIRED"} "dateText":{"simpleText":"Premiered Nov 14, 2026"}'
+    assert yt.parse_watch_page(html)['published'] == '2026-11-14T12:00:00-08:00'
+    assert yt.parse_watch_page('"playabilityStatus":{"status":"LOGIN_REQUIRED"}') is None
+
+
+def test_youtube_keeps_previous_videos_when_page_fallback_returns_fewer(tmp_path):
+    good = run_all(tmp_path)
+    kraig = 'youtube-UCpnuadQ_w3r6f4Q_NRlqd-w'
+    before = [i['id'] for i in good['items'] if i['source_id'] == kraig]
+    assert len(before) == 3
+
+    def http(url):
+        if 'feeds/videos.xml' in url and 'UCpnuadQ_w3r6f4Q_NRlqd-w' in url:
+            raise FeedError('http_status')
+        if url.endswith('/videos'):
+            return (FX / 'youtube_channel_videos.html').read_bytes()
+        if 'watch?v=' in url:
+            return (FX / 'youtube_watch.html').read_bytes()
+        return fake_http()(url)
+    env = run_all(tmp_path, previous=good, http=http)
+    after = [i['id'] for i in env['items'] if i['source_id'] == kraig]
+    assert set(before) <= set(after) and len(after) > len(before)
+    row = next(a for p in env['platforms'] if p['id'] == 'youtube' for a in p['accounts'] if a['handle'] == 'UCpnuadQ_w3r6f4Q_NRlqd-w')
+    assert row['via'] == 'page' and row['new'] >= 1
