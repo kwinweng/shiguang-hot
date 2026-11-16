@@ -37,6 +37,29 @@
     const p = parts(d);
     return beijingDate(d) === beijingDate(now || new Date()) ? `${p.hour}:${p.minute}` : `${p.month}月${p.day}日 ${p.hour}:${p.minute}`;
   }
+  /** 列表里的时间（v16）：1 小时内「N 分钟前」，24 小时内「N 小时前」，再早写「11月15日 20:42」 */
+  function fmtWhen(v, now) {
+    const d = toDate(v); if (!d) return '';
+    const m = Math.floor(((now ? toDate(now) : new Date()) - d) / 60000);
+    if (m < 0 || m >= 24 * 60) return fmtTime(d);
+    if (m < 1) return '刚刚';
+    if (m < 60) return m + ' 分钟前';
+    return Math.floor(m / 60) + ' 小时前';
+  }
+  /** 详情页时间「2026年11月16日 22:44」 */
+  function fmtFull(v) {
+    const d = toDate(v); if (!d) return '';
+    const p = parts(d);
+    return `${p.year}年${p.month}月${p.day}日 ${p.hour}:${p.minute}`;
+  }
+  /** 博主日期分组标题「11.16 今天」「11.15 昨天」「11.12 周四」；today = 北京日期 YYYY-MM-DD */
+  function dayLabel(day, today) {
+    const [y, m, dd] = String(day).split('-').map(Number);
+    if (!y) return '';
+    const base = `${m}.${String(dd).padStart(2, '0')}`;
+    const diff = Math.round((Date.parse(today + 'T00:00:00Z') - Date.UTC(y, m - 1, dd)) / 864e5);
+    return base + ' ' + (diff === 0 ? '今天' : diff === 1 ? '昨天' : WEEK[new Date(Date.UTC(y, m - 1, dd)).getUTCDay()]);
+  }
   /** 「11月15日 周日」 */
   function fmtDay(v) {
     const d = toDate(v); if (!d) return '';
@@ -73,10 +96,14 @@
   function thumbOk(image) {
     return !!(image && image.url);
   }
+  /** 列表一行元信息（v16）：来源 · 时间 · 浏览 · 评论 · 译 / 重点；拿不到的数不显示 */
   function metaLine(item, d) {
-    const hl = item.highlight ? '<span class="hl">今日重点</span>' : '';
-    const mt = d.translated ? `<span class="mt-badge">${esc(d.label)}</span>` : '';
-    return `<div class="f-meta"><span class="src">${esc(item.source_name)}</span><span>${esc(fmtTime(item.published_at))}</span>${hl}${mt}</div>`;
+    const tg = item.tg || {};
+    const views = tg.views != null ? `<span class="n" aria-label="浏览 ${esc(tg.views_label || tg.views)}">${icon('eye')}${esc(tg.views_label || fmtN(tg.views))}</span>` : '';
+    const cmt = tg.comments_total ? `<span class="n" aria-label="评论 ${tg.comments_total} 条">${ICO.reply}${esc(fmtN(tg.comments_total))}</span>` : '';
+    const hl = item.highlight ? '<span class="tag hl">重点</span>' : '';
+    const mt = d.translated ? `<span class="tag mt-badge" title="${esc(d.label)}">译</span>` : '';
+    return `<div class="f-meta"><span class="src">${esc(item.source_name)}</span><span>${esc(fmtWhen(item.published_at))}</span>${views}${cmt}${mt}${hl}</div>`;
   }
   /** TG 互动：表情回应 + 浏览数 + 评论数（都来自 t.me 公开页面；没有就不显示，不编） */
   function tgStatsHTML(item, full) {
@@ -105,14 +132,14 @@
     const d = display(item);
     let body;
     if (isBareForward(item)) {
-      body = `<div class="fwd-tag">转发</div>${quoteCardHTML(item, false)}${metaLine(item, d)}${tgStatsHTML(item, false)}`;
+      body = `<div class="fwd-tag">转发</div>${quoteCardHTML(item, false)}${metaLine(item, d)}`;
     } else {
       const sum = d.summary.trim() ? `<p class="sum">${esc(d.summary)}</p>` :
         (item.quote || thumbOk(item.image) ? '' : `<p class="sum none">${NO_SUMMARY}</p>`);
-      body = `<h3>${esc(d.title)}</h3>${sum}${quoteCardHTML(item, false)}${metaLine(item, d)}${tgStatsHTML(item, false)}`;
+      body = `<h3>${esc(d.title)}</h3>${sum}${quoteCardHTML(item, false)}${metaLine(item, d)}`;
     }
     if (thumbOk(item.image)) {
-      return `<article class="feed-row" data-id="${esc(item.id)}"><div class="thumb"><img src="${esc(item.image.url)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(item.image.url)}"></div><div>${body}</div></article>`;
+      return `<article class="feed-row" data-id="${esc(item.id)}"><div class="f-main">${body}</div><div class="thumb"><img src="${esc(item.image.url)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(item.image.url)}"></div></article>`;
     }
     return `<article class="feed-row noimg" data-id="${esc(item.id)}">${body}</article>`;
   }
@@ -148,22 +175,28 @@
     if (entry.hot_score) return `<span class="lbl">${esc(fmtN(entry.hot_score))}</span>`;
     return '<span class="lbl"></span>';
   }
-  /** 热搜块：分家 tab；status≠ok 的家显示「暂时取不到」；默认显示前 limit 条 */
-  function hotsearchHTML(payload, activeId, expanded, limit = 10) {
+  /** 热搜家的短名：「百度热搜」→「百度」，「B 站热搜」→「B站」 */
+  function hotShort(name) { return String(name || '').replace(/热搜|热榜/g, '').replace(/\s+/g, ''); }
+  /** 热搜块（v16）：吸顶的「日期 + 三家分段」，下面是这家的榜单。status≠ok 的家显示「暂时取不到」；默认显示前 limit 条。
+   *  opts.dates：日期一行的 HTML（放进吸顶区）；opts.note：替换默认的「百度 · 抓取于…」说明 */
+  function hotsearchHTML(payload, activeId, expanded, limit = 10, opts = {}) {
     const providers = (payload && payload.providers) || [];
     if (!providers.length) return '';
     const active = providers.find(p => p.id === activeId) || providers.find(p => p.status === 'ok') || providers[0];
-    const tabs = providers.map(p => `<button type="button" role="tab" data-hot="${esc(p.id)}" aria-selected="${p.id === active.id}" class="${p.id === active.id ? 'on' : ''}${p.status === 'ok' ? '' : ' bad'}">${esc(p.name)}</button>`).join('');
+    const tabs = providers.map(p => {
+      const n = p.status === 'ok' && (p.items || []).length ? `${p.items.length} 条` : '暂时取不到';
+      return `<button type="button" role="tab" data-hot="${esc(p.id)}" aria-selected="${p.id === active.id}" class="${p.id === active.id ? 'on' : ''}${p.status === 'ok' ? '' : ' bad'}"><b>${esc(hotShort(p.name))}</b><small>${esc(n)}</small></button>`;
+    }).join('');
     let body;
     if (active.status !== 'ok' || !(active.items || []).length) {
       body = `<p class="hot-empty" data-state="${esc(active.status)}">${esc(active.name)}${HOT_FAIL}</p>`;
     } else {
       const rows = expanded ? active.items : active.items.slice(0, limit);
-      body = `<ol class="hot-list">${rows.map(e => `<li><a href="${esc(e.url)}" target="_blank" rel="noopener"><span class="rk">${e.pinned ? '顶' : esc(e.rank)}</span><span class="t">${esc(e.title)}</span>${hotLabel(e)}</a></li>`).join('')}</ol>` +
+      body = `<ol class="hot-list">${rows.map(e => `<li><a href="${esc(e.url)}" target="_blank" rel="noopener"><span class="rk${e.pinned ? ' pin-rk' : (Number(e.rank) <= 3 ? ' hi' : '')}"${e.pinned ? ' aria-label="置顶"' : ''}>${e.pinned ? icon('flame') : esc(e.rank)}</span><span class="t">${esc(e.title)}</span>${hotLabel(e)}</a></li>`).join('')}</ol>` +
         (active.items.length > limit ? `<button type="button" class="hot-more" data-hot-more="${expanded ? 0 : 1}">${expanded ? '收起' : `展开全部 ${active.items.length} 条`}</button>` : '');
     }
-    const when = active.fetched_at ? `${esc(active.name)} · ${esc(fmtTime(active.fetched_at))}` : '';
-    return `<section class="hot" aria-label="热搜"><div class="hot-hd"><span class="hot-ttl">热搜</span><span class="hot-time">${when}</span></div><div class="hot-tabs" role="tablist">${tabs}</div>${body}</section>`;
+    const note = opts.note != null ? opts.note : (active.fetched_at ? `${hotShort(active.name)} · 抓取于 ${fmtWhen(active.fetched_at)}` : '');
+    return `<section class="hot" aria-label="热搜"><div class="hot-top">${opts.dates || ''}<div class="hot-tabs" role="tablist">${tabs}</div></div>${note ? `<p class="hot-note">${esc(note)}</p>` : ''}${body}</section>`;
   }
   /** 全站唯一图标集：Lucide（ISC，v1.73.0 原样路径，见 LICENSES/lucide.txt 与 docs/rebang-v1/DESIGN-SYSTEM.md）。
    *  不引运行时依赖；index.html 里的静态图标用同一份路径。 */
@@ -177,6 +210,18 @@
     'chevron-left': '<path d="m15 18-6-6 6-6"/>',
     'chevron-right': '<path d="m9 18 6-6-6-6"/>',
     'x': '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    'chevron-down': '<path d="m6 9 6 6 6-6"/>',
+    'arrow-left': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+    'ellipsis': '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+    'flame': '<path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"/>',
+    'bookmark': '<path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"/>',
+    'bookmark-check': '<path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"/><path d="m9 10 2 2 4-4"/>',
+    'share': '<path d="M12 2v13"/><path d="m16 6-4-4-4 4"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>',
+    'link': '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+    'external-link': '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+    'copy': '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+    'a-large-small': '<path d="m15 16 2.536-7.328a1.02 1.02 1 0 1 1.928 0L22 16"/><path d="M15.697 14h5.606"/><path d="m2 16 4.039-9.69a.5.5 0 0 1 .923 0L11 16"/><path d="M3.304 13h6.392"/>',
+    'list-filter': '<path d="M2 5h20"/><path d="M6 12h12"/><path d="M9 19h6"/>',
   };
   function icon(name, attrs = '') {
     return `<svg class="lucide lucide-${name}"${attrs ? ' ' + attrs : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${LUCIDE[name]}</svg>`;
@@ -225,34 +270,69 @@
     if (platform === 'weibo' && /^\d+$/.test(String(handle))) return '';
     return '@' + esc(handle);
   }
-  /** 推文卡（v9/v10 样式）。拿不到的互动数不显示，不编数字 */
+  /** X / 微博等的「热门回复」（详情页和评论半屏共用）。按点赞排序，最多 10 条；没有就不出 */
+  function xCommentsHTML(item, inSheet) {
+    const b = item.blogger || {};
+    const comments = (b.comments || []).slice(0, 10);
+    if (!comments.length) return '';
+    return `<div class="comments">${inSheet ? '' : `<h4>热门回复 <span class="meta">${comments.length}</span></h4>`}<p class="cmt-note">按点赞排序，最多 10 条。完整讨论请打开原文。</p>${comments.map(c => {
+      const text = c.text_zh || c.text;
+      const like = Number.isInteger(c.like) ? `<span class="meta c-like">${ICO.like}${esc(fmtN(c.like))}</span>` : '';
+      const mt = c.text_zh ? '<span class="mt-badge">机器翻译</span>' : '';
+      return `<div class="comment">${avatar(c.avatar, 'av')}<div class="c-main"><div class="nm c-nm">${esc(c.display_name || c.handle)} <span class="meta">@${esc(c.handle)}${c.published_at ? ' · ' + esc(fmtTime(c.published_at)) : ''}</span>${like}${mt}</div><div class="t-body">${esc(text)}</div></div></div>`;
+    }).join('')}</div>`;
+  }
+  /** 博主列表里的一条缩略图（放在右边）：第一张图 / 视频封面；多张时角上写「N 图」。
+   *  data-media-list 带全部媒体，点开在全屏查看里从第一张开始左右滑；文章类帖子用封面图 */
+  function postThumbHTML(item) {
+    const b = item.blogger || {};
+    const list = (b.media || []).filter(m => m && (m.url || m.preview_url));
+    if (list.length) {
+      const grid = mediaGrid(list.slice(0, 1), item.url);   // 只拿第一格的标记
+      const items = list.map(m => { const vid = (m.type === 'video' || m.type === 'gif' || m.type === 'youtube') && m.url; return vid ? {t: m.type, u: m.url, p: m.preview_url || ''} : {t: 'image', u: m.preview_url || m.url}; });
+      const cell = grid.slice(grid.indexOf('<div class="cell'), grid.lastIndexOf('</div>'));
+      const cnt = list.length > 1 ? `<i class="cnt">${list.length} ${list.every(m => !m.type || m.type === 'image') ? '图' : '项'}</i>` : '';
+      return `<div class="thumb" data-zoom-list="${esc(list.map(m => m.preview_url || m.url).join('|'))}" data-media-list="${esc(JSON.stringify(items))}"${item.url ? ` data-origin="${esc(item.url)}"` : ''}>${cell}${cnt}</div>`;
+    }
+    if (item.image && item.image.url) return `<div class="thumb"><img src="${esc(item.image.url)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(item.image.url)}"></div>`;
+    return '';
+  }
+  /** 博主列表一行（v16）：有标题 → 标题 + 最多 3 行摘要；没标题的帖子 → 正文最多 4 行。图在右边，账号名左对齐 */
+  function postRowHTML(item) {
+    const b = item.blogger || {};
+    const d = display(item);
+    const norm = x => String(x || '').replace(/[\s【】]/g, '');
+    let text = cardText(d.summary || d.body || '').replace(/\s+/g, ' ').trim();
+    if (d.title && text && norm(text).startsWith(norm(d.title))) text = text.slice(d.title.length).trim();
+    if (d.title && norm(text) === norm(d.title)) text = '';
+    const main = d.title ? `<h3 class="b-title">${esc(d.title)}</h3>${text ? `<p class="b-sum">${esc(text.slice(0, 300))}</p>` : ''}` :
+      `<p class="b-text">${esc(text.slice(0, 400) || NO_SUMMARY)}</p>`;
+    const m = b.metrics || {};
+    const like = Number.isInteger(m.like) ? `<span class="n">${ICO.like}${fmtN(m.like)}</span>` : '';
+    const reply = Number.isInteger(m.reply) ? `<span class="n">${ICO.reply}${fmtN(m.reply)}</span>` : '';
+    const metrics = like || reply ? `<span class="metrics">${like}${reply}</span>` : '';
+    const av = b.avatar ? `<img class="mav" src="${esc(b.avatar)}" alt="" loading="lazy">` : '';
+    const mt = d.translated ? `<span class="tag mt-badge" title="${esc(d.label)}">译</span>` : '';
+    const th = postThumbHTML(item);
+    return `<article class="tweet brow${th ? '' : ' noimg'}" data-id="${esc(item.id)}"><div class="b-main">${main}<div class="f-meta">${av}<span class="src">${esc(b.display_name || b.handle || item.source_name)}</span>${b.verified ? `<span class="blue" title="认证">${ICO.check}</span>` : ''}<span>${esc(fmtWhen(item.published_at))}</span>${metrics}${mt}</div></div>${th}</article>`;
+  }
+  /** 推文卡（v9/v10 样式）。clamp = 列表 → 走 v16 紧凑行；详情里是完整卡。拿不到的互动数不显示，不编数字 */
   function tweetCardHTML(item, clamp) {
+    if (clamp) return postRowHTML(item);
     const b = item.blogger || {};
     const d = display(item);
     const text = d.body || d.summary;
-    const key = `${item.id}-${clamp ? 'c' : 'd'}`;
+    const key = `${item.id}-d`;
     const tools = d.translated ? `<div class="t-tools"><span class="t-badge">${esc(d.label)}</span><button type="button" class="orig-btn" data-orig="${esc(key)}">看原文</button></div><div class="orig" data-orig-box="${esc(key)}">${esc(d.orig.body || d.orig.summary)}</div>` : '';
     const q = b.quote;
     const quote = q ? `<div class="quote"><div class="hd">${avatar(q.avatar, 'av')}<div><div class="nm">${esc(q.display_name || q.handle)}</div><div class="meta">${[atHandle(b.platform, q.handle), q.published_at ? esc(fmtTime(q.published_at)) : ''].filter(Boolean).join(' · ')}</div></div></div><div class="t-body">${esc(q.text)}</div></div>` : '';
-    const comments = (b.comments || []).slice(0, 10);
-    const cm = !clamp && comments.length ? `<div class="comments"><h4>热门回复</h4><p class="cmt-note">按点赞排序，最多 10 条。完整讨论请打开原文。</p>${comments.map(c => {
-      const text = c.text_zh || c.text;
-      const like = Number.isInteger(c.like) ? `<span class="meta c-like">♥ ${esc(fmtN(c.like))}</span>` : '';
-      const mt = c.text_zh ? '<span class="mt-badge">机器翻译</span>' : '';
-      return `<div class="comment">${avatar(c.avatar, 'av')}<div><div class="nm" style="font-size:13px">${esc(c.display_name || c.handle)} <span class="meta">@${esc(c.handle)}${c.published_at ? ' · ' + esc(fmtTime(c.published_at)) : ''}</span>${like}${mt}</div><div class="t-body">${esc(text)}</div></div></div>`;
-    }).join('')}</div>` : '';
+    const cm = xCommentsHTML(item, false);
     const m = b.metrics || {};
-    const metric = (k) => (Number.isInteger(m[k]) ? `<span>${ICO[k]}${fmtN(m[k])}</span>` : '');
+    const metric = (k) => (Number.isInteger(m[k]) ? `<span>${ICO[k]}${fmtN(m[k])}<em>${({reply: '回复', repost: '转发', like: '点赞'})[k]}</em></span>` : '');
     const metrics = ['reply', 'repost', 'like'].some(k => Number.isInteger(m[k])) ? `<div class="metrics">${metric('reply')}${metric('repost')}${metric('like')}</div>` : '';
-    const extra = !clamp ? ['view', 'bookmark', 'quote'].filter(k => Number.isInteger(m[k]) && m[k]).map(k => ({view: '浏览 ', bookmark: '收藏 ', quote: '引用 '}[k] + fmtN(m[k]))) : [];
+    const extra = ['view', 'bookmark', 'quote'].filter(k => Number.isInteger(m[k]) && m[k]).map(k => ({view: '浏览 ', bookmark: '收藏 ', quote: '引用 '}[k] + fmtN(m[k])));
     const title = d.title ? `<div class="b-title">${esc(d.title)}</div>` : '';
-    if (clamp && item.blocks && item.blocks.length) {
-      // 文章类帖子（公众号/博客）：列表里只放标题、摘要和一张封面，正文按原文顺序在详情里
-      const cover = item.image && item.image.url ? `<div class="post-cover"><img src="${esc(item.image.url)}" alt="" loading="lazy" data-zoom="${esc(item.image.url)}"></div>` : '';
-      const sum = d.summary ? `<div class="t-body clamp">${esc(d.summary)}</div>` : '';
-      return `<article class="tweet article-post" data-id="${esc(item.id)}"><div class="hd">${avatar(b.avatar)}<div style="flex:1;min-width:0"><div class="nm">${esc(b.display_name || b.handle)}</div><div class="meta">${esc(fmtTime(item.published_at))}${d.translated ? ' · ' + esc(d.label) : ''}</div></div></div>${title}${sum}${cover}</article>`;
-    }
-    return `<article class="tweet" data-id="${esc(item.id)}"><div class="hd">${avatar(b.avatar)}<div style="flex:1;min-width:0"><div class="nm">${esc(b.display_name || b.handle)} ${b.verified ? `<span class="blue" title="认证">${ICO.check}</span>` : ''}</div><div class="meta">${[atHandle(b.platform, b.handle), esc(fmtTime(item.published_at))].filter(Boolean).join(' · ')}</div></div></div>${title}<div class="t-body${clamp ? ' clamp' : ''}">${esc(text)}</div>${tools}${mediaGrid(b.media, item.url)}${quote}${metrics}${extra.length ? `<div class="detail-meta">${extra.map(esc).join(' · ')}</div>` : ''}${cm}</article>`;
+    return `<article class="tweet" data-id="${esc(item.id)}"><div class="hd">${avatar(b.avatar)}<div style="flex:1;min-width:0"><div class="nm">${esc(b.display_name || b.handle)} ${b.verified ? `<span class="blue" title="认证">${ICO.check}</span>` : ''}</div><div class="meta">${[atHandle(b.platform, b.handle), esc(fmtTime(item.published_at))].filter(Boolean).join(' · ')}</div></div></div>${title}<div class="t-body">${esc(text)}</div>${tools}${mediaGrid(b.media, item.url)}${quote}${metrics}${extra.length ? `<div class="detail-meta">${extra.map(esc).join(' · ')}</div>` : ''}${cm}</article>`;
   }
   /** 历史/收藏/搜索通用行 */
   function rowHTML(item) {
@@ -295,8 +375,8 @@
     return safeBot === null ? null : {appH: null, safeBot};
   }
 
-  const Lib = {TZ, NO_SUMMARY, NO_BODY, BODY_PENDING, HOT_FAIL, esc, beijingDate, fmtTime, fmtDay, fmtRefreshed, fmtN, display, thumbOk,
-    tgStatsHTML, quoteCardHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, tweetCardHTML, rowHTML, parseItemHash, itemHash, ICO, icon, mediaGrid, fmtDur, standaloneGeometry};
+  const Lib = {TZ, NO_SUMMARY, NO_BODY, BODY_PENDING, HOT_FAIL, esc, beijingDate, fmtTime, fmtWhen, fmtFull, dayLabel, fmtDay, fmtRefreshed, fmtN, display, thumbOk,
+    tgStatsHTML, quoteCardHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, hotShort, tweetCardHTML, postRowHTML, xCommentsHTML, rowHTML, parseItemHash, itemHash, ICO, icon, mediaGrid, fmtDur, standaloneGeometry};
   if (typeof module !== 'undefined' && module.exports) module.exports = Lib;
   else root.RebangLib = Lib;
 })(typeof window !== 'undefined' ? window : globalThis);

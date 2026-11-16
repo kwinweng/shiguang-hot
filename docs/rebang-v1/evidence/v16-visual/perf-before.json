@@ -1,0 +1,107 @@
+{
+ "label": "before",
+ "runs": {
+  "deep": [
+   {
+    "frames": 2003,
+    "janky": 14,
+    "max_frame": 116.7,
+    "longtasks": 12,
+    "lt_ms": 829,
+    "cls": 0,
+    "shifts": [],
+    "scroll_end": 73429,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1954,
+    "janky": 16,
+    "max_frame": 116.7,
+    "longtasks": 9,
+    "lt_ms": 624,
+    "cls": 0.3219,
+    "shifts": [
+     [
+      0.3219,
+      "ARTICLE.feed-row noimg | ARTICLE.feed-row noimg"
+     ]
+    ],
+    "scroll_end": 80733,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1871,
+    "janky": 31,
+    "max_frame": 133.4,
+    "longtasks": 21,
+    "lt_ms": 1389,
+    "cls": 0,
+    "shifts": [],
+    "scroll_end": 155069,
+    "back_jumps": 0
+   }
+  ],
+  "blogger": [
+   {
+    "frames": 1236,
+    "janky": 5,
+    "max_frame": 116.6,
+    "longtasks": 1,
+    "lt_ms": 80,
+    "cls": 0,
+    "shifts": [],
+    "scroll_end": 24283,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1283,
+    "janky": 7,
+    "max_frame": 200.0,
+    "longtasks": 3,
+    "lt_ms": 261,
+    "cls": 0,
+    "shifts": [],
+    "scroll_end": 21529,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1223,
+    "janky": 9,
+    "max_frame": 233.4,
+    "longtasks": 4,
+    "lt_ms": 255,
+    "cls": 0.0141,
+    "shifts": [
+     [
+      0.0141,
+      "ARTICLE.tweet"
+     ]
+    ],
+    "scroll_end": 62522,
+    "back_jumps": 0
+   }
+  ]
+ },
+ "summary": {
+  "deep": {
+   "frames": 1954,
+   "janky": 16,
+   "max_frame": 116.7,
+   "longtasks": 12,
+   "lt_ms": 829,
+   "cls": 0,
+   "scroll_end": 80733,
+   "back_jumps": 0
+  },
+  "blogger": {
+   "frames": 1236,
+   "janky": 7,
+   "max_frame": 200.0,
+   "longtasks": 3,
+   "lt_ms": 255,
+   "cls": 0,
+   "scroll_end": 24283,
+   "back_jumps": 0
+  }
+ }
+}

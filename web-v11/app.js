@@ -40,7 +40,7 @@
   ['resize', 'orientationchange', 'pageshow'].forEach(ev => window.addEventListener(ev, () => setTimeout(fitStandalone, 60)));
   if (window.visualViewport) visualViewport.addEventListener('resize', () => setTimeout(fitStandalone, 60));
 
-  /* ---------- 诊断浮层：长按左上角日期 1 秒开/关（记在本机），或网址带 ?diag=1。主屏幕 app 打开时网址参数会丢，所以要长按 ---------- */
+  /* ---------- 诊断浮层：长按左上角标题 1 秒开/关（记在本机），或网址带 ?diag=1。主屏幕 app 打开时网址参数会丢，所以要长按 ---------- */
   const DIAG_KEY = 'rebang-v11-diag';
   function diagData() {
     const m = fitStandalone(), env = insetProbe(), de = document.documentElement, vv = window.visualViewport;
@@ -141,8 +141,68 @@
   }
   function remember(list) { (list || []).forEach(it => it && it.id && items.set(it.id, it)); return list || []; }
   function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('on'), 3200); }
-  bindDiagLongPress(document.querySelector('.when-wrap'), () => { const on = !diagOn(); diagSet(on); toast(on ? '诊断已打开（再长按日期关闭）' : '诊断已关闭'); });
+  let diagSwallow = 0;   // 长按开/关诊断后，松手那一下点击不要再打开下拉
+  bindDiagLongPress(document.querySelector('#chBtn'), () => { const on = !diagOn(); diagSet(on); diagSwallow = performance.now() + 800; toast(on ? '诊断已打开（再长按左上角标题关闭）' : '诊断已关闭'); });
   function channels() { return (meta && meta.channels) || []; }
+
+  /* ---------- 已读（v16）：点开过的条目在所有列表里变灰，只记在这台设备 ---------- */
+  const READ_KEY = 'rebang-v11-read';
+  const readSet = (() => { try { return new Set(JSON.parse(localStorage.getItem(READ_KEY) || '[]')); } catch (e) { return new Set(); } })();
+  function markRead(scope) {
+    if (!readSet.size) return;
+    $$('[data-id], [data-item-id], .hot-list li[data-hid]', scope || document).forEach(el => {
+      const id = el.dataset.id || el.dataset.itemId || el.dataset.hid;
+      if (id && readSet.has(id) && !el.classList.contains('read') && !el.closest('#articleBody')) el.classList.add('read');
+    });
+  }
+  function setRead(id) {
+    if (!id || readSet.has(id)) return;
+    readSet.add(id);
+    try { localStorage.setItem(READ_KEY, JSON.stringify([...readSet].slice(-2000))); } catch (e) { /* 隐私模式 */ }
+    setTimeout(() => $$(`[data-id="${CSS.escape(id)}"], [data-item-id="${CSS.escape(id)}"], .hot-list li[data-hid="${CSS.escape(id)}"]`).forEach(el => { if (!el.closest('#articleBody')) el.classList.add('read'); }), MOTION.slow);
+  }
+
+  /* ---------- 顶栏（v16）：左上角是当前频道/平台名 + 下拉箭头，没有 logo ---------- */
+  function setTopName(name) {
+    const el = $('#chName'); if (!el || el.textContent === name) return;
+    el.textContent = name;
+    if (!REDUCE.matches && el.animate) el.animate([{opacity: 0.2}, {opacity: 1}], {duration: MOTION.base, easing: MOTION.ease});
+  }
+  function updateTopName() {
+    const v = currentView();
+    if (v === 'channels') setTopName(nameOf((channels()[curCh] || {}).slug) || '频道');
+    else if (v === 'blogger') { const s = blSegs[Number($('#bloggerList').dataset.cur || 0)]; const p = s && platOf(s.plat); setTopName(p ? p.name : '博主'); }
+    else if (v === 'hot') setTopName('热搜');
+    else setTopName('收藏');
+  }
+  function dropOpen() { return $('#drop').classList.contains('on'); }
+  function closeDrop() {
+    $('#drop').classList.remove('on'); $('#dropMask').classList.remove('on');
+    $('#drop').setAttribute('aria-hidden', 'true'); $('#chBtn').classList.remove('open'); $('#chBtn').setAttribute('aria-expanded', 'false');
+  }
+  function dropRow(attr, on, name, desc, count, ico) {
+    return `<button type="button" ${attr} class="${on ? 'on' : ''}" role="option" aria-selected="${on}">${ico || ''}<div class="dt"><div class="dn">${L.esc(name)}</div>${desc ? `<div class="dd">${L.esc(desc)}</div>` : ''}</div>${count ? `<span class="dc">${L.esc(count)}</span>` : ''}${on ? `<span class="ck">${L.ICO.check}</span>` : ''}</button>`;
+  }
+  async function openDrop() {
+    const v = currentView();
+    if (v === 'favorites') return;
+    let rows = '', note = '';
+    if (v === 'channels') {
+      rows = channels().map((c, i) => dropRow(`data-drop-ch="${i}"`, i === curCh, c.name, c.desc, c.total ? `${c.total} 条` : '')).join('');
+      note = mode === 'lr' ? '左右滑动也能换频道；一直往下刷会自动接到下一个频道。' : '一直往下刷会自动接到下一个频道。';
+    } else if (v === 'blogger') {
+      await ensureBloggers();
+      const cur = blSegs[Number($('#bloggerList').dataset.cur || 0)];
+      rows = ((bloggers && bloggers.platforms) || []).map(p => dropRow(`data-drop-plat="${L.esc(p.id)}"`, cur ? cur.plat === p.id : p.id === plat, p.name, '', p.count ? `${p.count} 条` : '', platIcon(p))).join('');
+      note = '一直往下刷会自动接到下一个平台。';
+    } else if (v === 'hot') {
+      rows = hotDayChips().map(c => dropRow(`data-hot-day="${c.date || ''}"`, (c.date || null) === hotDay, c.label, c.date ? '那天最后一次抓到的榜单' : '现在的热搜', '')).join('');
+    }
+    $('#dropList').innerHTML = rows;
+    $('#dropNote').textContent = note; $('#dropNote').hidden = !note;
+    $('#drop').classList.add('on'); $('#dropMask').classList.add('on'); $('#drop').setAttribute('aria-hidden', 'false');
+    $('#chBtn').classList.add('open'); $('#chBtn').setAttribute('aria-expanded', 'true');
+  }
 
   /* ---------- 数据 ---------- */
   async function loadPage(slug) {
@@ -197,7 +257,7 @@
     requestAnimationFrame(() => requestAnimationFrame(() => fresh.forEach(el => el.classList.add('cv'))));
   }
   function chainFoot(nextName) {
-    return nextName ? `<div class="next-div" data-next-div><span>下一个：${L.esc(nextName)}</span></div>` : `<div class="end-hint end-all" data-end="all">${ENDED}</div>`;
+    return nextName ? `<div class="next-div" data-next-div><span>下一个：<b>${L.esc(nextName)}</b></span></div>` : `<div class="end-hint end-all" data-end="all"><span>${ENDED}</span></div>`;
   }
   /** 段落闸门：返回每段是否显示。exhausted(i)：第 i 段已经全部加载完；revealed(i)：被直接跳到过 */
   function gateList(n, exhausted, revealed) {
@@ -299,7 +359,7 @@
     root.className = 'feed-root';
     root.innerHTML = channels().map((c, i) => `<section class="ch-sec" data-ch="${c.slug}" data-i="${i}">${channelInner(c, i)}</section>`).join('');
     applyMode(); gateChannels();
-    bindLoaders(); bindGestures(); fixBrokenThumbs(root); settleChunks(root);
+    bindLoaders(); bindGestures(); fixBrokenThumbs(root); settleChunks(root); markRead(root);
     if (!root._spy) { root._spy = true; root.addEventListener('scroll', spyChannels, {passive: true}); }
     spyChannels();
   }
@@ -312,13 +372,13 @@
       host.querySelector('.feed-foot').innerHTML = feedFooter(slug);
       gateChannels();
     });
-    fixBrokenThumbs(list); settleChunks(list);
+    fixBrokenThumbs(list); settleChunks(list); markRead(list);
     repin(); observeSentinels();
   }
   function fixBrokenThumbs(scope) {
-    $$('.feed-row .thumb img', scope).forEach(img => {
+    $$('.feed-row .thumb img, .brow .thumb img', scope).forEach(img => {
       if (img._bound) return; img._bound = true;
-      img.addEventListener('error', () => { const row = img.closest('.feed-row'); img.closest('.thumb').remove(); row.classList.add('noimg'); }, {once: true});
+      img.addEventListener('error', () => { const row = img.closest('.feed-row, .brow'), th = img.closest('.thumb'); if (th) th.remove(); if (row) row.classList.add('noimg'); }, {once: true});
     });
   }
   async function loadMore(slug) {
@@ -349,6 +409,7 @@
       if (at !== curCh || root.dataset.cur === undefined) {
         curCh = at; root.dataset.cur = (channels()[at] || {}).slug || '';
         chSections().forEach((sec, i) => sec.classList.toggle('cur', i === at));
+        if (currentView() === 'channels') updateTopName();
       }
     });
   }
@@ -359,6 +420,7 @@
     const sec = hostOf(cs[i].slug);
     pinTo(root, sec, 0);
     curCh = i; root.dataset.cur = cs[i].slug; chSections().forEach((s, k) => s.classList.toggle('cur', k === i));
+    updateTopName();
     slideIn(root, dir);
     return true;
   }
@@ -418,7 +480,8 @@
       if (i === 0 || blSegs[i - 1].plat !== s.plat) {
         const p = platOf(s.plat) || {name: s.plat, accounts: []};
         if (i) html += '</div>';
-        html += `<div class="bl-group" data-group="${L.esc(s.plat)}"><div class="bl-plat-hd">${platIcon(p)}<h3>${L.esc(p.name)}</h3>${p.count ? `<span class="meta">共 ${L.esc(p.count)} 条</span>` : ''}</div>${peopleRowHTML(p, s.pkey === 'all' ? 'all' : person)}`;
+        const who = (p.accounts || []).length ? `${p.accounts.length} 位博主 · ` : '';
+        html += `<div class="bl-group" data-group="${L.esc(s.plat)}"><div class="bl-plat-hd">${platIcon(p)}<h3>${L.esc(p.name)}</h3>${p.count || who ? `<span class="meta">${L.esc(who)}${p.count ? `共 ${L.esc(p.count)} 条` : ''}</span>` : ''}</div>${peopleRowHTML(p, s.pkey === 'all' ? 'all' : person)}`;
       }
       html += segHTML(s, i);
     });
@@ -427,7 +490,24 @@
   function blSecs() { return $$('#bloggerList .bl-seg'); }
   function segHTML(s, i) {
     const accHd = s.pkey !== 'all' ? `<div class="bl-acc-hd">${L.esc(s.name)}${s.total ? ` <span class="meta">共 ${L.esc(s.total)} 条</span>` : ''}</div>` : '';
-    return `<section class="bl-seg" data-seg="${i}" data-plat="${L.esc(s.plat)}" data-pkey="${L.esc(s.pkey)}" data-handle="${L.esc(s.handle)}">${accHd}<div class="bl-list list">${chunkHTML(s.list.map(postCardHTML))}</div><div class="bl-foot">${segFoot(i)}</div></section>`;
+    return `<section class="bl-seg" data-seg="${i}" data-plat="${L.esc(s.plat)}" data-pkey="${L.esc(s.pkey)}" data-handle="${L.esc(s.handle)}">${accHd}<div class="bl-list list">${chunkHTML(segRows(s, 0))}</div><div class="bl-foot">${segFoot(i)}</div></section>`;
+  }
+  /** 一段里从第 from 条起的行；北京日期一变就插一条「11.16 今天　更新 N 篇」（N = 这一段那天的全部帖子数，来自 bloggers.json 全量清单） */
+  function segRows(s, from) {
+    const rows = [];
+    let last = from > 0 && s.list[from - 1] ? L.beijingDate(s.list[from - 1].published_at) : null;
+    const today = (meta && meta.today) || L.beijingDate(new Date());
+    s.list.slice(from).forEach(x => {
+      const d = L.beijingDate(x.published_at);
+      if (d && d !== last) {
+        last = d;
+        if (!s.dayN) { s.dayN = {}; posts().forEach(p => { if (p.blogger.platform === s.plat && (s.pkey === 'all' || p.blogger.handle === s.handle)) { const k = L.beijingDate(p.published_at); s.dayN[k] = (s.dayN[k] || 0) + 1; } }); }
+        const n = s.dayN[d] || 0;
+        rows.push(`<div class="dayh" data-day="${d}"><b>${L.esc(L.dayLabel(d, today))}</b>${n ? `<span class="dpill">更新 ${n} 篇</span>` : ''}</div>`);
+      }
+      rows.push(L.postRowHTML(x));
+    });
+    return rows;
   }
   function gateBloggers() {
     const vis = gateList(blSegs.length, i => segExhausted(blSegs[i]), i => blSegs[i].revealed);
@@ -440,18 +520,27 @@
     if (!bloggers) { $('#bloggerList').innerHTML = '<p class="muted">正在加载…</p>'; return; }
     $('#platChips').innerHTML = bloggers.platforms.map(p => {
       const n = recentCount(p.id);
-      return `<button type="button" class="chip logo${p.id === plat ? ' on' : ''}" data-plat="${p.id}" aria-label="${L.esc(p.name)}" title="${L.esc(p.name)}">${platIcon(p)}${n ? `<span class="unread" aria-label="${n} 条 24 小时内的新帖">${n}</span>` : ''}</button>`;
+      return `<button type="button" class="avb${p.id === plat ? ' on' : ''}" data-plat="${p.id}" aria-label="${L.esc(p.name)}" title="${L.esc(p.name)}"><span class="avc">${platIcon(p)}${n ? `<span class="unread" aria-label="${n} 条 24 小时内的新帖">${n}</span>` : ''}</span><b>${L.esc(p.name)}</b></button>`;
     }).join('');
+    const nAcc = bloggers.platforms.reduce((a, p) => a + (p.accounts || []).length, 0);
+    $('#blStat').textContent = `${nAcc} 位博主 · ${bloggers.platforms.length} 个平台的最新动态`;
     buildBlSegs();
     const list = $('#bloggerList');
     list.innerHTML = groupsHTML();
     delete list.dataset.cur;
-    fixBrokenThumbs(list);
+    fixBrokenThumbs(list); markRead(list);
     if (blObs) blObs.disconnect();
     blObs = makeLoader($('#view-blogger .sub'), el => loadSeg(Number(el.dataset.seg)), blStickyH);
     gateBloggers(); observeBlSentinels();
     const sub = $('#view-blogger .sub');
     if (!sub._spy) { sub._spy = true; sub.addEventListener('scroll', spyBloggers, {passive: true}); }
+    syncBlTop();
+  }
+  /* 博主页顶上是一块色带（暗色青灰 / 亮色暖灰）：色带在的时候顶栏藏起来，滑过色带顶栏才出来，写当前平台名 */
+  function syncBlTop() {
+    const band = $('#blBand');
+    const show = currentView() === 'blogger' && !!band && band.getBoundingClientRect().bottom < $('#top').offsetHeight;
+    $('#app').classList.toggle('top-show', show);
   }
   async function loadSeg(i) {
     const s = blSegs[i];
@@ -469,18 +558,19 @@
     const sec = $(`#bloggerList .bl-seg[data-seg="${i}"]`); if (!sec) return;
     const box = sec.querySelector('.bl-list');
     keepPlace($('#view-blogger .sub'), sec, blStickyH(), () => {
-      box.insertAdjacentHTML('beforeend', chunkHTML(fresh.map(postCardHTML)));
+      box.insertAdjacentHTML('beforeend', chunkHTML(segRows(s, s.list.length - fresh.length)));
       sec.querySelector('.bl-foot').innerHTML = segFoot(i);
       gateBloggers();
     });
-    fixBrokenThumbs(box); settleChunks(box); repin(); observeBlSentinels();
+    fixBrokenThumbs(box); settleChunks(box); markRead(box); repin(); observeBlSentinels();
   }
-  function blStickyH() { const hd = $('#view-blogger .sticky-hd'); return hd ? hd.offsetHeight : 0; }
+  function blStickyH() { return $('#top').offsetHeight; }   // 博主页的顶栏浮在列表上面（滑过色带后出现），跳段时目标停在它下面
   let blSpyRaf = 0;
   function spyBloggers() {
     if (blSpyRaf) return;
     blSpyRaf = requestAnimationFrame(() => {
       blSpyRaf = 0;
+      syncBlTop();
       const sub = $('#view-blogger .sub'); if (!sub || !blSegs.length) return;
       if (pin && pin.scroller === sub && performance.now() < pin.until) return;
       const top = sub.getBoundingClientRect().top + blStickyH() + 8;
@@ -501,6 +591,19 @@
     const chip = $(`#platChips [data-plat="${CSS.escape(s.plat)}"]`);
     if (chip) { const r = chip.parentElement, cr = chip.getBoundingClientRect(), rr = r.getBoundingClientRect(); if (cr.left < rr.left || cr.right > rr.right) r.scrollLeft += cr.left - rr.left - 16; }   // 当前平台图标露出来
     if (s.pkey !== 'all') $$(`#bloggerList .people[data-people="${CSS.escape(s.plat)}"] .ppl`).forEach(b => b.classList.toggle('on', b.dataset.person === s.handle));
+    if (currentView() === 'blogger') updateTopName();
+  }
+  function nextPlat() {
+    const cur = blSegs[Number($('#bloggerList').dataset.cur || 0)];
+    const i = cur ? blSegs.findIndex(s => s.plat !== cur.plat && blSegs.indexOf(cur) < blSegs.indexOf(s)) : 1;
+    if (i < 0) { toast('已经是最后一个平台。'); return; }
+    jumpSeg(i, 1);
+  }
+  /** 「全部」：所有平台和博主一览，点平台跳过去，点人 = 从这个人开始按人分段 */
+  async function openAllBloggers() {
+    await ensureBloggers();
+    const ps = (bloggers && bloggers.platforms) || [];
+    openSheet(`<div class="sh-title">全部博主<small>${ps.length} 个平台</small></div><div class="allb">${ps.map(p => `<div class="allp"><button type="button" class="allp-h" data-all-plat="${L.esc(p.id)}">${platIcon(p)}<b>${L.esc(p.name)}</b><span>${p.count ? `${L.esc(p.count)} 条` : ''}${L.icon('chevron-right')}</span></button>${(p.accounts || []).length ? `<div class="accs">${p.accounts.map(a => `<button type="button" class="${a.total ? '' : 'zero'}" data-plat-of="${L.esc(p.id)}" data-person="${L.esc(a.handle)}">${L.esc(a.name)}${a.total ? ` <i>${L.esc(a.total)}</i>` : ''}</button>`).join('')}</div>` : ''}</div>`).join('')}</div>`, {cls: 'tall'});
   }
   function jumpSeg(i, dir) {
     const s = blSegs[i]; if (!s) return;
@@ -525,8 +628,6 @@
     const i = blSegs.findIndex(s => s.plat === id && (handle === 'all' ? s.pkey === 'all' : s.handle === handle));
     if (i >= 0) jumpSeg(i);
   }
-  /** Grok bot 渠道是我们整理的成品（有标题、摘要、配图），按资讯卡显示；其余平台按推文卡 */
-  function postCardHTML(x) { return x.blogger && x.blogger.platform === 'grok' ? L.feedRowHTML(x) : L.tweetCardHTML(x, true); }
   async function ensureBloggers() {
     if (bloggers) return false;
     try { bloggers = await getJSON('bloggers.json'); remember(bloggers.items); } catch (e) { bloggers = {platforms: [], items: []}; }
@@ -544,22 +645,32 @@
     return hotIndex;
   }
   function hotPayload() { return hotDay ? hotDays[hotDay] : hot; }
+  /** 日期：「今天」+ 存下来的往日（「11月15日」） */
+  function hotDayChips() {
+    const today = (meta && meta.today) || L.beijingDate(new Date());
+    const past = ((hotIndex && hotIndex.dates) || []).filter(d => d.date !== today);
+    return [{date: null, label: '今天'}].concat(past.map(d => { const [, m, dd] = d.date.split('-').map(Number); return {date: d.date, label: `${m}月${dd}日`}; }));
+  }
+  function hotDatesHTML() {
+    return `<div class="dates hot-dates" id="hotDates" role="tablist" aria-label="选日期">${hotDayChips().map(c => `<button type="button" role="tab" class="chip${(c.date || null) === hotDay ? ' on' : ''}" data-hot-day="${c.date || ''}" aria-selected="${(c.date || null) === hotDay}">${L.esc(c.label)}</button>`).join('')}</div>`;
+  }
+  /** 一行热搜的站内 id（已读变灰、长按收藏都用它）：外链地址的哈希 */
+  function hotIdOf(href) { let h = 0; for (const c of String(href)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return 'hot-' + h.toString(36); }
   function renderHotBody() {
     const host = $('#hotHost');
     const payload = hotPayload();
-    if (hotDay && payload === undefined) { host.innerHTML = '<p class="muted">正在加载…</p>'; return; }
-    if (!payload || !(payload.providers || []).length) { host.innerHTML = `<p class="muted">${hotDay ? '这天没有存下热搜。' : '热搜暂时没加载出来，稍后点右上角刷新再试。'}</p>`; return; }
-    const when = payload.generated_at ? (hotDay ? `这是 ${L.fmtDay(hotDay + 'T12:00:00+08:00')} 最后一次抓到的榜单（${L.fmtTime(payload.generated_at)}）。` : `抓取于 ${L.fmtTime(payload.generated_at)}。`) : '';
+    if (hotDay && payload === undefined) { host.innerHTML = `<div class="hot-top">${hotDatesHTML()}</div><p class="muted">正在加载…</p>`; return; }
+    if (!payload || !(payload.providers || []).length) { host.innerHTML = `<div class="hot-top">${hotDatesHTML()}</div><p class="muted">${hotDay ? '这天没有存下热搜。' : '热搜暂时没加载出来，稍后点右上角刷新再试。'}</p>`; return; }
     const act = (payload.providers || []).find(p => p.id === hotActive) || payload.providers.find(p => p.status === 'ok') || payload.providers[0];
-    const end = act && act.status === 'ok' && (act.items || []).length ? `<div class="end-hint end-all" data-end="hot">${ENDED}</div>` : '';
-    host.innerHTML = `${when ? `<p class="hot-day-note">${L.esc(when)}</p>` : ''}${L.hotsearchHTML(payload, hotActive, false, 1000)}${end}`;
+    const note = hotDay && payload.generated_at ? `这是 ${L.fmtDay(hotDay + 'T12:00:00+08:00')} 最后一次抓到的榜单（${L.fmtTime(payload.generated_at)}）` :
+      (act && act.status === 'ok' && (act.fetched_at || payload.generated_at) ? `${L.hotShort(act.name)} · 抓取于 ${L.fmtWhen(act.fetched_at || payload.generated_at)}` : '');
+    const end = act && act.status === 'ok' && (act.items || []).length ? `<div class="end-hint end-all" data-end="hot"><span>${ENDED}</span></div>` : '';
+    host.innerHTML = `${L.hotsearchHTML(payload, hotActive, false, 1000, {dates: hotDatesHTML(), note})}${end}`;
+    $$('.hot-list li', host).forEach(li => { const a = li.querySelector('a'); if (a) li.dataset.hid = hotIdOf(a.href); });
+    markRead(host);
   }
   async function renderHot() {
-    const idx = await ensureHotIndex();
-    const today = (meta && meta.today) || L.beijingDate(new Date());
-    const past = (idx.dates || []).filter(d => d.date !== today);
-    const chips = [{date: null, label: '今天 · 现在'}].concat(past.map(d => ({date: d.date, label: L.fmtDay(d.date + 'T12:00:00+08:00')})));
-    $('#hotDates').innerHTML = chips.map(c => `<button type="button" role="tab" class="chip${(c.date || null) === hotDay ? ' on' : ''}" data-hot-day="${c.date || ''}" aria-selected="${(c.date || null) === hotDay}">${L.esc(c.label)}</button>`).join('');
+    await ensureHotIndex();
     $('#view-hot').dataset.hotDay = hotDay || 'now';
     renderHotBody();
   }
@@ -608,6 +719,8 @@
   function showView(name, keepArticle) {
     $$('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + name));
     $$('.tabbar button').forEach(b => { b.classList.toggle('on', b.dataset.view === name); b.setAttribute('aria-current', b.dataset.view === name ? 'page' : 'false'); });
+    $('#app').dataset.tab = name;
+    closeDrop(); updateTopName(); syncBlTop();
     if (name === 'blogger') ensureBloggers();
     if (name === 'hot') renderHot();
     if (name === 'favorites') mountFeature(name);
@@ -659,46 +772,126 @@
     const more = hidden ? `<button type="button" class="more-btn c-more" data-cmt-more>展开更早的 ${hidden} 条</button>` : '';
     return `<section class="tg-comments${hidden ? ' folded' : ''}" data-tg-comments><h4>评论楼 <span class="meta">${L.esc(L.fmtN(total))}</span></h4><p class="cmt-note">${note}<a href="${L.esc(it.url)}" target="_blank" rel="noopener">在 Telegram 看全部</a></p>${more}${rows}</section>`;
   }
+  /* 正文页（v16）：大标题 → 作者行（头像 / 名字 / 完整时间）→ 机器翻译标记 + 看原文 → 配图 → 正文（字号可调）→ 引用卡、互动、评论 */
+  function artMeta(it) {
+    const b = it.blogger || {};
+    const isPost = it.kind === 'post';
+    const name = (isPost && (b.display_name || b.handle)) || it.source_name || '';
+    const av = isPost && b.avatar ? `<img class="av" src="${L.esc(b.avatar)}" alt="">` : `<span class="av letter">${L.esc((name || '?')[0])}</span>`;
+    const p = isPost ? platOf(b.platform) : null;
+    const sub = [L.fmtFull(it.published_at), p ? p.name : ''].filter(Boolean).join(' · ');
+    return `<div class="d-meta">${av}<div class="d-who"><div class="nm">${L.esc(name)}</div><div class="tm">${L.esc(sub)}</div></div>${it.highlight ? '<span class="mt-badge hlb">今日重点</span>' : ''}</div>`;
+  }
+  function paras(text) { return String(text || '').split(/\n+/).map(x => x.trim()).filter(Boolean).map(x => `<p>${L.esc(x)}</p>`).join(''); }
+  function mtRow(d, origHTML) {
+    if (!d.translated) return '';
+    return `<div class="mt-row art-tools"><span class="mt-badge">${L.esc(d.label)}</span>${origHTML ? '<button type="button" class="orig-btn" data-art-orig>看原文</button>' : ''}</div>${origHTML ? `<div class="art-orig" data-art-orig-box>${origHTML}</div>` : ''}`;
+  }
+  function artActions(it) {
+    const slot = '<div class="fav-slot" data-fav-slot></div>';
+    const open = it.url ? `<a class="primary d-src" href="${L.esc(it.url)}" target="_blank" rel="noopener">${L.icon('external-link')}打开原文</a>` : '';
+    return `<div class="actions">${slot}${open}</div>`;
+  }
   function articleHTML(it) {
     const d = L.display(it);
-    const slot = '<div class="fav-slot" data-fav-slot></div>';
-    const open = it.url ? `<a class="primary" href="${L.esc(it.url)}" target="_blank" rel="noopener">打开原文</a>` : '';
     const isGrok = it.kind === 'post' && it.blogger && it.blogger.platform === 'grok';
     const blocks = d.blocks || (d.bodyPending ? null : it.blocks);
+    const title = d.title ? `<h3 class="art-title">${L.esc(d.title)}</h3>` : '';
+    const cover = it.image && it.image.url ? `<img class="cover" src="${L.esc(it.image.url)}" alt="${L.esc(it.image.alt || '')}" data-zoom="${L.esc(it.image.url)}">` : '';
     if (d.bodyPending && !(d.blocks && d.blocks.length) && !(it.kind === 'post' && !isGrok)) {
-      const who = ((it.blogger || {}).display_name || it.source_name);
-      const cover = it.image && it.image.url ? `<img class="cover" src="${L.esc(it.image.url)}" alt="${L.esc(it.image.alt || '')}" data-zoom="${L.esc(it.image.url)}">` : '';
-      // 全文译文没好时，原文照样能看（以前这里没有「看原文」，英文正文完全看不到）
+      // 全文译文没好时，原文照样能看
       const ob = d.orig ? (it.blocks && it.blocks.length ? `<div class="art-blocks">${L.blocksHTML(it.blocks)}</div>` : L.esc(d.orig.body || d.orig.summary || '')) : '';
-      const pendingOrig = d.translated && ob ? `<div class="art-tools"><button type="button" class="orig-btn" data-art-orig>看原文</button></div><div class="art-orig" data-art-orig-box><h4>${L.esc(d.orig.title || '')}</h4>${ob}</div>` : '';
-      return `${cover}<div class="src art-src"><span>${L.esc(who)} · ${L.esc(L.fmtTime(it.published_at))}</span>${d.translated ? `<span class="mt-badge">${L.esc(d.label)}</span>` : ''}</div>
-        <h3 class="art-title">${L.esc(d.title)}</h3><p class="art-pending">${L.esc(L.BODY_PENDING)}</p>${d.summary ? `<p class="art-text">${L.esc(d.summary)}</p>` : ''}${pendingOrig}
-        <div class="actions">${slot}${open}</div>`;
+      return `${title}${artMeta(it)}${mtRow(d, ob ? `<h4>${L.esc(d.orig.title || '')}</h4>${ob}` : '')}${cover}<p class="art-pending">${L.esc(L.BODY_PENDING)}</p>${d.summary ? `<div class="art-text">${paras(d.summary)}</div>` : ''}${artActions(it)}`;
     }
     if (blocks && blocks.length && !(it.kind === 'post' && isGrok)) {
       // 公众号 / 博客 / 抽出的新闻正文：按原文顺序；有译文 blocks 时直接显示中文，原文可展开
-      const b = it.blogger || {};
-      const who = (b.display_name || it.source_name);
-      const origBlocks = d.translated && it.blocks && d.blocks ? `<div class="art-tools"><button type="button" class="orig-btn" data-art-orig>看原文</button></div><div class="art-orig" data-art-orig-box><div class="art-blocks">${L.blocksHTML(it.blocks)}</div></div>` : '';
-      return `<div class="src art-src"><span>${L.esc(who)} · ${L.esc(L.fmtTime(it.published_at))}</span>${d.translated ? `<span class="mt-badge">${L.esc(d.label)}</span>` : ''}</div>
-        <h3 class="art-title">${L.esc(d.title)}</h3><div class="art-blocks" data-blocks>${L.blocksHTML(blocks)}</div>${origBlocks}
-        <div class="actions">${slot}${open}</div>`;
+      const origBlocks = d.translated && it.blocks && d.blocks ? `<div class="art-blocks">${L.blocksHTML(it.blocks)}</div>` : '';
+      return `${title}${artMeta(it)}${mtRow(d, origBlocks)}<div class="art-blocks" data-blocks>${L.blocksHTML(blocks)}</div>${artActions(it)}`;
     }
-    if (it.kind === 'post' && !isGrok) return `${L.tweetCardHTML(it, false)}<div class="actions">${slot}${open}</div>`;
+    if (it.kind === 'post' && !isGrok) return `${L.tweetCardHTML(it, false)}${artActions(it)}`;
     let text = (d.body || d.summary || '').trim();
     // TG 正文第一行常是「【标题】」，标题已单独显示，正文里不再重复
     const first = text.split('\n')[0].replace(/[【】\s]/g, '');
     if (first && first === d.title.replace(/[【】\s]/g, '')) text = text.slice(text.indexOf('\n') + 1 || text.length).trim();
-    const orig = d.translated ? `<div class="art-tools"><button type="button" class="orig-btn" data-art-orig>看原文</button></div><div class="art-orig" data-art-orig-box><h4>${L.esc(d.orig.title)}</h4>${L.esc(d.orig.body || d.orig.summary)}</div>` : '';
+    const orig = d.translated ? `<h4>${L.esc(d.orig.title)}</h4>${L.esc(d.orig.body || d.orig.summary)}` : '';
     const bare = L.isBareForward(it);
-    const cover = it.image && it.image.url ? `<img class="cover" src="${L.esc(it.image.url)}" alt="${L.esc(it.image.alt || '')}" data-zoom="${L.esc(it.image.url)}">` : '';
-    const head = `${cover}
-      <div class="src art-src"><span>${L.esc(it.source_name)} · ${L.esc(L.fmtTime(it.published_at))}</span>${it.highlight ? '<span class="t-badge">今日重点</span>' : ''}${d.translated ? `<span class="mt-badge">${L.esc(d.label)}</span>` : ''}</div>`;
     const pending = d.bodyPending ? `<p class="art-pending">${L.esc(L.BODY_PENDING)}</p>` : '';
     const main = bare ? '<div class="fwd-tag">转发</div>' :
-      `<h3 class="art-title">${L.esc(d.title)}</h3>${pending}${text || !it.quote ? `<p class="art-text${text ? '' : ' none'}">${L.esc(text || L.NO_BODY)}</p>` : ''}${orig}`;
-    return `${head}${main}${L.quoteCardHTML(it, true)}${L.tgStatsHTML(it, true)}${commentsHTML(it)}
-      <div class="actions">${slot}${open}</div>`;
+      `${pending}${text || !it.quote ? `<div class="art-text${text ? '' : ' none'}">${text ? paras(text) : `<p>${L.esc(L.NO_BODY)}</p>`}</div>` : ''}`;
+    return `${bare ? '' : title}${artMeta(it)}${mtRow(d, orig)}${cover}${main}${L.quoteCardHTML(it, true)}${L.tgStatsHTML(it, true)}${commentsHTML(it)}${artActions(it)}`;
+  }
+  /** 评论数：TG 评论总数 / 抓到的评论 / X 回复数；都没有就 0（按钮上只写「评论」） */
+  function cmtCount(it) {
+    const tg = it.tg || {}, b = it.blogger || {};
+    return tg.comments_total || (tg.comments || []).length || (b.comments || []).length || ((b.metrics || {}).reply) || 0;
+  }
+
+  /* ---------- 底部半屏（v16）：评论、分享、字号、更多 ---------- */
+  function openSheet(html, opts = {}) {
+    const sh = $('#actSheet');
+    $('#actBody').innerHTML = html;
+    sh.querySelector('.box').className = 'box act-box' + (opts.half ? ' half' : '') + (opts.cls ? ' ' + opts.cls : '');
+    sh.classList.add('on'); sh.setAttribute('aria-hidden', 'false');
+    $('#actBody').scrollTop = 0;
+  }
+  function closeSheet() { const sh = $('#actSheet'); sh.classList.remove('on'); sh.setAttribute('aria-hidden', 'true'); }
+  let artItem = null;
+  function curItem() { return articleOpen ? artItem : null; }
+  function openComments(it) {
+    const tg = it.tg || {}, b = it.blogger || {};
+    const n = cmtCount(it);
+    let body;
+    if ((tg.comments || []).length) body = commentsHTML(it).replace(' folded', '').replace(/<button type="button" class="more-btn c-more" data-cmt-more>[^<]*<\/button>/, '');
+    else if ((b.comments || []).length) body = L.xCommentsHTML(it, true);
+    else body = `<div class="empty-cmt">暂时没有抓到公开评论。${it.url ? `<a class="d-link" href="${L.esc(it.url)}" target="_blank" rel="noopener">到原文看讨论 ›</a>` : ''}</div>`;
+    const ttl = (tg.comments || []).length ? '评论楼' : (b.comments || []).length ? '热门回复' : '评论';
+    openSheet(`<div class="sh-title">${ttl}${n ? `<small>${L.esc(L.fmtN(n))} 条</small>` : ''}</div><div class="cmts">${body}</div>`, {half: true});
+  }
+  function openShare(it) {
+    openSheet(`<div class="sh-title">分享<small>${L.esc(it.source_name || ((it.blogger || {}).display_name) || '')}</small></div><div class="share-grid">
+      <button type="button" data-act="sys"><span>${L.icon('share')}</span>系统分享</button><button type="button" data-act="copy"><span>${L.icon('link')}</span>复制链接</button>
+      <button type="button" data-act="text"><span>${L.icon('copy')}</span>复制标题</button>${it.url ? `<button type="button" data-act="open"><span>${L.icon('external-link')}</span>打开原文</button>` : ''}</div><button type="button" class="sh-cancel" data-act="x">取消</button>`);
+  }
+  const FONT_KEY = 'rebang-v11-font', FONT_DEF = 18;
+  function setFont(v) {
+    v = Math.max(14, Math.min(26, Number(v) || FONT_DEF));
+    document.documentElement.style.setProperty('--rfs', v + 'px');
+    try { if (v === FONT_DEF) localStorage.removeItem(FONT_KEY); else localStorage.setItem(FONT_KEY, String(v)); } catch (e) { /* 隐私模式 */ }
+    return v;
+  }
+  try { if (localStorage.getItem(FONT_KEY)) setFont(localStorage.getItem(FONT_KEY)); } catch (e) { /* 隐私模式 */ }
+  function fontNow() { return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rfs'), 10) || FONT_DEF; }
+  function openFont() {
+    const v = fontNow();
+    openSheet(`<div class="sh-title">字号<small id="fontV">${v}px</small></div><div class="font-sh"><div class="font-row"><span class="a1">A</span><input type="range" min="14" max="26" step="1" value="${v}" id="fontRange" aria-label="正文字号"><span class="a2">A</span></div>
+      <div class="font-prev">拖动滑块调整正文字号，正文会立即变化，下次打开也照这个字号。</div><div class="font-btns"><button type="button" data-act="font-def">默认字号</button><button type="button" class="pri" data-act="x">完成</button></div></div>`);
+    $('#fontRange').oninput = e => { $('#fontV').textContent = setFont(e.target.value) + 'px'; };
+  }
+  function openArtMore(it) {
+    openSheet(`<div class="menu-list"><button type="button" data-act="font">${L.icon('a-large-small')}字号</button><button type="button" data-act="copy">${L.icon('link')}复制链接</button>${it.url ? `<button type="button" data-act="open">${L.icon('external-link')}打开原文</button>` : ''}</div><button type="button" class="sh-cancel" data-act="x">取消</button>`);
+  }
+  async function onSheet(e) {
+    const sh = $('#actSheet');
+    if (performance.now() < suppressClickUntil) return;
+    const b = e.target.closest('[data-act], [data-all-plat], [data-person]');
+    if (!b) { if (e.target === sh) closeSheet(); return; }
+    if (b.dataset.allPlat) { closeSheet(); pickPlat(b.dataset.allPlat); return; }
+    if (b.dataset.person) { closeSheet(); pickPerson(b.dataset.platOf || plat, b.dataset.person); return; }
+    const act = b.dataset.act, it = curItem();
+    if (act === 'font') { openFont(); return; }
+    if (act === 'font-def') { const r = $('#fontRange'); if (r) { r.value = FONT_DEF; } $('#fontV').textContent = setFont(FONT_DEF) + 'px'; return; }
+    closeSheet();
+    if (!it || act === 'x') return;
+    if (act === 'sys') shareItem(it);
+    else if (act === 'copy') toast(await copyText(linkOf(it)) ? '链接已复制。' : '没能复制链接。');
+    else if (act === 'text') { const t = (L.display(it).title || it.title || '') + ' ' + linkOf(it); toast(await copyText(t.trim()) ? '已复制标题和链接。' : '没能复制。'); }
+    else if (act === 'open' && it.url) window.open(it.url, '_blank', 'noopener');
+  }
+  function syncArtFav() {
+    const F = window.RebangFavorites, btn = $('#dFav');
+    const on = !!(articleId && F && F.isFavorite && F.isFavorite(articleId));
+    btn.classList.toggle('faved', on); btn.setAttribute('aria-pressed', String(on)); btn.setAttribute('aria-label', on ? '取消收藏' : '收藏');
+    btn.innerHTML = L.icon(on ? 'bookmark-check' : 'bookmark');
   }
   function attachFav(slot, it) {
     const handle = mounted.favorites || (registry.favorites && mountFeature('favorites'));
@@ -749,15 +942,18 @@
     const slot = body.querySelector('[data-fav-slot]');
     if (slot) attachFav(slot, it);
     $('#articleView').classList.add('on');
-    body.scrollTop = 0;
-    articleOpen = true; articleId = id;
+    body.scrollTop = 0; $('#artBar').classList.remove('solid');
+    articleOpen = true; articleId = id; artItem = it;
+    const n = cmtCount(it); $('#dCmtN').textContent = n ? L.fmtN(n) : '评论';
+    syncArtFav(); setRead(id);
     renderNav();
     if (opts.replace && history.state && history.state.article) history.replaceState({article: id}, '', L.itemHash(id));
     else if (!opts.fromPop) history.pushState({article: id}, '', L.itemHash(id));
   }
   function closeArticle(opts = {}) {
     if (!articleOpen) return;
-    articleOpen = false; articleId = null;
+    articleOpen = false; articleId = null; artItem = null;
+    closeSheet();
     $('#articleView').classList.remove('on');
     $('#articleView').style.transform = '';
     restoreScroll(returnState);
@@ -870,16 +1066,15 @@
        8. 底栏同一个按钮 0.35 秒内点两下 → 当前页回到顶部（点一下照常切页）。 */
   const EDGE = 24, LOCK = 8, CH_SWIPE = 64, PULL_GO = 56, LONG_MS = 500;
   const CARD_SEL = '.feed-row, .tweet, .row-item, .hero, .hot-list li';
-  const HSCROLL_SEL = '.chips, .dates, .people, .hot-tabs, .banner-rail, .banner-wrap, pre, .b-pre';
+  const HSCROLL_SEL = '.chips, .dates, .people, .hot-tabs, .banner-rail, .banner-wrap, .accs, .drop, pre, .b-pre';
   const SCROLLER_SEL = '.feed-root, .sub, .article-body';
   let g = null, suppressClickUntil = 0;
   /** 热搜一行没有站内条目：用它的外链拼一个只读条目（收藏里点开显示标题 +「打开原文」，分享给外链） */
   function hotItem(li) {
     const a = li.querySelector('a'); if (!a || !a.href) return null;
-    let h = 0; for (const c of a.href) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-    const sec = li.closest('.hot'), tab = sec && sec.querySelector('.hot-tabs .on');
+    const sec = li.closest('.hot'), tab = sec && sec.querySelector('.hot-tabs .on b');
     const title = (li.querySelector('.t') || a).textContent.trim();
-    return {id: 'hot-' + h.toString(36), kind: 'news', hot: true, title, summary: '', url: a.href, source_name: tab ? `${tab.textContent.trim()}热搜` : '热搜', published_at: ''};
+    return {id: hotIdOf(a.href), kind: 'news', hot: true, title, summary: '', url: a.href, source_name: tab ? `${tab.textContent.trim()}热搜` : '热搜', published_at: ''};
   }
   function cardItem(card) {
     if (card && card.matches('.hot-list li')) return hotItem(card);
@@ -909,6 +1104,7 @@
     if (mounted.favorites && mounted.favorites.refresh) mounted.favorites.refresh();
     const btn = $('#articleBody [data-favorite-button]');
     if (btn && articleId === it.id) { btn.classList.toggle('on', res.on); btn.textContent = res.on ? '取消收藏' : '收藏这条'; btn.setAttribute('aria-pressed', String(res.on)); }
+    if (articleId === it.id) syncArtFav();
     toast(res.on ? '已收藏，只存在这台设备的浏览器里。' : '已取消收藏。');
   }
   function openMenu(card) {
@@ -917,9 +1113,10 @@
     const on = F && F.isFavorite ? F.isFavorite(it.id) : false;
     const full = items.get(it.id) || it;
     const menu = $('#cardMenu');
-    menu.querySelector('.box').innerHTML = `<div class="handle"></div><div class="menu-ttl">${L.esc(L.display(full).title || full.title || '')}</div>
-      <button type="button" data-menu="fav">${on ? '取消收藏' : '收藏'}</button><button type="button" data-menu="share">分享</button>
-      <button type="button" data-menu="copy">复制链接</button>${full.url ? '<button type="button" data-menu="open">打开原文</button>' : ''}<button type="button" data-menu="cancel" class="cancel">取消</button>`;
+    const prev = L.display(full).title || full.title || String(L.display(full).summary || '').slice(0, 90);
+    menu.querySelector('.box').innerHTML = `<div class="handle"></div>${prev ? `<div class="menu-ttl">${L.esc(prev)}</div>` : ''}
+      <div class="menu-list"><button type="button" data-menu="fav" class="${on ? 'red' : ''}">${L.icon(on ? 'bookmark-check' : 'bookmark')}<span>${on ? '取消收藏' : '收藏'}</span></button><button type="button" data-menu="share">${L.icon('share')}<span>分享</span></button>
+      <button type="button" data-menu="copy">${L.icon('link')}<span>复制链接</span></button>${full.url ? `<button type="button" data-menu="open">${L.icon('external-link')}<span>打开原文</span></button>` : ''}</div><button type="button" data-menu="cancel" class="cancel sh-cancel">取消</button>`;
     menu._item = full; menu.classList.add('on'); menu.setAttribute('aria-hidden', 'false');
   }
   function closeMenu() { const m = $('#cardMenu'); m.classList.remove('on'); m.setAttribute('aria-hidden', 'true'); m._item = null; }
@@ -945,7 +1142,7 @@
     g = {x0: t.clientX, y0: t.clientY, x: t.clientX, y: t.clientY, t0: performance.now(), axis: null, target, card,
       inArticle, edge: inArticle && t.clientX <= EDGE, hscroll: !!target.closest(HSCROLL_SEL),
       lrChannels: !!target.closest('.feed-root.lr'), scroller: target.closest(SCROLLER_SEL), kind: null, long: null};
-    if (card) g.long = setTimeout(() => { if (g && !g.axis) { g.kind = 'menu'; suppressClickUntil = performance.now() + 60000; if (navigator.vibrate) navigator.vibrate(10); openMenu(card); } }, LONG_MS);
+    if (card) g.long = setTimeout(() => { if (g && !g.axis) { g.kind = 'menu'; suppressClickUntil = performance.now() + 60000; if (navigator.vibrate) navigator.vibrate(10); card.classList.add('press'); setTimeout(() => card.classList.remove('press'), MOTION.slow); openMenu(card); } }, LONG_MS);
   }
   function onTouchMove(e) {
     if (!g) return;
@@ -1196,15 +1393,18 @@
   function onClick(e) {
     const t = e.target;
     if (performance.now() < suppressClickUntil) { e.preventDefault(); e.stopPropagation(); return; }
-    const zhit = t.closest('img[data-zoom], .media-grid .cell, .post-cover, .feed-row .thumb, .b-img');
+    const zhit = t.closest('img[data-zoom], .media-grid .cell, .thumb .cell, .post-cover, .feed-row .thumb, .brow .thumb, .b-img');
     if (zhit && !zoom.open) {
-      const cell = zhit.closest('[data-media-list] .cell');
+      const cell = zhit.closest('[data-media-list] .cell') || (zhit.matches('[data-media-list]') ? zhit.querySelector('.cell') : null);
       const mel = cell && cell.querySelector('[data-media-i]');
       if (mel) { e.preventDefault(); e.stopPropagation(); openZoom(mel); return; }
       const img = zhit.matches && zhit.matches('img') ? zhit : zhit.querySelector('img[data-zoom], img');
       if (img && (img.dataset.zoom || img.src)) { e.preventDefault(); e.stopPropagation(); openZoom(img); return; }
     }
     const nav = t.closest('[data-nav]'); if (nav) { step(Number(nav.dataset.nav)); return; }
+    const bb = t.closest('[data-b]');
+    if (bb) { const k = bb.dataset.b; if (k === 'fav') onTab('favorites'); else if (k === 'filter') openDrop(); else if (k === 'next') nextPlat(); else if (k === 'all') openAllBloggers(); return; }
+    const hotA = t.closest('.hot-list a'); if (hotA) { const li = hotA.closest('li'); if (li && li.dataset.hid) setRead(li.dataset.hid); return; }
     const orig = t.closest('[data-orig]');
     if (orig) { e.stopPropagation(); const box = $(`[data-orig-box="${CSS.escape(orig.dataset.orig)}"]`); if (box) { const on = box.classList.toggle('on'); orig.textContent = on ? '收起原文' : '看原文'; } return; }
     const cmore = t.closest('[data-cmt-more]');
@@ -1225,11 +1425,31 @@
   }
 
   async function boot() {
-    $('#when').textContent = L.fmtDay(new Date());
     $$('.tabbar button').forEach(b => b.addEventListener('click', () => onTab(b.dataset.view)));
     bindTouch();
     bindZoom();
     $('#cardMenu').addEventListener('click', onMenu);
+    $('#actSheet').addEventListener('click', onSheet);
+    // 顶栏：点标题开/关下拉（频道 / 平台 / 日期）；点遮罩关
+    $('#chBtn').addEventListener('click', () => { if (performance.now() < diagSwallow) return; if (dropOpen()) closeDrop(); else openDrop(); });
+    $('#dropMask').addEventListener('click', closeDrop);
+    $('#dropList').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      closeDrop();
+      if (b.dataset.dropCh != null) { showView('channels'); jumpChannel(Number(b.dataset.dropCh)); }
+      else if (b.dataset.dropPlat) pickPlat(b.dataset.dropPlat);
+      else if (b.dataset.hotDay != null) pickHotDay(b.dataset.hotDay);
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (dropOpen()) closeDrop(); else if ($('#actSheet').classList.contains('on')) closeSheet(); } });
+    // 正文底部浮条
+    $('#dFont').onclick = openFont;
+    $('#dFav').onclick = () => { const it = curItem(); if (it) toggleFav(it); };
+    $('#dShare').onclick = () => { const it = curItem(); if (it) openShare(it); };
+    $('#dCmt').onclick = () => { const it = curItem(); if (it) openComments(it); };
+    $('#btnArtMore').onclick = () => { const it = curItem(); if (it) openArtMore(it); };
+    $('#articleBody').addEventListener('scroll', () => { $('#artBar').classList.toggle('solid', $('#articleBody').scrollTop > 60); }, {passive: true});
+    // 收藏 / 搜索模块自己渲染的列表也标已读
+    if (window.MutationObserver) ['#view-favorites', '#search-panel'].forEach(sel => { const el = $(sel); if (el) new MutationObserver(() => markRead(el)).observe(el, {childList: true, subtree: true}); });
     // 收藏 / 搜索模块自己的列表（data-item-id）点开时，也带上「上一条/下一条」的列表
     document.addEventListener('click', e => {
       const row = e.target.closest('[data-item-id]');
@@ -1237,8 +1457,8 @@
       else if (row) { e.preventDefault(); e.stopImmediatePropagation(); }
     }, true);
     // 两种翻法共用同一条长流，只是「左右」多了横滑换频道；切换不重建，位置不动
-    $('#modeLR').onclick = () => { if (mode !== 'lr') { mode = 'lr'; localStorage.setItem(MKEY, mode); applyMode(); } };
-    $('#modeUD').onclick = () => { if (mode !== 'ud') { mode = 'ud'; localStorage.setItem(MKEY, mode); applyMode(); } };
+    $('#modeLR').onclick = () => { if (mode !== 'lr') { mode = 'lr'; localStorage.setItem(MKEY, mode); applyMode(); } closeDrop(); };
+    $('#modeUD').onclick = () => { if (mode !== 'ud') { mode = 'ud'; localStorage.setItem(MKEY, mode); applyMode(); } closeDrop(); };
     $('#btnRefresh').onclick = doRefresh;
     $('#btnBack').onclick = () => closeArticle();
     document.querySelector('.app').addEventListener('click', onClick);
@@ -1256,6 +1476,7 @@
       box.querySelector('button').onclick = () => { box.hidden = true; sessionStorage.setItem(NOTE_KEY, note); };
     }
     renderChannels();
+    $('#app').dataset.tab = currentView(); updateTopName();
     booted = true;
     ctx.searchButton = $('#btnSearch');
     if (registry.search) mountFeature('search');
