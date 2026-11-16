@@ -23,9 +23,10 @@ KEEP_DAYS = 16              # 条目只收 14 天，多留两天
 REFRESH_HOURS = 48          # 48 小时内的消息每次都重抓表情/浏览数（数字还在涨）
 MAX_PAGES = 45              # 每个频道每次最多翻多少页（每页约 20 条）
 COMMENT_HOURS = 48          # 只给 48 小时内的消息抓评论
-COMMENT_PER_CHANNEL = 8     # 每个频道每次最多抓几条消息的评论
+COMMENT_PER_CHANNEL = 10    # 每个频道每次最多抓几条消息的评论
 COMMENT_REFRESH_HOURS = 6
-COMMENT_PREVIEW = 8         # 每条最多存几条评论（挂件本身只给最近的一小段）
+COMMENT_PREVIEW = 30        # 评论楼：每条最多存几条评论（挂件加 comments_limit 参数后一次能给这么多，最新的在后）
+REPLY_SNIPPET = 120         # 楼中楼「回复 某人：…」引用的原话最多几个字
 PROBE_HOURS = 24            # 多久重新确认一次频道有没有开公开评论
 
 
@@ -141,21 +142,36 @@ def parse_discussion(html):
     comments = []
     for msg in soup.select('.tgme_post_discussion .tgme_widget_message, .tgme_widget_message[data-post-id]'):
         text = _text(_own_text_node(msg))
-        author = msg.select_one('.tgme_widget_message_author_name, .tgme_widget_message_owner_name')
+        author = msg.select_one('.tgme_widget_message_bubble > .tgme_widget_message_author .tgme_widget_message_author_name, '
+                                '.tgme_widget_message_author_name, .tgme_widget_message_owner_name')
         if not text or not author:
-            continue
+            continue          # 只有图片/贴纸的评论没有可显示的文字，跳过，不编
         c = {'display_name': author.get_text(' ', strip=True), 'text': text}
-        tm = msg.select_one('time[datetime]')
+        if str(msg.get('data-post-id') or '').isdigit():
+            c['id'] = int(msg['data-post-id'])
+        tm = msg.select_one('.tgme_widget_message_footer time[datetime], .tgme_widget_message_date time[datetime]') or msg.select_one('time[datetime]')
         if tm:
             c['published_at'] = tm['datetime']
-        reply = msg.select_one('.tgme_widget_message_reply .tgme_widget_message_author_name')
-        if reply:
-            c['reply_to'] = reply.get_text(' ', strip=True)
+        reply = msg.select_one('.tgme_widget_message_reply')
+        if reply is not None:
+            who = reply.select_one('.tgme_widget_message_author_name')
+            if who and who.get_text(' ', strip=True):
+                c['reply_to'] = who.get_text(' ', strip=True)
+            said = _text(reply.select_one('.js-message_reply_text, .tgme_widget_message_text'))
+            if said:
+                c['reply_text'] = said if len(said) <= REPLY_SNIPPET else said[:REPLY_SNIPPET].rstrip() + '…'
+            if str(reply.get('data-reply-to') or '').isdigit():
+                c['reply_to_id'] = int(reply['data-reply-to'])
         if c not in comments:
             comments.append(c)
     if total is None and not comments:
         return off
     return {'enabled': True, 'total': total, 'comments': comments[-COMMENT_PREVIEW:]}
+
+
+def discussion_url(channel, mid):
+    """讨论组挂件地址：加 comments_limit 一次拿评论楼，而不是默认的最近 5 条。"""
+    return f'https://t.me/{channel}/{mid}?embed=1&discussion=1&comments_limit={COMMENT_PREVIEW}'
 
 
 def _get(url):
@@ -246,7 +262,7 @@ def refresh(channels, now=None, store=None, get=_get, days=14, sleep=0.25, log=N
         probe_at = _when(info.get('discussion_probed_at'))
         if mine and (probe_at is None or now - probe_at > timedelta(hours=PROBE_HOURS)):
             try:
-                result = parse_discussion(get(f'https://t.me/{ch}/{mine[0][0]}?embed=1&discussion=1'))
+                result = parse_discussion(get(discussion_url(ch, mine[0][0])))
                 info['discussion'] = result['enabled']
                 info['discussion_probed_at'] = stamp
                 if result['enabled']:
@@ -267,7 +283,7 @@ def refresh(channels, now=None, store=None, get=_get, days=14, sleep=0.25, log=N
             if got and now - _when(got) < timedelta(hours=COMMENT_REFRESH_HOURS):
                 continue
             try:
-                meta['comments'] = dict(parse_discussion(get(f'https://t.me/{ch}/{mid}?embed=1&discussion=1')), fetched_at=stamp)
+                meta['comments'] = dict(parse_discussion(get(discussion_url(ch, mid))), fetched_at=stamp)
                 stats['comments_fetched'] += 1
             except Exception as ex:
                 stats['errors'][f'{ch}/{mid}:discussion'] = type(ex).__name__

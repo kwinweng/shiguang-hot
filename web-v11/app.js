@@ -396,12 +396,26 @@
     };
     apply(); requestAnimationFrame(() => requestAnimationFrame(apply));
   }
+  /** TG 评论楼：讨论组公开挂件里能看到的评论，按时间从早到晚；楼中楼显示「回复 某人」和被回复的原话。
+   *  先放 COMMENT_FOLD 条，其余点「展开」再显示；没有公开评论就不出这一块，不编。 */
+  const COMMENT_FOLD = 10;
   function commentsHTML(it) {
     const tg = it.tg || {};
     const list = tg.comments || [];
-    if (!list.length) return '';   // 频道没开公开评论，或挂件里没有可见评论：不显示，不编
-    const total = tg.comments_total ? `共 ${L.esc(L.fmtN(tg.comments_total))} 条，` : '';
-    return `<section class="tg-comments" data-tg-comments><h4>评论</h4><p class="cmt-note">${total}这里只显示 Telegram 公开页面上能看到的最近 ${list.length} 条。<a href="${L.esc(it.url)}" target="_blank" rel="noopener">在 Telegram 看全部</a></p>${list.map(c => `<div class="comment"><span class="av letter">${L.esc((c.display_name || '?').trim()[0] || '?')}</span><div><div class="nm" style="font-size:13px">${L.esc(c.display_name)}${c.reply_to ? ` <span class="meta">回复 ${L.esc(c.reply_to)}</span>` : ''}${c.published_at ? ` <span class="meta">· ${L.esc(L.fmtTime(c.published_at))}</span>` : ''}</div><div class="t-body">${L.esc(c.text)}</div></div></div>`).join('')}</section>`;
+    if (!list.length) return '';
+    const total = tg.comments_total && tg.comments_total > list.length ? tg.comments_total : list.length;
+    const note = total > list.length ? `共 ${L.esc(L.fmtN(total))} 条，这里是 Telegram 公开页面上能看到的最近 ${list.length} 条。` : `共 ${list.length} 条，来自 Telegram 公开页面。`;
+    const base = (it.url || '').split('?')[0];
+    const rows = list.map((c, i) => {
+      const name = (c.display_name || '').trim() || '匿名';
+      const reply = c.reply_to || c.reply_text ? `<div class="c-reply">${c.reply_to ? `<b>${L.esc(c.reply_to)}</b>` : ''}${c.reply_text ? `<span>${L.esc(c.reply_text)}</span>` : ''}</div>` : '';
+      const when = c.published_at ? `<span class="meta">${L.esc(L.fmtTime(c.published_at))}</span>` : '';
+      const link = base && Number.isInteger(c.id) ? ` <a class="meta c-open" href="${L.esc(base)}?comment=${c.id}" target="_blank" rel="noopener">原楼</a>` : '';
+      return `<div class="comment${i < list.length - COMMENT_FOLD ? ' c-fold' : ''}"><span class="av letter">${L.esc(name[0])}</span><div class="c-main"><div class="nm c-nm">${L.esc(name)}${c.reply_to ? ' <span class="meta">回复</span>' : ''} ${when}${link}</div>${reply}<div class="t-body">${L.esc(c.text)}</div></div></div>`;
+    }).join('');
+    const hidden = Math.max(0, list.length - COMMENT_FOLD);
+    const more = hidden ? `<button type="button" class="more-btn c-more" data-cmt-more>展开更早的 ${hidden} 条</button>` : '';
+    return `<section class="tg-comments${hidden ? ' folded' : ''}" data-tg-comments><h4>评论楼 <span class="meta">${L.esc(L.fmtN(total))}</span></h4><p class="cmt-note">${note}<a href="${L.esc(it.url)}" target="_blank" rel="noopener">在 Telegram 看全部</a></p>${more}${rows}</section>`;
   }
   function articleHTML(it) {
     const d = L.display(it);
@@ -943,6 +957,8 @@
     const nav = t.closest('[data-nav]'); if (nav) { step(Number(nav.dataset.nav)); return; }
     const orig = t.closest('[data-orig]');
     if (orig) { e.stopPropagation(); const box = $(`[data-orig-box="${CSS.escape(orig.dataset.orig)}"]`); if (box) { const on = box.classList.toggle('on'); orig.textContent = on ? '收起原文' : '看原文'; } return; }
+    const cmore = t.closest('[data-cmt-more]');
+    if (cmore) { const sec = cmore.closest('[data-tg-comments]'); if (sec) sec.classList.remove('folded'); cmore.remove(); return; }
     const artOrig = t.closest('[data-art-orig]');
     if (artOrig) { const box = $('[data-art-orig-box]'); const on = box.classList.toggle('on'); artOrig.textContent = on ? '收起原文' : '看原文'; return; }
     const tab = t.closest('[data-hot]');

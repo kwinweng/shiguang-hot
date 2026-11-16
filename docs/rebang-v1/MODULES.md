@@ -20,6 +20,7 @@ t.me 公开页 → tgmeta ──┼→ ingest → var/rebang/in/ingest.json ─�
 ## tgmeta：TG 附加信息
 - `python3 -m rebang.tgmeta [--store var/rebang/cache/tgmeta.json] [--channels a,b] [--fixtures DIR]`。
 - 读 t.me/s 公开页，补频道自己的话、引用/转发原帖、表情、浏览数、公开评论；按 `<频道>/<消息号>` 由 ingest 合进条目，`tg.db` 不动。
+- 评论楼（2026-11-16）：开了公开讨论区的频道（现为 zaihuapd、xhqcankao、FinanceNewsDaily、CE_Observe、myBigCharacterPoster）每条最多存 30 条评论；详情页「评论楼」按时间从早到晚，先放最近 10 条，「展开更早的 N 条」看其余，楼中楼显示被回复的人和原话，每条有「原楼」链接回 t.me。
 - 坑：`?before=` 翻页时转发头的名字有时为空。空名会退回作者名，新值缺失或变空时保留旧值（PR #41）。
 
 ## ingest：资讯来源 → `rebang.items/1`

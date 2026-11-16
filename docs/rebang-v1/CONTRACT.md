@@ -36,12 +36,12 @@
 | `highlight` / `highlight_date` | 否 | 今日重点标记（站上不单开栏） |
 | `blogger` | post 必填 | `{platform, handle, display_name, avatar?, verified?, metrics{reply,repost,like,quote,bookmark,view}?, media[{type:image|video|gif,url,preview_url?,duration_ms?}], quote{handle,text,display_name?,published_at?,url?,...}|null, comments[{handle,text,display_name?,avatar?,published_at?,url?,like?,text_zh?}]?}`；评论最多 10 条，按点赞排序。`like` 是非负整数，拿不到不写。英文回复译文在 `text_zh`，原文留在 `text`。拿不到的字段不写，不编数字。Grok bot 的 4 类整理内容是 `platform:"grok"`、`handle` = 来源 id（hot-daily/x/world/github）、`channel:null` |
 | `quote` | 否（news） | v13：TG 引用/转发的原帖。`{kind: forward|reply, source_name, url, text}`。`forward` = 频道转发别人的帖子，频道自己没写话时 `summary/body` 为空串，前端标「转发」；`reply` = 频道引用了某条帖子，`title/summary/body` 是频道自己的话，`quote.text` 是被引用的原文（≤1500 字）。来自 t.me 公开页面，拿不到不写 |
-| `tg` | 否（news） | v13：t.me 公开页面上的互动数。`{views?, views_label?, reactions[{emoji,count,label}]?, comments_total?, comments[{display_name,text,published_at?,reply_to?}]?, fetched_at}`。付费星星记为 ⭐，自定义表情（没有字符）跳过；评论只在频道开了公开讨论区、挂件里能看到时才写，否则不写，**不编** |
+| `tg` | 否（news） | v13：t.me 公开页面上的互动数。`{views?, views_label?, reactions[{emoji,count,label}]?, comments_total?, comments[{display_name,text,id?,published_at?,reply_to?,reply_to_id?,reply_text?}]?, fetched_at}`。付费星星记为 ⭐，自定义表情（没有字符）跳过；评论只在频道开了公开讨论区、挂件里能看到时才写，否则不写，**不编** |
 | `blocks` | 否 | 公众号/博客文章，以及从公开新闻页抽出的正文，按原文顺序：`p{text}`、`h{text,level}`、`quote{text}`、`ul/ol{items}`、`pre{text}`、`hr`、`img{src,width?,height?,alt?,local?,missing?}`。`blocks` 存在时 `body` = 块里的文字。公众号图片在 bloggers 运行时不带 Referer 下载到 `var/rebang/media/wechat/`（`local{path,rel,width,height}`），站点构建复制到 `media/wechat/…` 并去掉 `local`；没下下来的公众号图标 `missing:true`，前端如实写「这张图没存下来」，不外链（外站引用公众号图床会变成「未经允许不可引用」占位图）。Wechat2RSS 加的开头「原创/作者/日期/属地」行、封面图、结尾「跳转微信打开」都去掉 |
 
 ### 2.1 TG 公开页面附加信息（`rebang.tgmeta/1`，v13）
 
-`python3 -m rebang.tgmeta` 读 `channels.json` 里的 TG 频道，低频翻 `https://t.me/s/<频道>`（只读、匿名、不登录），存到 `var/rebang/cache/tgmeta.json`（不进仓库）：每条消息的频道自己的话、转发来源、引用原文、表情回应、浏览数；每个频道每 24 小时用最新一条探测一次是否开了公开讨论区（`?embed=1&discussion=1`），开了才抓最近 48 小时内最多 8 条消息的公开评论（6 小时内不重抓）。保留 16 天。`python3 -m rebang.ingest` 默认读这个文件（`--no-tgmeta` 关掉，文件不存在就跳过）。旧 `tg.db` 对引用消息存的是被引用的原文，有 tgmeta 时以 t.me 页面上频道自己的话为准。
+`python3 -m rebang.tgmeta` 读 `channels.json` 里的 TG 频道，低频翻 `https://t.me/s/<频道>`（只读、匿名、不登录），存到 `var/rebang/cache/tgmeta.json`（不进仓库）：每条消息的频道自己的话、转发来源、引用原文、表情回应、浏览数；每个频道每 24 小时用最新一条探测一次是否开了公开讨论区（`?embed=1&discussion=1`），开了才抓最近 48 小时内每频道最多 10 条消息的公开评论（6 小时内不重抓）。挂件加 `comments_limit=30`，每条最多存最近 30 条评论（评论楼），带楼号 `id`、被回复的楼号 `reply_to_id` 和原话 `reply_text`（≤120 字）；只有图片/贴纸的评论没有文字，跳过。保留 16 天。`python3 -m rebang.ingest` 默认读这个文件（`--no-tgmeta` 关掉，文件不存在就跳过）。旧 `tg.db` 对引用消息存的是被引用的原文，有 tgmeta 时以 t.me 页面上频道自己的话为准。
 
 ## 3. 热搜（`rebang.hotsearch/1`）
 
