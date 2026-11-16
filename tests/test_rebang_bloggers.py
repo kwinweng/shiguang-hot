@@ -596,8 +596,8 @@ def test_jike_images_shrunk_on_cdn_only():
     assert sized('https://example.com/a.jpg') == 'https://example.com/a.jpg'
 
 
-def test_weread_login_refreshes_qr_after_server_timeout(tmp_path):
-    """二维码只活一轮长轮询（约 60 秒）：LOGIN_TIMEOUT 时换新二维码接着等，而不是直接退出。"""
+def test_weread_login_refreshes_qr_when_server_says_no_retry(tmp_path):
+    """LOGIN_TIMEOUT 且没有 canRetry：换新二维码接着等，而不是直接退出。"""
     from rebang.bloggers import weread
     logs, uids = [], iter(['u-a', 'u-b'])
     polls = iter([{'logicCode': 'LOGIN_TIMEOUT'}, {'succeed': True, 'webLoginVid': 7, 'accessToken': 'S'}])
@@ -624,3 +624,21 @@ def test_weread_login_with_otp_does_not_refresh(tmp_path):
         return {'logicCode': 'LOGIN_TIMEOUT'}
     assert weread.login(wait=30, uid='u-9', otp='1234', session_path=tmp_path / 's.json', get=get, log=logs.append) is False
     assert json.loads(logs[-1])['step'] == 'expired'
+
+
+def test_weread_login_keeps_same_qr_on_retryable_timeout(tmp_path):
+    """真实回包（2026-11-16）：长轮询约 56 秒回 {LOGIN_TIMEOUT, canRetry: true, succeed: false}，同一个码接着等。"""
+    from rebang.bloggers import weread
+    logs, seen = [], []
+    polls = iter([{'logicCode': 'LOGIN_TIMEOUT', 'canRetry': True, 'succeed': False}] * 3
+                 + [{'succeed': True, 'webLoginVid': 8, 'accessToken': 'S2'}])
+
+    def get(url, session=None, timeout=25):
+        if url.endswith('getLoginUid'):
+            assert not seen, 'should not ask for a new QR'
+            return {'uid': 'u-same'}
+        seen.append(url)
+        return next(polls)
+    assert weread.login(wait=600, session_path=tmp_path / 's.json', get=get, log=logs.append) is True
+    assert [json.loads(x)['step'] for x in logs] == ['scan', 'done']
+    assert len(seen) == 4 and all('uid=u-same' in u for u in seen)

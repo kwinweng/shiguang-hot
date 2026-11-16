@@ -110,8 +110,9 @@ def _log(line):
 
 
 def login(qr_png=None, wait=600, uid=None, otp='', session_path=DEFAULT_SESSION, get=http_json, log=_log, clock=time.monotonic):
-    """扫码登录。微信读书一个二维码只活一轮长轮询（约 60 秒，网页版同样在 LOGIN_TIMEOUT 时把二维码标成「已失效」），
-    所以过期后自动换新二维码（覆盖同一个 PNG、打印新的 confirm_url），一直等到 wait 秒用完。带 --otp 重试时不换。"""
+    """扫码登录。getLoginInfo 是长轮询，约 56 秒回一次 {logicCode: LOGIN_TIMEOUT, canRetry: true}：这只是这一轮等完了，
+    同一个二维码仍然有效，用同一个 uid 接着轮询，直到 wait 秒用完（2026-11-16 前两次扫码失败就是把它当成过期退出了）。
+    只有服务端回 LOGIN_TIMEOUT 且没有 canRetry 时才换新二维码（覆盖同一个 PNG、打印 refreshed）。带 --otp 重试时不换。"""
     fixed = bool(uid)
 
     def new_qr(step):
@@ -145,8 +146,10 @@ def login(qr_png=None, wait=600, uid=None, otp='', session_path=DEFAULT_SESSION,
             log(json.dumps({'step': 'need_otp', 'uid': uid,
                             'how': f'手机上会显示验证码；拿到后运行 login --uid {uid} --otp <验证码>'}, ensure_ascii=False))
             return False
+        if code == 'LOGIN_TIMEOUT' and info.get('canRetry'):
+            continue          # 长轮询约 56 秒回一次 {LOGIN_TIMEOUT, canRetry:true}：同一个二维码仍有效，接着等
         if code == 'LOGIN_TIMEOUT' and not fixed and clock() < deadline:
-            new_qr('refreshed')
+            new_qr('refreshed')   # 服务端说不能再等这个码了，才换新码
             continue
         if code in ('LOGIN_TIMEOUT', 'OTP_EXPIRED'):
             log(json.dumps({'step': 'expired', 'how': '二维码过期了，重新运行 login 生成新的'}, ensure_ascii=False))
