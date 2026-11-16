@@ -826,6 +826,7 @@
   /** 停掉舞台上的视频：移出 DOM 的 <video> 在部分浏览器里会继续出声，所以先暂停再卸地址 */
   function zoomStopMedia() {
     $$('#zoomStage video').forEach(v => { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) { /* 已卸载 */ } });
+    $$('#zoomStage iframe').forEach(f => { try { f.src = 'about:blank'; } catch (e) { /* 已卸载 */ } });
   }
   function zoomVideoFail(v) {
     const m = zoomCur();
@@ -846,6 +847,11 @@
     const poster = m.poster ? ` poster="${L.esc(m.poster)}"` : '';
     if (m.type === 'video') {
       stage.innerHTML = `<div class="zoom-media is-video"><video src="${L.esc(m.src)}"${poster} controls playsinline preload="metadata"></video></div>`;
+    } else if (m.type === 'youtube') {
+      // YouTube 用 youtube-nocookie 嵌入播放器，点播放才出声；页面整体 referrer 是 same-origin，
+      // 嵌入播放器没有来源会报「播放器配置错误」，所以这一个 iframe 单独带来源域名（不带路径）。
+      const open = zoom.origin || m.src;
+      stage.innerHTML = `<div class="zoom-media is-video is-yt"><div class="yt-frame"><iframe src="${L.esc(m.src)}?playsinline=1&rel=0" title="YouTube 视频" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" loading="eager"></iframe></div>${open ? `<p class="yt-open"><a href="${L.esc(open)}" target="_blank" rel="noopener">播不了？在 YouTube 打开</a></p>` : ''}</div>`;
     } else if (m.type === 'gif') {
       stage.innerHTML = `<div class="zoom-media is-gif"><video src="${L.esc(m.src)}"${poster} autoplay muted loop playsinline preload="auto"></video></div>`;
     } else {
@@ -874,7 +880,7 @@
   /** 触点落在原生播放控件（视频底部一条）或兜底链接上：交给浏览器，不当成滑动/关闭 */
   function zoomNativeTouch(ev) {
     const t = ev.target;
-    if (t.closest && t.closest('.zoom-fail a')) return true;
+    if (t.closest && t.closest('.zoom-fail a, .yt-open a, .yt-frame')) return true;
     const v = t.closest && t.closest('.zoom-media.is-video video');
     if (!v || !ev.touches || !ev.touches.length) return false;
     const r = v.getBoundingClientRect();

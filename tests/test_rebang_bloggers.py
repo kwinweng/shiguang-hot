@@ -214,10 +214,12 @@ def test_full_run_envelope_valid_and_login_platforms_not_configured(tmp_path):
     assert validate_items_envelope(env) == []
     status = {p['id']: p['status'] for p in env['platforms']}
     assert status == {'x': 'ok', 'blog': 'ok', 'jike': 'ok', 'weibo': 'not_configured',
-                      'wechat': 'ok', 'zhihu': 'empty'}
+                      'wechat': 'ok', 'youtube': 'empty', 'zhihu': 'empty'}
     assert not [i for i in env['items'] if i['blogger']['platform'] == 'weibo']
     jike = next(p for p in env['platforms'] if p['id'] == 'jike')
     assert {a['status'] for a in jike['accounts']} == {'ok'} and len(jike['accounts']) == 9
+    yt = next(p for p in env['platforms'] if p['id'] == 'youtube')
+    assert yt['reason'] == runmod.REASONS['youtube_pending_confirm'] and yt['accounts'] == []
     wechat = next(p for p in env['platforms'] if p['id'] == 'wechat')
     rows = {a['handle']: a['status'] for a in wechat['accounts']}
     assert rows.pop('夕小瑶科技说') == 'ok' and set(rows.values()) == {'not_configured'}
@@ -399,3 +401,93 @@ def test_wechat_header_lines_not_in_summary():
     items = feed_posts((FX / 'rss_wechat2rss.xml').read_bytes(), platform('wechat'), account('wechat', '夕小瑶科技说'), NOW.isoformat())
     assert all(not i['summary'].startswith('原创') for i in items)
     assert items[0]['title'] and items[0]['body']
+
+
+# ---------- YouTube（名单待确认；管道用合成名单测） ----------
+
+YT_ACC = {'handle': 'UCpnuadQ_w3r6f4Q_NRlqd-w', 'name': 'Kraig Adams', 'home': 'https://www.youtube.com/@KraigAdams'}
+
+
+def yt_platform(accounts=(YT_ACC,)):
+    return dict(platform('youtube'), accounts=list(accounts))
+
+
+def test_youtube_feed_to_posts_uses_embed_player_and_real_fields():
+    from rebang.bloggers import youtube as yt
+    calls = []
+
+    def http(url):
+        calls.append(url)
+        return (FX / 'youtube_feed.xml').read_bytes()
+    items, via = yt.channel_posts(http, yt_platform(), YT_ACC, NOW.isoformat())
+    assert via == 'rss' and calls == ['https://www.youtube.com/feeds/videos.xml?channel_id=UCpnuadQ_w3r6f4Q_NRlqd-w']
+    assert len(items) == 3 and all(validate_item(i) == [] for i in items)
+    first = items[0]
+    assert first['published_at'] >= items[1]['published_at']
+    m = first['blogger']['media'][0]
+    vid = first['id'].split(':')[-1]
+    assert m == {'type': 'youtube', 'url': f'https://www.youtube-nocookie.com/embed/{vid}', 'preview_url': f'https://i.ytimg.com/vi/{vid}/hqdefault.jpg'}
+    assert first['url'] == f'https://www.youtube.com/watch?v={vid}' and first['title']
+    assert isinstance(first['blogger']['metrics']['view'], int)
+
+
+def test_youtube_rss_404_falls_back_to_public_pages_and_caches_dates():
+    from rebang.bloggers import youtube as yt
+    calls, naps = [], []
+
+    def http(url):
+        calls.append(url)
+        if 'feeds/videos.xml' in url:
+            raise FeedError('http_status')        # 2026 年常见：订阅接口对存在的频道回 404
+        if url.endswith('/videos'):
+            return (FX / 'youtube_channel_videos.html').read_bytes()
+        if 'watch?v=AAAAAAAAAA1' in url:
+            return (FX / 'youtube_watch.html').read_bytes()
+        raise FeedError('http_5xx')               # 第二个视频页取不到：这轮不出，不编时间
+    cache = {}
+    items, via = yt.channel_posts(http, yt_platform(), YT_ACC, NOW.isoformat(), cache=cache, sleep=naps.append)
+    assert via == 'page' and naps == [yt.RETRY_PAUSE]
+    assert sum('feeds/videos.xml' in u for u in calls) == 2      # 订阅重试一次
+    assert [i['id'].split(':')[-1] for i in items] == ['AAAAAAAAAA1']
+    assert items[0]['published_at'] == '2026-11-12T02:43:56+08:00' and items[0]['summary'].startswith('第一行简介')
+    assert items[0]['blogger']['media'][0]['duration_ms'] == 914000
+    assert 'AAAAAAAAAA1' in cache and 'AAAAAAAAAA2' not in cache
+    calls.clear()
+    yt.channel_posts(http, yt_platform(), YT_ACC, NOW.isoformat(), cache=cache, sleep=naps.append)
+    assert not any('watch?v=AAAAAAAAAA1' in u for u in calls)    # 已缓存的视频不再打开视频页
+
+
+def test_youtube_platform_run_keeps_previous_when_unreachable(tmp_path, monkeypatch):
+    from rebang.contract import schema
+    real = schema.load_bloggers()
+    cfg = dict(real, platforms=[yt_platform() if p['id'] == 'youtube' else p for p in real['platforms']])
+    monkeypatch.setattr(runmod, 'load_bloggers', lambda: cfg)
+    monkeypatch.setattr(schema, 'load_bloggers', lambda: cfg)
+    good_http = lambda url: (FX / 'youtube_feed.xml').read_bytes()
+    o = opts(tmp_path)
+    o.youtube_cache = tmp_path / 'yt.json'
+    good = runmod.run(('youtube',), http=good_http, now=NOW, opts=o, sleep=lambda s: None)
+    yt = next(p for p in good['platforms'] if p['id'] == 'youtube')
+    assert yt['status'] == 'ok' and yt['accounts'][0]['via'] == 'rss' and validate_items_envelope(good) == []
+
+    def down(url):
+        raise FeedError('http_status')
+    later = datetime.fromisoformat('2026-11-16T21:00:00+08:00')
+    env = runmod.run(('youtube',), http=down, now=later, previous=good, opts=o, sleep=lambda s: None)
+    yt = next(p for p in env['platforms'] if p['id'] == 'youtube')
+    row = yt['accounts'][0]
+    assert row['status'] == 'error' and row['error'] == 'youtube_unreachable' and row['stale'] is True
+    assert len([i for i in env['items'] if i['blogger']['platform'] == 'youtube']) == 3
+
+
+def test_youtube_bad_channel_id_is_not_fetched(tmp_path, monkeypatch):
+    from rebang.contract import schema
+    real = schema.load_bloggers()
+    bad = {'handle': '@KraigAdams', 'name': 'x'}
+    cfg = dict(real, platforms=[yt_platform([bad]) if p['id'] == 'youtube' else p for p in real['platforms']])
+    monkeypatch.setattr(runmod, 'load_bloggers', lambda: cfg)
+
+    def http(url):
+        raise AssertionError('should not fetch')
+    env = runmod.run(('youtube',), http=http, now=NOW, opts=opts(tmp_path), sleep=lambda s: None)
+    assert next(p for p in env['platforms'] if p['id'] == 'youtube')['accounts'][0]['error'] == 'parse'

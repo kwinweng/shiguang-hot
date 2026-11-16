@@ -75,7 +75,7 @@ class HotsearchConfigTests(unittest.TestCase):
 class BloggerConfigTests(unittest.TestCase):
     def test_counts(self):
         counts = {p['id']: len(p['accounts']) for p in load_bloggers()['platforms']}
-        self.assertEqual(counts, {'x': 16, 'grok': 4, 'blog': 7, 'jike': 9, 'weibo': 6, 'wechat': 6, 'zhihu': 0})
+        self.assertEqual(counts, {'x': 16, 'grok': 4, 'blog': 7, 'jike': 9, 'weibo': 6, 'wechat': 6, 'youtube': 0, 'zhihu': 0})
 
 
 class ItemTests(unittest.TestCase):

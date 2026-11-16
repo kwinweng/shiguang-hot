@@ -10,7 +10,7 @@ ITEMS_SCHEMA = 'rebang.items/1'
 HOTSEARCH_SCHEMA = 'rebang.hotsearch/1'
 KINDS = ('news', 'post')
 PROVIDER_STATUS = ('ok', 'empty', 'error')
-MEDIA_TYPES = ('image', 'video', 'gif')
+MEDIA_TYPES = ('image', 'video', 'gif', 'youtube')   # youtube：url 是 youtube-nocookie 嵌入地址，preview_url 是封面
 METRIC_KEYS = ('reply', 'repost', 'like', 'quote', 'bookmark', 'view')
 MT_LABEL = '机器翻译'
 
