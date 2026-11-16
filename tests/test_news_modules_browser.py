@@ -109,6 +109,10 @@ class NewsModulesBrowserTests(unittest.TestCase):
                 self.page.emulate_media(color_scheme=initial)
                 self.page.goto('about:blank')
                 self.open()
+                # 上一个子测试点过切换，选择存在本机；清掉再进，才是「跟随系统」的初始状态
+                self.page.evaluate("localStorage.removeItem('rebang-theme')")
+                self.page.goto('about:blank')
+                self.open()
                 button = self.page.locator('#theme')
                 for position, mode in enumerate((initial, 'dark' if initial == 'light' else 'light', initial)):
                     self.assertEqual(self.page.locator('html').get_attribute('data-theme'), mode)

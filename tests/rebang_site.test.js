@@ -169,3 +169,25 @@ test('v13 公众号正文块：按原文顺序渲染；没存下的图如实说�
   assert.ok(order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), order.join(','));
   assert.doesNotMatch(html, /mmbiz\.qpic\.cn/, '公众号图床不外链');
 });
+
+test('推文视频：封面 + 播放标 + 时长，媒体清单带视频地址和原帖链接；没封面时用 <video> 首帧', () => {
+  const media = [
+    {type: 'image', url: 'https://pbs/a.jpg'},
+    {type: 'video', url: 'https://video.twimg.com/v.mp4', preview_url: 'https://pbs/v.jpg', duration_ms: 42000},
+    {type: 'gif', url: 'https://video.twimg.com/g.mp4'},
+  ];
+  const html = L.mediaGrid(media, 'https://x.com/a/status/1');
+  assert.match(html, /data-origin="https:\/\/x.com\/a\/status\/1"/);
+  assert.match(html, /<img src="https:\/\/pbs\/v.jpg"[^>]*data-media-i="1">/);
+  assert.match(html, /<span class="vid-dur">0:42<\/span>/);
+  assert.match(html, /<video src="https:\/\/video.twimg.com\/g.mp4#t=0.1" muted playsinline preload="metadata" data-media-i="2">/);
+  const list = JSON.parse(html.match(/data-media-list="([^"]+)"/)[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&'));
+  assert.deepEqual(list, [
+    {t: 'image', u: 'https://pbs/a.jpg'},
+    {t: 'video', u: 'https://video.twimg.com/v.mp4', p: 'https://pbs/v.jpg'},
+    {t: 'gif', u: 'https://video.twimg.com/g.mp4', p: ''},
+  ]);
+  assert.equal(L.mediaGrid([]), '');
+  assert.equal(L.fmtDur(0), '');
+  assert.equal(L.fmtDur(125400), '2:05');
+});
