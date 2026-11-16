@@ -587,3 +587,10 @@ def test_wechat_without_session_stays_not_configured(tmp_path):
     rows = {a['handle']: (a['status'], a.get('reason')) for a in wechat['accounts']}
     rows.pop('夕小瑶科技说')
     assert set(rows.values()) == {('not_configured', runmod.REASONS['wechat_weread_qr'])}
+
+
+def test_jike_images_shrunk_on_cdn_only():
+    from rebang.bloggers.jike import sized
+    u = 'https://cdnv2.ruguoapp.com/x.heic?imageMogr2/format/jpeg'
+    assert sized(u) == u + '/thumbnail/1080x%3E' and sized(sized(u)) == sized(u)
+    assert sized('https://example.com/a.jpg') == 'https://example.com/a.jpg'
