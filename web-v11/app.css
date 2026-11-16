@@ -135,6 +135,9 @@ h2.ch{margin:0 16px 4px;font-size:28px;letter-spacing:-.04em;line-height:1.05;fo
 .vid-mark{position:absolute;inset:0;display:grid;place-items:center;background:#0006}
 .vid-mark i{width:44px;height:44px;border-radius:50%;background:#ffffffdd;display:grid;place-items:center}
 .vid-mark i svg{width:20px;height:20px;margin-left:2px}
+.vid-dur{position:absolute;right:6px;bottom:6px;padding:1px 6px;border-radius:4px;background:#000a;color:#fff;font-size:11px;font-variant-numeric:tabular-nums}
+.media-grid video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
+.media-grid .cell.is-vid{cursor:pointer}
 .more-ph{position:absolute;inset:0;background:#0007;color:#fff;font-size:22px;font-weight:600;display:grid;place-items:center}
 .quote{margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:10px}
 .quote .t-body{font-size:13px;margin-top:6px}
@@ -398,6 +401,13 @@ html,body{margin:0;height:100%;height:100dvh;background:var(--bg);color:var(--in
 .zoom-view.on{display:flex}
 .zoom-stage{flex:1;min-height:0;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .zoom-stage img{max-width:100%;max-height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;will-change:transform}
+.zoom-media{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;will-change:transform}
+.zoom-media video{max-width:100%;max-height:100%;width:100%;background:#000;object-fit:contain}
+.zoom-fail{gap:12px;padding:0 16px}
+.zoom-fail img{max-height:70%}
+.zoom-fail p{margin:0;font-size:14px;color:#ddd;text-align:center}
+.zoom-fail a{color:#d6b36a;text-decoration:underline}
+.zoom-close{position:absolute;top:calc(8px + var(--safe-top));right:10px;z-index:2;border:0;background:rgba(255,255,255,.14);color:#fff;border-radius:999px;width:36px;height:36px;font-size:22px;line-height:1;cursor:pointer}
 .zoom-bar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:8px 12px calc(10px + var(--safe-bot));color:#fff;font-size:13px}
 .zoom-bar button{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:999px;width:36px;height:36px;cursor:pointer}
 .zoom-count{letter-spacing:.04em;color:#ddd}

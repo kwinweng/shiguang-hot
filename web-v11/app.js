@@ -761,66 +761,122 @@
     else if (root._gAbort) { root._gAbort.abort(); root._gAbort = null; root.style.transform = ''; root.classList.remove('is-drag'); }   // 上下模式：频道横滑解绑，横滑留给卡片
   }
 
-  /* ---------- 图片全屏查看（现有栈，不另加依赖）：点开、左右滑、双指缩放、点空白或下滑关闭 ---------- */
-  const zoom = {urls: [], i: 0, open: false, scale: 1, tx: 0, ty: 0, start: null};
-  function zoomUrlsFrom(img) {
-    const grid = img.closest('[data-zoom-list]');
+  /* ---------- 图片/视频全屏查看（现有栈，不另加依赖）：点开、左右滑、图片双指缩放、点空白或下滑关闭 ----------
+   * 视频用原生 <video controls playsinline>，不自动出声；GIF 静音循环；离开当前一项就暂停；
+   * 播放出错保留封面，并给出原帖链接。 */
+  const zoom = {items: [], urls: [], i: 0, open: false, scale: 1, tx: 0, ty: 0, start: null, origin: ''};
+  function zoomUrlsFrom(el) {
+    const mgrid = el.closest('[data-media-list]');
+    if (mgrid) {
+      let items = [];
+      try { items = JSON.parse(mgrid.dataset.mediaList).map(m => ({type: m.t, src: m.u, poster: m.p || ''})).filter(m => m.src); } catch (e) { items = []; }
+      if (items.length) {
+        const i = Number(el.dataset.mediaI);
+        return {items, i: Number.isInteger(i) && i >= 0 && i < items.length ? i : 0, origin: mgrid.dataset.origin || ''};
+      }
+    }
+    const asImages = (urls, i) => ({items: urls.map(u => ({type: 'image', src: u})), i, origin: ''});
+    const grid = el.closest('[data-zoom-list]');
     if (grid && grid.dataset.zoomList) {
       const urls = grid.dataset.zoomList.split('|').filter(Boolean);
-      const i = Math.max(0, urls.indexOf(img.dataset.zoom || img.src));
-      return {urls, i: i < 0 ? 0 : i};
+      const i = Math.max(0, urls.indexOf(el.dataset.zoom || el.src));
+      return asImages(urls, i < 0 ? 0 : i);
     }
-    const scope = img.closest('.article-body, .tweet, .feed-row, .hero, .row-item, .more-body, .art-orig') || document;
+    const scope = el.closest('.article-body, .tweet, .feed-row, .hero, .row-item, .more-body, .art-orig') || document;
     const urls = [];
-    scope.querySelectorAll('img[data-zoom]').forEach(el => { const u = el.dataset.zoom || el.currentSrc || el.src; if (u && !urls.includes(u)) urls.push(u); });
-    const cur = img.dataset.zoom || img.currentSrc || img.src;
+    scope.querySelectorAll('img[data-zoom]').forEach(x => { const u = x.dataset.zoom || x.currentSrc || x.src; if (u && !urls.includes(u)) urls.push(u); });
+    const cur = el.dataset.zoom || el.currentSrc || el.src;
     const i = Math.max(0, urls.indexOf(cur));
-    return {urls: urls.length ? urls : [cur], i: i < 0 ? 0 : i};
+    return asImages(urls.length ? urls : [cur], i < 0 ? 0 : i);
   }
+  function zoomCur() { return zoom.items[zoom.i] || {type: 'image'}; }
   function zoomPaint() {
-    const stage = $('#zoomStage'), img = stage.querySelector('img');
-    if (!img) return;
-    img.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
-    $('#zoomCount').textContent = `${zoom.i + 1} / ${zoom.urls.length}`;
-    $('#zoomPrev').disabled = zoom.urls.length < 2;
-    $('#zoomNext').disabled = zoom.urls.length < 2;
+    const stage = $('#zoomStage'), el = stage.firstElementChild;
+    if (el) el.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
+    $('#zoomCount').textContent = `${zoom.i + 1} / ${zoom.items.length}`;
+    $('#zoomPrev').disabled = zoom.items.length < 2;
+    $('#zoomNext').disabled = zoom.items.length < 2;
+  }
+  /** 停掉舞台上的视频：移出 DOM 的 <video> 在部分浏览器里会继续出声，所以先暂停再卸地址 */
+  function zoomStopMedia() {
+    $$('#zoomStage video').forEach(v => { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) { /* 已卸载 */ } });
+  }
+  function zoomVideoFail(v) {
+    const m = zoomCur();
+    const box = v.closest('.zoom-media');
+    if (!box || box.dataset.failed) return;
+    box.dataset.failed = '1';
+    zoomStopMedia();
+    const link = zoom.origin || m.src;
+    box.className = 'zoom-media zoom-fail';
+    box.innerHTML = `${m.poster ? `<img src="${L.esc(m.poster)}" alt="">` : ''}<p>视频暂时播不了${link ? ` · <a href="${L.esc(link)}" target="_blank" rel="noopener">${zoom.origin ? '打开原帖' : '打开视频文件'}</a>` : ''}</p>`;
   }
   function zoomGo(i) {
-    if (!zoom.urls.length) return;
-    zoom.i = (i + zoom.urls.length) % zoom.urls.length;
+    if (!zoom.items.length) return;
+    zoomStopMedia();
+    zoom.i = (i + zoom.items.length) % zoom.items.length;
     zoom.scale = 1; zoom.tx = 0; zoom.ty = 0;
-    const stage = $('#zoomStage');
-    stage.innerHTML = `<img src="${L.esc(zoom.urls[zoom.i])}" alt="">`;
+    const stage = $('#zoomStage'), m = zoomCur();
+    const poster = m.poster ? ` poster="${L.esc(m.poster)}"` : '';
+    if (m.type === 'video') {
+      stage.innerHTML = `<div class="zoom-media is-video"><video src="${L.esc(m.src)}"${poster} controls playsinline preload="metadata"></video></div>`;
+    } else if (m.type === 'gif') {
+      stage.innerHTML = `<div class="zoom-media is-gif"><video src="${L.esc(m.src)}"${poster} autoplay muted loop playsinline preload="auto"></video></div>`;
+    } else {
+      stage.innerHTML = `<img src="${L.esc(m.src)}" alt="">`;
+    }
+    const v = stage.querySelector('video');
+    if (v) {
+      v.addEventListener('error', () => zoomVideoFail(v));
+      if (m.type === 'gif') { v.muted = true; const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+    }
     zoomPaint();
   }
-  function openZoom(img) {
-    const got = zoomUrlsFrom(img);
-    zoom.urls = got.urls; zoom.i = got.i; zoom.open = true; zoom.scale = 1; zoom.tx = 0; zoom.ty = 0;
+  function openZoom(el) {
+    const got = zoomUrlsFrom(el);
+    zoom.items = got.items; zoom.urls = got.items.map(m => m.src); zoom.i = got.i; zoom.origin = got.origin;
+    zoom.open = true; zoom.scale = 1; zoom.tx = 0; zoom.ty = 0;
     const view = $('#zoomView'); view.hidden = false; view.classList.add('on');
     zoomGo(zoom.i);
   }
   function closeZoom() {
     zoom.open = false; zoom.start = null;
+    zoomStopMedia();
     const view = $('#zoomView'); view.classList.remove('on'); view.hidden = true;
     $('#zoomStage').innerHTML = '';
+  }
+  /** 触点落在原生播放控件（视频底部一条）或兜底链接上：交给浏览器，不当成滑动/关闭 */
+  function zoomNativeTouch(ev) {
+    const t = ev.target;
+    if (t.closest && t.closest('.zoom-fail a')) return true;
+    const v = t.closest && t.closest('.zoom-media.is-video video');
+    if (!v || !ev.touches || !ev.touches.length) return false;
+    const r = v.getBoundingClientRect();
+    return ev.touches[0].clientY > r.bottom - 64;
   }
   function bindZoom() {
     const view = $('#zoomView'), stage = $('#zoomStage');
     $('#zoomPrev').onclick = ev => { ev.stopPropagation(); zoomGo(zoom.i - 1); };
     $('#zoomNext').onclick = ev => { ev.stopPropagation(); zoomGo(zoom.i + 1); };
     view.addEventListener('click', ev => { if (ev.target === view || ev.target === stage || ev.target === stage.querySelector('img') && zoom.scale <= 1) { /* tap handled in touchend */ } });
+    $('#zoomClose').onclick = ev => { ev.stopPropagation(); closeZoom(); };
     view.addEventListener('touchstart', ev => {
       ev.stopPropagation();
+      if (ev.target.closest && ev.target.closest('#zoomClose, .zoom-bar button')) { zoom.start = null; return; }
+      if (zoomNativeTouch(ev)) { zoom.start = {mode: 'native'}; return; }
       const pts = ev.touches;
-      if (pts.length === 2) {
+      if (pts.length === 2 && zoomCur().type === 'image') {
         const dx = pts[1].clientX - pts[0].clientX, dy = pts[1].clientY - pts[0].clientY;
         zoom.start = {mode: 'pinch', dist: Math.hypot(dx, dy), scale: zoom.scale, x: (pts[0].clientX + pts[1].clientX) / 2, y: (pts[0].clientY + pts[1].clientY) / 2, tx: zoom.tx, ty: zoom.ty};
       } else if (pts.length === 1) {
-        zoom.start = {mode: 'drag', x: pts[0].clientX, y: pts[0].clientY, tx: zoom.tx, ty: zoom.ty, t0: performance.now(), moved: false};
+        zoom.start = {mode: 'drag', x: pts[0].clientX, y: pts[0].clientY, tx: zoom.tx, ty: zoom.ty, t0: performance.now(), moved: false,
+          onMedia: !!(ev.target.closest && ev.target.closest('.zoom-media'))};
       }
     }, {passive: false});
     view.addEventListener('touchmove', ev => {
-      ev.preventDefault(); ev.stopPropagation();
+      ev.stopPropagation();
+      if (zoom.start && zoom.start.mode === 'native') return;   // 拖进度条等原生操作
+      ev.preventDefault();
       if (!zoom.start) return;
       const pts = ev.touches;
       if (zoom.start.mode === 'pinch' && pts.length === 2) {
@@ -843,9 +899,11 @@
       if (s.mode === 'drag' && zoom.scale <= 1) {
         const dx = zoom.tx, dy = zoom.ty, dt = performance.now() - s.t0;
         zoom.tx = 0; zoom.ty = 0; zoomPaint();
-        if (!s.moved || (Math.abs(dx) < 10 && Math.abs(dy) < 10 && dt < 350)) { closeZoom(); return; }
+        const tap = !s.moved || (Math.abs(dx) < 10 && Math.abs(dy) < 10 && dt < 350);
+        if (tap && s.onMedia) return;   // 点在视频上：交给原生控件播放/暂停，不关闭
+        if (tap) { closeZoom(); return; }
         if (dy > 80 && Math.abs(dy) > Math.abs(dx)) { closeZoom(); return; }
-        if (Math.abs(dx) > 60 && zoom.urls.length > 1) zoomGo(zoom.i + (dx < 0 ? 1 : -1));
+        if (Math.abs(dx) > 60 && zoom.items.length > 1) zoomGo(zoom.i + (dx < 0 ? 1 : -1));
         else zoomPaint();
       }
     });
@@ -864,6 +922,9 @@
     if (performance.now() < suppressClickUntil) { e.preventDefault(); e.stopPropagation(); return; }
     const zhit = t.closest('img[data-zoom], .media-grid .cell, .post-cover, .feed-row .thumb, .b-img');
     if (zhit && !zoom.open) {
+      const cell = zhit.closest('[data-media-list] .cell');
+      const mel = cell && cell.querySelector('[data-media-i]');
+      if (mel) { e.preventDefault(); e.stopPropagation(); openZoom(mel); return; }
       const img = zhit.matches && zhit.matches('img') ? zhit : zhit.querySelector('img[data-zoom], img');
       if (img && (img.dataset.zoom || img.src)) { e.preventDefault(); e.stopPropagation(); openZoom(img); return; }
     }

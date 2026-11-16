@@ -172,16 +172,32 @@
     play: '<svg viewBox="0 0 24 24" fill="#111"><path d="M9 7v10l9-5z"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M6 12l4 4 8-8"/></svg>'
   };
-  function mediaGrid(media) {
+  function fmtDur(ms) {
+    const t = Math.round(Number(ms) / 1000);
+    if (!Number.isFinite(t) || t <= 0) return '';
+    return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  }
+  /** 推文媒体九宫格。视频/GIF 显示封面 + 播放标；data-media-list 带完整媒体清单（类型、地址、封面），
+   *  点开后在全屏查看里直接播放；data-origin 是原帖链接，播放失败时给用户兜底 */
+  function mediaGrid(media, origin) {
     if (!media || !media.length) return '';
-    const show = media.slice(0, 4);
-    const extra = media.length > 4 ? media.length - 4 : 0;
-    const n = media.length >= 5 ? 5 : show.length;
-    const all = media.map(m => m.preview_url || m.url).filter(Boolean);
-    return `<div class="media-grid n${n}" data-zoom-list="${esc(all.join('|'))}">` + show.map((m, i) => {
-      const vid = m.type === 'video' || m.type === 'gif';
+    const list = media.filter(m => m && (m.url || m.preview_url));
+    if (!list.length) return '';
+    const show = list.slice(0, 4);
+    const extra = list.length > 4 ? list.length - 4 : 0;
+    const n = list.length >= 5 ? 5 : show.length;
+    const all = list.map(m => m.preview_url || m.url);
+    const items = list.map(m => {
+      const vid = (m.type === 'video' || m.type === 'gif') && m.url;
+      return vid ? {t: m.type, u: m.url, p: m.preview_url || ''} : {t: 'image', u: m.preview_url || m.url};
+    });
+    return `<div class="media-grid n${n}" data-zoom-list="${esc(all.join('|'))}" data-media-list="${esc(JSON.stringify(items))}"${origin ? ` data-origin="${esc(origin)}"` : ''}>` + show.map((m, i) => {
+      const vid = items[i].t !== 'image';
       const src = m.preview_url || m.url;
-      return `<div class="cell"><img src="${esc(src)}" alt="" loading="lazy" data-zoom="${esc(src)}">${vid ? `<div class="vid-mark"><i>${ICO.play}</i></div>` : ''}${i === show.length - 1 && extra ? `<div class="more-ph">+${extra}</div>` : ''}</div>`;
+      const dur = vid && m.type === 'video' ? fmtDur(m.duration_ms) : '';
+      const mark = vid ? `<div class="vid-mark" aria-label="${m.type === 'gif' ? '播放动图' : '播放视频'}"><i>${ICO.play}</i>${m.type === 'gif' ? '<span class="vid-dur">GIF</span>' : dur ? `<span class="vid-dur">${esc(dur)}</span>` : ''}</div>` : '';
+      const img = vid && !m.preview_url ? `<video src="${esc(m.url)}#t=0.1" muted playsinline preload="metadata" data-media-i="${i}"></video>` : `<img src="${esc(src)}" alt="" loading="lazy" data-zoom="${esc(src)}" data-media-i="${i}">`;
+      return `<div class="cell${vid ? ' is-vid' : ''}">${img}${mark}${i === show.length - 1 && extra ? `<div class="more-ph">+${extra}</div>` : ''}</div>`;
     }).join('') + '</div>';
   }
   function avatar(src, cls = '') {
@@ -214,7 +230,7 @@
       const sum = d.summary ? `<div class="t-body clamp">${esc(d.summary)}</div>` : '';
       return `<article class="tweet article-post" data-id="${esc(item.id)}"><div class="hd">${avatar(b.avatar)}<div style="flex:1;min-width:0"><div class="nm">${esc(b.display_name || b.handle)}</div><div class="meta">${esc(fmtTime(item.published_at))}${d.translated ? ' · ' + esc(d.label) : ''}</div></div></div>${title}${sum}${cover}</article>`;
     }
-    return `<article class="tweet" data-id="${esc(item.id)}"><div class="hd">${avatar(b.avatar)}<div style="flex:1;min-width:0"><div class="nm">${esc(b.display_name || b.handle)} ${b.verified ? `<span class="blue" title="认证">${ICO.check}</span>` : ''}</div><div class="meta">@${esc(b.handle)} · ${esc(fmtTime(item.published_at))}</div></div></div>${title}<div class="t-body${clamp ? ' clamp' : ''}">${esc(text)}</div>${tools}${mediaGrid(b.media)}${quote}${metrics}${extra.length ? `<div class="detail-meta">${extra.map(esc).join(' · ')}</div>` : ''}${cm}</article>`;
+    return `<article class="tweet" data-id="${esc(item.id)}"><div class="hd">${avatar(b.avatar)}<div style="flex:1;min-width:0"><div class="nm">${esc(b.display_name || b.handle)} ${b.verified ? `<span class="blue" title="认证">${ICO.check}</span>` : ''}</div><div class="meta">@${esc(b.handle)} · ${esc(fmtTime(item.published_at))}</div></div></div>${title}<div class="t-body${clamp ? ' clamp' : ''}">${esc(text)}</div>${tools}${mediaGrid(b.media, item.url)}${quote}${metrics}${extra.length ? `<div class="detail-meta">${extra.map(esc).join(' · ')}</div>` : ''}${cm}</article>`;
   }
   /** 历史/收藏/搜索通用行 */
   function rowHTML(item) {
@@ -237,7 +253,7 @@
   function itemHash(id) { return '#/item/' + encodeURIComponent(id); }
 
   const Lib = {TZ, NO_SUMMARY, NO_BODY, BODY_PENDING, HOT_FAIL, esc, beijingDate, fmtTime, fmtDay, fmtRefreshed, fmtN, display, thumbOk,
-    tgStatsHTML, quoteCardHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, tweetCardHTML, rowHTML, parseItemHash, itemHash, ICO};
+    tgStatsHTML, quoteCardHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, tweetCardHTML, rowHTML, parseItemHash, itemHash, ICO, mediaGrid, fmtDur};
   if (typeof module !== 'undefined' && module.exports) module.exports = Lib;
   else root.RebangLib = Lib;
 })(typeof window !== 'undefined' ? window : globalThis);

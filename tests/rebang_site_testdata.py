@@ -41,8 +41,17 @@ def site_items():
                       'title': '', 'summary': f'合成推文 {n}', 'body': f'合成推文 {n}', 'url': f'https://x.com/{handle}/status/{n}',
                       'published_at': (NOW - timedelta(hours=n)).isoformat(), 'lang': 'zh', 'translated': False,
                       'blogger': {'platform': 'x', 'handle': handle, 'display_name': handle, 'avatar': None, 'verified': True,
-                                  'metrics': {'reply': 1, 'repost': 2, 'like': 3}, 'media': [], 'quote': None}})
+                                  'metrics': {'reply': 1, 'repost': 2, 'like': 3}, 'media': MEDIA.get(handle, []), 'quote': None}})
     return items
+
+
+# dotey 这条带图片 + 视频 + GIF（站内播放器测试用）；simonw 这条视频地址是坏的（兜底测试用）
+MEDIA = {
+    'dotey': [{'type': 'image', 'url': 'https://img.test/p0.png'},
+              {'type': 'video', 'url': 'https://vid.test/v1.webm', 'preview_url': 'https://img.test/v1.png', 'duration_ms': 3000},
+              {'type': 'gif', 'url': 'https://vid.test/g2.webm', 'preview_url': 'https://img.test/g2.png'}],
+    'simonw': [{'type': 'video', 'url': 'https://vid.test/missing.webm', 'preview_url': 'https://img.test/v9.png'}],
+}
 
 
 def hotsearch():

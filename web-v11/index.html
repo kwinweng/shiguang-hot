@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
+<!-- X 的视频地址（video.twimg.com）带别站 Referer 会回 403；跨站请求不带 Referer，站内照常 -->
+<meta name="referrer" content="same-origin">
 <meta name="theme-color" content="#101114" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f6f3ec" media="(prefers-color-scheme: light)">
 <meta name="application-name" content="拾光热榜">
@@ -122,12 +124,13 @@
     <nav class="art-nav" id="artNav" aria-label="同一列表里的上一条 / 下一条" hidden></nav>
   </div>
   <div class="sheet" id="cardMenu" role="dialog" aria-label="卡片菜单" aria-hidden="true"><div class="box menu-box"></div></div>
-  <div class="zoom-view" id="zoomView" hidden role="dialog" aria-label="查看图片" aria-modal="true">
+  <div class="zoom-view" id="zoomView" hidden role="dialog" aria-label="查看图片和视频" aria-modal="true">
+    <button type="button" class="zoom-close" id="zoomClose" aria-label="关闭">×</button>
     <div class="zoom-stage" id="zoomStage"></div>
     <div class="zoom-bar">
-      <button type="button" id="zoomPrev" aria-label="上一张">‹</button>
+      <button type="button" id="zoomPrev" aria-label="上一个">‹</button>
       <span class="zoom-count" id="zoomCount"></span>
-      <button type="button" id="zoomNext" aria-label="下一张">›</button>
+      <button type="button" id="zoomNext" aria-label="下一个">›</button>
     </div>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>

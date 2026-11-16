@@ -18,6 +18,7 @@ try:
 except ImportError:  # pragma: no cover
     sync_playwright = None
 
+VIDEO = (Path(__file__).parent / 'fixtures' / 'rebang-tiny.webm').read_bytes()
 PNG = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAQUBAScY42YAAAAASUVORK5CYII=')
 STUB = """
 window.Rebang = window.Rebang || {};
@@ -62,6 +63,10 @@ class SiteBrowserTests(unittest.TestCase):
             url = urlsplit(route.request.url)
             if url.netloc == 'img.test':
                 return route.fulfill(status=200, body=PNG, content_type='image/png')
+            if url.netloc == 'vid.test':
+                if url.path == '/missing.webm':
+                    return route.fulfill(status=404, body=b'missing', content_type='text/plain')
+                return route.fulfill(status=200, body=VIDEO, content_type='video/webm')
             if url.netloc != 'rebang.test':
                 return route.abort()
             path = self.out / (unquote(url.path).lstrip('/') or 'index.html')
@@ -231,6 +236,63 @@ class SiteBrowserTests(unittest.TestCase):
         self.assertIn('还没有成功抓取过', self.page.locator('#bloggerList').inner_text())
         self.page.locator('[data-plat=zhihu]').click()
         self.assertIn('知乎', self.page.locator('#bloggerList').inner_text())
+
+    def video_state(self):
+        return self.page.evaluate('''() => { const v = document.querySelector('#zoomStage video'); if (!v) return null;
+          return {paused: v.paused, muted: v.muted, controls: v.controls, loop: v.loop, poster: v.poster, t: v.currentTime, rs: v.readyState}; }''')
+
+    def test_video_player_mixed_media_swipe_and_error_fallback(self):
+        self.open()
+        self.page.locator('.tabbar [data-view=blogger]').click()
+        card = self.page.locator('#bloggerList .tweet[data-id="x-dotey:0"]')
+        card.wait_for()
+        self.assertEqual(card.locator('.cell.is-vid .vid-mark').count(), 2)
+        self.assertIn('0:03', card.locator('.cell.is-vid').first.inner_text())
+        card.locator('.cell.is-vid').first.tap()
+        self.page.wait_for_selector('#zoomView.on #zoomStage video')
+        self.assertEqual(self.page.get_attribute('#zoomView', 'aria-label'), '查看图片和视频')
+        self.assertEqual(self.page.inner_text('#zoomCount'), '2 / 3')
+        s = self.video_state()
+        self.assertTrue(s['controls'] and s['paused'] and not s['muted'] and s['poster'].endswith('/v1.png'), s)   # 不自动出声
+        box = self.page.locator('#zoomStage video').bounding_box()
+        cdp = self.context.new_cdp_session(self.page)
+        for _ in range(2):   # 点在视频中间：不关闭查看器
+            cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': box['x'] + box['width'] / 2, 'y': box['y'] + box['height'] / 2}]})
+            cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+            self.page.wait_for_timeout(200)
+        self.assertTrue(self.page.is_visible('#zoomView'))
+        self.page.evaluate("document.querySelector('#zoomStage video').play()")
+        self.page.wait_for_function("(() => { const v = document.querySelector('#zoomStage video'); return v && v.currentTime > 0.3 && v.readyState >= 2; })()", timeout=8000)
+        self.page.evaluate("window.__v = document.querySelector('#zoomStage video')")
+        self.swipe(300, 400, 80, 400)   # 左滑到 GIF
+        self.assertEqual(self.page.inner_text('#zoomCount'), '3 / 3')
+        self.assertTrue(self.page.evaluate('window.__v.paused'))   # 离开即暂停
+        self.page.wait_for_function("(() => { const v = document.querySelector('#zoomStage video'); return v && !v.paused && v.currentTime > 0.2; })()", timeout=8000)
+        s = self.video_state()
+        self.assertTrue(s['muted'] and s['loop'] and not s['controls'], s)
+        self.swipe(300, 400, 80, 400)   # 循环到第一张图
+        self.assertEqual(self.page.inner_text('#zoomCount'), '1 / 3')
+        self.assertEqual(self.page.locator('#zoomStage > img').count(), 1)
+        self.page.locator('#zoomClose').tap()
+        self.assertFalse(self.page.is_visible('#zoomView'))
+        # 坏地址：保留封面，给原帖链接
+        bad = self.page.locator('#bloggerList .tweet[data-id="x-simonw:1"] .cell.is-vid')
+        bad.scroll_into_view_if_needed()
+        bad.tap()
+        self.page.wait_for_selector('#zoomStage .zoom-fail a')
+        self.assertEqual(self.page.get_attribute('#zoomStage .zoom-fail a', 'href'), 'https://x.com/simonw/status/1')
+        self.assertEqual(self.page.locator('#zoomStage .zoom-fail img').count(), 1)
+        # 普通图片：点一下仍然关闭
+        self.page.locator('#zoomClose').tap()
+
+    def test_zoom_bar_buttons_do_not_close_viewer_on_touch(self):
+        self.open()
+        self.page.locator('.tabbar [data-view=blogger]').click()
+        self.page.locator('#bloggerList .tweet[data-id="x-dotey:0"] .cell').first.tap()
+        self.page.wait_for_selector('#zoomView.on #zoomStage > img')
+        self.page.locator('#zoomNext').tap()
+        self.assertTrue(self.page.is_visible('#zoomView'))
+        self.assertEqual(self.page.inner_text('#zoomCount'), '2 / 3')
 
 
 if __name__ == '__main__':
