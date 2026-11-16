@@ -14,6 +14,7 @@ from rebang.contract.schema import validate_items_envelope
 from rebang.translate import Translator
 
 from . import weread as weread_mod
+from . import weibo as weibo_mod
 from .run import ALL_PLATFORMS, Options, load_previous, run, write_atomic
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -26,8 +27,10 @@ def main(argv=None):
     ap.add_argument('--x-dump', default=os.environ.get('REBANG_X_DUMP', str(ROOT / 'var/rebang/x-dump')),
                     help='X 原始响应目录（取最新子目录）或单个文件')
     ap.add_argument('--jike-rsshub', default=os.environ.get('REBANG_JIKE_RSSHUB'), help='即刻 RSSHub 根地址，逗号分隔可写多个；不写用 bloggers.json 的公共实例清单')
-    ap.add_argument('--weibo-cookie-file', default=None, help='仓库外 Cookie 文件路径（只检查存在，不读取）')
-    ap.add_argument('--weibo-output', default=None, help='weibo-crawler 输出目录')
+    ap.add_argument('--weibo-cookie-file', default=os.environ.get('REBANG_WEIBO_COOKIE', str(weibo_mod.DEFAULT_COOKIE)),
+                    help='仓库外 Cookie 文件（默认 ~/.config/rebang/weibo-cookie.txt，只检查存在，不读取、不打印）')
+    ap.add_argument('--weibo-output', default=os.environ.get('REBANG_WEIBO_OUTPUT', str(weibo_mod.DEFAULT_OUTPUT)),
+                    help='weibo-crawler 输出目录（默认 var/rebang/weibo-crawler/）')
     ap.add_argument('--weread-session', default=str(weread_mod.DEFAULT_SESSION),
                     help='微信读书会话文件（python3 -m rebang.bloggers.weread login 扫码后写入，仓库外、0600）；不存在 → 5 个公众号 not_configured')
     ap.add_argument('--limit', type=int, default=10, help='每个账号最多条数')

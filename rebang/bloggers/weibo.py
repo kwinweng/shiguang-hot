@@ -1,9 +1,10 @@
 """微博：只做 weibo-crawler（dataabc/weibo-crawler）的调用框架与输出映射。
 
-- Cookie 只放在仓库外、仅本机可读的密钥文件里；这里只接受它的**路径**，只检查“文件是否存在”，
-  不打开、不读取、不打印内容。没有文件 → not_configured。
-- 本分支不安装、不运行 weibo-crawler，也不登录。运行 crawler（把 Cookie 文件交给它）属于
-  另批的运维步骤；它产出的 JSON 放进 --weibo-output 目录后，这里负责映射成卡片。
+- Cookie 默认路径：``~/.config/rebang/weibo-cookie.txt``（可用 ``REBANG_WEIBO_COOKIE`` / ``--weibo-cookie-file`` 改）。
+  仓库外、建议 0600。这里只检查“文件是否存在”，不打开、不读取、不打印内容。没有文件 → not_configured，不抓。
+- 文件格式：一行浏览器 Cookie 头（weibo-crawler 的 cookie 文件），例如 ``SUB=...; SUBP=...; SSOLoginState=...; ALF=...``，
+  不要写成 JSON，不要加 ``Cookie:`` 前缀。从已登录微博的小号浏览器里复制即可。
+- 输出默认 ``var/rebang/weibo-crawler/``（``REBANG_WEIBO_OUTPUT`` / ``--weibo-output``）。刷新脚本在 Cookie 文件出现且本机装了 weibo-crawler 时才去跑它；没装则保持 weibo_crawler_output_missing。
 - 映射按 weibo-crawler 输出的 {"user": {...}, "weibo": [...]} 结构，字段名接入真实输出时需再复核。
 """
 import json
@@ -12,6 +13,9 @@ from datetime import datetime
 from pathlib import Path
 
 from .common import BJT, BODY_CHARS, clip, iso, normalize_text, source_id, summary_of, html_to_text
+
+DEFAULT_COOKIE = Path(os.environ.get("REBANG_WEIBO_COOKIE") or Path.home() / ".config" / "rebang" / "weibo-cookie.txt")
+DEFAULT_OUTPUT = Path(__file__).resolve().parents[2] / "var" / "rebang" / "weibo-crawler"
 
 
 def cookie_configured(cookie_file):
