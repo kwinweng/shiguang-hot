@@ -54,6 +54,7 @@
       {"handle": "夕小瑶科技说", "name": "夕小瑶科技说", "method": "wechat2rss-public-feed", "login": false, "feed": "https://wechat2rss.xlab.app/feed/a1cd365aa14ed7d64cabfc8aa086da40ecaba34d.xml"},
       {"handle": "王建硕", "name": "王建硕"}
     ]},
+    {"id": "youtube", "name": "YouTube", "method": "public-channel-feed", "login": false, "empty_reason": "youtube_pending_confirm", "note": "官方频道订阅 feeds/videos.xml?channel_id=UC…（不用 API 密钥），失败退到公开频道页；名单由阿欢确认后填 accounts（handle = UC 开头的频道 id，name、home 照填），候选见 docs/rebang-v1/youtube-candidates.md", "accounts": []},
     {"id": "zhihu", "name": "知乎", "method": "none", "login": false, "accounts": []}
   ]
 }

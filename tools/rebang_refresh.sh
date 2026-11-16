@@ -40,7 +40,7 @@ ingest() {
     mv -f "$out.tmp" "$out"
 }
 bloggers() {
-    platforms=blog,wechat,jike
+    platforms=blog,wechat,jike,youtube
     xdump=''
     if [ -d var/rebang/x-dump ] && [ -n "$(ls -A var/rebang/x-dump 2>/dev/null)" ]; then platforms=$platforms,x; xdump='--x-dump var/rebang/x-dump'; fi
     # shellcheck disable=SC2086

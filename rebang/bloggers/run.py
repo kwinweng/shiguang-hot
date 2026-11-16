@@ -9,12 +9,14 @@ from rebang.contract.schema import ITEMS_SCHEMA, load_bloggers, validate_items_e
 
 from . import jike as jike_mod
 from . import weibo as weibo_mod
+from . import youtube as yt_mod
 from . import x as x_mod
 from .common import apply_translation, iso, parse_time, translate_comments
 from .feed import FeedError, feed_posts
 
 PRODUCER = 'bloggers'
-ALL_PLATFORMS = ('blog', 'x', 'jike', 'weibo', 'wechat', 'zhihu')
+ALL_PLATFORMS = ('blog', 'x', 'jike', 'weibo', 'wechat', 'youtube', 'zhihu')
+YOUTUBE_CACHE = Path(__file__).resolve().parents[2] / 'var' / 'rebang' / 'cache' / 'youtube-watch.json'
 X_STALE_HOURS = 36
 
 REASONS = {
@@ -26,6 +28,8 @@ REASONS = {
     'x_dump_missing': '还没有公开 X 读取工具写入的原始数据',
     'x_dump_stale': '公开 X 读取数据超过 36 小时未更新',
     'no_accounts': '本期名单为空',
+    'youtube_pending_confirm': '频道名单待确认，确认前不抓',
+    'youtube_unreachable': 'YouTube 订阅和频道页这次都没取到',
 }
 
 
@@ -141,6 +145,33 @@ def _platform_weibo(platform, http, fetched_at, opts, sleep):
     return rows, items
 
 
+def _platform_youtube(platform, http, fetched_at, opts, sleep):
+    cache_path = getattr(opts, 'youtube_cache', None) or YOUTUBE_CACHE
+    cache = yt_mod.load_cache(cache_path)
+    rows, items = [], []
+    for index, account in enumerate(platform['accounts']):
+        if index:
+            sleep(opts.pause)
+        if not yt_mod.valid_channel_id(account.get('handle')):
+            rows.append(_account(platform, account, 'error', error='parse')[0])
+            continue
+        try:
+            posts, via = yt_mod.channel_posts(http, platform, account, fetched_at, opts.limit, cache=cache, sleep=sleep)
+        except FeedError as exc:
+            row, got = _account(platform, account, 'error', error='youtube_unreachable')
+            row['detail'] = exc.code
+        except Exception:
+            row, got = _account(platform, account, 'error', error='parse')
+        else:
+            row, got = _account(platform, account, 'ok' if posts else 'empty', posts)
+            row['via'] = via
+        rows.append(row)
+        items += got
+    if platform['accounts']:
+        yt_mod.save_cache(cache_path, cache)
+    return rows, items
+
+
 def _platform_x(platform, http, fetched_at, opts, sleep, now):
     dump = None
     if opts.x_dump:
@@ -208,10 +239,10 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
             continue
         if not platform['accounts']:
             platforms.append({'id': pid, 'name': platform['name'], 'status': 'empty', 'last_ok_at': None,
-                              'reason': REASONS['no_accounts'], 'accounts': []})
+                              'reason': REASONS.get(platform.get('empty_reason'), REASONS['no_accounts']), 'accounts': []})
             continue
         handler = {'blog': _platform_blog, 'jike': _platform_jike, 'wechat': _platform_wechat,
-                   'weibo': _platform_weibo}.get(pid)
+                   'weibo': _platform_weibo, 'youtube': _platform_youtube}.get(pid)
         if pid == 'x':
             rows, got = _platform_x(platform, http, fetched_at, opts, sleep, now)
         else:
@@ -250,7 +281,7 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
     translator = opts.translator
     for item in items:
         if item.get('fetched_at') == fetched_at:  # 只翻本次新抓的；沿用的旧条目保持原样
-            apply_translation(item, translator, ('title', 'summary') if item['blogger']['platform'] == 'blog' else ('title', 'summary', 'body'))
+            apply_translation(item, translator, ('title', 'summary') if item['blogger']['platform'] in ('blog', 'youtube') else ('title', 'summary', 'body'))
             translate_comments(item, translator)
     if translator is not None:
         translator.save()

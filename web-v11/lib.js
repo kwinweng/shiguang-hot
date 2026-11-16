@@ -204,13 +204,13 @@
     const n = list.length >= 5 ? 5 : show.length;
     const all = list.map(m => m.preview_url || m.url);
     const items = list.map(m => {
-      const vid = (m.type === 'video' || m.type === 'gif') && m.url;
+      const vid = (m.type === 'video' || m.type === 'gif' || m.type === 'youtube') && m.url;
       return vid ? {t: m.type, u: m.url, p: m.preview_url || ''} : {t: 'image', u: m.preview_url || m.url};
     });
     return `<div class="media-grid n${n}" data-zoom-list="${esc(all.join('|'))}" data-media-list="${esc(JSON.stringify(items))}"${origin ? ` data-origin="${esc(origin)}"` : ''}>` + show.map((m, i) => {
       const vid = items[i].t !== 'image';
       const src = m.preview_url || m.url;
-      const dur = vid && m.type === 'video' ? fmtDur(m.duration_ms) : '';
+      const dur = vid && (m.type === 'video' || m.type === 'youtube') ? fmtDur(m.duration_ms) : '';
       const mark = vid ? `<div class="vid-mark" aria-label="${m.type === 'gif' ? '播放动图' : '播放视频'}"><i>${ICO.play}</i>${m.type === 'gif' ? '<span class="vid-dur">GIF</span>' : dur ? `<span class="vid-dur">${esc(dur)}</span>` : ''}</div>` : '';
       const img = vid && !m.preview_url ? `<video src="${esc(m.url)}#t=0.1" muted playsinline preload="metadata" data-media-i="${i}"></video>` : `<img src="${esc(src)}" alt="" loading="lazy" data-zoom="${esc(src)}" data-media-i="${i}">`;
       return `<div class="cell${vid ? ' is-vid' : ''}">${img}${mark}${i === show.length - 1 && extra ? `<div class="more-ph">+${extra}</div>` : ''}</div>`;
