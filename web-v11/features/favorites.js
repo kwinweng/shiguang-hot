@@ -6,8 +6,8 @@
  * 约定：window.Rebang.register('favorites', mount)；详情页调用 attachButton(slot, item, ctx)。
  */
 const STORAGE_KEY = 'rebang.favorites.v1';
-const DEVICE_NOTE = '在正文里点「收藏这条」，或在列表里把卡片往左滑、长按卡片选「收藏」。记录只存在这台设备的浏览器里，换手机或清理数据会消失。';
-const EMPTY_TEXT = '还没有收藏。打开一篇正文点「收藏这条」，或在列表里把卡片往左滑。收藏只存在这台设备的浏览器里，换手机或清理数据会消失。';
+const DEVICE_NOTE = '在正文里点「收藏这条」，或在列表里长按卡片选「收藏」。记录只存在这台设备的浏览器里，换手机或清理数据会消失。';
+const EMPTY_TEXT = '还没有收藏。打开一篇正文点「收藏这条」，或在列表里长按卡片选「收藏」。收藏只存在这台设备的浏览器里，换手机或清理数据会消失。';
 
 function defaultStorage() {
   if (typeof localStorage !== 'undefined') return localStorage;
@@ -124,15 +124,10 @@ function register(name, mountFn) {
   root.Rebang._queue.push([name, mountFn]);
 }
 
-function renderList(el, items, openItem) {
-  const listEl = el.querySelector('[data-favorites-list]');
-  if (!items.length) {
-    el.dataset.favoritesEmpty = 'true';
-    listEl.innerHTML = `<p class="muted" data-favorites-empty>${esc(EMPTY_TEXT)}</p>`;
-    return;
-  }
-  el.dataset.favoritesEmpty = 'false';
-  listEl.innerHTML = items.map((item) => {
+const PAGE = 30;          // 一直往下刷：每次多放 30 条，到底写「内容已结束」
+const ENDED = '内容已结束';
+
+function rowHTML(item) {
     const img = imageUrl(item);
     return `<article class="row-item${img ? '' : ' noimg'}" data-item-id="${esc(item.id)}" role="button" tabindex="0">
       ${img ? `<img src="${esc(img)}" alt="">` : ''}
@@ -142,7 +137,22 @@ function renderList(el, items, openItem) {
         ${displaySummary(item) ? `<p class="excerpt">${esc(displaySummary(item))}</p>` : ''}
       </div>
     </article>`;
-  }).join('');
+}
+
+function renderList(el, items, openItem, shown) {
+  const listEl = el.querySelector('[data-favorites-list]');
+  const footEl = el.querySelector('[data-favorites-foot]');
+  if (!items.length) {
+    el.dataset.favoritesEmpty = 'true';
+    listEl.innerHTML = `<p class="muted" data-favorites-empty>${esc(EMPTY_TEXT)}</p>`;
+    if (footEl) footEl.innerHTML = '';
+    return 0;
+  }
+  el.dataset.favoritesEmpty = 'false';
+  const n = Math.min(items.length, Math.max(PAGE, shown || 0));
+  listEl.innerHTML = items.slice(0, n).map(rowHTML).join('');
+  if (footEl) footEl.innerHTML = n < items.length ? '<div class="sentinel" data-favorites-more></div><div class="load-hint">正在加载…</div>' : `<div class="end-hint end-all" data-end="favorites">${ENDED}</div>`;
+  return n;
 }
 
 function attachButton(host, item, ctx) {
@@ -185,10 +195,30 @@ function mount(el, ctx) {
       <h2 class="ch" style="margin:0 0 8px">收藏</h2>
       <p class="desc" data-favorites-note style="margin:0 0 14px">${esc(DEVICE_NOTE)}</p>
       <div class="list" data-favorites-list></div>
+      <div data-favorites-foot></div>
     </div>`;
+  let shown = 0, obs = null;
+  const scroller = el.querySelector('.rebang-favorites');
+  function watch() {
+    if (obs) obs.disconnect();
+    const s = el.querySelector('[data-favorites-more]');
+    if (!s || typeof IntersectionObserver === 'undefined') return;
+    obs = new IntersectionObserver((es) => es.forEach((e) => {
+      if (!e.isIntersecting) return;
+      const items = load(storage);
+      const listEl = el.querySelector('[data-favorites-list]');
+      const n = Math.min(items.length, shown + PAGE);
+      listEl.insertAdjacentHTML('beforeend', items.slice(shown, n).map(rowHTML).join(''));
+      shown = n;
+      el.querySelector('[data-favorites-foot]').innerHTML = n < items.length ? '<div class="sentinel" data-favorites-more></div><div class="load-hint">正在加载…</div>' : `<div class="end-hint end-all" data-end="favorites">${ENDED}</div>`;
+      watch();
+    }), { root: scroller, rootMargin: '0px 0px 800px 0px', threshold: 0 });
+    obs.observe(s);
+  }
   function refresh() {
     const items = load(storage);
-    renderList(el, items, openItem);
+    shown = renderList(el, items, openItem, shown);
+    watch();
     return items;
   }
   el.querySelector('[data-favorites-list]').addEventListener('click', (event) => {

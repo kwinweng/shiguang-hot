@@ -2,7 +2,8 @@
    交互以 v10 设计稿为准：两种翻法、频道顶部 banner、信息流、时事热搜块、整页正文 + 返回原位、无限加载、刷新/下拉刷新。
    收藏 / 搜索由 web-v11/features/*.js 通过 Rebang.register(name, mount) 挂到 #view-favorites / #search-panel。
    2026-11-15 21:26 阿欢改：底栏「历史」→「热搜」（当前热搜 + 按北京日期回看），时事频道不再嵌热搜；
-   博主页加「Grok bot」渠道（今日重点/推特爆款/环球要闻/GitHub 热门）；每个频道、每个博主都有「查看更多」整页。
+   博主页加「Grok bot」渠道（今日重点/推特爆款/环球要闻/GitHub 热门）。
+   2026-11-16 阿欢改：频道区、博主区各是一条一直往下刷的长流（见「一直往下刷」段），去掉「查看更多」整页；卡片去掉横滑收藏/分享，只留长按菜单。
    2026-11-15 22:08–22:11 阿欢改（v13）：各页标题吸顶；TG 引用/转发卡、表情回应/浏览/公开评论；详情上一条/下一条；
    卡片手势（左滑收藏、右滑分享、长按菜单）、详情左边缘右滑返回、所有列表下拉刷新、双击底栏回顶部；公众号正文按原文顺序；
    顶栏日期居左只写一次。手势优先级见下方「手势」段注释。 */
@@ -83,9 +84,6 @@
   const DATA = 'data';
   const MKEY = 'rebang-v11-mode';
   const NOTE_KEY = 'rebang-v11-note-closed';
-  const UD_FIRST = 6;     // 上下看频道：每个频道先放几条
-  const UD_STEP = 20;     // 「继续看」每次加几条
-  const BL_PREVIEW = 10;  // 博主页每个平台 / 每个人先放几条，其余点「查看更多」
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   /* 动效令牌：与 app.css 的 --duration-* / --ease-out 一致（docs/rebang-v1/DESIGN-SYSTEM.md）。系统开了「减少动态效果」就全部归零 */
@@ -122,9 +120,8 @@
   let person = 'all';
   let mode = localStorage.getItem(MKEY) === 'ud' ? 'ud' : 'lr';
   const items = new Map();        // id → 完整条目
-  const ch = {};                  // slug → {list, page, pages, total, shown, loading, error}
+  const ch = {};                  // slug → {list, page, pages, total, loading, error}
   let articleOpen = false, articleId = null, returnState = null;
-  let more = null;                // 「查看更多」整页：{key, title, type:'ch'|'bl', slug|plat+pkey, list, page, pages, total, loading, error}
   let idIndex = null;
   let pendingList = null;         // 收藏/搜索模块点开条目时的同列表顺序（给详情的上一条/下一条）
 
@@ -166,7 +163,7 @@
     meta = await getJSON('meta.json', fresh);
     channels().forEach(c => {
       remember(c.banner);
-      ch[c.slug] = {list: [], page: 0, pages: c.pages || 1, total: c.feed_total || 0, shown: UD_FIRST, loading: false, error: null};
+      ch[c.slug] = {list: [], page: 0, pages: c.pages || 1, total: c.feed_total || 0, loading: false, error: null};
     });
     await Promise.all([
       ...channels().map(c => loadPage(c.slug)),
@@ -185,62 +182,138 @@
     } catch (e) { return null; }
   }
 
+  /* ---------- 一直往下刷（2026-11-16 22:3x 阿欢）----------
+     频道区、博主区各是一条不断的长流：每一段（一个频道 / 一个平台 / 一个博主）滑到底自动加载下一批；
+     这一段全部加载完，出一条「下一个：<名字>」细分隔，紧接着就是下一段，顺序同顶部从左到右；最后一段刷完写「内容已结束」。
+     频道区和博主区不串。段落顺序靠「闸门」保证：第 i 段只有在第 i-1 段可见且已加载完（或被左右滑 / 点图标直接跳到）时才显示，
+     所以下一段永远接在上一段真正的末尾，不会出现在还没加载完的上一段中间。
+     平滑：每批 30 条包成一个 .chunk，插进去先正常排版一帧，再加 content-visibility:auto（浏览器记住真实高度，离屏的批不再参与绘制），
+     往回滚不会因为估算高度不准而跳。加载只在「哨兵从下方进入视口 1200px 内」时触发，视口上方的段落不会偷偷加载把内容往下推。 */
+  const ENDED = '内容已结束';
+  function chunkHTML(rows) { return rows.length ? `<div class="chunk">${rows.join('')}</div>` : ''; }
+  function settleChunks(scope) {
+    const fresh = $$('.chunk:not(.cv)', scope).filter(el => !el.closest('[hidden]'));   // 还没显示的段落先不加，等它显示、排过版再加
+    if (!fresh.length) return;
+    requestAnimationFrame(() => requestAnimationFrame(() => fresh.forEach(el => el.classList.add('cv'))));
+  }
+  function chainFoot(nextName) {
+    return nextName ? `<div class="next-div" data-next-div><span>下一个：${L.esc(nextName)}</span></div>` : `<div class="end-hint end-all" data-end="all">${ENDED}</div>`;
+  }
+  /** 段落闸门：返回每段是否显示。exhausted(i)：第 i 段已经全部加载完；revealed(i)：被直接跳到过 */
+  function gateList(n, exhausted, revealed) {
+    const vis = [];
+    for (let i = 0; i < n; i++) vis.push(i === 0 || revealed(i) || (vis[i - 1] && exhausted(i - 1)));
+    return vis;
+  }
+  /** 哨兵进到视口下方 1200px 以内才加载；在视口上方、或被吸顶头盖着（已经滑过去的段落）不加载。stickyH：吸顶头高度 */
+  function makeLoader(root, onHit, stickyH = () => 0) {
+    return new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      const top = (e.rootBounds ? e.rootBounds.top : 0) + stickyH();
+      if (e.boundingClientRect.bottom > top) onHit(e.target);
+    }), {root, rootMargin: '0px 0px 1200px 0px', threshold: 0});
+  }
+  /** 往一段末尾插内容时保住读者正在看的位置：哨兵在视口上半（读者是从下面一段往回滚上来的）时，
+   *  插完把滚动位置补上新增的高度，下面那段不会被顶下去。正常往下刷（哨兵在视口下方）不补。
+   *  滚动容器都关了浏览器自带的 overflow-anchor，各家浏览器表现一致（Safari 本来就没有） */
+  function keepPlace(scroller, sec, stickyH, mutate) {
+    const sent = sec && sec.querySelector('.sentinel');
+    let nxt = sec && sec.nextElementSibling; while (nxt && nxt.hidden) nxt = nxt.nextElementSibling;
+    const r = scroller.getBoundingClientRect(), top = r.top + stickyH;
+    // 这一段的开头已经滑过视口顶部、哨兵又在视口上半：读者在下面一段往回看。刚跳到的空段（开头就在顶部）不算
+    const above = !!(sent && nxt && sec.getBoundingClientRect().top < top - 4 && sent.getBoundingClientRect().top < top + (r.bottom - top) / 2);
+    const before = above ? nxt.getBoundingClientRect().top : 0;
+    mutate();
+    if (above) scroller.scrollTop += nxt.getBoundingClientRect().top - before;
+  }
+  /** 把 el 滚到 scroller 顶上（扣掉吸顶头的高度） */
+  function scrollToEl(scroller, el, stickyH = 0) {
+    scroller.scrollTop = Math.max(0, scroller.scrollTop + el.getBoundingClientRect().top - scroller.getBoundingClientRect().top - stickyH);
+  }
+  /* 跳段（左右滑换频道、点平台图标/人物）后先「钉住」目标段开头 1.5 秒：这期间上面那段如果还在补内容，补完再对齐一次，
+     目标不会被顶下去。手指再碰屏幕就松开，不跟用户抢。 */
+  let pin = null;
+  function pinTo(scroller, el, stickyH) {
+    pin = {scroller, el, stickyH, until: performance.now() + 1500};
+    if (!scroller._pinBound) { scroller._pinBound = true; ['touchstart', 'wheel', 'mousedown'].forEach(ev => scroller.addEventListener(ev, () => { pin = null; }, {passive: true})); }
+    scrollToEl(scroller, el, stickyH);
+  }
+  function repin() {
+    if (!pin) return;
+    if (performance.now() > pin.until || !pin.el.isConnected) { pin = null; return; }
+    scrollToEl(pin.scroller, pin.el, pin.stickyH);
+  }
+  function slideIn(el, dir) {
+    if (!dir || REDUCE.matches || !el.animate) return;
+    el.animate([{transform: `translateX(${dir * 48}px)`, opacity: 0.35}, {transform: 'none', opacity: 1}], {duration: MOTION.base, easing: MOTION.ease});
+  }
+
   /* ---------- 频道渲染 ---------- */
   function unavailableNote(c) {
     const bad = c.unavailable || [];
     if (!bad.length) return '';
     return `<div class="note">暂时取不到：${bad.map(s => L.esc(s.name || s.id)).join('、')}。抓到之前先空着。</div>`;
   }
+  function chExhausted(slug) { const st = ch[slug]; return !st.error && !st.loading && st.page >= st.pages; }
   function feedFooter(slug) {
     const st = ch[slug];
     if (st.error) return `<div class="load-err">没加载出来。<button type="button" data-retry="${slug}">再试一次</button></div>`;
-    if (mode === 'ud') {
-      const left = st.total - Math.min(st.shown, st.total);
-      if (left > 0) return `<button type="button" class="more-btn" data-more="${slug}">继续看「${L.esc(nameOf(slug))}」（还有 ${left} 条）</button>`;
-      return st.total ? `<div class="end-hint" data-end="${slug}">没有更多了</div>` : '';
-    }
-    if (st.page < st.pages) return `<div class="sentinel" data-ch="${slug}"></div><div class="load-hint" data-load="${slug}">下滑加载更多</div>`;
-    return `<div class="end-hint" data-end="${slug}">没有更多了</div>`;
+    if (st.page < st.pages) return `<div class="sentinel" data-ch="${slug}"></div><div class="load-hint" data-load="${slug}">正在加载…</div>`;
+    const cs = channels(), i = cs.findIndex(c => c.slug === slug);
+    return chainFoot(cs[i + 1] && cs[i + 1].name);
   }
   function nameOf(slug) { const c = channels().find(x => x.slug === slug); return c ? c.name : slug; }
-  function visibleFeed(slug) { const st = ch[slug]; return mode === 'ud' ? st.list.slice(0, st.shown) : st.list; }
+  function chHint(i) {
+    const last = i === channels().length - 1;
+    if (mode === 'ud') return last ? '最后一个频道' : '下滑接着看下一个频道';
+    return last ? '最后一个频道 · 右滑回上一个' : '左右滑换频道 · 下滑接着看';
+  }
   function channelInner(c, i) {
     const st = ch[c.slug];
-    const feed = visibleFeed(c.slug);
     const empty = !c.banner.length && !st.total ? '<p class="muted">这一频道暂时还没有内容。</p>' : '';
-    const hint = mode === 'ud' ? '左右滑顶部图，下滑看下一频道' : (i < channels().length - 1 ? '左滑看下一频道' : '已经是最后一个频道');
-    return `<div class="ch-head"><div class="ch-kicker"${mode === 'lr' ? ' style="padding:0"' : ''}><span class="idx">${i + 1} / ${channels().length}</span><span class="hint">${hint}</span></div>
-      <div class="ch-row"><h2 class="ch">${L.esc(c.name)}</h2>${c.total ? `<button type="button" class="see-more" data-see="ch:${L.esc(c.slug)}">查看更多<span aria-hidden="true">›</span></button>` : ''}</div></div>
+    return `<div class="ch-head"><div class="ch-kicker"><span class="idx">${i + 1} / ${channels().length}</span><span class="hint">${chHint(i)}</span></div>
+      <div class="ch-row"><h2 class="ch">${L.esc(c.name)}</h2>${c.total ? `<span class="ch-count">共 ${L.esc(c.total)} 条</span>` : ''}</div></div>
       <p class="desc">${L.esc(c.desc || '')}</p>
       ${unavailableNote(c)}
       ${L.bannerHTML(c.slug, c.banner)}
-      <div class="feed" data-ch="${c.slug}">${empty}<div class="feed-list">${feed.map(L.feedRowHTML).join('')}</div><div class="feed-foot">${feedFooter(c.slug)}</div></div>`;
+      <div class="feed" data-ch="${c.slug}">${empty}<div class="feed-list">${chunkHTML(st.list.map(L.feedRowHTML))}</div><div class="feed-foot">${feedFooter(c.slug)}</div></div>`;
   }
-  function renderChannels() {
+  const chRevealed = new Set();
+  function chSections() { return $$('#channelRoot > .ch-sec'); }
+  function gateChannels() {
+    const cs = channels();
+    const vis = gateList(cs.length, i => chExhausted(cs[i].slug), i => chRevealed.has(cs[i].slug));
+    chSections().forEach((sec, i) => { if (sec.hidden === vis[i]) { sec.hidden = !vis[i]; if (vis[i]) settleChunks(sec); } });
+  }
+  function applyMode() {
     $('#modeLR').classList.toggle('on', mode === 'lr');
     $('#modeUD').classList.toggle('on', mode === 'ud');
     $('#modeLR').setAttribute('aria-pressed', String(mode === 'lr'));
     $('#modeUD').setAttribute('aria-pressed', String(mode === 'ud'));
     const root = $('#channelRoot');
-    if (mode === 'ud') {
-      root.className = 'pager-a';
-      root.innerHTML = channels().map((c, i) => `<section class="block-a" data-ch="${c.slug}">${channelInner(c, i)}</section>`).join('') +
-        '<div class="end-hint" data-end="channels">没有更多了</div>';
-    } else {
-      root.className = 'pager-b';
-      root.innerHTML = channels().map((c, i) => `<article class="page-b" data-ch="${c.slug}">${channelInner(c, i)}</article>`).join('');
-    }
-    bindLoaders(); bindGestures(); fixBrokenThumbs(root);
+    root.classList.toggle('lr', mode === 'lr'); root.classList.toggle('ud', mode === 'ud');
+    chSections().forEach((sec, i) => { const h = sec.querySelector('.ch-kicker .hint'); if (h) h.textContent = chHint(i); });
   }
-  function hostOf(slug) { return mode === 'lr' ? $(`.page-b[data-ch="${slug}"]`) : $(`.block-a[data-ch="${slug}"]`); }
+  function renderChannels() {
+    const root = $('#channelRoot');
+    root.className = 'feed-root';
+    root.innerHTML = channels().map((c, i) => `<section class="ch-sec" data-ch="${c.slug}" data-i="${i}">${channelInner(c, i)}</section>`).join('');
+    applyMode(); gateChannels();
+    bindLoaders(); bindGestures(); fixBrokenThumbs(root); settleChunks(root);
+    if (!root._spy) { root._spy = true; root.addEventListener('scroll', spyChannels, {passive: true}); }
+    spyChannels();
+  }
+  function hostOf(slug) { return $(`#channelRoot > .ch-sec[data-ch="${slug}"]`); }
   function renderFeed(slug, from) {
     const host = hostOf(slug); if (!host) return;
     const list = host.querySelector('.feed-list');
-    const feed = visibleFeed(slug);
-    list.insertAdjacentHTML('beforeend', feed.slice(from).map(L.feedRowHTML).join(''));
-    host.querySelector('.feed-foot').innerHTML = feedFooter(slug);
-    fixBrokenThumbs(list);
-    bindLoaders();
+    keepPlace($('#channelRoot'), host, 0, () => {
+      list.insertAdjacentHTML('beforeend', chunkHTML(ch[slug].list.slice(from).map(L.feedRowHTML)));
+      host.querySelector('.feed-foot').innerHTML = feedFooter(slug);
+      gateChannels();
+    });
+    fixBrokenThumbs(list); settleChunks(list);
+    repin(); observeSentinels();
   }
   function fixBrokenThumbs(scope) {
     $$('.feed-row .thumb img', scope).forEach(img => {
@@ -250,25 +323,47 @@
   }
   async function loadMore(slug) {
     const st = ch[slug];
-    const before = visibleFeed(slug).length;
-    if (mode === 'ud') {
-      st.shown += UD_STEP;
-      while (st.list.length < Math.min(st.shown, st.total) && st.page < st.pages && !st.error) { if (!(await loadPage(slug))) break; }
-    } else if (!(await loadPage(slug)) && !st.error) return;
+    const before = st.list.length;
+    if (!(await loadPage(slug)) && !st.error) return;
     renderFeed(slug, before);
   }
-  let observers = [];
+  let chObs = null;
   function bindLoaders() {
-    observers.forEach(o => o.disconnect()); observers = [];
-    if (mode !== 'lr') return;
-    $$('.page-b').forEach(page => {
-      const obs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && e.target.dataset.ch) loadMore(e.target.dataset.ch); }), {root: page, rootMargin: '600px 0px', threshold: 0});
-      page.querySelectorAll('.sentinel').forEach(el => obs.observe(el));
-      observers.push(obs);
+    if (chObs) chObs.disconnect();
+    chObs = makeLoader($('#channelRoot'), el => { if (el.dataset.ch) loadMore(el.dataset.ch); });
+    observeSentinels();
+  }
+  function observeSentinels() { if (chObs) $$('#channelRoot .sentinel').forEach(el => { if (!el._obs) { el._obs = true; chObs.observe(el); } }); }
+  /* 吸顶：每段的 .ch-head 自己 sticky，标题/条数天然跟着当前段走；这里只记下当前是哪一段（换频道、刷新、测试用） */
+  let curCh = 0, spyRaf = 0;
+  function spyChannels() {
+    if (spyRaf) return;
+    spyRaf = requestAnimationFrame(() => {
+      spyRaf = 0;
+      const root = $('#channelRoot'); if (!root) return;
+      const top = root.getBoundingClientRect().top + 8;
+      if (pin && pin.scroller === root && performance.now() < pin.until) return;   // 刚跳过去：以跳到的那段为准
+      let at = 0;
+      chSections().forEach((sec, i) => { if (!sec.hidden && sec.getBoundingClientRect().top <= top) at = i; });
+      if (root.scrollTop + root.clientHeight >= root.scrollHeight - 4) chSections().forEach((sec, i) => { if (!sec.hidden) at = i; });   // 到底了：最后一段算当前
+      if (at !== curCh || root.dataset.cur === undefined) {
+        curCh = at; root.dataset.cur = (channels()[at] || {}).slug || '';
+        chSections().forEach((sec, i) => sec.classList.toggle('cur', i === at));
+      }
     });
   }
+  function jumpChannel(i, dir) {
+    const cs = channels(), root = $('#channelRoot');
+    if (i < 0 || i >= cs.length) { toast(i < 0 ? '已经是第一个频道。' : '已经是最后一个频道。'); return false; }
+    chRevealed.add(cs[i].slug); gateChannels();
+    const sec = hostOf(cs[i].slug);
+    pinTo(root, sec, 0);
+    curCh = i; root.dataset.cur = cs[i].slug; chSections().forEach((s, k) => s.classList.toggle('cur', k === i));
+    slideIn(root, dir);
+    return true;
+  }
 
-  /* ---------- 博主 ---------- */
+  /* ---------- 博主（一条长流：平台按顶部图标从左到右；点某个人 = 这个平台按人分段，从这个人开始） ---------- */
   function platIcon(p) { return `<img class="plat-ico" src="${L.esc(p.icon || `icons/${p.id}.svg`)}" alt="" width="22" height="22">`; }
   function posts() { return (bloggers && bloggers.items) || []; }
   function platOf(id) { return ((bloggers && bloggers.platforms) || []).find(p => p.id === id); }
@@ -276,45 +371,170 @@
     const since = new Date(meta.built_at).getTime() - 24 * 3600e3;
     return posts().filter(p => p.blogger.platform === id && new Date(p.published_at).getTime() >= since).length;
   }
+  let blSegs = [];            // [{plat, pkey, handle, name, total, list, page, pages, loading, error, revealed}]
+  function emptyText(p, acc) {
+    const last = (x) => x && x.last_ok_at ? `上次成功抓取：${L.fmtTime(x.last_ok_at)}。` : '还没有成功抓取过。';
+    let t;
+    if (p && !p.accounts.length) t = `${p.name}：${p.reason || '本期名单为空'}。`;
+    else if (p && !p.connected && p.status && p.status !== 'ok') t = `${p.name}暂时没有内容：${p.reason || p.status}。${last(p)}`;
+    else if (p && !p.connected) t = `${p.name}的内容还没接上。${last(p)}`;
+    else if (acc && acc.status && !['ok', 'empty'].includes(acc.status)) t = `${acc.name}暂时没有内容（${acc.reason || (acc.status === 'not_configured' ? '需要登录，还没接' : '这次没抓到')}）。${last(acc)}`;
+    else if (acc) t = `${acc.name}最近没有新帖。${last(acc)}`;
+    else t = '这一栏暂时还没有帖子。';
+    return t.replace(/。。/g, '。');
+  }
+  const segCache = new Map();  // 「平台:人」→ 段（已加载的条目、页码）；点人物/全部重建长流时沿用，不重新加载
+  function buildBlSegs() {
+    blSegs = [];
+    ((bloggers && bloggers.platforms) || []).forEach(p => {
+      const seg = (acc) => { const k = `${p.id}:${acc ? acc.key : 'all'}`; if (!segCache.has(k)) segCache.set(k, mkSeg(acc)); const s = segCache.get(k); s.revealed = false; return s; };
+      const mkSeg = (acc) => ({plat: p.id, pkey: acc ? acc.key : 'all', handle: acc ? acc.handle : 'all', name: acc ? acc.name : p.name,
+        total: acc ? (acc.total || 0) : (p.count || 0), list: [], page: 0, pages: 1, loading: false, error: null, revealed: false});
+      if (p.id === plat && person !== 'all' && p.accounts.length) p.accounts.forEach(a => blSegs.push(seg(a)));
+      else blSegs.push(seg(null));
+    });
+    blSegs.forEach(s => { if (!s.total) s.pages = 0; if (s.error) s.error = null; });   // 没帖子的段不发请求，直接显示空态再接下一段
+  }
+  function segExhausted(s) { return !s.error && !s.loading && s.page >= s.pages; }
+  function segDisplayName(s) { const p = platOf(s.plat); return s.pkey === 'all' ? (p ? p.name : s.plat) : `${s.name}（${p ? p.name : s.plat}）`; }
+  function peopleRowHTML(p, sel) {
+    if (!p || !p.accounts.length) return '';
+    const mine = posts().filter(x => x.blogger.platform === p.id);
+    const avatarOf = h => (mine.find(x => x.blogger.handle === h && x.blogger.avatar) || {blogger: {}}).blogger.avatar;
+    return `<div class="people" data-people="${L.esc(p.id)}"><button type="button" class="ppl${sel === 'all' ? ' on' : ''}" data-plat-of="${L.esc(p.id)}" data-person="all"><span class="ph-av letter">全</span><span>全部</span></button>` +
+      p.accounts.map(a => { const av = avatarOf(a.handle); return `<button type="button" class="ppl${sel === a.handle ? ' on' : ''}" data-plat-of="${L.esc(p.id)}" data-person="${L.esc(a.handle)}">${av ? `<img src="${L.esc(av)}" alt="">` : `<span class="ph-av letter">${L.esc((a.name || a.handle)[0])}</span>`}<span>${L.esc(a.name)}</span></button>`; }).join('') + '</div>';
+  }
+  function segFoot(i) {
+    const s = blSegs[i];
+    if (s.error) return `<div class="load-err">没加载出来。<button type="button" data-seg-retry="${i}">再试一次</button></div>`;
+    if (s.page < s.pages) return `<div class="sentinel" data-seg="${i}"></div><div class="load-hint">正在加载…</div>`;
+    const empty = !s.list.length ? (() => { const p = platOf(s.plat); const acc = p && s.pkey !== 'all' ? p.accounts.find(a => a.key === s.pkey) : null; return `<div class="empty-plat">${L.esc(emptyText(p, acc))}</div>`; })() : '';
+    return empty + chainFoot(blSegs[i + 1] && segDisplayName(blSegs[i + 1]));
+  }
+  /** 一个平台一组：组头（平台名 + 人物行）+ 这个平台的段（「全部」一段，或点了某人后按人分段） */
+  function groupsHTML() {
+    let html = '';
+    blSegs.forEach((s, i) => {
+      if (i === 0 || blSegs[i - 1].plat !== s.plat) {
+        const p = platOf(s.plat) || {name: s.plat, accounts: []};
+        if (i) html += '</div>';
+        html += `<div class="bl-group" data-group="${L.esc(s.plat)}"><div class="bl-plat-hd">${platIcon(p)}<h3>${L.esc(p.name)}</h3>${p.count ? `<span class="meta">共 ${L.esc(p.count)} 条</span>` : ''}</div>${peopleRowHTML(p, s.pkey === 'all' ? 'all' : person)}`;
+      }
+      html += segHTML(s, i);
+    });
+    return html + (blSegs.length ? '</div>' : '');
+  }
+  function blSecs() { return $$('#bloggerList .bl-seg'); }
+  function segHTML(s, i) {
+    const accHd = s.pkey !== 'all' ? `<div class="bl-acc-hd">${L.esc(s.name)}${s.total ? ` <span class="meta">共 ${L.esc(s.total)} 条</span>` : ''}</div>` : '';
+    return `<section class="bl-seg" data-seg="${i}" data-plat="${L.esc(s.plat)}" data-pkey="${L.esc(s.pkey)}" data-handle="${L.esc(s.handle)}">${accHd}<div class="bl-list list">${chunkHTML(s.list.map(postCardHTML))}</div><div class="bl-foot">${segFoot(i)}</div></section>`;
+  }
+  function gateBloggers() {
+    const vis = gateList(blSegs.length, i => segExhausted(blSegs[i]), i => blSegs[i].revealed);
+    blSecs().forEach((sec, i) => { if (sec.hidden === vis[i]) { sec.hidden = !vis[i]; if (vis[i]) settleChunks(sec); } });
+    $$('#bloggerList > .bl-group').forEach(gr => { const h = !gr.querySelector('.bl-seg:not([hidden])'); if (gr.hidden !== h) gr.hidden = h; });
+  }
+  let blObs = null;
+  function observeBlSentinels() { if (blObs) $$('#bloggerList .sentinel').forEach(el => { if (!el._obs) { el._obs = true; blObs.observe(el); } }); }
   function renderBloggers() {
     if (!bloggers) { $('#bloggerList').innerHTML = '<p class="muted">正在加载…</p>'; return; }
     $('#platChips').innerHTML = bloggers.platforms.map(p => {
       const n = recentCount(p.id);
       return `<button type="button" class="chip logo${p.id === plat ? ' on' : ''}" data-plat="${p.id}" aria-label="${L.esc(p.name)}" title="${L.esc(p.name)}">${platIcon(p)}${n ? `<span class="unread" aria-label="${n} 条 24 小时内的新帖">${n}</span>` : ''}</button>`;
     }).join('');
-    const p = platOf(plat);
-    const mine = posts().filter(x => x.blogger.platform === plat);
-    const avatarOf = h => (mine.find(x => x.blogger.handle === h && x.blogger.avatar) || {blogger: {}}).blogger.avatar;
-    $('#peopleRow').innerHTML = p && p.accounts.length ? `<button type="button" class="ppl${person === 'all' ? ' on' : ''}" data-person="all"><span class="ph-av letter">全</span><span>全部</span></button>` +
-      p.accounts.map(a => { const av = avatarOf(a.handle); return `<button type="button" class="ppl${person === a.handle ? ' on' : ''}" data-person="${L.esc(a.handle)}">${av ? `<img src="${L.esc(av)}" alt="">` : `<span class="ph-av letter">${L.esc((a.name || a.handle)[0])}</span>`}<span>${L.esc(a.name)}</span></button>`; }).join('') : '';
-    let list = mine;
-    if (person !== 'all') list = list.filter(x => x.blogger.handle === person);
-    let empty = '';
-    if (!list.length) {
-      const acc = p && p.accounts.find(a => a.handle === person);
-      const last = (x) => x && x.last_ok_at ? `上次成功抓取：${L.fmtTime(x.last_ok_at)}。` : '还没有成功抓取过。';
-      if (p && !p.accounts.length) empty = `${p.name}：${p.reason || '本期名单为空'}。`;
-      else if (p && !p.connected && p.status && p.status !== 'ok') empty = `${p.name}暂时没有内容：${p.reason || p.status}。${last(p)}`;
-      else if (p && !p.connected) empty = `${p.name}的内容还没接上。${last(p)}`;
-      else if (acc && acc.status && !['ok', 'empty'].includes(acc.status)) empty = `${acc.name}暂时没有内容（${acc.reason || (acc.status === 'not_configured' ? '需要登录，还没接' : '这次没抓到')}）。${last(acc)}`;
-      else if (acc) empty = `${acc.name}最近没有新帖。${last(acc)}`;
-      else empty = '这一栏暂时还没有帖子。';
-      empty = empty.replace(/。。/g, '。');
-    }
-    const acc = p && person !== 'all' ? p.accounts.find(a => a.handle === person) : null;
-    const total = acc ? (acc.total || 0) : (p ? p.count : 0);
-    const key = acc ? acc.key : 'all';
-    const who = acc ? acc.name : (p ? p.name : '');
-    const moreBtn = total ? `<button type="button" class="more-btn see-more-bl" data-see="bl:${L.esc(plat)}:${L.esc(key)}">查看更多「${L.esc(who)}」（共 ${total} 条）</button>` : '';
-    $('#bloggerList').innerHTML = empty ? `<div class="empty-plat">${L.esc(empty)}</div>` : list.slice(0, BL_PREVIEW).map(postCardHTML).join('') + moreBtn;
+    buildBlSegs();
+    const list = $('#bloggerList');
+    list.innerHTML = groupsHTML();
+    delete list.dataset.cur;
+    fixBrokenThumbs(list);
+    if (blObs) blObs.disconnect();
+    blObs = makeLoader($('#view-blogger .sub'), el => loadSeg(Number(el.dataset.seg)), blStickyH);
+    gateBloggers(); observeBlSentinels();
+    const sub = $('#view-blogger .sub');
+    if (!sub._spy) { sub._spy = true; sub.addEventListener('scroll', spyBloggers, {passive: true}); }
+  }
+  async function loadSeg(i) {
+    const s = blSegs[i];
+    if (!s || s.loading || s.page >= s.pages) return;
+    s.loading = true; s.error = null;
+    let fresh = [];
+    try {
+      const page = await getJSON(`blogger/${s.plat}/${s.pkey}/page-${s.page + 1}.json`);
+      const seen = new Set(s.list.map(x => x.id));
+      fresh = remember(page.items).filter(x => !seen.has(x.id));
+      s.list.push(...fresh); s.page = page.page; s.pages = page.pages;
+    } catch (e) { s.error = String(e.message || e); } finally { s.loading = false; }
+    const at = blSegs.indexOf(s); if (at < 0) return;   // 期间长流重建过：数据已进缓存，下次显示时带上
+    i = at;
+    const sec = $(`#bloggerList .bl-seg[data-seg="${i}"]`); if (!sec) return;
+    const box = sec.querySelector('.bl-list');
+    keepPlace($('#view-blogger .sub'), sec, blStickyH(), () => {
+      box.insertAdjacentHTML('beforeend', chunkHTML(fresh.map(postCardHTML)));
+      sec.querySelector('.bl-foot').innerHTML = segFoot(i);
+      gateBloggers();
+    });
+    fixBrokenThumbs(box); settleChunks(box); repin(); observeBlSentinels();
+  }
+  function blStickyH() { const hd = $('#view-blogger .sticky-hd'); return hd ? hd.offsetHeight : 0; }
+  let blSpyRaf = 0;
+  function spyBloggers() {
+    if (blSpyRaf) return;
+    blSpyRaf = requestAnimationFrame(() => {
+      blSpyRaf = 0;
+      const sub = $('#view-blogger .sub'); if (!sub || !blSegs.length) return;
+      if (pin && pin.scroller === sub && performance.now() < pin.until) return;
+      const top = sub.getBoundingClientRect().top + blStickyH() + 8;
+      let at = 0;
+      blSecs().forEach((sec, i) => { if (!sec.hidden && sec.getBoundingClientRect().top <= top) at = i; });
+      if (sub.scrollTop + sub.clientHeight >= sub.scrollHeight - 4) blSecs().forEach((sec, i) => { if (!sec.hidden) at = i; });   // 到底了：最后一段算当前
+      markBlCurrent(at);
+    });
+  }
+  function markBlCurrent(at) {
+    const s = blSegs[at]; if (!s) return;
+    const list = $('#bloggerList');
+    if (list.dataset.cur === String(at)) return;
+    list.dataset.cur = String(at);
+    blSecs().forEach((sec, i) => sec.classList.toggle('cur', i === at));
+    if (s.plat !== plat) { plat = s.plat; if (person !== 'all' && !blSegs.some(x => x.plat === plat && x.pkey !== 'all')) person = 'all'; }
+    $$('#platChips [data-plat]').forEach(b => b.classList.toggle('on', b.dataset.plat === s.plat));
+    const chip = $(`#platChips [data-plat="${CSS.escape(s.plat)}"]`);
+    if (chip) { const r = chip.parentElement, cr = chip.getBoundingClientRect(), rr = r.getBoundingClientRect(); if (cr.left < rr.left || cr.right > rr.right) r.scrollLeft += cr.left - rr.left - 16; }   // 当前平台图标露出来
+    if (s.pkey !== 'all') $$(`#bloggerList .people[data-people="${CSS.escape(s.plat)}"] .ppl`).forEach(b => b.classList.toggle('on', b.dataset.person === s.handle));
+  }
+  function jumpSeg(i, dir) {
+    const s = blSegs[i]; if (!s) return;
+    s.revealed = true; gateBloggers();
+    const sec = $(`#bloggerList .bl-seg[data-seg="${i}"]`); if (!sec) return;
+    const sub = $('#view-blogger .sub');
+    // 这一组里前面没有显示的段：从组头（平台名 + 人物行）开始；否则从这一段开头开始
+    const gr = sec.closest('.bl-group'), firstVis = gr && gr.querySelector('.bl-seg:not([hidden])');
+    pinTo(sub, firstVis === sec ? gr : sec, blStickyH());
+    if (!s.page && s.pages) loadSeg(i);
+    markBlCurrent(i);
+    slideIn($('#bloggerList'), dir);
+  }
+  function pickPlat(id) {
+    if (person !== 'all') { person = 'all'; plat = id; renderBloggers(); }
+    const i = blSegs.findIndex(s => s.plat === id);
+    if (i >= 0) jumpSeg(i);
+  }
+  function pickPerson(id, handle) {
+    plat = id; person = handle;
+    renderBloggers();
+    const i = blSegs.findIndex(s => s.plat === id && (handle === 'all' ? s.pkey === 'all' : s.handle === handle));
+    if (i >= 0) jumpSeg(i);
   }
   /** Grok bot 渠道是我们整理的成品（有标题、摘要、配图），按资讯卡显示；其余平台按推文卡 */
   function postCardHTML(x) { return x.blogger && x.blogger.platform === 'grok' ? L.feedRowHTML(x) : L.tweetCardHTML(x, true); }
   async function ensureBloggers() {
-    if (bloggers) return;
+    if (bloggers) return false;
     try { bloggers = await getJSON('bloggers.json'); remember(bloggers.items); } catch (e) { bloggers = {platforms: [], items: []}; }
     if (!platOf(plat) && bloggers.platforms[0]) plat = bloggers.platforms[0].id;
     renderBloggers();
+    const i = blSegs.findIndex(s => s.plat === plat);
+    if (i > 0) jumpSeg(i);
+    return true;
   }
 
   /* ---------- 热搜（底栏，替换原历史页） ---------- */
@@ -330,7 +550,9 @@
     if (hotDay && payload === undefined) { host.innerHTML = '<p class="muted">正在加载…</p>'; return; }
     if (!payload || !(payload.providers || []).length) { host.innerHTML = `<p class="muted">${hotDay ? '这天没有存下热搜。' : '热搜暂时没加载出来，稍后点右上角刷新再试。'}</p>`; return; }
     const when = payload.generated_at ? (hotDay ? `这是 ${L.fmtDay(hotDay + 'T12:00:00+08:00')} 最后一次抓到的榜单（${L.fmtTime(payload.generated_at)}）。` : `抓取于 ${L.fmtTime(payload.generated_at)}。`) : '';
-    host.innerHTML = `${when ? `<p class="hot-day-note">${L.esc(when)}</p>` : ''}${L.hotsearchHTML(payload, hotActive, false, 1000)}`;
+    const act = (payload.providers || []).find(p => p.id === hotActive) || payload.providers.find(p => p.status === 'ok') || payload.providers[0];
+    const end = act && act.status === 'ok' && (act.items || []).length ? `<div class="end-hint end-all" data-end="hot">${ENDED}</div>` : '';
+    host.innerHTML = `${when ? `<p class="hot-day-note">${L.esc(when)}</p>` : ''}${L.hotsearchHTML(payload, hotActive, false, 1000)}${end}`;
   }
   async function renderHot() {
     const idx = await ensureHotIndex();
@@ -350,70 +572,21 @@
     }
   }
 
-  /* ---------- 查看更多（频道 / 博主整页，无限下滑到「没有更多了」） ---------- */
-  function moreSpec(key) {
+  /* ---------- 旧「查看更多」整页链接（#/more/ch:<频道> 或 #/more/bl:<平台>:<人>）：直接跳到长流里那一段 ---------- */
+  async function openMoreLink(key) {
     const [type, a, b] = String(key).split(':');
-    if (type === 'ch') { const c = channels().find(x => x.slug === a); return c ? {key, type, slug: a, title: c.name, total: c.total, head: c.banner || []} : null; }
-    if (type === 'bl') {
-      const p = platOf(a); if (!p) return null;
-      const acc = b === 'all' ? null : p.accounts.find(x => x.key === b);
-      if (b !== 'all' && !acc) return null;
-      return {key, type, plat: a, pkey: b, title: acc ? `${acc.name} · ${p.name}` : p.name, total: acc ? acc.total : p.count, head: []};
+    if (type === 'ch') {
+      const i = channels().findIndex(c => c.slug === a);
+      showView('channels');
+      if (i >= 0) jumpChannel(i);
+    } else if (type === 'bl') {
+      showView('blogger');
+      await ensureBloggers();
+      const p = platOf(a);
+      if (!p) return;
+      const acc = b && b !== 'all' ? p.accounts.find(x => x.key === b) : null;
+      pickPerson(p.id, acc ? acc.handle : 'all');
     }
-    return null;
-  }
-  function morePath(m, n) { return m.type === 'ch' ? `channel/${m.slug}/page-${n}.json` : `blogger/${m.plat}/${m.pkey}/page-${n}.json`; }
-  function moreRow(it) { return it.kind === 'post' ? postCardHTML(it) : L.feedRowHTML(it); }
-  function moreFoot() {
-    if (more.error) return `<div class="load-err">没加载出来。<button type="button" data-more-retry>再试一次</button></div>`;
-    if (more.page < more.pages) return '<div class="more-sentinel"></div><div class="load-hint">下滑加载更多</div>';
-    return more.list.length ? '<div class="end-hint" data-end="more">没有更多了</div>' : '<p class="muted" style="padding:16px">这里暂时还没有内容。</p>';
-  }
-  let moreObs = null;
-  function bindMoreLoader() {
-    if (moreObs) moreObs.disconnect();
-    const el = $('#moreBody .more-sentinel'); if (!el) return;
-    moreObs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) loadMorePage(); }), {root: $('#moreBody'), rootMargin: '600px 0px', threshold: 0});
-    moreObs.observe(el);
-  }
-  async function loadMorePage() {
-    const m = more; if (!m || m.loading || (m.page >= m.pages && m.page > 0)) return;
-    m.loading = true; m.error = null;
-    const before = m.list.length;
-    try {
-      const page = await getJSON(morePath(m, m.page + 1));
-      if (more !== m) return;
-      const seen = new Set(m.list.map(x => x.id));
-      m.list.push(...remember(page.items).filter(x => !seen.has(x.id)));
-      m.page = page.page; m.pages = page.pages;
-    } catch (e) { m.error = String(e.message || e); } finally { m.loading = false; }
-    if (more !== m) return;
-    const body = $('#moreBody');
-    body.querySelector('.more-list').insertAdjacentHTML('beforeend', m.list.slice(before).map(moreRow).join(''));
-    body.querySelector('.more-foot').innerHTML = moreFoot();
-    fixBrokenThumbs(body); bindMoreLoader();
-    if (m.page < m.pages && body.scrollHeight <= body.clientHeight + 40) loadMorePage();
-  }
-  async function openMore(key, opts = {}) {
-    if (key.startsWith('bl:')) await ensureBloggers();
-    const spec = moreSpec(key);
-    if (!spec) { toast('这一栏找不到了。'); return; }
-    more = {...spec, list: remember(spec.head.slice()), page: 0, pages: 1, loading: false, error: null};
-    $('#moreTitle').textContent = `${spec.title} · 全部 ${spec.total || 0} 条`;
-    const body = $('#moreBody');
-    body.innerHTML = `<h2 class="ch more-h">${L.esc(spec.title)}</h2><p class="desc more-desc">全部 ${spec.total || 0} 条，按时间从新到旧。</p><div class="more-list">${more.list.map(moreRow).join('')}</div><div class="more-foot"></div>`;
-    body.scrollTop = 0;
-    $('#moreView').classList.add('on');
-    $('#moreView').dataset.moreKey = key;
-    if (!opts.fromPop) history.pushState({more: key}, '', '#/more/' + encodeURIComponent(key));
-    await loadMorePage();
-  }
-  function closeMore(opts = {}) {
-    if (!more) return;
-    more = null; if (moreObs) moreObs.disconnect();
-    $('#moreView').classList.remove('on');
-    delete $('#moreView').dataset.moreKey;
-    if (!opts.fromPop && history.state && history.state.more) history.back();
   }
 
   /* ---------- 视图与功能挂载 ---------- */
@@ -435,11 +608,10 @@
   function showView(name, keepArticle) {
     $$('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + name));
     $$('.tabbar button').forEach(b => { b.classList.toggle('on', b.dataset.view === name); b.setAttribute('aria-current', b.dataset.view === name ? 'page' : 'false'); });
-    if (name === 'blogger') ensureBloggers().then(renderBloggers);
+    if (name === 'blogger') ensureBloggers();
     if (name === 'hot') renderHot();
     if (name === 'favorites') mountFeature(name);
     if (!keepArticle && articleOpen) closeArticle();
-    if (!keepArticle && more) closeMore();
   }
 
   /* ---------- 正文（整页）与返回原位 ---------- */
@@ -447,10 +619,9 @@
     const root = $('#channelRoot');
     const st = {view: currentView(), mode, search: $('#search-panel').classList.contains('on')};
     st.bannersX = $$('.banner-rail').map(c => c.scrollLeft);
-    if (mode === 'lr') { st.pagerX = root.scrollLeft; st.pagesY = $$('.page-b').map(p => p.scrollTop); } else st.pagerY = root.scrollTop;
+    st.pagerY = root.scrollTop;
     st.subY = $$('.view.on .sub, .view.on [class*="sub"]').map(s => s.scrollTop);
     st.searchY = $$('#search-panel .sub').map(s => s.scrollTop);
-    st.moreY = more ? $('#moreBody').scrollTop : null;
     return st;
   }
   function restoreScroll(st) {
@@ -458,13 +629,12 @@
     if (st.view && currentView() !== st.view) showView(st.view, true);
     const apply = () => {
       const root = $('#channelRoot');
-      if (st.mode === mode) {
-        if (mode === 'lr') { root.scrollLeft = st.pagerX || 0; const pages = $$('.page-b'); (st.pagesY || []).forEach((y, i) => { if (pages[i]) pages[i].scrollTop = y; }); } else root.scrollTop = st.pagerY || 0;
+      {
+        root.scrollTop = st.pagerY || 0;
         const rails = $$('.banner-rail'); (st.bannersX || []).forEach((x, i) => { if (rails[i]) rails[i].scrollLeft = x; });
       }
       const subs = $$('.view.on .sub, .view.on [class*="sub"]'); (st.subY || []).forEach((y, i) => { if (subs[i]) subs[i].scrollTop = y; });
       if (st.search) { $('#search-panel').classList.add('on'); const ss = $$('#search-panel .sub'); (st.searchY || []).forEach((y, i) => { if (ss[i]) ss[i].scrollTop = y; }); }
-      if (st.moreY != null && more) $('#moreBody').scrollTop = st.moreY;
     };
     apply(); requestAnimationFrame(() => requestAnimationFrame(apply));
   }
@@ -538,7 +708,7 @@
   }
   /* 详情里的「上一条 / 下一条」：在打开它的那个列表里按顺序走（频道信息流、banner、查看更多、博主、收藏、搜索结果） */
   let navList = null;   // {ids, at}
-  const LIST_SCOPE = '.feed-list, .banner-rail, .more-list, #bloggerList, [data-favorites-list], #search-panel';
+  const LIST_SCOPE = '.feed-list, .banner-rail, #bloggerList, .hot-list, [data-favorites-list], #search-panel';
   function listContext(card) {
     const scope = card && card.closest(LIST_SCOPE);
     if (!scope) return null;
@@ -597,15 +767,18 @@
     const st = e.state || {};
     const hashId = !e.state ? L.parseItemHash(location.hash) : null;
     if (st.article) openItem(st.article, {fromPop: true});
-    else if (st.more) {
+    else if (/^#\/more\//.test(location.hash)) {
+      // 旧「查看更多」链接（例如私聊稿里的）在已开着的页面里点开：跳到长流里那一段
       if (articleOpen) closeArticle({fromPop: true});
-      if (!more || more.key !== st.more) openMore(st.more, {fromPop: true});
+      const key = location.hash.slice(7);
+      history.replaceState({home: true}, '', location.pathname + location.search);
+      try { openMoreLink(decodeURIComponent(key)); } catch (err) { /* 坏链接 */ }
     } else if (hashId) {
       // 已开着的页面里再点一次私聊稿链接（只改了 #/item/…）：直接打开详情，返回回到原来的位置
       if (!articleOpen) returnState = captureScroll();
       history.replaceState({article: hashId}, '', L.itemHash(hashId));
       openItem(hashId, {fromPop: true});
-    } else { if (articleOpen) closeArticle({fromPop: true}); if (more) closeMore({fromPop: true}); }
+    } else if (articleOpen) closeArticle({fromPop: true});
   });
 
   /* ---------- 刷新 ---------- */
@@ -619,19 +792,18 @@
     try { fresh = await getJSON('meta.json', true); } catch (e) { toast('刷新失败，网络或站点暂时连不上。'); hidePtr(); return; }
     stampRefresh(new Date());
     if (fresh.built_at !== old) {
-      const idx = currentChannelIndex();
-      items.clear(); idIndex = null; bloggers = null; hotIndex = null; Object.keys(hotDays).forEach(k => delete hotDays[k]);
+      const idx = curCh, blAt = Number($('#bloggerList').dataset.cur || 0);
+      items.clear(); idIndex = null; bloggers = null; segCache.clear(); hotIndex = null; Object.keys(hotDays).forEach(k => delete hotDays[k]);
       await loadAll(true);
       renderChannels();
       if (currentView() === 'hot') renderHot();
-      if (currentView() === 'blogger') ensureBloggers();
-      if (mode === 'lr') $('#channelRoot').scrollLeft = idx * $('#channelRoot').clientWidth;
+      if (idx > 0) jumpChannel(Math.min(idx, channels().length - 1));
+      if (currentView() === 'blogger') { await ensureBloggers(); if (blAt > 0 && blSegs[blAt]) jumpSeg(Math.min(blAt, blSegs.length - 1)); }
       toast('有新内容，已更新。' + NOTE);
     } else toast('没有新内容，已是最新。' + NOTE);
     hidePtr();
   }
   function hidePtr() { const p = $('#ptr'); p.classList.remove('spin', 'show'); p.hidden = true; }
-  function currentChannelIndex() { const r = $('#channelRoot'); return mode === 'lr' ? Math.round(r.scrollLeft / (r.clientWidth || 1)) : 0; }
 
   /* ---------- 手势（沿用 v10：跟手、回弹、动量翻页；banner 内横滑不交给换频道） ---------- */
   function ensureHInd(s) { let ind = s.querySelector(':scope > .h-ind'); if (!ind) { ind = document.createElement('div'); ind.className = 'h-ind'; ind.innerHTML = '<i></i>'; ind.setAttribute('aria-hidden', 'true'); s.appendChild(ind); } return ind; }
@@ -656,8 +828,7 @@
     let sx, sy, sl, axis, lastX, lastT, vel, dragging, skip = false;
     const opt = {signal: ac.signal, passive: true};
     scroller.addEventListener('touchstart', e => {
-      skip = !!(scroller.classList.contains('pager-b') && e.target.closest && e.target.closest('.banner-rail, .banner-wrap, .hot-tabs'));
-      if (skip) return;
+      skip = false;
       const t = e.touches[0]; sx = t.clientX; sy = t.clientY; sl = scroller.scrollLeft; axis = null; lastT = performance.now(); lastX = sx; vel = 0; dragging = false;
       scroller.style.scrollSnapType = 'none'; scroller.style.transform = '';
     }, opt);
@@ -692,24 +863,33 @@
        1. 详情页：从屏幕左边缘 24px 内开始往右滑 → 返回；其余横滑 → 上一条 / 下一条（详情页里没有频道和 banner 横滑）。
        2. banner 区域里横滑 → 只翻 banner（bindHSwipe，换频道不接手）。
        3. 横向可滚的条（平台图标、日期、人物、热搜 tab）→ 原生横滚，谁也不接手。
-       4. 「左右」模式的频道页 → 横滑只换频道；这里卡片不做左滑收藏/右滑分享（用长按菜单收藏/分享）。
-       5. 其余列表里的卡片（上下模式频道、查看更多、博主、收藏、搜索结果）→ 横滑是卡片动作：左滑收藏，右滑分享（拉过 72px 松手才生效）。
+       4. 「左右」模式的频道长流 → 横滑只换频道（跳到上一个/下一个频道的开头）；「上下」模式横滑什么也不做。
+       5. 卡片没有横滑动作（2026-11-16 22:47 阿欢：去掉左滑收藏/右滑分享）。收藏、分享等一律长按卡片弹菜单，频道/博主/收藏/热搜/搜索结果都一样。
        6. 竖向：列表已在最顶上且往下拉 → 下拉刷新；否则正常滚动。
        7. 长按卡片 0.5 秒且手指几乎没动（< 8px）→ 卡片菜单（收藏/分享/复制链接/打开原文）；之后的点击不再打开详情。
        8. 底栏同一个按钮 0.35 秒内点两下 → 当前页回到顶部（点一下照常切页）。 */
-  const EDGE = 24, LOCK = 8, CARD_ACT = 72, PULL_GO = 56, LONG_MS = 500;
-  const CARD_SEL = '.feed-row, .tweet, .row-item, .hero';
+  const EDGE = 24, LOCK = 8, CH_SWIPE = 64, PULL_GO = 56, LONG_MS = 500;
+  const CARD_SEL = '.feed-row, .tweet, .row-item, .hero, .hot-list li';
   const HSCROLL_SEL = '.chips, .dates, .people, .hot-tabs, .banner-rail, .banner-wrap, pre, .b-pre';
-  const SCROLLER_SEL = '.page-b, .pager-a, .sub, .more-body, .article-body';
+  const SCROLLER_SEL = '.feed-root, .sub, .article-body';
   let g = null, suppressClickUntil = 0;
+  /** 热搜一行没有站内条目：用它的外链拼一个只读条目（收藏里点开显示标题 +「打开原文」，分享给外链） */
+  function hotItem(li) {
+    const a = li.querySelector('a'); if (!a || !a.href) return null;
+    let h = 0; for (const c of a.href) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    const sec = li.closest('.hot'), tab = sec && sec.querySelector('.hot-tabs .on');
+    const title = (li.querySelector('.t') || a).textContent.trim();
+    return {id: 'hot-' + h.toString(36), kind: 'news', hot: true, title, summary: '', url: a.href, source_name: tab ? `${tab.textContent.trim()}热搜` : '热搜', published_at: ''};
+  }
   function cardItem(card) {
+    if (card && card.matches('.hot-list li')) return hotItem(card);
     const id = card && (card.dataset.id || card.dataset.itemId);
     if (!id) return null;
     if (items.get(id)) return items.get(id);
     const fav = window.RebangFavorites && window.RebangFavorites.load ? window.RebangFavorites.load().find(x => x.id === id) : null;
     return fav || {id};
   }
-  function linkOf(it) { return location.origin + location.pathname + L.itemHash(it.id); }
+  function linkOf(it) { if (it.hot) return it.url; return location.origin + location.pathname + L.itemHash(it.id); }
   async function copyText(t) {
     try { await navigator.clipboard.writeText(t); return true; } catch (e) {
       const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
@@ -756,7 +936,6 @@
     else if (act === 'open' && it.url) window.open(it.url, '_blank', 'noopener');
   }
   function setPtr(show, txt, spin) { const ptr = $('#ptr'); ptr.style.top = $('.top').offsetHeight + 'px'; ptr.hidden = !show; ptr.classList.toggle('show', !!show); ptr.classList.toggle('spin', !!spin); if (txt) ptr.querySelector('.ptr-txt').textContent = txt; }
-  function resetCard(card) { if (!card) return; card.style.transition = MOTION.tr('transform', MOTION.base); card.style.transform = ''; delete card.dataset.swipe; setTimeout(() => { card.style.transition = ''; card.classList.remove('swiping'); }, MOTION.base + 10); }
   function onTouchStart(e) {
     if (zoom.open || e.target.closest('#zoomView')) { g = null; return; }
     if (e.touches.length !== 1) { g = null; return; }
@@ -765,7 +944,7 @@
     const card = !inArticle ? target.closest(CARD_SEL) : null;
     g = {x0: t.clientX, y0: t.clientY, x: t.clientX, y: t.clientY, t0: performance.now(), axis: null, target, card,
       inArticle, edge: inArticle && t.clientX <= EDGE, hscroll: !!target.closest(HSCROLL_SEL),
-      lrChannels: !!target.closest('.pager-b'), scroller: target.closest(SCROLLER_SEL), kind: null, long: null};
+      lrChannels: !!target.closest('.feed-root.lr'), scroller: target.closest(SCROLLER_SEL), kind: null, long: null};
     if (card) g.long = setTimeout(() => { if (g && !g.axis) { g.kind = 'menu'; suppressClickUntil = performance.now() + 60000; if (navigator.vibrate) navigator.vibrate(10); openMenu(card); } }, LONG_MS);
   }
   function onTouchMove(e) {
@@ -779,19 +958,15 @@
       g.axis = Math.abs(dx) > Math.abs(dy) + 4 ? 'x' : 'y';
       if (g.axis === 'x') {
         if (g.inArticle) g.kind = g.edge && dx > 0 ? 'back' : (g.hscroll ? null : 'step');                       // 规则 1
-        else if (g.hscroll || g.lrChannels) g.kind = null;                                                         // 规则 2–4
-        else if (g.card && g.card.closest('.pager-a, .more-list, #bloggerList, [data-favorites-list], #search-panel')) g.kind = 'card';  // 规则 5
+        else if (g.hscroll) g.kind = null;                                                                         // 规则 2–3
+        else if (g.lrChannels) g.kind = 'chswipe';                                                                 // 规则 4（规则 5：卡片不接横滑）
       } else if (dy > 0 && g.scroller && g.scroller.scrollTop <= 0 && !g.inArticle) g.kind = 'pull';            // 规则 6
     }
     if (!g.kind || g.kind === 'menu') return;
     if (e.cancelable) e.preventDefault();
     if (g.kind === 'back') { $('#articleView').style.transform = `translateX(${Math.max(0, dx)}px)`; }
     else if (g.kind === 'step') { $('#articleBody').style.transform = `translateX(${dx * 0.35}px)`; }
-    else if (g.kind === 'card') {
-      const c = g.card; c.classList.add('swiping');
-      const x = Math.max(-120, Math.min(120, dx)); c.style.transform = `translateX(${x}px)`;
-      c.dataset.swipe = x < -CARD_ACT ? 'fav-go' : x < 0 ? 'fav' : x > CARD_ACT ? 'share-go' : 'share';
-    } else if (g.kind === 'pull') {
+    else if (g.kind === 'chswipe') { $('#channelRoot').style.transform = `translateX(${dx * 0.3}px)`; } else if (g.kind === 'pull') {
       g.pull = Math.max(0, dy * 0.42); g.scroller.style.transform = `translateY(${Math.min(72, g.pull)}px)`;
       setPtr(true, g.pull > PULL_GO ? '松开刷新' : '下拉刷新', false);
     }
@@ -809,12 +984,12 @@
     } else if (s0.kind === 'step') {
       const body = $('#articleBody'); body.style.transform = '';
       if (Math.abs(dx) > 60) step(dx < 0 ? 1 : -1);
-    } else if (s0.kind === 'card') {
-      const c = s0.card, it = cardItem(c);
-      suppressClickUntil = performance.now() + 400;
-      if (dx <= -CARD_ACT && it) toggleFav(it);
-      else if (dx >= CARD_ACT && it) shareItem(it);
-      resetCard(c);
+    } else if (s0.kind === 'chswipe') {
+      const root = $('#channelRoot');
+      suppressClickUntil = performance.now() + 300;
+      root.style.transition = MOTION.tr('transform', MOTION.fast); root.style.transform = '';
+      setTimeout(() => { root.style.transition = ''; }, MOTION.fast + 10);
+      if (Math.abs(dx) >= CH_SWIPE) jumpChannel(curCh + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
     } else if (s0.kind === 'pull') {
       const el = s0.scroller; const go = (s0.pull || 0) > PULL_GO;
       el.style.transition = MOTION.tr('transform', MOTION.slow); el.style.transform = 'translateY(0)';
@@ -833,7 +1008,7 @@
     app.addEventListener('scroll', () => { if (g && g.long && g.kind !== 'menu') { clearTimeout(g.long); g.long = null; } }, {passive: true, capture: true});
   }
   function scrollTopOf(view) {
-    if (view === 'channels') { const r = $('#channelRoot'); return mode === 'lr' ? $$('.page-b')[currentChannelIndex()] : r; }
+    if (view === 'channels') return $('#channelRoot');
     if (view === 'favorites') return $('#view-favorites .sub');
     return $(`#view-${view} .sub`);
   }
@@ -854,9 +1029,6 @@
   }
   function bindGestures() {
     $$('.banner-rail').forEach(rail => { bindHSwipe(rail); rail.addEventListener('scroll', () => updateBannerPager(rail), {passive: true}); updateBannerPager(rail); });
-    const root = $('#channelRoot');
-    if (mode === 'lr') bindHSwipe(root);
-    else if (root._gAbort) { root._gAbort.abort(); root._gAbort = null; root.style.transform = ''; root.classList.remove('is-drag'); }   // 上下模式：频道横滑解绑，横滑留给卡片
   }
 
   /* ---------- 图片/视频全屏查看（现有栈，不另加依赖）：点开、左右滑、图片双指缩放、点空白或下滑关闭 ----------
@@ -1043,13 +1215,10 @@
     if (tab) { hotActive = tab.dataset.hot; renderHotBody(); return; }
     const day = t.closest('[data-hot-day]');
     if (day) { pickHotDay(day.dataset.hotDay); return; }
-    const see = t.closest('[data-see]');
-    if (see) { openMore(see.dataset.see); return; }
-    if (t.closest('[data-more-retry]')) { if (more) { more.error = null; loadMorePage(); } return; }
-    const m = t.closest('[data-more]'); if (m) { loadMore(m.dataset.more); return; }
     const r = t.closest('[data-retry]'); if (r) { ch[r.dataset.retry].error = null; loadMore(r.dataset.retry); return; }
-    const pl = t.closest('[data-plat]'); if (pl) { plat = pl.dataset.plat; person = 'all'; renderBloggers(); return; }
-    const pe = t.closest('[data-person]'); if (pe) { person = pe.dataset.person; renderBloggers(); return; }
+    const sr = t.closest('[data-seg-retry]'); if (sr) { const i = Number(sr.dataset.segRetry); if (blSegs[i]) { blSegs[i].error = null; loadSeg(i); } return; }
+    const pl = t.closest('#platChips [data-plat]'); if (pl) { pickPlat(pl.dataset.plat); return; }
+    const pe = t.closest('[data-person]'); if (pe) { pickPerson(pe.dataset.platOf || plat, pe.dataset.person); return; }
     if (t.closest('a,button')) return;
     const card = t.closest('[data-id]');
     if (card && !card.closest('#articleBody')) openItem(card.dataset.id, {list: listContext(card)});
@@ -1067,11 +1236,11 @@
       if (row && performance.now() >= suppressClickUntil) pendingList = listContext(row);
       else if (row) { e.preventDefault(); e.stopImmediatePropagation(); }
     }, true);
-    $('#modeLR').onclick = () => { if (mode !== 'lr') { mode = 'lr'; localStorage.setItem(MKEY, mode); renderChannels(); } };
-    $('#modeUD').onclick = () => { if (mode !== 'ud') { mode = 'ud'; localStorage.setItem(MKEY, mode); channels().forEach(c => { ch[c.slug].shown = Math.max(UD_FIRST, Math.min(ch[c.slug].shown, ch[c.slug].list.length)); }); renderChannels(); } };
+    // 两种翻法共用同一条长流，只是「左右」多了横滑换频道；切换不重建，位置不动
+    $('#modeLR').onclick = () => { if (mode !== 'lr') { mode = 'lr'; localStorage.setItem(MKEY, mode); applyMode(); } };
+    $('#modeUD').onclick = () => { if (mode !== 'ud') { mode = 'ud'; localStorage.setItem(MKEY, mode); applyMode(); } };
     $('#btnRefresh').onclick = doRefresh;
     $('#btnBack').onclick = () => closeArticle();
-    $('#btnMoreBack').onclick = () => closeMore();
     document.querySelector('.app').addEventListener('click', onClick);
     const deep = L.parseItemHash(location.hash);
     const deepMore = (location.hash.match(/^#\/more\/(.+)$/) || [])[1];
@@ -1093,7 +1262,7 @@
     else $('#btnSearch').onclick = () => toast('搜索功能还没接入。');
     $('#app').removeAttribute('aria-busy');
     if (deep) openItem(deep);
-    else if (deepMore) { try { openMore(decodeURIComponent(deepMore)); } catch (e) { /* 坏链接就留在首页 */ } }
+    else if (deepMore) { try { openMoreLink(decodeURIComponent(deepMore)); } catch (e) { /* 坏链接就留在首页 */ } }
   }
   window.Rebang.openItem = (x) => openItem(x);
   window.Rebang.ctx = ctx;

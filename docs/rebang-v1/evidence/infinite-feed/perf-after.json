@@ -1,0 +1,91 @@
+{
+ "label": "after",
+ "runs": {
+  "deep": [
+   {
+    "frames": 1924,
+    "janky": 23,
+    "max_frame": 133.3,
+    "longtasks": 17,
+    "lt_ms": 1064,
+    "cls": 0.3404,
+    "scroll_end": 110127,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1952,
+    "janky": 15,
+    "max_frame": 100.0,
+    "longtasks": 10,
+    "lt_ms": 635,
+    "cls": 0,
+    "scroll_end": 97602,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1966,
+    "janky": 17,
+    "max_frame": 200.0,
+    "longtasks": 10,
+    "lt_ms": 723,
+    "cls": 0.0522,
+    "scroll_end": 82817,
+    "back_jumps": 0
+   }
+  ],
+  "blogger": [
+   {
+    "frames": 1205,
+    "janky": 7,
+    "max_frame": 166.6,
+    "longtasks": 3,
+    "lt_ms": 180,
+    "cls": 0,
+    "scroll_end": 45717,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1254,
+    "janky": 5,
+    "max_frame": 116.7,
+    "longtasks": 2,
+    "lt_ms": 136,
+    "cls": 0,
+    "scroll_end": 37719,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1226,
+    "janky": 8,
+    "max_frame": 116.7,
+    "longtasks": 2,
+    "lt_ms": 134,
+    "cls": 0,
+    "scroll_end": 54903,
+    "back_jumps": 0
+   }
+  ]
+ },
+ "summary": {
+  "deep": {
+   "frames": 1952,
+   "janky": 17,
+   "max_frame": 133.3,
+   "longtasks": 10,
+   "lt_ms": 723,
+   "cls": 0.0522,
+   "scroll_end": 97602,
+   "back_jumps": 0
+  },
+  "blogger": {
+   "frames": 1226,
+   "janky": 7,
+   "max_frame": 116.7,
+   "longtasks": 2,
+   "lt_ms": 136,
+   "cls": 0,
+   "scroll_end": 45717,
+   "back_jumps": 0
+  }
+ }
+}

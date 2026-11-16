@@ -1,6 +1,8 @@
 """frontend-v11：手机尺寸（390×844）浏览器实测，离线、合成数据。
-覆盖：左右换频道（真触摸滑动）、banner 内横滑不换频道、两种翻法切换并记住、热搜分家与失败态、
-无限加载到「没有更多了」、整页正文 + 返回原频道原位置（页面返回与系统返回）、#/item/<id> 深链、底栏、功能模块注册与收藏槽。"""
+覆盖：频道/博主一条长流（一直往下刷、「下一个：…」接下一段、到底「内容已结束」、吸顶标题跟着当前段）、
+左右换频道（真触摸滑动，跳到下一频道开头）、banner 内横滑不换频道、两种翻法切换并记住、热搜分家与失败态、
+卡片没有横滑动作只有长按菜单（频道/博主/收藏/热搜）、整页正文 + 返回原位置（页面返回与系统返回）、
+#/item/<id> 深链、旧 #/more/ 链接跳到长流里那一段、底栏、功能模块注册与收藏槽。"""
 import base64
 import json
 import mimetypes
@@ -93,7 +95,32 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.wait_for_timeout(500)
 
     def channel_index(self):
-        return self.page.locator('#channelRoot').evaluate('e => Math.round(e.scrollLeft / e.clientWidth)')
+        """当前在看第几个频道（吸顶标题那一段）"""
+        self.page.wait_for_timeout(80)
+        return self.page.locator('#channelRoot').evaluate("e => [...e.querySelectorAll(':scope > .ch-sec')].findIndex(s => s.dataset.ch === e.dataset.cur)")
+
+    def section_top(self, slug):
+        return self.page.evaluate(f"""(() => {{ const r = document.querySelector('#channelRoot'), s = r.querySelector('.ch-sec[data-ch="{slug}"]');
+          return Math.round(s.getBoundingClientRect().top - r.getBoundingClientRect().top); }})()""")
+
+    def scroll_to_end(self, sel, rounds=60):
+        for _ in range(rounds):
+            self.page.locator(sel).evaluate('e => e.scrollTop = e.scrollHeight')
+            self.page.wait_for_timeout(120)
+            if self.page.evaluate(f"[...document.querySelectorAll('{sel} [data-end=all]')].some(e => !e.closest('[hidden]'))"):
+                self.page.locator(sel).evaluate('e => e.scrollTop = e.scrollHeight')
+                self.page.wait_for_timeout(120)
+                return True
+        return False
+
+    def long_press(self, locator):
+        box = locator.bounding_box()
+        x, y = box['x'] + min(40, box['width'] / 2), box['y'] + min(30, box['height'] / 2)
+        cdp = self.context.new_cdp_session(self.page)
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': x, 'y': y}]})
+        self.page.wait_for_timeout(650)
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+        self.page.wait_for_timeout(350)   # 松手后 250ms 内的补发点击会被吞掉
 
     def test_top_bar_tabs_and_six_channels(self):
         self.open()
@@ -102,7 +129,8 @@ class SiteBrowserTests(unittest.TestCase):
         expect = self.page.evaluate("'刷新于 ' + RebangLib.fmtRefreshed('2026-11-15T12:00:00Z', new Date())")
         self.assertIn(expect, ('刷新于 20:00', '刷新于 11月15日 20:00'))
         self.assertEqual(self.page.locator('#refreshed').inner_text(), expect)
-        self.assertEqual(self.page.locator('.page-b h2.ch').all_inner_texts(), ['时事', '环球', '财经', '科技与 AI', '数码', '工具与项目'])
+        self.assertEqual(self.page.locator('#channelRoot > .ch-sec h2.ch').evaluate_all('es => es.map(e => e.textContent)'), ['时事', '环球', '财经', '科技与 AI', '数码', '工具与项目'])
+        self.assertEqual(self.page.locator('.see-more, [data-see], #moreView').count(), 0, '「查看更多」入口和整页都去掉了')
         self.assertEqual([t.strip() for t in self.page.locator('.tabbar button').all_inner_texts()], ['频道', '博主', '热搜', '收藏'])
         self.assertEqual(self.page.locator('#view-history').count(), 0, '历史页已改为热搜页')
         for mount in ('#view-hot', '#view-favorites', '#search-panel'):
@@ -112,15 +140,17 @@ class SiteBrowserTests(unittest.TestCase):
         self.open()
         self.swipe(330, 700, 40, 690)
         self.assertEqual(self.channel_index(), 1)
+        self.assertEqual(self.section_top('world'), 0, '左滑跳到下一个频道的开头')
         self.swipe(40, 700, 340, 705)
         self.assertEqual(self.channel_index(), 0)
-        banner = self.page.locator('.page-b[data-ch=current] .banner-rail')
-        self.assertEqual(self.page.locator('.page-b[data-ch=current] .banner-slide').count(), 5)
+        self.assertEqual(self.section_top('current'), 0)
+        banner = self.page.locator('.ch-sec[data-ch=current] .banner-rail')
+        self.assertEqual(self.page.locator('.ch-sec[data-ch=current] .banner-slide').count(), 5)
         box = banner.bounding_box()
         y = box['y'] + box['height'] / 2
         self.swipe(box['x'] + box['width'] - 20, y, box['x'] + 20, y)
         self.assertEqual(self.channel_index(), 0, 'banner 内横滑只滑 banner')
-        self.assertEqual(self.page.locator('.page-b[data-ch=current] .banner-pager').inner_text(), '2 / 5')
+        self.assertEqual(self.page.locator('.ch-sec[data-ch=current] .banner-pager').inner_text(), '2 / 5')
 
     def test_hotsearch_view_tabs_and_failure_state(self):
         # 2026-11-15 21:26：热搜从时事频道移到底栏「热搜」页，频道里不再有热搜块
@@ -131,40 +161,55 @@ class SiteBrowserTests(unittest.TestCase):
         hot.wait_for()
         self.assertEqual(hot.locator('[role=tab]').all_inner_texts(), ['百度热搜', '知乎热榜', 'B 站热搜'])
         self.assertEqual(hot.locator('.hot-list li').count(), 12, '热搜页直接列全部')
+        self.assertEqual(self.page.locator('#hotHost [data-end=hot]').inner_text(), '内容已结束')
         self.assertEqual(self.page.locator('#hotDates .chip').all_inner_texts(), ['今天 · 现在'])
         hot.locator('[data-hot=zhihu]').click()
         self.assertIn('暂时取不到', self.page.locator('#view-hot .hot-empty').inner_text())
 
     def test_feed_cards_and_infinite_load_to_end(self):
         self.open()
-        page = self.page.locator('.page-b[data-ch=current]')
+        page = self.page.locator('.ch-sec[data-ch=current]')
         self.assertEqual(page.locator('.feed-row').count(), 30)
         # banner 仍只挑合格大图；列表里凡是有图（含短边不够 banner 标准的 tnews365:8）都显示缩略图
         self.assertEqual(page.locator('.feed-row:not(.noimg)').count(), 3, '有图的列表项都显示缩略图（含短边 < 240 的）')
         self.assertEqual(page.locator('.feed-row[data-id="tnews365:8"]:not(.noimg)').count(), 1)
         self.assertIn('这条没有正文摘要', page.locator('.feed-row[data-id="tnews365:9"]').inner_text(), '无图且无摘要才显示占位句')
-        for _ in range(6):
-            page.evaluate('e => e.scrollTop = e.scrollHeight')
-            self.page.wait_for_timeout(300)
+        self.assertTrue(self.page.locator('.ch-sec[data-ch=world]').evaluate('e => e.hidden'), '时事没加载完之前，下一个频道不露出来')
+        self.assertTrue(self.scroll_to_end('#channelRoot'))
         self.assertEqual(page.locator('.feed-row').count(), 65)
-        self.assertEqual(page.locator('.end-hint').inner_text(), '没有更多了')
+        self.assertEqual(page.locator('.feed-foot').inner_text().strip(), '下一个：环球', '一个频道刷完接下一个，中间一条细分隔')
+        names = self.page.locator('#channelRoot > .ch-sec').evaluate_all('es => es.map(e => [e.dataset.ch, e.hidden, e.querySelector(".feed-foot").innerText.trim()])')
+        self.assertEqual([n[0] for n in names], ['current', 'world', 'finance', 'tech-ai', 'digital', 'tools'])
+        self.assertTrue(all(not n[1] for n in names), names)
+        self.assertEqual([n[2] for n in names][1:], ['下一个：财经', '下一个：科技与 AI', '下一个：数码', '下一个：工具与项目', '内容已结束'])
+        self.assertEqual(self.channel_index(), 5, '到底时吸顶标题是最后一个频道')
+        self.assertEqual(self.page.locator('#channelRoot [data-end=all]').count(), 1)
+
+    def test_header_follows_scrolled_channel(self):
+        self.open()
+        self.scroll_to_end('#channelRoot')
+        for slug in ('world', 'finance', 'current'):
+            self.page.evaluate(f"""(() => {{ const r = document.querySelector('#channelRoot'), s = r.querySelector('.ch-sec[data-ch="{slug}"]');
+              r.scrollTop += s.getBoundingClientRect().top - r.getBoundingClientRect().top + 40; }})()""")
+            self.page.wait_for_timeout(150)
+            self.assertEqual(self.page.locator('#channelRoot').get_attribute('data-cur'), slug)
+            head = self.page.locator(f'.ch-sec[data-ch="{slug}"] .ch-head')
+            self.assertLess(abs(head.bounding_box()['y'] - self.page.locator('#channelRoot').bounding_box()['y']), 2, '这一段的标题吸在顶上')
 
     def test_article_full_page_and_back_restores_channel_and_scroll(self):
         self.open()
-        self.page.locator('#channelRoot').evaluate('e => e.scrollLeft = e.clientWidth')
-        self.page.wait_for_timeout(200)
-        self.page.locator('.page-b[data-ch=world] .feed-row').first.click()
+        self.swipe(330, 700, 40, 690)
+        self.page.locator('.ch-sec[data-ch=world] .feed-row').first.click()
         self.assertIn('机器翻译', self.page.locator('#articleBody').inner_text())
         self.page.locator('#articleBody [data-art-orig]').click()
         self.assertIn('Synthetic headline', self.page.locator('[data-art-orig-box]').inner_text())
         self.page.locator('#btnBack').click()
         self.page.wait_for_timeout(300)
         self.assertEqual(self.channel_index(), 1)
-        current = self.page.locator('.page-b[data-ch=current]')
-        self.page.locator('#channelRoot').evaluate('e => e.scrollLeft = 0')
+        current = self.page.locator('#channelRoot')
         current.evaluate('e => e.scrollTop = 900')
         self.page.wait_for_timeout(300)
-        row = self.page.locator('.page-b[data-ch=current] .feed-row').nth(12)
+        row = self.page.locator('.ch-sec[data-ch=current] .feed-row').nth(12)
         row.scroll_into_view_if_needed()
         before = current.evaluate('e => e.scrollTop')
         self.assertGreater(before, 500)
@@ -184,46 +229,108 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.go_back()
         self.page.wait_for_timeout(300)
         self.assertFalse(self.page.locator('#articleView').is_visible())
-        self.assertEqual(self.page.locator('.page-b').count(), 6)
+        self.assertEqual(self.page.locator('#channelRoot > .ch-sec').count(), 6)
+
+    def test_old_more_links_jump_into_the_feed(self):
+        self.open('#/more/ch%3Afinance')
+        self.page.wait_for_timeout(300)
+        self.assertEqual(self.page.locator('#channelRoot').get_attribute('data-cur'), 'finance')
+        self.assertEqual(self.section_top('finance'), 0)
+        self.open('#/more/bl%3Ax%3Aall')
+        self.page.wait_for_selector('#view-blogger.on #bloggerList .tweet')
+        self.assertEqual(self.page.locator('#platChips .on').get_attribute('data-plat'), 'x')
 
     def test_deep_link_in_already_open_tab(self):
         self.open()
-        self.page.locator('.page-b[data-ch=current]').evaluate('e => e.scrollTop = 400')
+        self.page.locator('#channelRoot').evaluate('e => e.scrollTop = 400')
         self.page.evaluate("location.hash = '#/item/tnews365%3A69'")
         self.page.wait_for_selector('#articleView.on')
         self.assertIn('current 合成标题 69', self.page.locator('#articleBody').inner_text())
         self.page.locator('#btnBack').click()
         self.page.wait_for_timeout(400)
         self.assertFalse(self.page.locator('#articleView').is_visible())
-        self.assertEqual(self.page.locator('.page-b[data-ch=current]').evaluate('e => e.scrollTop'), 400)
+        self.assertEqual(self.page.locator('#channelRoot').evaluate('e => e.scrollTop'), 400)
 
-    def test_vertical_mode_more_button_end_and_remembered(self):
+    def test_vertical_mode_same_feed_no_swipe_and_remembered(self):
         self.open()
         self.page.locator('#modeUD').click()
-        self.assertEqual(self.page.locator('#channelRoot').get_attribute('class'), 'pager-a')
-        block = self.page.locator('.block-a[data-ch=current]')
-        self.assertEqual(block.locator('.feed-row').count(), 6)
-        self.assertEqual(block.locator('.banner-slide').count(), 5)
-        for _ in range(3):
-            block.locator('[data-more]').click()
-            self.page.wait_for_timeout(200)
-        self.assertEqual(block.locator('.feed-row').count(), 65)
-        self.assertEqual(block.locator('.end-hint').inner_text(), '没有更多了')
+        self.assertEqual(self.page.locator('#channelRoot').get_attribute('class'), 'feed-root ud')
+        self.assertEqual(self.page.locator('.ch-sec[data-ch=current] .banner-slide').count(), 5)
+        self.assertEqual(self.page.locator('[data-more]').count(), 0, '没有「继续看」按钮，下滑自动加载')
+        self.swipe(330, 700, 40, 690)
+        self.assertEqual(self.channel_index(), 0, '上下模式横滑不换频道')
+        self.assertTrue(self.scroll_to_end('#channelRoot'))
+        self.assertEqual(self.page.locator('.ch-sec[data-ch=current] .feed-row').count(), 65)
         self.page.reload()
         self.page.wait_for_selector('#app:not([aria-busy])')
         self.assertTrue(self.page.locator('#modeUD').evaluate('e => e.classList.contains("on")'))
-        self.assertEqual(self.page.locator('#channelRoot > .end-hint').inner_text(), '没有更多了')
+
+    def test_cards_have_no_swipe_actions_only_long_press_menu(self):
+        """2026-11-16 22:47 阿欢：去掉左滑收藏 / 右滑分享；收藏、分享一律长按弹菜单（频道/博主/收藏/热搜一致）"""
+        self.open()
+        self.page.locator('#modeUD').click()
+        row = self.page.locator('.ch-sec[data-ch=current] .feed-row').nth(1)
+        row.scroll_into_view_if_needed()
+        box = row.bounding_box()
+        y = box['y'] + box['height'] / 2
+        self.swipe(box['x'] + box['width'] - 10, y, box['x'] + 10, y)    # 左滑
+        self.swipe(box['x'] + 10, y, box['x'] + box['width'] - 10, y)    # 右滑
+        self.assertEqual(self.page.evaluate("localStorage.getItem('rebang.favorites.v1')"), None, '横滑不再收藏')
+        self.assertEqual(self.page.locator('.swiping, [data-swipe]').count(), 0)
+        self.assertFalse(self.page.locator('#cardMenu').evaluate('e => e.classList.contains("on")'))
+        # 频道：长按 → 菜单 → 收藏
+        self.long_press(row)
+        self.assertTrue(self.page.locator('#cardMenu.on').is_visible())
+        self.assertEqual(self.page.locator('#cardMenu [data-menu]').all_inner_texts()[:3], ['收藏', '分享', '复制链接'])
+        self.page.locator('#cardMenu [data-menu=fav]').click()
+        self.assertEqual(len(self.page.evaluate("RebangFavorites.load()")), 1)
+        # 博主
+        self.page.locator('.tabbar [data-view=blogger]').click()
+        tweet = self.page.locator('#bloggerList .tweet').first
+        tweet.wait_for()
+        self.long_press(tweet)
+        self.assertTrue(self.page.locator('#cardMenu.on').is_visible())
+        self.page.locator('#cardMenu [data-menu=cancel]').click()
+        # 热搜：长按一行也是同一个菜单，收藏进本机
+        self.page.locator('.tabbar [data-view=hot]').click()
+        li = self.page.locator('#view-hot .hot-list li').first
+        li.wait_for()
+        self.long_press(li)
+        self.assertTrue(self.page.locator('#cardMenu.on').is_visible())
+        self.page.locator('#cardMenu [data-menu=fav]').click()
+        self.assertEqual(len(self.page.evaluate("RebangFavorites.load()")), 2)
+        self.assertTrue(self.page.locator('#view-hot').evaluate('e => e.classList.contains("on")'), '长按松手不会打开外链')
+        # 收藏：长按同样出菜单
+        self.page.locator('.tabbar [data-view=favorites]').click()
+        fav = self.page.locator('[data-favorites-list] [data-item-id]').first
+        fav.wait_for()
+        self.assertNotIn('左滑', self.page.locator('#view-favorites').inner_text())
+        self.long_press(fav)
+        self.assertTrue(self.page.locator('#cardMenu.on').is_visible())
+
+    def test_favorites_infinite_scroll_to_end(self):
+        self.open()
+        self.page.evaluate("""RebangFavorites.save(Array.from({length: 75}, (_, i) => ({id: 'fav-' + i, title: '收藏 ' + i, source_name: '测试'})))""")
+        self.page.locator('.tabbar [data-view=favorites]').click()
+        rows = self.page.locator('[data-favorites-list] [data-item-id]')
+        rows.first.wait_for()
+        self.assertEqual(rows.count(), 30)
+        for _ in range(8):
+            self.page.locator('#view-favorites .rebang-favorites').evaluate('e => e.scrollTop = e.scrollHeight')
+            self.page.wait_for_timeout(150)
+        self.assertEqual(rows.count(), 75)
+        self.assertEqual(self.page.locator('#view-favorites [data-end=favorites]').inner_text(), '内容已结束')
 
     def test_feature_queue_ctx_and_favorite_slot_only_in_article(self):
         self.stub_features = True
         self.page.add_init_script(STUB)
         self.open()
-        self.assertEqual(self.page.locator('.page-b [data-favorite-button], .page-b .fav').count(), 0, '列表里没有收藏按钮')
+        self.assertEqual(self.page.locator('.ch-sec [data-favorite-button], .ch-sec .fav').count(), 0, '列表里没有收藏按钮')
         self.page.locator('.tabbar [data-view=favorites]').click()
         self.assertEqual(self.page.locator('#stub-fav').inner_text(), '收藏桩')
         self.assertEqual(self.page.evaluate('window.__ctx'), {'dataBase': 'data', 'now': True, 'openItem': 'function', 'toast': 'function'})
         self.page.locator('.tabbar [data-view=channels]').click()
-        self.page.locator('.page-b[data-ch=current] .feed-row').first.click()
+        self.page.locator('.ch-sec[data-ch=current] .feed-row').first.click()
         self.assertEqual(self.page.locator('#articleBody #stub-fav-btn').count(), 1)
         self.assertEqual(self.page.evaluate('window.__attached'), 'tnews365:5')
         self.page.locator('#btnBack').click()
@@ -232,11 +339,35 @@ class SiteBrowserTests(unittest.TestCase):
         self.open()
         self.page.locator('.tabbar [data-view=blogger]').click()
         self.page.wait_for_selector('#bloggerList .tweet')
-        self.assertEqual(self.page.locator('#bloggerList .tweet').count(), 2)
-        self.page.locator('[data-plat=weibo]').click()
-        self.assertIn('还没有成功抓取过', self.page.locator('#bloggerList').inner_text())
-        self.page.locator('[data-plat=zhihu]').click()
-        self.assertIn('知乎', self.page.locator('#bloggerList').inner_text())
+        self.assertEqual(self.page.locator('#bloggerList .bl-seg[data-plat=x] .tweet').count(), 2)
+        self.page.locator('#platChips [data-plat=weibo]').click()
+        self.page.wait_for_timeout(300)
+        self.assertIn('还没有成功抓取过', self.page.locator('#bloggerList .bl-seg[data-plat=weibo]').inner_text())
+        self.assertEqual(self.page.locator('#platChips .on').get_attribute('data-plat'), 'weibo')
+        self.page.locator('#platChips [data-plat=zhihu]').click()
+        self.assertIn('知乎', self.page.locator('#bloggerList .bl-seg[data-plat=zhihu]').inner_text())
+
+    def test_blogger_one_feed_chains_platforms_to_end(self):
+        self.open()
+        self.page.locator('.tabbar [data-view=blogger]').click()
+        self.page.wait_for_selector('#bloggerList .tweet')
+        order = self.page.locator('#platChips [data-plat]').evaluate_all('es => es.map(e => e.dataset.plat)')
+        self.assertTrue(self.scroll_to_end('#view-blogger .sub'))
+        segs = self.page.locator('#bloggerList .bl-seg').evaluate_all('es => es.map(e => [e.dataset.plat, e.hidden, e.querySelector(".bl-foot").innerText.trim()])')
+        self.assertEqual([x[0] for x in segs], order, '顺序同顶部图标从左到右')
+        self.assertTrue(all(not x[1] for x in segs), segs)
+        self.assertTrue(segs[0][2].endswith('下一个：' + self.page.locator(f'#platChips [data-plat="{order[1]}"]').get_attribute('aria-label')), segs[0])
+        self.assertTrue(segs[-1][2].endswith('内容已结束'), segs[-1])
+        self.assertEqual(self.page.locator('#bloggerList [data-end=all]').count(), 1)
+        self.assertEqual(self.page.locator('.see-more-bl, [data-see]').count(), 0)
+        # 点某个人：这个平台按人分段，从这个人开始，刷完接同平台下一个人
+        self.page.locator('#view-blogger .sub').evaluate('e => e.scrollTop = 0')
+        person = self.page.locator('#bloggerList .people[data-people=x] [data-person]:not([data-person=all])').first
+        handle = person.get_attribute('data-person')
+        person.click()
+        self.page.wait_for_timeout(400)
+        cur = self.page.locator('#bloggerList').get_attribute('data-cur')
+        self.assertEqual(self.page.locator(f'#bloggerList .bl-seg[data-seg="{cur}"]').get_attribute('data-handle'), handle)
 
     def video_state(self):
         return self.page.evaluate('''() => { const v = document.querySelector('#zoomStage video'); if (!v) return null;
@@ -297,7 +428,7 @@ class SiteBrowserTests(unittest.TestCase):
 
     def test_tab_switch_keeps_channel_scroll_and_hidden_views_are_inert(self):
         self.open()
-        current = self.page.locator('.page-b[data-ch=current]')
+        current = self.page.locator('#channelRoot')
         current.evaluate('e => e.scrollTop = 700')
         self.page.wait_for_timeout(100)
         before = current.evaluate('e => e.scrollTop')

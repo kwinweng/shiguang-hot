@@ -1,0 +1,102 @@
+{
+ "label": "after-probe",
+ "runs": {
+  "deep": [
+   {
+    "frames": 1927,
+    "janky": 13,
+    "max_frame": 83.4,
+    "longtasks": 9,
+    "lt_ms": 522,
+    "cls": 0,
+    "shifts": [],
+    "scroll_end": 73190,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1925,
+    "janky": 22,
+    "max_frame": 133.3,
+    "longtasks": 15,
+    "lt_ms": 921,
+    "cls": 0,
+    "shifts": [],
+    "scroll_end": 128238,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1879,
+    "janky": 18,
+    "max_frame": 116.6,
+    "longtasks": 10,
+    "lt_ms": 661,
+    "cls": 0,
+    "shifts": [],
+    "scroll_end": 108835,
+    "back_jumps": 0
+   }
+  ],
+  "blogger": [
+   {
+    "frames": 1229,
+    "janky": 3,
+    "max_frame": 83.3,
+    "longtasks": 1,
+    "lt_ms": 52,
+    "cls": 0,
+    "shifts": [],
+    "scroll_end": 32672,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1250,
+    "janky": 7,
+    "max_frame": 149.9,
+    "longtasks": 2,
+    "lt_ms": 138,
+    "cls": 0.1055,
+    "shifts": [
+     [
+      0.1055,
+      "ARTICLE.tweet"
+     ]
+    ],
+    "scroll_end": 45112,
+    "back_jumps": 0
+   },
+   {
+    "frames": 1231,
+    "janky": 8,
+    "max_frame": 183.4,
+    "longtasks": 3,
+    "lt_ms": 201,
+    "cls": 0,
+    "shifts": [],
+    "scroll_end": 53623,
+    "back_jumps": 0
+   }
+  ]
+ },
+ "summary": {
+  "deep": {
+   "frames": 1925,
+   "janky": 18,
+   "max_frame": 116.6,
+   "longtasks": 10,
+   "lt_ms": 661,
+   "cls": 0,
+   "scroll_end": 108835,
+   "back_jumps": 0
+  },
+  "blogger": {
+   "frames": 1231,
+   "janky": 7,
+   "max_frame": 149.9,
+   "longtasks": 2,
+   "lt_ms": 138,
+   "cls": 0,
+   "scroll_end": 45112,
+   "back_jumps": 0
+  }
+ }
+}
