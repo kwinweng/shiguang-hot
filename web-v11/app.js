@@ -10,40 +10,75 @@
   'use strict';
   const L = window.RebangLib;
 
-  /* ---------- iOS 主屏幕 web app：底栏贴底（见 lib.js standaloneSafeBottom）---------- */
+  /* ---------- iOS 主屏幕 web app：外壳撑满整屏、底栏贴底（见 lib.js standaloneGeometry）---------- */
+  function insetProbe() {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
+    document.body.appendChild(probe);
+    const cs = getComputedStyle(probe), r = {top: parseFloat(cs.paddingTop) || 0, bottom: parseFloat(cs.paddingBottom) || 0};
+    probe.remove();
+    return r;
+  }
   function fitStandalone() {
     const de = document.documentElement;
     const standalone = navigator.standalone === true || !!(window.matchMedia && matchMedia('(display-mode: standalone)').matches);
     de.classList.toggle('is-standalone', standalone);
-    if (!standalone) { de.style.removeProperty('--safe-bot'); return null; }
-    const probe = document.createElement('div');
-    probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
-    document.body.appendChild(probe);
-    const cs = getComputedStyle(probe);
-    const fake = window.__rebangTestInsets;   // 只给验收脚本模拟真机安全区用（模拟器里 env() 恒为 0）
-    const m = {standalone, ios: typeof navigator.standalone === 'boolean', insetTop: fake ? fake.top : parseFloat(cs.paddingTop) || 0,
-      insetBottom: fake ? fake.bottom : parseFloat(cs.paddingBottom) || 0, screenW: screen.width, screenH: screen.height,
+    const env = insetProbe(), fake = window.__rebangTestInsets;   // 只给验收脚本模拟真机安全区用（模拟器里 env() 恒为 0）
+    const m = {standalone, ios: typeof navigator.standalone === 'boolean', insetTop: fake ? fake.top : env.top,
+      insetBottom: fake ? fake.bottom : env.bottom, screenW: screen.width, screenH: screen.height,
       innerW: window.innerWidth, innerH: window.innerHeight};
-    probe.remove();
-    const pad = L.standaloneSafeBottom(m);
-    if (pad === null) de.style.removeProperty('--safe-bot'); else de.style.setProperty('--safe-bot', pad + 'px');
-    m.pad = pad;
+    const g = L.standaloneGeometry(m);
+    if (g && g.appH) { de.style.setProperty('--app-h', g.appH + 'px'); de.classList.add('app-fullscreen'); }
+    else { de.style.removeProperty('--app-h'); de.classList.remove('app-fullscreen'); }
+    if (g && g.safeBot !== null) de.style.setProperty('--safe-bot', g.safeBot + 'px'); else de.style.removeProperty('--safe-bot');
+    m.geom = g;
     window.__rebangViewport = m;
     return m;
   }
   fitStandalone();
   ['resize', 'orientationchange', 'pageshow'].forEach(ev => window.addEventListener(ev, () => setTimeout(fitStandalone, 60)));
-  /* ?diag=1：手机上看实测几何，排查底栏位置用 */
-  if (/[?&]diag=1/.test(location.search)) {
-    const show = () => {
-      const m = fitStandalone() || {standalone: false};
-      const bar = document.querySelector('.tabbar'), r = bar ? bar.getBoundingClientRect() : null;
-      let box = document.getElementById('diagBox');
-      if (!box) { box = document.createElement('pre'); box.id = 'diagBox'; box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:99;margin:0;padding:8px;font:11px/1.4 ui-monospace,monospace;background:#000c;color:#0f0;border-radius:8px;white-space:pre-wrap;pointer-events:none'; document.body.appendChild(box); }
-      box.textContent = JSON.stringify({...m, vv: window.visualViewport ? Math.round(visualViewport.height) : null,
-        tabbarTop: r && Math.round(r.top), tabbarBottom: r && Math.round(r.bottom), dpr: devicePixelRatio, ua: navigator.userAgent.slice(0, 90)}, null, 1);
+  if (window.visualViewport) visualViewport.addEventListener('resize', () => setTimeout(fitStandalone, 60));
+
+  /* ---------- 诊断浮层：长按左上角日期 1 秒开/关（记在本机），或网址带 ?diag=1。主屏幕 app 打开时网址参数会丢，所以要长按 ---------- */
+  const DIAG_KEY = 'rebang-v11-diag';
+  function diagData() {
+    const m = fitStandalone(), env = insetProbe(), de = document.documentElement, vv = window.visualViewport;
+    const rect = sel => { const el = document.querySelector(sel); if (!el) return null; const r = el.getBoundingClientRect(); return {top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height)}; };
+    const mq = q => !!(window.matchMedia && matchMedia(q).matches);
+    const bar = document.querySelector('.tabbar');
+    return {
+      standalone: m.standalone, navStandalone: navigator.standalone,
+      displayMode: ['standalone', 'fullscreen', 'minimal-ui', 'browser'].find(d => mq(`(display-mode: ${d})`)) || '?',
+      innerH: innerHeight, innerW: innerWidth, outerH: outerHeight, screen: `${screen.width}x${screen.height}`,
+      vvH: vv ? Math.round(vv.height) : null, vvTop: vv ? Math.round(vv.offsetTop) : null, docClientH: de.clientHeight,
+      safeTop: env.top, safeBot: env.bottom, geom: m.geom, appH: de.style.getPropertyValue('--app-h') || null,
+      tabbar: rect('.tabbar'), tabbarPadBot: bar ? getComputedStyle(bar).paddingBottom : null,
+      body: rect('body'), app: rect('#app'), dpr: devicePixelRatio, ua: navigator.userAgent,
     };
-    window.addEventListener('load', show); window.addEventListener('resize', () => setTimeout(show, 80)); setTimeout(show, 300);
+  }
+  let diagTimer = 0;
+  function diagRender() {
+    let box = document.getElementById('diagBox');
+    if (!box) { box = document.createElement('pre'); box.id = 'diagBox'; box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:99;margin:0;padding:8px;font:11px/1.4 ui-monospace,monospace;background:#000d;color:#0f0;border-radius:8px;white-space:pre-wrap;word-break:break-all;pointer-events:none'; document.body.appendChild(box); }
+    box.textContent = JSON.stringify(diagData(), null, 1);
+  }
+  function diagSet(on) {
+    try { on ? localStorage.setItem(DIAG_KEY, '1') : localStorage.removeItem(DIAG_KEY); } catch (e) { /* 隐私模式 */ }
+    clearInterval(diagTimer);
+    if (on) { diagRender(); diagTimer = setInterval(diagRender, 1000); }
+    else { const box = document.getElementById('diagBox'); if (box) box.remove(); }
+  }
+  function diagOn() { try { return localStorage.getItem(DIAG_KEY) === '1'; } catch (e) { return false; } }
+  if (/[?&]diag=1/.test(location.search) || diagOn()) window.addEventListener('load', () => setTimeout(() => diagSet(true), 300));
+  window.__rebangDiag = {data: diagData, set: diagSet};
+  function bindDiagLongPress(el, onToggle) {
+    if (!el) return;
+    let t = 0, x = 0, y = 0;
+    const cancel = () => { clearTimeout(t); t = 0; };
+    el.addEventListener('pointerdown', e => { x = e.clientX; y = e.clientY; cancel(); t = setTimeout(() => { t = 0; onToggle(); }, 1000); });
+    el.addEventListener('pointermove', e => { if (t && Math.hypot(e.clientX - x, e.clientY - y) > 10) cancel(); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => el.addEventListener(ev, cancel));
+    el.addEventListener('contextmenu', e => e.preventDefault());
   }
   const DATA = 'data';
   const MKEY = 'rebang-v11-mode';
@@ -109,6 +144,7 @@
   }
   function remember(list) { (list || []).forEach(it => it && it.id && items.set(it.id, it)); return list || []; }
   function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('on'), 3200); }
+  bindDiagLongPress(document.querySelector('.when-wrap'), () => { const on = !diagOn(); diagSet(on); toast(on ? '诊断已打开（再长按日期关闭）' : '诊断已关闭'); });
   function channels() { return (meta && meta.channels) || []; }
 
   /* ---------- 数据 ---------- */

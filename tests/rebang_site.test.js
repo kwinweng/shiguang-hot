@@ -204,22 +204,23 @@ test('微博卡片：数字 uid 不显示「@」，个性域名照常显示；�
   assert.match(L.tweetCardHTML(custom, false), /@linfcstmr/);
 });
 
-test('iOS 主屏幕 web app 底栏：视口比屏幕矮时不再垫两次安全区；其它情况照常用 env()', () => {
-  const base = {standalone: true, ios: true, insetTop: 47, insetBottom: 34, screenW: 390, screenH: 844, innerW: 390};
-  // iOS 26 standalone：视口 812（底下 32px 归系统）→ 只补剩下的 2px
-  assert.equal(L.standaloneSafeBottom({...base, innerH: 812}), 2);
-  // 缺口比安全区还大（WebKit bug 313800：874 屏、812 视口）→ 不再垫
-  assert.equal(L.standaloneSafeBottom({...base, screenH: 874, screenW: 402, innerW: 402, insetTop: 62, innerH: 812}), 0);
-  // 视口就是整屏：照常用 env()
-  assert.equal(L.standaloneSafeBottom({...base, innerH: 844}), null);
-  // 整屏但 env() 报 0（iOS 26.1 回归）→ 至少留 20px
-  assert.equal(L.standaloneSafeBottom({...base, insetBottom: 0, innerH: 844}), 20);
+test('standaloneGeometry：iOS 主屏幕 web app 外壳撑满整屏、底栏贴底', () => {
+  const base = {standalone: true, ios: true, insetTop: 62, insetBottom: 34, screenW: 402, screenH: 874, innerW: 402};
+  // 阿欢的 iPhone 17 Pro（WebKit 313800）：视口 812、屏幕 874 → 外壳 874，底栏照常垫 env()（34）
+  assert.deepEqual(L.standaloneGeometry({...base, innerH: 812}), {appH: 874, safeBot: null});
+  // 同上但 env() 错报 0 → 外壳 874，底部至少 20
+  assert.deepEqual(L.standaloneGeometry({...base, insetBottom: 0, innerH: 812}), {appH: 874, safeBot: 20});
+  // 视口就是整屏：照常
+  assert.equal(L.standaloneGeometry({...base, innerH: 874}), null);
+  // 整屏但 env() 报 0（iOS 26.1 回归）→ 只兜底 20px
+  assert.deepEqual(L.standaloneGeometry({...base, insetBottom: 0, innerH: 874}), {appH: null, safeBot: 20});
   // 状态栏不透明（视口从状态栏下开始），缺口在顶部：不动
-  assert.equal(L.standaloneSafeBottom({...base, insetTop: 0, innerH: 797}), null);
-  // 横屏用短边；iPad 分屏窗口不是整屏：不猜
-  assert.equal(L.standaloneSafeBottom({...base, innerW: 844, innerH: 390, insetBottom: 21}), null);
-  assert.equal(L.standaloneSafeBottom({...base, screenW: 1024, screenH: 1366, innerW: 600, innerH: 1300}), null);
+  assert.equal(L.standaloneGeometry({...base, insetTop: 0, innerH: 812}), null);
+  // 横屏：屏幕短边 402、视口 402 → 整屏，照常
+  assert.equal(L.standaloneGeometry({...base, innerW: 874, innerH: 402, insetBottom: 21}), null);
+  // iPad 分屏窗口不是整屏：不猜
+  assert.equal(L.standaloneGeometry({...base, screenW: 1024, screenH: 1366, innerW: 600, innerH: 1300}), null);
   // 浏览器标签页（Safari / iOS Chrome）、桌面、安卓：不覆盖
-  assert.equal(L.standaloneSafeBottom({...base, standalone: false, innerH: 664}), null);
-  assert.equal(L.standaloneSafeBottom({...base, ios: false, innerH: 800}), null);
+  assert.equal(L.standaloneGeometry({...base, standalone: false, innerH: 683}), null);
+  assert.equal(L.standaloneGeometry({...base, ios: false, innerH: 800}), null);
 });

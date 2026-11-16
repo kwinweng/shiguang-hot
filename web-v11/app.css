@@ -459,3 +459,7 @@ img[data-zoom]{cursor:zoom-in}
 .comments .mt-badge{margin-left:6px;vertical-align:middle}
 /* banner 右下角的「1 / 5」页码不压标题：标题右侧留出页码位 */
 .banner-wrap .hero .cap{padding-right:56px}
+/* iOS 主屏幕 web app：WebKit 报的视口比屏幕矮一截（状态栏高度），外壳按整屏高度排，底栏才贴到屏幕最底（app.js fitStandalone） */
+html.app-fullscreen,html.app-fullscreen body{height:var(--app-h)}
+html.app-fullscreen .app{bottom:auto;height:var(--app-h)}
+.when-wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}

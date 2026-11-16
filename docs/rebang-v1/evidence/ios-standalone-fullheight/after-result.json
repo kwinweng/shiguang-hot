@@ -1,0 +1,203 @@
+{
+ "base": "http://127.0.0.1:8782/",
+ "checks": [
+  {
+   "check": "ios-standalone-812/dark：底栏下沿到屏幕底的空白",
+   "ok": true,
+   "gap": 0,
+   "tabBottom": 874,
+   "tabTop": 782,
+   "tabH": 92,
+   "padBot": "34px",
+   "appBottom": 874,
+   "innerH": 812,
+   "cls": "is-standalone app-fullscreen",
+   "bg": "rgb(16, 17, 20)",
+   "geom": {
+    "appH": 874,
+    "safeBot": null
+   }
+  },
+  {
+   "check": "ios-standalone-812/dark：外壳撑到整屏 874",
+   "ok": true,
+   "appBottom": 874
+  },
+  {
+   "check": "ios-standalone-812/dark：底栏 padding-bottom = 安全区 34",
+   "ok": true,
+   "padBot": "34px"
+  },
+  {
+   "check": "diag/dark：长按 1 秒打开、记在本机、字段齐",
+   "ok": true,
+   "ls": "1"
+  },
+  {
+   "check": "diag/dark：刷新后仍开着",
+   "ok": true
+  },
+  {
+   "check": "diag/dark：短按不切换",
+   "ok": true
+  },
+  {
+   "check": "diag/dark：再长按关闭",
+   "ok": true
+  },
+  {
+   "check": "ios-standalone-paint/dark：底栏贴屏幕底、图标在 Home 条上方",
+   "ok": true,
+   "tabBottom": 874,
+   "tabTop": 782,
+   "tabH": 92,
+   "padBot": "34px",
+   "appBottom": 874,
+   "innerH": 812,
+   "cls": "is-standalone app-fullscreen",
+   "bg": "rgb(16, 17, 20)",
+   "geom": {
+    "appH": 874,
+    "safeBot": null
+   }
+  },
+  {
+   "check": "ios-browser-tab/dark：底栏下沿 = 683、无 app-fullscreen",
+   "ok": true,
+   "tabBottom": 683,
+   "tabTop": 625,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 683,
+   "innerH": 683,
+   "cls": "",
+   "bg": "rgb(16, 17, 20)",
+   "geom": null
+  },
+  {
+   "check": "android-standalone/dark：底栏下沿 = 视口、不改外壳",
+   "ok": true,
+   "tabBottom": 915,
+   "tabTop": 857,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 915,
+   "innerH": 915,
+   "cls": "is-standalone",
+   "bg": "rgb(16, 17, 20)",
+   "geom": null
+  },
+  {
+   "check": "desktop/dark：底栏下沿 = 800",
+   "ok": true,
+   "tabBottom": 800,
+   "tabTop": 742,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 800,
+   "innerH": 800,
+   "cls": "",
+   "bg": "rgb(16, 17, 20)",
+   "geom": null
+  },
+  {
+   "check": "ios-standalone-812/light：底栏下沿到屏幕底的空白",
+   "ok": true,
+   "gap": 0,
+   "tabBottom": 874,
+   "tabTop": 782,
+   "tabH": 92,
+   "padBot": "34px",
+   "appBottom": 874,
+   "innerH": 812,
+   "cls": "is-standalone app-fullscreen",
+   "bg": "rgb(246, 243, 236)",
+   "geom": {
+    "appH": 874,
+    "safeBot": null
+   }
+  },
+  {
+   "check": "ios-standalone-812/light：外壳撑到整屏 874",
+   "ok": true,
+   "appBottom": 874
+  },
+  {
+   "check": "ios-standalone-812/light：底栏 padding-bottom = 安全区 34",
+   "ok": true,
+   "padBot": "34px"
+  },
+  {
+   "check": "diag/light：长按 1 秒打开、记在本机、字段齐",
+   "ok": true,
+   "ls": "1"
+  },
+  {
+   "check": "diag/light：刷新后仍开着",
+   "ok": true
+  },
+  {
+   "check": "diag/light：短按不切换",
+   "ok": true
+  },
+  {
+   "check": "diag/light：再长按关闭",
+   "ok": true
+  },
+  {
+   "check": "ios-standalone-paint/light：底栏贴屏幕底、图标在 Home 条上方",
+   "ok": true,
+   "tabBottom": 874,
+   "tabTop": 782,
+   "tabH": 92,
+   "padBot": "34px",
+   "appBottom": 874,
+   "innerH": 812,
+   "cls": "is-standalone app-fullscreen",
+   "bg": "rgb(246, 243, 236)",
+   "geom": {
+    "appH": 874,
+    "safeBot": null
+   }
+  },
+  {
+   "check": "ios-browser-tab/light：底栏下沿 = 683、无 app-fullscreen",
+   "ok": true,
+   "tabBottom": 683,
+   "tabTop": 625,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 683,
+   "innerH": 683,
+   "cls": "",
+   "bg": "rgb(246, 243, 236)",
+   "geom": null
+  },
+  {
+   "check": "android-standalone/light：底栏下沿 = 视口、不改外壳",
+   "ok": true,
+   "tabBottom": 915,
+   "tabTop": 857,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 915,
+   "innerH": 915,
+   "cls": "is-standalone",
+   "bg": "rgb(246, 243, 236)",
+   "geom": null
+  },
+  {
+   "check": "desktop/light：底栏下沿 = 800",
+   "ok": true,
+   "tabBottom": 800,
+   "tabTop": 742,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 800,
+   "innerH": 800,
+   "cls": "",
+   "bg": "rgb(246, 243, 236)",
+   "geom": null
+  }
+ ]
+}

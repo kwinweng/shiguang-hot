@@ -273,24 +273,30 @@
     return null;
   }
   function itemHash(id) { return '#/item/' + encodeURIComponent(id); }
-  /** iOS 主屏幕 web app（standalone）底部安全区。
-   *  iOS 26 的 standalone 里，WebKit 给页面的视口可能比屏幕矮一截（screen.height − innerHeight 那条带子归系统，
-   *  网页画不进去，只露出 html 背景）；这时 env(safe-area-inset-bottom) 还照样报 34px，底栏就会「垫两次」浮在半空。
-   *  返回要用的底部内边距（px），null = 不覆盖、照常用 env()。m = {standalone, ios, insetTop, insetBottom, screenW, screenH, innerW, innerH} */
-  function standaloneSafeBottom(m) {
+  /** iOS 主屏幕 web app（standalone）的外壳几何。
+   *  iOS 26/27 的 standalone（Safari 或 Chrome「添加到主屏幕」，内核都是 WebKit）有个 bug（WebKit 313800）：
+   *  innerHeight / 100dvh / inset:0 只到「屏幕高 − 状态栏高」（17 Pro：874 − 62 = 812），但网页实际铺满整屏，
+   *  下面那 62px 照样画 html 背景。外壳按视口排版，底栏就停在 812，下面空一大截。
+   *  修法：外壳高度直接用整屏高度（超出视口那段 WebKit 照画），底栏照常垫 env(safe-area-inset-bottom) 让图标落在 Home 条上方。
+   *  返回 {appH, safeBot}：appH = 外壳高度 px（null = 不改，照常 inset:0），safeBot = 底部内边距 px（null = 照常 env()）；
+   *  不是 iOS standalone 整屏 → null。m = {standalone, ios, insetTop, insetBottom, screenW, screenH, innerW, innerH} */
+  function standaloneGeometry(m) {
     if (!m || !m.standalone || !m.ios) return null;
     const portrait = m.innerH >= m.innerW;
     const long = Math.max(m.screenW || 0, m.screenH || 0), short = Math.min(m.screenW || 0, m.screenH || 0);
     const fullH = portrait ? long : short, fullW = portrait ? short : long;
     if (!fullH || Math.abs(fullW - m.innerW) > 2) return null;          // iPad 分屏/窗口：不是整屏，不猜
+    const homeBar = portrait && fullH >= 812;                            // 全面屏 iPhone 竖屏才有 Home 条
+    const safeBot = m.insetBottom > 0 ? null : (homeBar ? 20 : null);    // env() 错报 0（iOS 26.1 回归 / 27 新装图标）→ 至少留 20px
     const gap = Math.round(fullH - m.innerH);
-    if (gap >= 2 && m.insetTop > 0) return Math.max(0, Math.round(m.insetBottom - gap));   // 视口顶到状态栏下，缺口在底部
-    if (gap < 2 && m.insetBottom === 0 && portrait && fullH >= 812) return 20;              // 有 Home 条却报 0（iOS 26.1 回归）
-    return null;
+    // 视口比屏幕矮，且页面画在状态栏下面（顶部安全区 > 0 说明视口从屏幕顶开始）→ 缺口在底部：外壳撑到整屏
+    if (gap >= 2 && m.insetTop > 0) return {appH: fullH, safeBot};
+    if (gap >= 2) return null;                                           // 状态栏不透明、视口从状态栏下开始：缺口在顶部，不动
+    return safeBot === null ? null : {appH: null, safeBot};
   }
 
   const Lib = {TZ, NO_SUMMARY, NO_BODY, BODY_PENDING, HOT_FAIL, esc, beijingDate, fmtTime, fmtDay, fmtRefreshed, fmtN, display, thumbOk,
-    tgStatsHTML, quoteCardHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, tweetCardHTML, rowHTML, parseItemHash, itemHash, ICO, icon, mediaGrid, fmtDur, standaloneSafeBottom};
+    tgStatsHTML, quoteCardHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, tweetCardHTML, rowHTML, parseItemHash, itemHash, ICO, icon, mediaGrid, fmtDur, standaloneGeometry};
   if (typeof module !== 'undefined' && module.exports) module.exports = Lib;
   else root.RebangLib = Lib;
 })(typeof window !== 'undefined' ? window : globalThis);

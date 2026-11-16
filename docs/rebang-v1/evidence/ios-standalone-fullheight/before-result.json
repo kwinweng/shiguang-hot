@@ -1,0 +1,111 @@
+{
+ "base": "http://127.0.0.1:8781/",
+ "checks": [
+  {
+   "check": "ios-standalone-812/dark：底栏下沿到屏幕底的空白",
+   "ok": true,
+   "gap": 62,
+   "tabBottom": 812,
+   "tabTop": 754,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 812,
+   "innerH": 812,
+   "cls": "is-standalone",
+   "bg": "rgb(16, 17, 20)",
+   "geom": null
+  },
+  {
+   "check": "ios-browser-tab/dark：底栏下沿 = 683、无 app-fullscreen",
+   "ok": true,
+   "tabBottom": 683,
+   "tabTop": 625,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 683,
+   "innerH": 683,
+   "cls": "",
+   "bg": "rgb(16, 17, 20)",
+   "geom": null
+  },
+  {
+   "check": "android-standalone/dark：底栏下沿 = 视口、不改外壳",
+   "ok": true,
+   "tabBottom": 915,
+   "tabTop": 857,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 915,
+   "innerH": 915,
+   "cls": "is-standalone",
+   "bg": "rgb(16, 17, 20)",
+   "geom": null
+  },
+  {
+   "check": "desktop/dark：底栏下沿 = 800",
+   "ok": true,
+   "tabBottom": 800,
+   "tabTop": 742,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 800,
+   "innerH": 800,
+   "cls": "",
+   "bg": "rgb(16, 17, 20)",
+   "geom": null
+  },
+  {
+   "check": "ios-standalone-812/light：底栏下沿到屏幕底的空白",
+   "ok": true,
+   "gap": 62,
+   "tabBottom": 812,
+   "tabTop": 754,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 812,
+   "innerH": 812,
+   "cls": "is-standalone",
+   "bg": "rgb(246, 243, 236)",
+   "geom": null
+  },
+  {
+   "check": "ios-browser-tab/light：底栏下沿 = 683、无 app-fullscreen",
+   "ok": true,
+   "tabBottom": 683,
+   "tabTop": 625,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 683,
+   "innerH": 683,
+   "cls": "",
+   "bg": "rgb(246, 243, 236)",
+   "geom": null
+  },
+  {
+   "check": "android-standalone/light：底栏下沿 = 视口、不改外壳",
+   "ok": true,
+   "tabBottom": 915,
+   "tabTop": 857,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 915,
+   "innerH": 915,
+   "cls": "is-standalone",
+   "bg": "rgb(246, 243, 236)",
+   "geom": null
+  },
+  {
+   "check": "desktop/light：底栏下沿 = 800",
+   "ok": true,
+   "tabBottom": 800,
+   "tabTop": 742,
+   "tabH": 58,
+   "padBot": "0px",
+   "appBottom": 800,
+   "innerH": 800,
+   "cls": "",
+   "bg": "rgb(246, 243, 236)",
+   "geom": null
+  }
+ ]
+}
