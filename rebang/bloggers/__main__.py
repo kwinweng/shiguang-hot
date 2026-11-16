@@ -24,7 +24,7 @@ def main(argv=None):
     ap.add_argument('--platform', default=','.join(ALL_PLATFORMS), help='逗号分隔：' + ','.join(ALL_PLATFORMS))
     ap.add_argument('--x-dump', default=os.environ.get('REBANG_X_DUMP', str(ROOT / 'var/rebang/x-dump')),
                     help='X 原始响应目录（取最新子目录）或单个文件')
-    ap.add_argument('--jike-rsshub', default=os.environ.get('REBANG_JIKE_RSSHUB'), help='自建 RSSHub 根地址；不配 → not_configured')
+    ap.add_argument('--jike-rsshub', default=os.environ.get('REBANG_JIKE_RSSHUB'), help='即刻 RSSHub 根地址，逗号分隔可写多个；不写用 bloggers.json 的公共实例清单')
     ap.add_argument('--weibo-cookie-file', default=None, help='仓库外 Cookie 文件路径（只检查存在，不读取）')
     ap.add_argument('--weibo-output', default=None, help='weibo-crawler 输出目录')
     ap.add_argument('--limit', type=int, default=10, help='每个账号最多条数')

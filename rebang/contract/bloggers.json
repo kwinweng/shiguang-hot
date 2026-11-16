@@ -27,7 +27,7 @@
       {"handle": "emollick", "name": "Ethan Mollick", "home": "https://www.oneusefulthing.org/", "feed": "https://www.oneusefulthing.org/feed"},
       {"handle": "lilianweng", "name": "Lilian Weng", "home": "https://lilianweng.github.io/", "feed": "https://lilianweng.github.io/index.xml"}
     ]},
-    {"id": "jike", "name": "即刻", "method": "self-hosted-rsshub-no-login", "login": false, "needs_approval": "自建 RSSHub 部署另批（约 258MB 内存峰值）", "accounts": [
+    {"id": "jike", "name": "即刻", "method": "public-rsshub-no-login", "login": false, "note": "公共 RSSHub 实例的即刻用户路由，不登录（2026-11-16 阿欢：先试 RSSHub 等公开方式）；实例按顺序轮换，全挂才算失败", "rsshub_mirrors": ["https://rsshub.ktachibana.party", "https://rsshub.liumingye.cn", "https://rsshub.cups.moe", "https://rsshub.rssforever.com"], "accounts": [
       {"handle": "7B1385A9-FCC9-4446-B8CE-472EAF6817B2", "name": "少楠Plidezus"},
       {"handle": "BB769515-C724-4652-8838-6AA32EC1A8DF", "name": "刘飞Lufy"},
       {"handle": "35224A78-8B11-469E-B307-16B58688FBEC", "name": "艾逗笔"},

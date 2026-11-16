@@ -219,6 +219,11 @@
   function avatar(src, cls = '') {
     return src ? `<img class="${cls}" src="${esc(src)}" alt="">` : `<span class="av ${cls}"></span>`;
   }
+  /** 「@账号」只给 X、微博这类账号名可读的平台；即刻的账号是 UUID，YouTube 是频道 id，不显示 */
+  function atHandle(platform, handle) {
+    if (!handle || !['x', 'weibo', 'blog'].includes(platform || 'x')) return '';
+    return '@' + esc(handle);
+  }
   /** 推文卡（v9/v10 样式）。拿不到的互动数不显示，不编数字 */
   function tweetCardHTML(item, clamp) {
     const b = item.blogger || {};
@@ -227,7 +232,7 @@
     const key = `${item.id}-${clamp ? 'c' : 'd'}`;
     const tools = d.translated ? `<div class="t-tools"><span class="t-badge">${esc(d.label)}</span><button type="button" class="orig-btn" data-orig="${esc(key)}">看原文</button></div><div class="orig" data-orig-box="${esc(key)}">${esc(d.orig.body || d.orig.summary)}</div>` : '';
     const q = b.quote;
-    const quote = q ? `<div class="quote"><div class="hd">${avatar(q.avatar, 'av')}<div><div class="nm">${esc(q.display_name || q.handle)}</div><div class="meta">@${esc(q.handle)}${q.published_at ? ' · ' + esc(fmtTime(q.published_at)) : ''}</div></div></div><div class="t-body">${esc(q.text)}</div></div>` : '';
+    const quote = q ? `<div class="quote"><div class="hd">${avatar(q.avatar, 'av')}<div><div class="nm">${esc(q.display_name || q.handle)}</div><div class="meta">${[atHandle(b.platform, q.handle), q.published_at ? esc(fmtTime(q.published_at)) : ''].filter(Boolean).join(' · ')}</div></div></div><div class="t-body">${esc(q.text)}</div></div>` : '';
     const comments = (b.comments || []).slice(0, 10);
     const cm = !clamp && comments.length ? `<div class="comments"><h4>热门回复</h4><p class="cmt-note">按点赞排序，最多 10 条。完整讨论请打开原文。</p>${comments.map(c => {
       const text = c.text_zh || c.text;
@@ -246,7 +251,7 @@
       const sum = d.summary ? `<div class="t-body clamp">${esc(d.summary)}</div>` : '';
       return `<article class="tweet article-post" data-id="${esc(item.id)}"><div class="hd">${avatar(b.avatar)}<div style="flex:1;min-width:0"><div class="nm">${esc(b.display_name || b.handle)}</div><div class="meta">${esc(fmtTime(item.published_at))}${d.translated ? ' · ' + esc(d.label) : ''}</div></div></div>${title}${sum}${cover}</article>`;
     }
-    return `<article class="tweet" data-id="${esc(item.id)}"><div class="hd">${avatar(b.avatar)}<div style="flex:1;min-width:0"><div class="nm">${esc(b.display_name || b.handle)} ${b.verified ? `<span class="blue" title="认证">${ICO.check}</span>` : ''}</div><div class="meta">@${esc(b.handle)} · ${esc(fmtTime(item.published_at))}</div></div></div>${title}<div class="t-body${clamp ? ' clamp' : ''}">${esc(text)}</div>${tools}${mediaGrid(b.media, item.url)}${quote}${metrics}${extra.length ? `<div class="detail-meta">${extra.map(esc).join(' · ')}</div>` : ''}${cm}</article>`;
+    return `<article class="tweet" data-id="${esc(item.id)}"><div class="hd">${avatar(b.avatar)}<div style="flex:1;min-width:0"><div class="nm">${esc(b.display_name || b.handle)} ${b.verified ? `<span class="blue" title="认证">${ICO.check}</span>` : ''}</div><div class="meta">${[atHandle(b.platform, b.handle), esc(fmtTime(item.published_at))].filter(Boolean).join(' · ')}</div></div></div>${title}<div class="t-body${clamp ? ' clamp' : ''}">${esc(text)}</div>${tools}${mediaGrid(b.media, item.url)}${quote}${metrics}${extra.length ? `<div class="detail-meta">${extra.map(esc).join(' · ')}</div>` : ''}${cm}</article>`;
   }
   /** 历史/收藏/搜索通用行 */
   function rowHTML(item) {
