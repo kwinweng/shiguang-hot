@@ -1,0 +1,8 @@
+{"_note": "结构照 we-mp-rss core/wx/model/weread_mp.py 与 2026-10 公开逆向笔记里的 /web/mp/articles 回包（reviews[].subReviews[].review.mpInfo），内容为合成样例；扫码后要用真回包复核",
+ "reviews": [
+  {"subReviews": [
+    {"review": {"reviewId": "MP_WXS_123_aaaa", "createTime": 1763200000, "mpInfo": {"title": "合成样例：第二篇", "pic_url": "https://mmbiz.qpic.cn/fake/cover2.jpg", "time": 1763200000, "content": "第二篇摘要", "originalId": "aaaa"}}},
+    {"review": {"reviewId": "MP_WXS_123_bbbb", "createTime": 1763280000, "mpInfo": {"title": "合成样例：最新一篇", "pic_url": "https://mmbiz.qpic.cn/fake/cover1.jpg", "time": 1763280000, "content": "最新一篇摘要", "doc_url": "https://mp.weixin.qq.com/s/bbbb"}}}
+  ]},
+  {"subReviews": [{"review": {"reviewId": "MP_WXS_123_cccc", "mpInfo": {"title": "没有时间的不出"}}}]}
+ ]}

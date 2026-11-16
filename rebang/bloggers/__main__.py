@@ -13,6 +13,7 @@ from pathlib import Path
 from rebang.contract.schema import validate_items_envelope
 from rebang.translate import Translator
 
+from . import weread as weread_mod
 from .run import ALL_PLATFORMS, Options, load_previous, run, write_atomic
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -27,6 +28,8 @@ def main(argv=None):
     ap.add_argument('--jike-rsshub', default=os.environ.get('REBANG_JIKE_RSSHUB'), help='即刻 RSSHub 根地址，逗号分隔可写多个；不写用 bloggers.json 的公共实例清单')
     ap.add_argument('--weibo-cookie-file', default=None, help='仓库外 Cookie 文件路径（只检查存在，不读取）')
     ap.add_argument('--weibo-output', default=None, help='weibo-crawler 输出目录')
+    ap.add_argument('--weread-session', default=str(weread_mod.DEFAULT_SESSION),
+                    help='微信读书会话文件（python3 -m rebang.bloggers.weread login 扫码后写入，仓库外、0600）；不存在 → 5 个公众号 not_configured')
     ap.add_argument('--limit', type=int, default=10, help='每个账号最多条数')
     ap.add_argument('--pause', type=float, default=1.0, help='同平台账号之间的间隔秒数')
     ap.add_argument('--translate-engine', default=None, help='none|cache|openai-compatible（默认读 REBANG_TRANSLATE_ENGINE，否则 cache）')
@@ -40,6 +43,7 @@ def main(argv=None):
                    weibo_output=args.weibo_output, limit=args.limit, pause=args.pause,
                    translator=Translator(engine=args.translate_engine))
     opts.localize_media = not args.no_media
+    opts.weread_session = args.weread_session
     envelope = run(platforms, previous=load_previous(args.out), opts=opts)
     errors = validate_items_envelope(envelope)
     if errors:

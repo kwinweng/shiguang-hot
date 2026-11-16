@@ -1,0 +1,261 @@
+"""微信读书（weread.qq.com 网页版）读公众号文章列表：5 个没有公开订阅的公众号走这里。
+
+登录：微信读书网页版自己的扫码登录（不经第三方中转）。
+  python3 -m rebang.bloggers.weread login --qr-png /tmp/weread-qr.png [--wait 600]
+    1. GET  /api/auth/getLoginUid            → uid
+    2. 二维码内容 = https://weread.qq.com/web/confirm?uid=<uid>（用微信扫，或在微信里打开这个链接）
+    3. GET  /api/auth/getLoginInfo?uid=…    长轮询，扫码确认后返回 webLoginVid + accessToken
+    4. 存成会话文件（默认 ~/.config/rebang/weread-session.json，权限 0600，仓库外），只写 vid/skey 和时间。
+  需要验证码（NEED_OTP）时命令会提示，用 `login --uid <同一个 uid> --otp <手机上显示的码>` 接着等。
+
+读取：GET /web/mp/articles?bookId=MP_WXS_…&offset=0（列表：标题、封面、发布时间、reviewId）。
+bookId 优先用 bloggers.json 里写好的 `book_id`，没写就登录后用站内搜索按公众号名字找，找到后缓存。
+Cookie 只通过 curl 的标准输入配置传给 curl（不进命令行参数、不进日志），任何输出都不打印会话内容。
+错误码：-2010 没登录 / -2012 登录超时 / -2041 风控或会话失效 → 统一记为 login_expired，站上保留旧内容。
+"""
+import argparse
+import json
+import os
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+from urllib.parse import quote, urlencode
+
+from .common import detect_lang, iso, normalize_text, source_id, summary_of
+
+BASE = 'https://weread.qq.com'
+UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36'
+DEFAULT_SESSION = Path(os.environ.get('REBANG_WEREAD_SESSION') or Path.home() / '.config' / 'rebang' / 'weread-session.json')
+BOOKS_CACHE = Path(__file__).resolve().parents[2] / 'var' / 'rebang' / 'cache' / 'weread-books.json'
+LOGIN_ERRORS = {-2010, -2012, -2041}
+
+
+class WereadError(Exception):
+    def __init__(self, code):
+        super().__init__(code)
+        self.code = code
+
+
+# ---------- 会话 ----------
+
+def session_exists(path=DEFAULT_SESSION):
+    return Path(path).is_file()
+
+
+def load_session(path=DEFAULT_SESSION):
+    data = json.loads(Path(path).read_text(encoding='utf-8'))
+    if not (data.get('vid') and data.get('skey')):
+        raise WereadError('session_incomplete')
+    return data
+
+
+def save_session(vid, skey, path=DEFAULT_SESSION):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    os.chmod(path.parent, 0o700)
+    tmp = path.with_name(path.name + '.tmp')
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        json.dump({'vid': str(vid), 'skey': str(skey), 'saved_at': datetime.now(timezone.utc).isoformat(timespec='seconds')}, f)
+    os.replace(tmp, path)
+
+
+# ---------- HTTP（curl；Cookie 走标准输入） ----------
+
+def http_json(url, session=None, timeout=25):
+    config = [f'url = "{url}"', f'user-agent = "{UA}"', 'header = "Accept: application/json, text/plain, */*"',
+              f'header = "Referer: {BASE}/"', f'max-time = {int(timeout)}', 'silent', 'location']
+    if session:
+        config.append(f'cookie = "wr_vid={session["vid"]}; wr_skey={session["skey"]}"')
+    try:
+        r = subprocess.run(['curl', '-q', '-K', '-', '-w', '\n%{http_code}'], input='\n'.join(config) + '\n',
+                           capture_output=True, text=True, timeout=timeout + 10)
+    except (OSError, subprocess.TimeoutExpired):
+        raise WereadError('network') from None
+    if r.returncode:
+        raise WereadError('network')
+    body, _, code = r.stdout.rpartition('\n')
+    try:
+        data = json.loads(body) if body.strip() else {}
+    except ValueError:
+        raise WereadError(f'http_{code}_not_json') from None
+    err = data.get('errCode', data.get('errcode', (data.get('data') or {}).get('errcode') if isinstance(data.get('data'), dict) else None))
+    if isinstance(err, int) and err in LOGIN_ERRORS:
+        raise WereadError('login_expired')
+    if code.startswith(('4', '5')) and not data:
+        raise WereadError(f'http_{code}')
+    return data
+
+
+# ---------- 登录 ----------
+
+def confirm_url(uid):
+    return f'{BASE}/web/confirm?uid={quote(uid)}'
+
+
+def write_qr(text, png_path):
+    """有 segno 就出二维码图；没有返回 False，调用方只给链接。"""
+    try:
+        import segno
+    except ImportError:
+        return False
+    segno.make(text, error='m').save(str(png_path), scale=10, border=3)
+    return True
+
+
+def login(qr_png=None, wait=600, uid=None, otp='', session_path=DEFAULT_SESSION, get=http_json, log=print, clock=time.monotonic):
+    if not uid:
+        uid = (get(f'{BASE}/api/auth/getLoginUid') or {}).get('uid')
+        if not uid:
+            raise WereadError('no_uid')
+    url = confirm_url(uid)
+    made = write_qr(url, qr_png) if qr_png else False
+    log(json.dumps({'step': 'scan', 'uid': uid, 'confirm_url': url, 'qr_png': str(qr_png) if made else None,
+                    'how': '用微信扫二维码（或在微信里打开 confirm_url），在手机上点确认登录'}, ensure_ascii=False))
+    deadline = clock() + wait
+    while clock() < deadline:
+        try:
+            info = get(f'{BASE}/api/auth/getLoginInfo?' + urlencode({'uid': uid, 'otp': otp}), timeout=65)
+        except WereadError as exc:
+            if exc.code == 'network':
+                continue      # 长轮询超时：接着等
+            raise
+        if info.get('accessToken') and info.get('webLoginVid'):
+            save_session(info['webLoginVid'], info['accessToken'], session_path)
+            log(json.dumps({'step': 'done', 'session': str(session_path)}, ensure_ascii=False))
+            return True
+        code = info.get('logicCode')
+        if code == 'NEED_OTP':
+            log(json.dumps({'step': 'need_otp', 'uid': uid,
+                            'how': f'手机上会显示验证码；拿到后运行 login --uid {uid} --otp <验证码>'}, ensure_ascii=False))
+            return False
+        if code in ('LOGIN_TIMEOUT', 'OTP_EXPIRED'):
+            log(json.dumps({'step': 'expired', 'how': '二维码过期了，重新运行 login 生成新的'}, ensure_ascii=False))
+            return False
+        if code == 'OTP_NOT_MATCH':
+            log(json.dumps({'step': 'otp_wrong'}, ensure_ascii=False))
+            return False
+    log(json.dumps({'step': 'timeout', 'how': '等太久没扫，重新运行 login'}, ensure_ascii=False))
+    return False
+
+
+# ---------- 公众号 bookId 与文章 ----------
+
+def _find_mp_books(node, out):
+    if isinstance(node, dict):
+        bid = node.get('bookId')
+        if isinstance(bid, str) and bid.startswith('MP_WXS_'):
+            out.append({'book_id': bid, 'title': str(node.get('title') or node.get('name') or ''),
+                        'cover': node.get('cover') or ''})
+        for v in node.values():
+            _find_mp_books(v, out)
+    elif isinstance(node, list):
+        for v in node:
+            _find_mp_books(v, out)
+    return out
+
+
+def _norm(name):
+    return ''.join(str(name).lower().split())
+
+
+def resolve_book_id(account, session, get=http_json, cache=None):
+    if account.get('book_id'):
+        return account['book_id']
+    cache = cache if cache is not None else {}
+    if cache.get(account['handle']):
+        return cache[account['handle']]
+    data = get(f'{BASE}/api/store/search?' + urlencode({'keyword': account['handle'], 'count': 20}), session=session)
+    want = _norm(account['handle'])
+    for book in _find_mp_books(data, []):
+        if _norm(book['title']) == want:
+            cache[account['handle']] = book['book_id']
+            return book['book_id']
+    raise WereadError('book_not_found')
+
+
+def article_rows(data):
+    """/web/mp/articles 的回包 → [{review_id, title, published(epoch), cover, summary, url}]"""
+    rows = []
+    for group in data.get('reviews') or []:
+        subs = group.get('subReviews') or [group]
+        for sub in subs:
+            review = (sub or {}).get('review') or {}
+            mp = review.get('mpInfo') or {}
+            rid = review.get('reviewId')
+            when = mp.get('time') or review.get('createTime')
+            if not rid or not mp.get('title') or not isinstance(when, (int, float)):
+                continue
+            url = next((mp.get(k) for k in ('doc_url', 'url', 'link') if str(mp.get(k) or '').startswith('https://')), '')
+            rows.append({'review_id': rid, 'title': str(mp['title']).strip(), 'published': int(when),
+                         'cover': mp.get('pic_url') if str(mp.get('pic_url') or '').startswith('https://') else '',
+                         'summary': normalize_text(str(mp.get('content') or mp.get('abstract') or '')), 'url': url})
+    return rows
+
+
+def wechat_posts(account, platform, fetched_at, session, get=http_json, limit=10, cache=None):
+    book = resolve_book_id(account, session, get=get, cache=cache)
+    data = get(f'{BASE}/web/mp/articles?' + urlencode({'bookId': book, 'offset': 0}), session=session)
+    sid = source_id(platform['id'], account['handle'])
+    out = []
+    for row in sorted(article_rows(data), key=lambda r: r['published'], reverse=True)[:limit]:
+        moment = datetime.fromtimestamp(row['published'], tz=timezone.utc)
+        item = {
+            'id': f'{sid}:{row["review_id"]}',
+            'kind': 'post', 'channel': None, 'source_id': sid, 'source_name': account['name'],
+            'title': row['title'], 'summary': summary_of(row['summary']), 'body': row['summary'],
+            'url': row['url'],
+            'image': {'url': row['cover']} if row['cover'] else None,
+            'published_at': iso(moment), 'fetched_at': fetched_at,
+            'lang': detect_lang(row['title'], row['summary']),
+            'blogger': {'platform': platform['id'], 'handle': account['handle'], 'display_name': account['name'],
+                        'media': [], 'quote': None},
+        }
+        out.append(item)
+    return out
+
+
+def load_books(path=BOOKS_CACHE):
+    try:
+        return json.loads(Path(path).read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return {}
+
+
+def save_books(cache, path=BOOKS_CACHE):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(cache, ensure_ascii=False, indent=1), encoding='utf-8')
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog='python3 -m rebang.bloggers.weread')
+    sub = ap.add_subparsers(dest='cmd', required=True)
+    lg = sub.add_parser('login', help='扫码登录微信读书网页版，成功后写会话文件（0600，仓库外）')
+    lg.add_argument('--qr-png', default='/tmp/weread-login-qr.png')
+    lg.add_argument('--wait', type=int, default=600, help='最多等几秒')
+    lg.add_argument('--uid', default=None, help='接着等同一个二维码（验证码步骤用）')
+    lg.add_argument('--otp', default='')
+    lg.add_argument('--session', default=str(DEFAULT_SESSION))
+    st = sub.add_parser('status', help='只看会话文件在不在、能不能读到书架（不打印内容）')
+    st.add_argument('--session', default=str(DEFAULT_SESSION))
+    args = ap.parse_args(argv)
+    if args.cmd == 'login':
+        return 0 if login(args.qr_png, args.wait, args.uid, args.otp, Path(args.session)) else 1
+    if not session_exists(args.session):
+        print(json.dumps({'session': False}))
+        return 1
+    try:
+        session = load_session(args.session)
+        http_json(f'{BASE}/api/userInfo?' + urlencode({'userVid': session['vid']}), session=session)
+        print(json.dumps({'session': True, 'valid': True}))
+        return 0
+    except WereadError as exc:
+        print(json.dumps({'session': True, 'valid': False, 'error': exc.code}))
+        return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())

@@ -41,7 +41,10 @@ t.me 公开页 → tgmeta ──┼→ ingest → var/rebang/in/ingest.json ─�
 - `python3 -m rebang.bloggers --out var/rebang/in/bloggers.json --platform blog,wechat[,x] [--x-dump DIR] --translate-engine cache`。
 - 输出带 `platforms[{id,status,last_ok_at,reason?,accounts[...]}]`，前端据此显示空状态和上次成功日期。
 - **博客 7 个**：官方订阅源，直接抓。
-- **公众号**：夕小瑶科技说走 Wechat2RSS 公开源；图片不带 Referer 下载到 `var/rebang/media/wechat/`，下载失败标 `missing`，不外链。其余 5 个需要微信读书扫码，现为 `not_configured`。
+- **公众号**：夕小瑶科技说走 Wechat2RSS 公开源；图片不带 Referer 下载到 `var/rebang/media/wechat/`，下载失败标 `missing`，不外链。其余 5 个（MacTalk、独立开发变现周刊、乱翻书、caoz的梦呓、王建硕）走微信读书：`rebang/bloggers/weread.py`。没扫码时是 `not_configured`（“已准备好，等扫码”）；扫码后按公众号名在微信读书里搜 `MP_WXS_` bookId（缓存 `var/rebang/cache/weread-books.json`），再取 `/web/mp/articles` 文章列表；登录失效标 `login_expired`、保留旧条目。
+  - 扫码：`python3 -m rebang.bloggers.weread login --qr-png /tmp/weread-login-qr.png --wait 600`（生成二维码要 segno，盒子上用 `/workspace/rebang-v1-briefs/tools/.venv-qr/bin/python`）。命令打印 `confirm_url` 和二维码图；在微信里扫码（或在微信里打开 confirm_url），手机上点确认。要验证码时命令会打印带 `--uid … --otp <码>` 的重跑命令。
+  - 会话只存 vid/skey，写在仓库外 `~/.config/rebang/weread-session.json`（0600，可用 `REBANG_WEREAD_SESSION` 改路径），通过 curl 标准输入传 Cookie，不进命令行、不打印。`python3 -m rebang.bloggers.weread status` 只回报 ok / login_expired。
+  - 文章回包结构按公开逆向资料写的，测试用合成样例；扫码后第一次刷新要用真数据核对。
 - **X 16 人**：Python 里调不到 Grok Bot 的公开 X 读取工具，所以适配器只读工具写好的原始响应 `var/rebang/x-dump/<YYYYMMDDTHHMM>/`（X API v2 结构；`quotes*`、`replies*`、`refs*` 开头的文件只作引用/评论参考；可选 `_dump.json` 写 `generated_at`）。取最新子目录；超过 36 小时标 `x_dump_stale` 并保留上次内容；没有 dump 是 `not_configured`。谁定时写 dump：例程草稿已备，**未创建**。
 - **即刻 9 人**（2026-11-16 接通）：公共 RSSHub 实例的 `/jike/user/<UUID>`，不登录、不带 Cookie。实例清单在 `bloggers.json` 的 `rsshub_mirrors`，每个账号错开起点轮换，失败（超时、5xx、回错误页）换下一个，全挂才标 `jike_mirrors_down` 并保留上次内容；账号行写 `via` 记下这次用的实例。`--jike-rsshub`（或 `REBANG_JIKE_RSSHUB`，逗号分隔）可覆盖清单。`rebang/bloggers/jike.py` 去掉「发布了/转发了」前缀（即刻帖子没有标题），转发的原帖进 `blogger.quote`，频道头像来自订阅源的 `<image>`。公共实例是第三方服务，随时可能限流或下线。
 - **微博**：2026-11-16 试过公开方式都不通：公共 RSSHub 的微博路由全部 503（「Cooling down before new visitor Cookies」或实例的无头浏览器挂了），`m.weibo.cn` 免登录接口返回 `ok:-100` 跳登录，`weibo.com/ajax` 403，无头浏览器打开主页停在游客验证页。要接只能用副号 Cookie（待阿欢定）。`--weibo-cookie-file` 只检查文件存在，不读内容、不打印；还需 `--weibo-output`（weibo-crawler 的输出）。crawler 未安装；字段映射只用合成样本测过，接真实输出要复核。
@@ -69,4 +72,4 @@ t.me 公开页 → tgmeta ──┼→ ingest → var/rebang/in/ingest.json ─�
 
 ## 已知缺口
 - `public-feeds/` 只到 2026-10-23（`/workspace/tg-local/sync.sh` 改为 `publish_public.py --no-push`）；4 个每日成品直接读盒子上的原始目录：推特爆款 `/workspace/x-digest/YYYY-MM-DD.json`、环球要闻 `/workspace/world-brief/YYYY-MM-DD/brief.json`、GitHub 热门 `/workspace/feeds-inbox/github/YYYY-MM-DD/feed.json`、今日重点 `/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json`（11/15 核对时的位置）。
-- 微博、5 个公众号未接通，站上显示真实空状态。
+- 微博未接通（公开方式都要登录/游客验证）；5 个公众号的微信读书管道已备好、等扫码；YouTube 管道已备好、频道名单待确认。站上显示真实空状态。
