@@ -46,13 +46,13 @@
       {"handle": "5700099573", "name": "数字生命卡兹克", "home": "https://weibo.com/u/5700099573"},
       {"handle": "1906286443", "name": "钟文泽", "home": "https://weibo.com/u/1906286443"}
     ]},
-    {"id": "wechat", "name": "公众号", "method": "weread-secondary-account-qr", "login": true, "secret": "盒子浏览器扫码，登录态不写文件", "accounts": [
-      {"handle": "MacTalk", "name": "MacTalk（池建强）"},
-      {"handle": "独立开发变现周刊", "name": "独立开发变现周刊（凯凯而谈）"},
-      {"handle": "乱翻书", "name": "乱翻书"},
-      {"handle": "caoz的梦呓", "name": "caoz的梦呓"},
+    {"id": "wechat", "name": "公众号", "method": "weread-secondary-account-qr", "login": true, "secret": "会话只存 vid/skey，仓库外 ~/.config/rebang/weread-session.json（0600）；代码不打印", "note": "5 个号的 book_id 由公开 __biz（hellodword/wechat-feeds list.csv）Base64 解码得到，2026-11-16 用 /api/mp/cover 返回的名字核对过。网页搜索搜不到公众号。/web/mp/articles 本会话回 -2041，走 /api/mp/cover + /web/mp/content 兜底（每次最新一篇，上次的留着）。", "accounts": [
+      {"handle": "MacTalk", "name": "MacTalk（池建强）", "book_id": "MP_WXS_2398460220"},
+      {"handle": "独立开发变现周刊", "name": "独立开发变现周刊（凯凯而谈）", "book_id": "MP_WXS_2399377006"},
+      {"handle": "乱翻书", "name": "乱翻书", "book_id": "MP_WXS_2390738373"},
+      {"handle": "caoz的梦呓", "name": "caoz的梦呓", "book_id": "MP_WXS_3242052866"},
       {"handle": "夕小瑶科技说", "name": "夕小瑶科技说", "method": "wechat2rss-public-feed", "login": false, "feed": "https://wechat2rss.xlab.app/feed/a1cd365aa14ed7d64cabfc8aa086da40ecaba34d.xml"},
-      {"handle": "王建硕", "name": "王建硕"}
+      {"handle": "王建硕", "name": "王建硕", "book_id": "MP_WXS_2397242840"}
     ]},
     {"id": "youtube", "name": "YouTube", "method": "public-channel-feed", "login": false, "note": "官方频道订阅 feeds/videos.xml?channel_id=UC…（不用 API 密钥），失败退到公开频道页；名单 2026-11-16 15:49 阿欢确认候选 13 个全部启用（handle = UC 开头的频道 id），候选说明见 docs/rebang-v1/youtube-candidates.md", "accounts": [
       {"handle": "UCbfYPyITQ-7l4upoX8nvctg", "name": "Two Minute Papers", "home": "https://www.youtube.com/@TwoMinutePapers"},

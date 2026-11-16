@@ -8,18 +8,19 @@
     4. 存成会话文件（默认 ~/.config/rebang/weread-session.json，权限 0600，仓库外），只写 vid/skey 和时间。
   需要验证码（NEED_OTP）时命令会提示，用 `login --uid <同一个 uid> --otp <手机上显示的码>` 接着等。
 
-读取：GET /web/mp/articles?bookId=MP_WXS_…&offset=0（列表：标题、封面、发布时间、reviewId）。
-bookId 优先用 bloggers.json 里写好的 `book_id`，没写就登录后用站内搜索按公众号名字找，找到后缓存。
+读取：优先 GET /web/mp/articles?bookId=MP_WXS_…&offset=0（列表）。2026-11-16 实测新鲜会话上这个接口仍回 -2041（不是登录失效，/api/userInfo 与 /api/mp/cover 都正常），所以失败时改走 /api/mp/cover（最新一篇：标题、封面、reviewId）再读 /web/mp/content 补发布时间和原文链接。
+bookId 优先用 bloggers.json 的 `book_id`（由公众号公开 __biz Base64 解码得到 MP_WXS_<数字>，并用 cover 返回的名字核对过）。没写才登录后用站内搜索；网页搜索经常搜不到公众号本身。
 Cookie 只通过 curl 的标准输入配置传给 curl（不进命令行参数、不进日志），任何输出都不打印会话内容。
-错误码：-2010 没登录 / -2012 登录超时 / -2041 风控或会话失效 → 统一记为 login_expired，站上保留旧内容。
+错误码：-2010 没登录 / -2012 登录超时 → login_expired，站上保留旧内容。-2041 在列表接口上当「这次列表不可用」处理，改走 cover，不把整次登录判死。
 """
 import argparse
 import json
+import re
 import os
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote, urlencode
 
@@ -29,7 +30,7 @@ BASE = 'https://weread.qq.com'
 UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36'
 DEFAULT_SESSION = Path(os.environ.get('REBANG_WEREAD_SESSION') or Path.home() / '.config' / 'rebang' / 'weread-session.json')
 BOOKS_CACHE = Path(__file__).resolve().parents[2] / 'var' / 'rebang' / 'cache' / 'weread-books.json'
-LOGIN_ERRORS = {-2010, -2012, -2041}
+LOGIN_ERRORS = {-2010, -2012}  # -2041 在列表接口上常见，不一定是登录失效
 
 
 class WereadError(Exception):
@@ -87,6 +88,25 @@ def http_json(url, session=None, timeout=25):
     if code.startswith(('4', '5')) and not data:
         raise WereadError(f'http_{code}')
     return data
+
+
+def http_text(url, session=None, timeout=40):
+    """取 HTML（公众号正文页）；Cookie 同样走标准输入，不打印。"""
+    config = [f'url = "{url}"', f'user-agent = "{UA}"', 'header = "Accept: text/html,application/xhtml+xml"',
+              f'header = "Referer: {BASE}/"', f'max-time = {int(timeout)}', 'silent', 'location']
+    if session:
+        config.append(f'cookie = "wr_vid={session["vid"]}; wr_skey={session["skey"]}"')
+    try:
+        r = subprocess.run(['curl', '-q', '-K', '-', '-w', '\n%{http_code}'], input='\n'.join(config) + '\n',
+                           capture_output=True, text=True, timeout=timeout + 15)
+    except (OSError, subprocess.TimeoutExpired):
+        raise WereadError('network') from None
+    if r.returncode:
+        raise WereadError('network')
+    body, _, code = r.stdout.rpartition('\n')
+    if code.startswith(('4', '5')):
+        raise WereadError(f'http_{code}')
+    return body
 
 
 # ---------- 登录 ----------
@@ -196,6 +216,45 @@ def resolve_book_id(account, session, get=http_json, cache=None):
     raise WereadError('book_not_found')
 
 
+def short_url(review_id):
+    """reviewId 形如 MP_WXS_<id>_<token>，token 就是 mp.weixin.qq.com/s/ 短链。"""
+    token = str(review_id or '').rsplit('_', 1)[-1]
+    return f'https://mp.weixin.qq.com/s/{token}' if token else ''
+
+
+def cover_row(data):
+    """/api/mp/cover 回包 → article_rows 同形，发布时间要另读正文页。"""
+    rid = data.get('reviewId')
+    title = str(data.get('title') or '').strip()
+    if not rid or not title:
+        return None
+    pic = data.get('pic') if str(data.get('pic') or '').startswith('http') else ''
+    avatar = data.get('avatar') if str(data.get('avatar') or '').startswith('http') else ''
+    return {'review_id': rid, 'title': title, 'published': None, 'cover': pic, 'summary': '',
+            'url': short_url(rid), 'avatar': avatar, 'display_name': str(data.get('name') or '').strip()}
+
+
+def content_meta(html):
+    """从 /web/mp/content 的 HTML 里取发布时间（unix 秒）和原文链接。没有时间就返回 published=None。"""
+    out = {'published': None, 'url': ''}
+    if not html:
+        return out
+    m = re.search(r'property="og:url" content="([^"]+)"', html) or re.search(r'og:url" content="([^"]+)"', html)
+    if m:
+        out['url'] = (m.group(1).replace('&amp;', '&').split('#')[0])
+    for pat in (r"ori_create_time:\s*'(\d+)'", r"create_timestamp:\s*'(\d+)'",
+                r'"publish_time"\s*:\s*(\d+)', r'publish_time%22%3A(\d+)', r'\bct\s*=\s*"(\d+)"'):
+        m = re.search(pat, html)
+        if m:
+            out['published'] = int(m.group(1))
+            break
+    if out['published'] is None:
+        m = re.search(r"create_time:\s*'(\d{4}-\d{2}-\d{2} \d{2}:\d{2})'", html)
+        if m:
+            out['published'] = int(datetime.strptime(m.group(1), '%Y-%m-%d %H:%M').replace(tzinfo=timezone(timedelta(hours=8))).timestamp())
+    return out
+
+
 def article_rows(data):
     """/web/mp/articles 的回包 → [{review_id, title, published(epoch), cover, summary, url}]"""
     rows = []
@@ -208,33 +267,58 @@ def article_rows(data):
             when = mp.get('time') or review.get('createTime')
             if not rid or not mp.get('title') or not isinstance(when, (int, float)):
                 continue
-            url = next((mp.get(k) for k in ('doc_url', 'url', 'link') if str(mp.get(k) or '').startswith('https://')), '')
+            url = next((mp.get(k) for k in ('doc_url', 'url', 'link') if str(mp.get(k) or '').startswith('https://')), '') or short_url(rid)
             rows.append({'review_id': rid, 'title': str(mp['title']).strip(), 'published': int(when),
                          'cover': mp.get('pic_url') if str(mp.get('pic_url') or '').startswith('https://') else '',
                          'summary': normalize_text(str(mp.get('content') or mp.get('abstract') or '')), 'url': url})
     return rows
 
 
-def wechat_posts(account, platform, fetched_at, session, get=http_json, limit=10, cache=None):
-    book = resolve_book_id(account, session, get=get, cache=cache)
-    data = get(f'{BASE}/web/mp/articles?' + urlencode({'bookId': book, 'offset': 0}), session=session)
+def _to_posts(rows, account, platform, fetched_at):
     sid = source_id(platform['id'], account['handle'])
     out = []
-    for row in sorted(article_rows(data), key=lambda r: r['published'], reverse=True)[:limit]:
+    for row in sorted((r for r in rows if r.get('published')), key=lambda r: r['published'], reverse=True):
         moment = datetime.fromtimestamp(row['published'], tz=timezone.utc)
         item = {
             'id': f'{sid}:{row["review_id"]}',
             'kind': 'post', 'channel': None, 'source_id': sid, 'source_name': account['name'],
             'title': row['title'], 'summary': summary_of(row['summary']), 'body': row['summary'],
-            'url': row['url'],
+            'url': row['url'] or short_url(row['review_id']),
             'image': {'url': row['cover']} if row['cover'] else None,
             'published_at': iso(moment), 'fetched_at': fetched_at,
             'lang': detect_lang(row['title'], row['summary']),
-            'blogger': {'platform': platform['id'], 'handle': account['handle'], 'display_name': account['name'],
+            'blogger': {'platform': platform['id'], 'handle': account['handle'],
+                        'display_name': row.get('display_name') or account['name'],
                         'media': [], 'quote': None},
         }
+        if row.get('avatar'):
+            item['blogger']['avatar'] = row['avatar']
         out.append(item)
     return out
+
+
+def wechat_posts(account, platform, fetched_at, session, get=http_json, get_text=None, limit=10, cache=None):
+    book = resolve_book_id(account, session, get=get, cache=cache)
+    data = get(f'{BASE}/web/mp/articles?' + urlencode({'bookId': book, 'offset': 0}), session=session)
+    rows = article_rows(data if isinstance(data, dict) else {})
+    via = 'articles'
+    if not rows:
+        cover = get(f'{BASE}/api/mp/cover?' + urlencode({'bookId': book}), session=session)
+        row = cover_row(cover if isinstance(cover, dict) else {})
+        if not row:
+            return [], 'cover'
+        via = 'cover'
+        text_get = get_text or http_text
+        try:
+            html = text_get(f'{BASE}/web/mp/content?' + urlencode({'reviewId': row['review_id']}), session=session)
+        except WereadError:
+            html = ''
+        meta = content_meta(html)
+        if meta.get('published'):
+            row['published'] = meta['published']
+        rows = [row]
+    posts = _to_posts(rows, account, platform, fetched_at)[:limit]
+    return posts, via
 
 
 def load_books(path=BOOKS_CACHE):
