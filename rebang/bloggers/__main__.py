@@ -28,15 +28,15 @@ def main(argv=None):
                     help='X 原始响应目录（取最新子目录）或单个文件')
     ap.add_argument('--jike-rsshub', default=os.environ.get('REBANG_JIKE_RSSHUB'), help='即刻 RSSHub 根地址，逗号分隔可写多个；不写用 bloggers.json 的公共实例清单')
     ap.add_argument('--weibo-cookie-file', default=os.environ.get('REBANG_WEIBO_COOKIE', str(weibo_mod.DEFAULT_COOKIE)),
-                    help='仓库外 Cookie 文件（默认 ~/.config/rebang/weibo-cookie.txt，只检查存在，不读取、不打印）')
+                    help='仓库外 Cookie 文件（默认 ~/.config/rebang/weibo-cookie.txt；只在请求时读进内存，不打印）')
     ap.add_argument('--weibo-output', default=os.environ.get('REBANG_WEIBO_OUTPUT', str(weibo_mod.DEFAULT_OUTPUT)),
-                    help='weibo-crawler 输出目录（默认 var/rebang/weibo-crawler/）')
+                    help='微博长文缓存与原始回包目录（默认 var/rebang/weibo-crawler/，不含 Cookie）')
     ap.add_argument('--weread-session', default=str(weread_mod.DEFAULT_SESSION),
                     help='微信读书会话文件（python3 -m rebang.bloggers.weread login 扫码后写入，仓库外、0600）；不存在 → 5 个公众号 not_configured')
     ap.add_argument('--limit', type=int, default=10, help='每个账号最多条数')
     ap.add_argument('--pause', type=float, default=1.0, help='同平台账号之间的间隔秒数')
     ap.add_argument('--translate-engine', default=None, help='none|cache|openai-compatible（默认读 REBANG_TRANSLATE_ENGINE，否则 cache）')
-    ap.add_argument('--no-media', action='store_true', help='不下载公众号正文图片到本地（默认下载，见 rebang/bloggers/media.py）')
+    ap.add_argument('--no-media', action='store_true', help='不下载公众号正文图片、微博图片到本地（默认下载，见 rebang/bloggers/media.py）')
     args = ap.parse_args(argv)
     platforms = tuple(p.strip() for p in args.platform.split(',') if p.strip())
     unknown = set(platforms) - set(ALL_PLATFORMS)
@@ -60,6 +60,7 @@ def main(argv=None):
         'ok': True, 'out': args.out, 'items': len(envelope['items']),
         'translated': f'{translated}/{foreign}',
         'wechat_media': getattr(opts, 'media_stats', None),
+        'weibo_media': getattr(opts, 'weibo_media_stats', None),
         'platforms': [{'id': p['id'], 'status': p['status'], 'items': count.get(p['id'], 0),
                        'accounts': {a['handle']: a['status'] + (f"({a['error']})" if a.get('error') else '') for a in p['accounts']}}
                       for p in envelope['platforms']],

@@ -1,6 +1,7 @@
 """编排：按 bloggers.json 逐平台、逐账号抓取 → items 信封 + platforms 状态；失败账号沿用上次成功内容。"""
 import json
 import os
+import sys
 import time
 from datetime import timedelta
 from pathlib import Path
@@ -23,8 +24,9 @@ X_STALE_HOURS = 36
 REASONS = {
     'jike_rsshub_unset': '即刻的公共 RSSHub 地址未配置',
     'jike_mirrors_down': '公共 RSSHub 实例这次都没取到即刻',
-    'weibo_cookie_unset': '微博的公开方式（公共 RSSHub、免登录接口）都要登录或游客验证，取不到；要接需副号 Cookie 文件（待阿欢定）',
-    'weibo_crawler_output_missing': '已有 Cookie 文件路径，但还没有 weibo-crawler 输出（安装/运行另批）',
+    'weibo_cookie_unset': '微博要副号 Cookie：~/.config/rebang/weibo-cookie.txt 还没放（或是空文件）',
+    'weibo_cookie_expired': '微博 Cookie 已失效（接口不再返回 ok=1 或跳到登录页），站上保留上次内容；需重新登录副号换 Cookie',
+    'weibo_fetch_failed': '微博接口这次没取到（网络或接口错误），站上保留上次内容',
     'wechat_weread_qr': '需要微信读书扫码登录，已准备好、等扫码',
     'wechat_weread_expired': '微信读书登录已失效，待重新扫码',
     'wechat_book_not_found': '微信读书里没搜到这个公众号',
@@ -171,22 +173,50 @@ def _platform_wechat(platform, http, fetched_at, opts, sleep):
 
 
 def _platform_weibo(platform, http, fetched_at, opts, sleep):
+    """weibo.com ajax + 副号 Cookie。Cookie 失效：本平台全部标 login_expired（后面的号不再请求），沿用上次内容。"""
     if not weibo_mod.cookie_configured(opts.weibo_cookie_file):
         return [_account(platform, a, 'not_configured', error='weibo_cookie_unset')[0] for a in platform['accounts']], []
-    rows, items = [], []
-    for account in platform['accounts']:
-        path = weibo_mod.find_output(opts.weibo_output, account)
-        if path is None:
-            rows.append(_account(platform, account, 'not_configured', error='weibo_crawler_output_missing')[0])
+    try:
+        cookie = weibo_mod.read_cookie(opts.weibo_cookie_file)
+    except weibo_mod.WeiboError:
+        return [_account(platform, a, 'not_configured', error='weibo_cookie_unset')[0] for a in platform['accounts']], []
+    get = getattr(opts, 'weibo_get', None) or weibo_mod.http_json
+    out_dir = Path(opts.weibo_output) if opts.weibo_output else None
+    cache_path = out_dir / weibo_mod.CACHE_NAME if out_dir else None
+    cache = weibo_mod.load_cache(cache_path) if cache_path else {}
+    pause = max(opts.pause, weibo_mod.PAUSE)
+    rows, items, expired = [], [], False
+    for index, account in enumerate(platform['accounts']):
+        if expired:
+            rows.append(_account(platform, account, 'login_expired', error='weibo_cookie_expired')[0])
             continue
+        if index:
+            sleep(pause)
         try:
-            posts = weibo_mod.map_crawler_json(weibo_mod.load_output(path), platform, account, fetched_at, opts.limit)
-        except (ValueError, OSError, KeyError, TypeError):
+            posts, cache = weibo_mod.fetch_account(account, cookie, get=get, sleep=sleep, cache=cache,
+                                                   limit=opts.limit, raw_dir=out_dir, pause=pause)
+            got = weibo_mod.map_posts(posts, platform, account, fetched_at, cache, opts.limit)
+        except weibo_mod.WeiboError as exc:
+            if exc.code == 'login_expired':
+                expired = True
+                print('weibo cookie expired: 微博 Cookie 已失效，本轮不更新微博，站上保留上次内容', file=sys.stderr)
+                rows.append(_account(platform, account, 'login_expired', error='weibo_cookie_expired')[0])
+            else:
+                row = _account(platform, account, 'error', error='weibo_fetch_failed')[0]
+                row['detail'] = exc.code
+                rows.append(row)
+            continue
+        except Exception:  # 解析器意外：记为 error，不中断其它账号
             rows.append(_account(platform, account, 'error', error='parse')[0])
             continue
-        row, got = _account(platform, account, 'ok' if posts else 'empty', posts)
+        row, got = _account(platform, account, 'ok' if got else 'empty', got)
         rows.append(row)
         items += got
+    if cache_path:
+        try:
+            weibo_mod.save_cache(cache_path, cache)
+        except OSError:
+            pass
     return rows, items
 
 
@@ -332,7 +362,7 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
             got = _keep_recent(pid, rows, got, prev_items, opts.limit)
         else:
             rows, got = handler(platform, http, fetched_at, opts, sleep)
-            if pid in ('youtube', 'wechat'):   # YouTube 公开页一轮只补得出几条；公众号 cover 兜底每次只有最新一篇：上次的留着
+            if pid in ('youtube', 'wechat', 'weibo'):   # 微博只取第一页；YouTube 公开页一轮只补得出几条；公众号 cover 兜底每次只有最新一篇：上次的留着
                 got = _keep_recent(pid, rows, got, prev_items, opts.limit)
         got_by_source = {}
         for item in got:
@@ -365,6 +395,14 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
         opts.media_stats = media_mod.localize(fresh, getattr(opts, 'media_dir', None) or media_mod.MEDIA_DIR,
                                               **({'get': opts.media_get} if getattr(opts, 'media_get', None) else {}))
         media_mod.prune(items, getattr(opts, 'media_dir', None) or media_mod.MEDIA_DIR)
+    if 'weibo' in platform_ids and getattr(opts, 'localize_media', False):
+        from . import media as media_mod
+        weibo_items = [i for i in items if i['blogger']['platform'] == 'weibo']
+        if weibo_items:   # 一条都没有（如 Cookie 没配）就不动已有文件
+            mdir = getattr(opts, 'media_dir', None) or media_mod.MEDIA_DIR
+            opts.weibo_media_stats = media_mod.localize_weibo(
+                weibo_items, mdir, **({'get': opts.weibo_media_get} if getattr(opts, 'weibo_media_get', None) else {}))
+            media_mod.prune(weibo_items, mdir, platform='weibo')
     translator = opts.translator
     for item in items:
         if item.get('fetched_at') == fetched_at:  # 只翻本次新抓的；沿用的旧条目保持原样

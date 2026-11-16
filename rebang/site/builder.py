@@ -255,6 +255,48 @@ def _resolve_local_path(local):
     return raw
 
 
+def _copy_local(local, site):
+    """bloggers 给的本地副本 {path, rel} → 复制进 site/media/<rel>，返回 (站内相对地址, 是否新复制)；不合法/文件不在返回 (None, 0)。"""
+    if not isinstance(local, dict):
+        return None, 0
+    src = _resolve_local_path(local)
+    rel = str(local.get('rel') or '').replace('\\', '/').lstrip('/')
+    if not (src.is_file() and rel and '..' not in rel.split('/')):
+        return None, 0
+    rel = rel if rel.startswith('media/') else 'media/' + rel
+    dest = site / rel
+    if dest.exists():
+        return rel, 0
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dest)
+    return rel, 1
+
+
+def _localize_blogger_media(blogger, site):
+    """微博：media[i].local（图）/ preview_local（视频封面）/ avatar_local（头像）→ 站内副本。
+    没有本地副本的保持原地址（前端加载失败时按已有逻辑处理）。返回复制张数。"""
+    if not isinstance(blogger, dict):
+        return 0
+    copied = 0
+    for m in blogger.get('media') or []:
+        for key, field in (('local', 'url'), ('preview_local', 'preview_url')):
+            local = m.pop(key, None)
+            rel, n = _copy_local(local, site)
+            if rel:
+                copied += n
+                if field == 'url':
+                    m['orig_url'] = m.get('url')
+                m[field] = rel
+                for dim in ('width', 'height'):
+                    if field == 'url' and isinstance(local.get(dim), int) and local[dim] > 0:
+                        m[dim] = local[dim]
+    rel, n = _copy_local(blogger.pop('avatar_local', None), site)
+    if rel:
+        copied += n
+        blogger['avatar'] = rel
+    return copied
+
+
 def localize_images(items, site):
     """ingest 给的本地图（image_local{path, rel?, width, height}）复制进 site/media/，改写成站内相对地址 image。
     已有网络图 image.url 的不动；文件不在就当无图（不编图）。返回复制张数。"""
@@ -279,6 +321,7 @@ def localize_images(items, site):
                         block[dim] = local[dim]
             elif 'mmbiz.qpic.cn' in str(block.get('src')):
                 block['missing'] = True     # 公众号图床拒绝外站引用，没存下本地副本就如实说没有
+        copied += _localize_blogger_media(item.get('blogger'), site)
         local = item.pop('image_local', None)
         if item.get('image') or not isinstance(local, dict):
             continue

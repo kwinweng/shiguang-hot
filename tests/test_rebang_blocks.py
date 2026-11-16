@@ -90,6 +90,48 @@ class MediaTests(unittest.TestCase):
             self.assertEqual(media.prune([], tmp / 'media'), 2)
 
 
+class WeiboMediaTests(unittest.TestCase):
+    """sinaimg/weibocdn 只认 weibo.com 的 Referer：图、视频封面、头像抓取时下载，站上用本站副本。"""
+
+    def test_localize_weibo_images_cover_avatar_and_site_copies(self):
+        item = {'id': 'weibo-1:1', 'blogger': {'platform': 'weibo', 'handle': '1', 'avatar': 'https://tva1.sinaimg.cn/crop.0.0.1.1.1024/av.jpg',
+                'media': [{'type': 'image', 'url': 'https://wx1.sinaimg.cn/large/a.jpg', 'width': 3000, 'height': 1500},
+                          {'type': 'image', 'url': 'https://wx1.sinaimg.cn/large/broken.jpg'},
+                          {'type': 'video', 'url': 'https://f.video.weibocdn.com/o0/v.mp4', 'preview_url': 'https://wx3.sinaimg.cn/orj480/c.jpg'}]},
+                'image': {'url': 'https://wx1.sinaimg.cn/large/a.jpg'}}
+        fetched = []
+
+        def get(url):
+            fetched.append(url)
+            if 'broken' in url:
+                raise RuntimeError('403')
+            return jpeg(80, 40)
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            stats = media.localize_weibo([item], tmp / 'media', get=get)
+            self.assertEqual(stats, {'saved': 3, 'reused': 0, 'failed': 1})
+            self.assertNotIn('https://f.video.weibocdn.com/o0/v.mp4', fetched, '视频本体不下载')
+            m = item['blogger']['media']
+            self.assertTrue(m[0]['local']['rel'].startswith('weibo/') and 'local' not in m[1] and m[2]['preview_local'])
+            self.assertTrue(item['blogger']['avatar_local'] and item['image'] is None and item['image_local'] == m[0]['local'])
+            # 第二次：文件都在，直接复用，不再下载
+            fetched.clear()
+            media.localize_weibo([item], tmp / 'media', get=get)
+            self.assertEqual(fetched, ['https://wx1.sinaimg.cn/large/broken.jpg'])
+            site = tmp / 'site'
+            site.mkdir()
+            builder.localize_images([item], site)
+            b = item['blogger']
+            self.assertTrue(b['media'][0]['url'].startswith('media/weibo/') and (site / b['media'][0]['url']).is_file())
+            self.assertEqual(b['media'][0]['orig_url'], 'https://wx1.sinaimg.cn/large/a.jpg')
+            self.assertEqual((b['media'][0]['width'], b['media'][0]['height']), (80, 40))
+            self.assertEqual(b['media'][1]['url'], 'https://wx1.sinaimg.cn/large/broken.jpg', '没存下的保持原地址，不拿别的图顶替')
+            self.assertTrue(b['media'][2]['preview_url'].startswith('media/weibo/') and b['media'][2]['url'].startswith('https://f.video'))
+            self.assertTrue(b['avatar'].startswith('media/weibo/') and item['image']['url'].startswith('media/weibo/'))
+            self.assertNotIn('"path"', json.dumps(item), '本机路径不进站点数据')
+            self.assertEqual(media.prune([], tmp / 'media', platform='weibo'), 3)
+
+
 if __name__ == '__main__':
     unittest.main()
 
