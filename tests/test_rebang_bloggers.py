@@ -491,3 +491,106 @@ def test_youtube_bad_channel_id_is_not_fetched(tmp_path, monkeypatch):
         raise AssertionError('should not fetch')
     env = runmod.run(('youtube',), http=http, now=NOW, opts=opts(tmp_path), sleep=lambda s: None)
     assert next(p for p in env['platforms'] if p['id'] == 'youtube')['accounts'][0]['error'] == 'parse'
+
+
+# ---------- 微信读书（5 个公众号；扫码前 not_configured，扫码后的读取用合成回包测） ----------
+
+def test_weread_login_writes_private_session_and_never_prints_token(tmp_path):
+    from rebang.bloggers import weread
+    seen, logs = [], []
+    replies = iter([{'logicCode': 'WAITING'}, {'succeed': True, 'webLoginVid': 12345, 'accessToken': 'TOKEN-SECRET'}])
+
+    def get(url, session=None, timeout=25):
+        seen.append(url)
+        if url.endswith('/api/auth/getLoginUid'):
+            return {'uid': 'u-1'}
+        return next(replies)
+    sess = tmp_path / 'cfg' / 'weread-session.json'
+    assert weread.login(qr_png=None, wait=30, session_path=sess, get=get, log=logs.append) is True
+    assert seen[1].startswith('https://weread.qq.com/api/auth/getLoginInfo?uid=u-1')
+    assert json.loads(logs[0])['confirm_url'] == 'https://weread.qq.com/web/confirm?uid=u-1'
+    assert oct(sess.stat().st_mode & 0o777) == '0o600' and oct(sess.parent.stat().st_mode & 0o777) == '0o700'
+    assert weread.load_session(sess)['skey'] == 'TOKEN-SECRET'
+    assert 'TOKEN-SECRET' not in ''.join(logs)
+
+
+def test_weread_login_need_otp_stops_with_instruction(tmp_path):
+    from rebang.bloggers import weread
+    logs = []
+
+    def get(url, session=None, timeout=25):
+        return {'uid': 'u-2'} if url.endswith('getLoginUid') else {'logicCode': 'NEED_OTP'}
+    assert weread.login(wait=30, session_path=tmp_path / 's.json', get=get, log=logs.append) is False
+    assert json.loads(logs[-1])['step'] == 'need_otp' and '--uid u-2' in json.loads(logs[-1])['how']
+    assert not (tmp_path / 's.json').exists()
+
+
+def weread_opts(tmp_path, get, session=True):
+    from rebang.bloggers import weread
+    sess = tmp_path / 'weread-session.json'
+    if session:
+        weread.save_session('1', 'k', sess)
+    o = opts(tmp_path)
+    o.weread_session = str(sess)
+    o.weread_books = tmp_path / 'books.json'
+    o.weread_get = get
+    return o
+
+
+def test_wechat_weread_articles_mapping(tmp_path):
+    body = json.loads((FX / 'weread_mp_articles.json').read_text(encoding='utf-8'))
+    calls = []
+
+    def get(url, session=None, timeout=25):
+        calls.append(url)
+        assert session == {'vid': '1', 'skey': 'k', 'saved_at': session['saved_at']}
+        if '/api/store/search' in url:
+            return {'results': [{'books': [{'bookInfo': {'bookId': 'MP_WXS_999', 'title': '别的号'}},
+                                           {'bookInfo': {'bookId': 'MP_WXS_123', 'title': _kw(url)}}]}]}
+        return body
+    env = runmod.run(('wechat',), http=fake_http(), now=NOW, opts=weread_opts(tmp_path, get), sleep=lambda s: None)
+    assert validate_items_envelope(env) == []
+    wechat = next(p for p in env['platforms'] if p['id'] == 'wechat')
+    assert {a['status'] for a in wechat['accounts']} == {'ok'}
+    mac = [i for i in env['items'] if i['source_id'] == 'wechat-MacTalk']
+    assert [i['title'] for i in mac] == ['合成样例：最新一篇', '合成样例：第二篇']
+    assert mac[0]['url'] == 'https://mp.weixin.qq.com/s/bbbb' and mac[1]['url'] == ''
+    assert mac[0]['image'] == {'url': 'https://mmbiz.qpic.cn/fake/cover1.jpg'}
+    assert json.loads((tmp_path / 'books.json').read_text(encoding='utf-8'))['MacTalk'] == 'MP_WXS_123'
+    calls.clear()
+    runmod.run(('wechat',), http=fake_http(), now=NOW, opts=weread_opts(tmp_path, get), sleep=lambda s: None)
+    assert not [u for u in calls if '/api/store/search' in u]       # bookId 已缓存，不再搜
+
+
+def _kw(url):
+    from urllib.parse import parse_qs, urlsplit
+    return parse_qs(urlsplit(url).query)['keyword'][0]
+
+
+def test_wechat_weread_expired_marks_rest_and_keeps_old(tmp_path):
+    from rebang.bloggers import weread
+
+    def get(url, session=None, timeout=25):
+        raise weread.WereadError('login_expired')
+    env = runmod.run(('wechat',), http=fake_http(), now=NOW, opts=weread_opts(tmp_path, get), sleep=lambda s: None)
+    wechat = next(p for p in env['platforms'] if p['id'] == 'wechat')
+    rows = {a['handle']: a for a in wechat['accounts']}
+    assert rows.pop('夕小瑶科技说')['status'] == 'ok'
+    assert {r['status'] for r in rows.values()} == {'login_expired'}
+
+
+def test_wechat_without_session_stays_not_configured(tmp_path):
+    def get(url, session=None, timeout=25):
+        raise AssertionError('no network without session')
+    env = runmod.run(('wechat',), http=fake_http(), now=NOW, opts=weread_opts(tmp_path, get, session=False), sleep=lambda s: None)
+    wechat = next(p for p in env['platforms'] if p['id'] == 'wechat')
+    rows = {a['handle']: (a['status'], a.get('reason')) for a in wechat['accounts']}
+    rows.pop('夕小瑶科技说')
+    assert set(rows.values()) == {('not_configured', runmod.REASONS['wechat_weread_qr'])}
+
+
+def test_jike_images_shrunk_on_cdn_only():
+    from rebang.bloggers.jike import sized
+    u = 'https://cdnv2.ruguoapp.com/x.heic?imageMogr2/format/jpeg'
+    assert sized(u) == u + '/thumbnail/1080x%3E' and sized(sized(u)) == sized(u)
+    assert sized('https://example.com/a.jpg') == 'https://example.com/a.jpg'

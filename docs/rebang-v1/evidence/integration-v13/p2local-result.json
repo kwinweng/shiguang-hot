@@ -1,0 +1,814 @@
+{
+ "base": "http://127.0.0.1:8811/",
+ "at": "2026-11-16 15:08:44 +0800",
+ "input": "CDP Input.dispatchTouchEvent / Playwright tap, 390x844 mobile",
+ "passed": 92,
+ "total": 94,
+ "checks": [
+  {
+   "check": "顶部说明不再有「英文还没接机器翻译」",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "check": "底栏 = 频道/博主/热搜/收藏",
+   "ok": true,
+   "tabs": [
+    "频道",
+    "博主",
+    "热搜",
+    "收藏"
+   ]
+  },
+  {
+   "check": "历史页已去掉",
+   "ok": true
+  },
+  {
+   "check": "频道里没有热搜块",
+   "ok": true
+  },
+  {
+   "check": "底栏贴在视口最底部",
+   "ok": true,
+   "box": {
+    "x": 0,
+    "y": 786,
+    "width": 390,
+    "height": 58
+   }
+  },
+  {
+   "check": "模拟 home indicator 后底栏仍贴底，按钮在安全区上方",
+   "ok": true,
+   "bottom": 844,
+   "height": 92,
+   "btnBottom": 810,
+   "vh": 844
+  },
+  {
+   "check": "7 顶栏日期居左（左边距 ≤ 20px，左对齐）",
+   "ok": true,
+   "left": {
+    "channels": 16,
+    "blogger": 16,
+    "hot": 16,
+    "favorites": 16
+   },
+   "align": "left"
+  },
+  {
+   "check": "7 顶栏日期只写一次（顶栏里「X月X日」只出现 1 次；刷新时间同一天只写时间）",
+   "ok": true,
+   "when": "11月16日 周一",
+   "refreshed": "刷新于 15:06",
+   "counts": {
+    "channels": [
+     1,
+     1
+    ],
+    "blogger": [
+     1,
+     1
+    ],
+    "hot": [
+     1,
+     1
+    ],
+    "favorites": [
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "check": "7 四个页面顶栏一致（同一个顶栏、同样文字和高度）",
+   "ok": true,
+   "heights": {
+    "channels": 52,
+    "blogger": 52,
+    "hot": 52,
+    "favorites": 52
+   }
+  },
+  {
+   "check": "1 频道（左右）下滑后频道名一行吸在顶上",
+   "ok": true,
+   "scrollTop": 1835,
+   "scTop": 52,
+   "hdTop": 52,
+   "hdH": 72,
+   "text": "1 / 6 左滑看下一频道 时事 查看更多 ›"
+  },
+  {
+   "check": "2 引用：卡片先是频道自己的话，下面是原帖引用卡（来源频道名）",
+   "ok": true,
+   "id": "zaihuapd:45147",
+   "own": "🤖 Qwen4-Max 正式上线，后续将开源小模型",
+   "quote_src": "在花 🎗️ 科技圈"
+  },
+  {
+   "check": "3 卡片上显示表情回应（最多 3 个 +N）和浏览数，数字与 t.me 抓到的一致",
+   "ok": true,
+   "reactions": 7,
+   "shown": 3,
+   "views": "12.3K"
+  },
+  {
+   "check": "2 转发且频道没写话：标「转发」+ 原帖引用卡（转发自 来源）",
+   "ok": true,
+   "id": "dps_build:731",
+   "src": "Parallel Experiments"
+  },
+  {
+   "check": "2 详情里点引用卡打开原帖",
+   "ok": true,
+   "href": "https://t.me/LinghaoCh/1016"
+  },
+  {
+   "check": "2 详情：频道自己的话在上，引用卡在下且链接原帖",
+   "ok": true,
+   "url": "https://t.me/zaihuapd/45054"
+  },
+  {
+   "check": "3 详情显示全部表情回应 + 浏览数",
+   "ok": true,
+   "shown": 7,
+   "data": 7
+  },
+  {
+   "check": "4 详情底部有小的上一条/下一条，位置 = 列表里第几条",
+   "ok": true,
+   "pos": "11 / 30",
+   "height": 34
+  },
+  {
+   "check": "4 点「下一条」到同一列表的下一条",
+   "ok": true,
+   "now": "OneMillion_AI:5945",
+   "want": "OneMillion_AI:5945"
+  },
+  {
+   "check": "4 正文左滑 → 下一条",
+   "ok": true,
+   "now": "xhqcankao:33127",
+   "want": "xhqcankao:33127"
+  },
+  {
+   "check": "4 正文右滑（不从边缘起） → 上一条",
+   "ok": true,
+   "now": "OneMillion_AI:5945",
+   "want": "OneMillion_AI:5945"
+  },
+  {
+   "check": "4 点「上一条」回到原条",
+   "ok": true
+  },
+  {
+   "check": "5 详情从左边缘右滑 → 返回原列表原位置（上一条/下一条用 replace，不多压历史）",
+   "ok": true,
+   "y0": 2134,
+   "y1": 2134
+  },
+  {
+   "check": "3 公开评论：只显示 t.me 讨论区公开可见的那几条 + 总数 + 去 Telegram 看全部",
+   "ok": true,
+   "id": "myBigCharacterPoster:1336",
+   "shown": 2,
+   "total": 2
+  },
+  {
+   "check": "3 没有公开评论的条目不显示评论区（不编）",
+   "ok": true,
+   "id": "OneMillion_AI:5952"
+  },
+  {
+   "check": "5 左右模式：在卡片上横滑 = 换频道，不触发卡片收藏",
+   "ok": true,
+   "index": 1
+  },
+  {
+   "check": "5 banner 上横滑只翻 banner，不换频道",
+   "ok": true,
+   "channel": "world",
+   "before": "1 / 2",
+   "after": "2 / 2",
+   "index": 1
+  },
+  {
+   "check": "5 长按卡片 → 菜单（收藏/分享/复制链接/打开原文），且不打开详情",
+   "ok": true,
+   "menu": [
+    "收藏",
+    "分享",
+    "复制链接",
+    "打开原文",
+    "取消"
+   ]
+  },
+  {
+   "check": "5 菜单「复制链接」复制这条的深链",
+   "ok": true,
+   "toast": "链接已复制。",
+   "clip": "http://127.0.0.1:8811/#/item/tnews365%3A35785"
+  },
+  {
+   "check": "5 菜单「收藏」收进收藏",
+   "ok": true,
+   "id": "tnews365:35785"
+  },
+  {
+   "check": "5 菜单再点「取消收藏」移出",
+   "ok": true
+  },
+  {
+   "check": "5 下拉刷新：频道（左右）",
+   "ok": true,
+   "ptr": "松开刷新",
+   "toast": "没有新内容，已是最新。刷新拿到的是最近一次发布的数据。"
+  },
+  {
+   "check": "5 双击底栏「频道」→ 当前频道回到顶部",
+   "ok": true,
+   "before": 1219,
+   "after": 0
+  },
+  {
+   "check": "1 频道（上下）下滑后当前频道名一行吸在顶上",
+   "ok": true,
+   "scrollTop": 2098,
+   "pinned": "2 / 6 左右滑顶部图，下滑看下一频道 环球 查看更多 ›"
+  },
+  {
+   "check": "5 卡片横滑过程中只有卡片在动（频道块不跟着移）",
+   "ok": true,
+   "block_left": [
+    0
+   ]
+  },
+  {
+   "check": "5 上下模式：卡片左滑 → 收藏（不打开详情），整页不横移",
+   "ok": true,
+   "id": "tnews365:35786",
+   "shift": [
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "check": "5 卡片右滑 → 分享（系统分享面板；本浏览器没有分享面板时复制链接）",
+   "ok": true,
+   "toast": "已复制这条的链接，可以粘贴分享。",
+   "clip": "http://127.0.0.1:8811/#/item/tnews365%3A35786",
+   "native_share": false
+  },
+  {
+   "check": "5 横滑不到 72px 松手不生效",
+   "ok": true
+  },
+  {
+   "check": "5 连续左滑收藏 9 条",
+   "ok": true,
+   "favs": 9
+  },
+  {
+   "check": "5 下拉刷新：频道（上下）",
+   "ok": true,
+   "ptr": "松开刷新",
+   "toast": "没有新内容，已是最新。刷新拿到的是最近一次发布的数据。"
+  },
+  {
+   "check": "博主平台图标左内边距不少于正文边距（16px）",
+   "ok": true,
+   "left": 16
+  },
+  {
+   "check": "博主页已去掉平台标题和说明句",
+   "ok": true
+  },
+  {
+   "check": "点博主图片打开全屏查看器",
+   "ok": true
+  },
+  {
+   "check": "关闭查看器后回到博主列表",
+   "ok": true
+  },
+  {
+   "check": "1 博主：下滑后「博主」+ 平台行（X、Grok bot、即刻…）吸在顶上",
+   "ok": true,
+   "scrollTop": 2259,
+   "scTop": 52,
+   "hdTop": 52,
+   "hdH": 93,
+   "text": "博主 37 15 3 10"
+  },
+  {
+   "check": "5 双击底栏「博主」→ 回到顶部",
+   "ok": true,
+   "before": 2259,
+   "after": 0
+  },
+  {
+   "check": "5 下拉刷新：博主",
+   "ok": true,
+   "ptr": "松开刷新",
+   "toast": "没有新内容，已是最新。刷新拿到的是最近一次发布的数据。"
+  },
+  {
+   "check": "6 公众号文章：正文块与原文同序（段落/标题/图片/引用/列表）",
+   "ok": true,
+   "articles": [
+    {
+     "id": "wechat-夕小瑶科技说:d360a849c8a3911c",
+     "title": "Claude 被封号后我找到了新的办公搭子",
+     "blocks": 127,
+     "images": 32,
+     "loaded": 32,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:52fbc266a6c2d2fd",
+     "title": "刚刚，黄仁勋正式辞职！",
+     "blocks": 5,
+     "images": 1,
+     "loaded": 1,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:42866f01d8f01969",
+     "title": "Qwen控制机器人得分从1.9涨到31.4！清华伯克利开源统",
+     "blocks": 108,
+     "images": 17,
+     "loaded": 17,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:827ddcbbc7d6f5d1",
+     "title": "实测Seedream 5.5：100轮改图不崩，还能直出透明",
+     "blocks": 122,
+     "images": 25,
+     "loaded": 25,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:0ab3af8e3021eff4",
+     "title": "OpenAI 发布 GPT-6 Cyber，专攻网络安全",
+     "blocks": 72,
+     "images": 12,
+     "loaded": 12,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:add627780c3eca03",
+     "title": "AI4S首个开源大模型Hydrogen-1.0发布：跑赢GP",
+     "blocks": 94,
+     "images": 13,
+     "loaded": 13,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:7739a1385e2fba4d",
+     "title": "今日起，ChatGPT Pro额度翻倍，免费重置时代结束了！",
+     "blocks": 46,
+     "images": 10,
+     "loaded": 10,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:4aadefb0333d9e2b",
+     "title": "TRAE给开发者配了个人助理，终于不用挨个催进度了...",
+     "blocks": 167,
+     "images": 28,
+     "loaded": 28,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:b6b1c2366b7daa19",
+     "title": "Google 重磅发布 Genie 4：世界模型终于活了",
+     "blocks": 91,
+     "images": 9,
+     "loaded": 9,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    },
+    {
+     "id": "wechat-夕小瑶科技说:2e2d6160748a589d",
+     "title": "Anthropic正式交表IPO，7%收入来自违规账号。。",
+     "blocks": 85,
+     "images": 12,
+     "loaded": 12,
+     "missing": 0,
+     "dup_images": 0,
+     "order_ok": true,
+     "text_ok": true,
+     "text_mismatch": []
+    }
+   ]
+  },
+  {
+   "check": "6 公众号文章：图片全部加载、没有缺图、没有重复",
+   "ok": true,
+   "images": 159,
+   "loaded": 159
+  },
+  {
+   "check": "5 博主列表卡片左滑 → 收藏",
+   "ok": true,
+   "id": "wechat-夕小瑶科技说:52fbc266a6c2d2fd"
+  },
+  {
+   "check": "1 热搜：下滑后「热搜」+ 日期条吸在顶上",
+   "ok": true,
+   "scrollTop": 1522,
+   "scTop": 52,
+   "hdTop": 52,
+   "hdH": 91,
+   "text": "热搜 今天 · 现在 11月15日 周日"
+  },
+  {
+   "check": "5 下拉刷新：热搜",
+   "ok": true,
+   "ptr": "松开刷新",
+   "toast": "没有新内容，已是最新。刷新拿到的是最近一次发布的数据。"
+  },
+  {
+   "check": "1 收藏：下滑后「收藏」标题吸在顶上",
+   "ok": true,
+   "favorites": 10,
+   "scrollTop": 571,
+   "scTop": 52,
+   "hdTop": 52,
+   "hdH": 45,
+   "text": "收藏"
+  },
+  {
+   "check": "5 下拉刷新：收藏",
+   "ok": true,
+   "ptr": "松开刷新",
+   "toast": "没有新内容，已是最新。刷新拿到的是最近一次发布的数据。"
+  },
+  {
+   "check": "5 收藏页卡片左滑 → 取消收藏（同一个开关）",
+   "ok": true,
+   "id": "wechat-夕小瑶科技说:52fbc266a6c2d2fd"
+  },
+  {
+   "check": "4 从收藏点进详情也有上一条/下一条",
+   "ok": true,
+   "pos": "2 / 9"
+  },
+  {
+   "check": "5 下拉刷新：查看更多",
+   "ok": true,
+   "ptr": "松开刷新",
+   "toast": "没有新内容，已是最新。刷新拿到的是最近一次发布的数据。"
+  },
+  {
+   "check": "热搜页默认当前三家 tab",
+   "ok": true,
+   "tabs": [
+    "百度热搜",
+    "知乎热榜",
+    "B 站热搜"
+   ],
+   "rows": {
+    "baidu": 51,
+    "zhihu": 30,
+    "bilibili": 50
+   }
+  },
+  {
+   "check": "日期切换条：今天·现在 + 归档里的往日",
+   "ok": true,
+   "chips": [
+    "今天 · 现在",
+    "11月15日 周日"
+   ],
+   "archived": [
+    "2026-11-16",
+    "2026-11-15"
+   ]
+  },
+  {
+   "check": "切到往日看当天最后一次榜单",
+   "ok": true,
+   "date": "2026-11-15"
+  },
+  {
+   "check": "博主平台含 Grok bot，与 X/即刻/微博/知乎/公众号并列",
+   "ok": true,
+   "plats": [
+    "x",
+    "grok",
+    "blog",
+    "jike",
+    "weibo",
+    "wechat",
+    "youtube",
+    "zhihu"
+   ]
+  },
+  {
+   "check": "平台图标都是本地官方图标文件且已加载",
+   "ok": true,
+   "icons": [
+    {
+     "src": "icons/x.svg",
+     "w": 150
+    },
+    {
+     "src": "icons/grok.svg",
+     "w": 512
+    },
+    {
+     "src": "icons/blog.svg",
+     "w": 150
+    },
+    {
+     "src": "icons/jike.svg",
+     "w": 38
+    },
+    {
+     "src": "icons/weibo.svg",
+     "w": 150
+    },
+    {
+     "src": "icons/wechat.svg",
+     "w": 150
+    },
+    {
+     "src": "icons/youtube.svg",
+     "w": 150
+    },
+    {
+     "src": "icons/zhihu.svg",
+     "w": 150
+    }
+   ]
+  },
+  {
+   "check": "Grok bot 里 = 今日重点/推特爆款/环球要闻/GitHub 热门",
+   "ok": true,
+   "people": [
+    "全部",
+    "今日重点",
+    "推特爆款",
+    "环球要闻",
+    "GitHub 热门"
+   ]
+  },
+  {
+   "check": "4 类整理内容已离开主题频道",
+   "ok": true,
+   "leaked": 0
+  },
+  {
+   "check": "Grok bot 条数",
+   "ok": true,
+   "per_account": {
+    "今日重点": 108,
+    "推特爆款": 136,
+    "环球要闻": 173,
+    "GitHub 热门": 133
+   }
+  },
+  {
+   "check": "博主「查看更多」下滑到「没有更多了」",
+   "ok": true,
+   "rows": 133,
+   "total": 133
+  },
+  {
+   "check": "系统返回关掉「查看更多」回博主页",
+   "ok": true
+  },
+  {
+   "check": "频道「查看更多」= 整个频道全部条目，到「没有更多了」",
+   "ok": true,
+   "rows": 35,
+   "total": 35
+  },
+  {
+   "check": "从详情返回，「查看更多」页停在原位置",
+   "ok": true,
+   "y0": 4008,
+   "y1": 4008
+  },
+  {
+   "check": "「查看更多」返回回到频道",
+   "ok": true
+  },
+  {
+   "check": "新闻频道英文条目全部有中文译文（机器翻译）",
+   "ok": false,
+   "english": 156,
+   "translated": 152
+  },
+  {
+   "check": "博主英文帖子全部有中文译文（机器翻译）",
+   "ok": false,
+   "english": 60,
+   "translated": 59
+  },
+  {
+   "check": "环球卡片显示中文译文 + 「机器翻译」标",
+   "ok": true,
+   "sample": "内政部被指试图取消安德烈亚斯·马尔姆的线上讲座\n\n哈克尼市长谴责对言论自由的“攻击”，事涉一位被禁止进入英国的学者 沙巴纳·马哈茂德被指控“攻击”言论自由，原因"
+  },
+  {
+   "check": "深链地址 #/item/<id>",
+   "ok": true,
+   "url": "ps%3A%2F%2Fwww.bbc.co.uk%2Fnews%2Fvideos%2Fcm3wgeqnppljo%232"
+  },
+  {
+   "check": "详情系统返回回到原频道原位置",
+   "ok": true,
+   "x": 1,
+   "y0": 2031,
+   "y1": 2031
+  },
+  {
+   "check": "收藏后刷新仍在",
+   "ok": true,
+   "id": "bbc-world:https://www.bbc.co.uk/news/videos/cm3wgeqnppljo#2"
+  },
+  {
+   "check": "搜索 OpenAI 有命中",
+   "ok": true,
+   "hits": 185
+  },
+  {
+   "check": "搜索结果点进详情再返回，回到搜索结果",
+   "ok": true
+  },
+  {
+   "check": "冷启动打开 #/item/<id> 直接到详情",
+   "ok": true,
+   "id": "tnews365:35783"
+  },
+  {
+   "check": "深链详情返回到首页频道",
+   "ok": true
+  },
+  {
+   "check": "上下模式「继续看」按钮保留",
+   "ok": true,
+   "buttons": 6
+  },
+  {
+   "check": "白天和暗黑背景不同，并跟随 prefers-color-scheme",
+   "ok": true,
+   "dark": "rgb(16, 17, 20)",
+   "light": "rgb(246, 243, 236)"
+  },
+  {
+   "check": "环球已译卡片的标题是中文",
+   "ok": true,
+   "leftover": [],
+   "n": 16
+  },
+  {
+   "check": "P2 即刻：平台有帖子，卡片不露 @UUID",
+   "ok": true,
+   "cards": 10,
+   "count": 90,
+   "ok_accounts": 9
+  },
+  {
+   "check": "P2 即刻帖子点开有详情或查看器",
+   "ok": true
+  },
+  {
+   "check": "P2 YouTube 平台已上架",
+   "ok": true
+  },
+  {
+   "check": "P2 YouTube 名单为空 → 显示「频道名单待确认」",
+   "ok": true,
+   "text": "YouTube：频道名单待确认，确认前不抓。"
+  },
+  {
+   "check": "P2 公众号未扫码：空状态写「等扫码」，不编内容",
+   "ok": true,
+   "who": "MacTalk",
+   "text": "MacTalk（池建强）暂时没有内容（需要微信读书扫码登录，已准备好、等扫码）。还没有成功抓取过。"
+  },
+  {
+   "check": "P2 评论楼：标题「评论楼」+ 条数",
+   "ok": true,
+   "n": 30,
+   "id": "zaihuapd:45140"
+  },
+  {
+   "check": "P2 评论楼：超过 10 条先折叠，只露最近 10 条",
+   "ok": true,
+   "visible": 10,
+   "total": 30
+  },
+  {
+   "check": "P2 评论楼：点「展开更早的」后全部显示",
+   "ok": true,
+   "visible": 30
+  },
+  {
+   "check": "P2 评论楼：楼中楼显示被回复的人和原话",
+   "ok": true,
+   "shown": 10
+  },
+  {
+   "check": "P2 评论楼：每条有「原楼」链接到 t.me",
+   "ok": true,
+   "links": 30
+  },
+  {
+   "check": "页面无脚本错误",
+   "ok": true,
+   "errors": []
+  },
+  {
+   "check": "无 4xx/5xx 请求",
+   "ok": true,
+   "bad": []
+  }
+ ],
+ "screenshots": [
+  "p2local-01-topbar-channels.png",
+  "p2local-02-topbar-blogger.png",
+  "p2local-03-topbar-hot.png",
+  "p2local-04-topbar-favorites.png",
+  "p2local-05-sticky-channel-lr.png",
+  "p2local-06-tg-reply-card.png",
+  "p2local-07-tg-forward-card.png",
+  "p2local-08-tg-forward-detail.png",
+  "p2local-09-tg-reply-detail.png",
+  "p2local-10-detail-next.png",
+  "p2local-11-tg-comments.png",
+  "p2local-12-banner-swipe.png",
+  "p2local-13-longpress-menu.png",
+  "p2local-14-pull-to-refresh.png",
+  "p2local-15-sticky-channel-ud.png",
+  "p2local-16-card-swipe-fav.png",
+  "p2local-17-zoom-x.png",
+  "p2local-18-sticky-blogger.png",
+  "p2local-19-wechat-article-top.png",
+  "p2local-20-wechat-article-mid.png",
+  "p2local-21-sticky-hot.png",
+  "p2local-22-sticky-favorites.png",
+  "p2local-23-hot-now.png",
+  "p2local-24-hot-past-day.png",
+  "p2local-25-blogger-grok.png",
+  "p2local-26-more-blogger-end.png",
+  "p2local-27-more-channel-mid.png",
+  "p2local-28-world-translated.png",
+  "p2local-29-article-translated.png",
+  "p2local-30-favorites.png",
+  "p2local-31-search.png",
+  "p2local-32-deeplink.png",
+  "p2local-33-theme-dark-channels.png",
+  "p2local-34-theme-light-channels.png",
+  "p2local-35-theme-light-blogger.png",
+  "p2local-36-theme-light-hot.png",
+  "p2local-37-theme-light-favorites.png",
+  "p2local-38-p2-jike.png",
+  "p2local-39-p2-youtube.png",
+  "p2local-40-p2-wechat-wait.png",
+  "p2local-41-p2-tg-thread.png"
+ ]
+}

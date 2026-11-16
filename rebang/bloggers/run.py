@@ -10,6 +10,7 @@ from rebang.contract.schema import ITEMS_SCHEMA, load_bloggers, validate_items_e
 from . import jike as jike_mod
 from . import weibo as weibo_mod
 from . import youtube as yt_mod
+from . import weread as weread_mod
 from . import x as x_mod
 from .common import apply_translation, iso, parse_time, translate_comments
 from .feed import FeedError, feed_posts
@@ -24,7 +25,9 @@ REASONS = {
     'jike_mirrors_down': '公共 RSSHub 实例这次都没取到即刻',
     'weibo_cookie_unset': '微博的公开方式（公共 RSSHub、免登录接口）都要登录或游客验证，取不到；要接需副号 Cookie 文件（待阿欢定）',
     'weibo_crawler_output_missing': '已有 Cookie 文件路径，但还没有 weibo-crawler 输出（安装/运行另批）',
-    'wechat_weread_qr': '需要微信读书副号扫码登录（第一期不做）',
+    'wechat_weread_qr': '需要微信读书扫码登录，已准备好、等扫码',
+    'wechat_weread_expired': '微信读书登录已失效，待重新扫码',
+    'wechat_book_not_found': '微信读书里没搜到这个公众号',
     'x_dump_missing': '还没有公开 X 读取工具写入的原始数据',
     'x_dump_stale': '公开 X 读取数据超过 36 小时未更新',
     'no_accounts': '本期名单为空',
@@ -63,6 +66,8 @@ def _account(platform, account, status, items=(), error=None):
     row = {'handle': account['handle'], 'name': account['name'], 'status': status, 'count': len(items)}
     if error:
         row['error'] = error
+        if error in REASONS:
+            row['reason'] = REASONS[error]
     return row, list(items)
 
 
@@ -117,9 +122,48 @@ def _platform_jike(platform, http, fetched_at, opts, sleep):
 def _platform_wechat(platform, http, fetched_at, opts, sleep):
     public = [a for a in platform['accounts'] if a.get('feed') and a.get('login') is False]
     rows, items = _fetch_feeds(platform, public, http, fetched_at, opts, lambda a: a['feed'], sleep)
+    session_path = getattr(opts, 'weread_session', None)
+    session = None
+    if session_path and weread_mod.session_exists(session_path):
+        try:
+            session = weread_mod.load_session(session_path)
+        except (OSError, ValueError, weread_mod.WereadError):
+            session = None
+    books = weread_mod.load_books(getattr(opts, 'weread_books', None) or weread_mod.BOOKS_CACHE) if session else {}
+    get = getattr(opts, 'weread_get', None) or weread_mod.http_json
+    expired = False
     for account in platform['accounts']:
-        if account not in public:
+        if account in public:
+            continue
+        if session is None:
             rows.append(_account(platform, account, 'not_configured', error='wechat_weread_qr')[0])
+            continue
+        if expired:
+            rows.append(_account(platform, account, 'login_expired', error='wechat_weread_expired')[0])
+            continue
+        sleep(max(opts.pause, 2.0))   # 微信读书有频率限制，号与号之间至少隔 2 秒
+        try:
+            posts = weread_mod.wechat_posts(account, platform, fetched_at, session, get=get, limit=opts.limit, cache=books)
+        except weread_mod.WereadError as exc:
+            if exc.code == 'login_expired':
+                expired = True
+                rows.append(_account(platform, account, 'login_expired', error='wechat_weread_expired')[0])
+            elif exc.code == 'book_not_found':
+                rows.append(_account(platform, account, 'error', error='wechat_book_not_found')[0])
+            else:
+                row = _account(platform, account, 'error', error='parse')[0]
+                row['detail'] = exc.code
+                rows.append(row)
+            continue
+        except Exception:
+            rows.append(_account(platform, account, 'error', error='parse')[0])
+            continue
+        row, got = _account(platform, account, 'ok' if posts else 'empty', posts)
+        row['via'] = 'weread'
+        rows.append(row)
+        items += got
+    if session is not None:
+        weread_mod.save_books(books, getattr(opts, 'weread_books', None) or weread_mod.BOOKS_CACHE)
     order = [a['handle'] for a in platform['accounts']]
     rows.sort(key=lambda r: order.index(r['handle']))
     return rows, items

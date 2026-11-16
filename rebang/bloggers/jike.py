@@ -53,6 +53,13 @@ def _avatar(body):
     return url if url.startswith('https://') else None
 
 
+def sized(url):
+    """即刻图床（七牛 imageMogr2）原图常有 2MB+；在原有处理链后加「宽超过 1080 才缩」，手机上够清楚，体积约 1/5。"""
+    if 'ruguoapp.com/' in url and 'imageMogr2' in url and '/thumbnail/' not in url:
+        return url + '/thumbnail/1080x%3E'
+    return url
+
+
 def jike_posts(body, platform, account, fetched_at, limit=10):
     handle = account['handle']
     sid = source_id(platform['id'], handle)
@@ -65,7 +72,7 @@ def jike_posts(body, platform, account, fetched_at, limit=10):
             continue
         own_html, quote, quote_images = _split_quote(entry['html'] or entry['summary_html'])
         text = html_to_text(own_html)
-        images = html_images(own_html, url or 'https://m.okjike.com/') or quote_images
+        images = [dict(m, url=sized(m['url'])) for m in (html_images(own_html, url or 'https://m.okjike.com/') or quote_images)]
         if not text and quote is None:
             text = _TITLE_PREFIX.sub('', entry['title'] or '').strip()
             if text == _PLACEHOLDER and images:   # 只有图：RSSHub 补的占位标题不当正文

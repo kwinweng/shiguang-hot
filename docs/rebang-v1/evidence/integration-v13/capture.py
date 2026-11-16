@@ -1,7 +1,8 @@
 """v13 验收：从真实入口（站点首页）在 390x844 手机尺寸、用真实触摸事件（CDP Input.dispatchTouchEvent）实测
 阿欢 2026-11-15 22:08–22:11 定的 7 条 + v12 及以前的既有功能。
 
-用法：python3 docs/rebang-v1/evidence/integration-v13/capture.py <站点根 URL> [截图前缀]
+用法：python3 docs/rebang-v1/evidence/integration-v13/capture.py <站点根 URL> [截图前缀] [--phase2]
+第二期（2026-11-16）加了即刻、TG 评论楼、YouTube、公众号等扫码几项（P2 开头）；--phase2 时即刻没帖子算失败。
 输出：同目录 <前缀>NN-*.png 与 <前缀>result.json。任一检查失败退出码 1。
 """
 import json
@@ -11,8 +12,10 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-BASE = sys.argv[1].rstrip('/') + '/'
-PREFIX = sys.argv[2] if len(sys.argv) > 2 else ''
+ARGS = [a for a in sys.argv if a != '--phase2']
+BASE = ARGS[1].rstrip('/') + '/'
+PREFIX = ARGS[2] if len(ARGS) > 2 else ''
+PHASE2_STRICT = '--phase2' in sys.argv   # 第二期验收：即刻必须有帖子
 OUT = Path(__file__).resolve().parent
 checks, shots = [], []
 
@@ -738,6 +741,96 @@ def main():
         import re as _re
         leftover = [x for x in titles if x and _re.search(r'[A-Za-z]{6,}', x) and not _re.search(r'[一-鿿]', x)]
         check('环球已译卡片的标题是中文', not leftover, leftover=leftover[:5], n=len(titles))
+        # ---- 第二期（2026-11-16）：即刻、TG 评论楼、YouTube 管道、5 个公众号等扫码 ----
+        bl = get('bloggers.json')
+        plats = {p['id']: p for p in bl['platforms']}
+        page.goto(BASE)
+        page.wait_for_selector('#app:not([aria-busy])')
+        page.locator('.tabbar [data-view=blogger]').tap()
+        page.wait_for_timeout(300)
+        jk = plats.get('jike') or {}
+        if PHASE2_STRICT or jk.get('count'):
+            page.locator('#platChips [data-plat=jike]').tap()
+            page.wait_for_selector('#bloggerList .tweet, #bloggerList .empty-plat')
+            cards = page.locator('#bloggerList .tweet').count()
+            txt = page.locator('#bloggerList').inner_text()
+            import re as _re2
+            uuid_shown = _re2.search(r'@[0-9A-F]{8}-[0-9A-F]{4}-', txt, _re2.I)
+            check('P2 即刻：平台有帖子，卡片不露 @UUID', cards > 0 and not uuid_shown, cards=cards, count=jk.get('count'),
+                  ok_accounts=sum(a.get('status') == 'ok' for a in jk.get('accounts', [])))
+            shot('p2-jike')
+            first = page.locator('#bloggerList .tweet').first
+            if first.count():
+                first.locator('.t-body:not(:empty), img').first.tap()
+                page.wait_for_timeout(400)
+                check('P2 即刻帖子点开有详情或查看器', page.locator('#articleView.on, #zoomView.on').count() >= 1)
+                if page.locator('#zoomView.on').count():
+                    page.go_back()
+                if page.locator('#articleView.on').count():
+                    page.locator('#btnBack').tap()
+                page.wait_for_timeout(300)
+        yt = plats.get('youtube')
+        check('P2 YouTube 平台已上架', yt is not None)
+        if yt is not None:
+            page.locator('.tabbar [data-view=blogger]').tap()
+            page.locator('#platChips [data-plat=youtube]').tap()
+            page.wait_for_selector('#bloggerList .tweet, #bloggerList .empty-plat')
+            if yt['accounts']:
+                check('P2 YouTube 有频道时显示视频卡', page.locator('#bloggerList .tweet').count() > 0)
+            else:
+                check('P2 YouTube 名单为空 → 显示「频道名单待确认」', '频道名单待确认' in page.locator('#bloggerList').inner_text(),
+                      text=page.locator('#bloggerList').inner_text()[:80])
+            shot('p2-youtube')
+        wx = plats.get('wechat') or {}
+        wait = [a for a in wx.get('accounts', []) if a.get('status') == 'not_configured']
+        if wait:
+            page.locator('#platChips [data-plat=wechat]').tap()
+            page.wait_for_timeout(200)
+            sel = page.locator(f'#peopleRow [data-person="{wait[0]["handle"]}"]').first
+            if sel.count():
+                sel.tap()
+                page.wait_for_selector('#bloggerList .empty-plat')
+                t = page.locator('#bloggerList .empty-plat').inner_text()
+                check('P2 公众号未扫码：空状态写「等扫码」，不编内容', '扫码' in t, who=wait[0]['handle'], text=t[:80])
+                shot('p2-wechat-wait')
+        # TG 评论楼：找评论最多的一条（优先有楼中楼的）
+        best = None
+        for c in meta['channels']:
+            for n in range(1, c['pages'] + 1):
+                for i in get(f'channel/{c["slug"]}/page-{n}.json')['items']:
+                    cs = (i.get('tg') or {}).get('comments') or []
+                    key = (any(x.get('reply_text') for x in cs), len(cs))
+                    if cs and (best is None or key > best[0]):
+                        best = (key, i)
+        if best:
+            it = best[1]
+            cs = it['tg']['comments']
+            page.goto(BASE + '#/item/' + it['id'].replace(':', '%3A'))
+            page.wait_for_selector('#articleView.on [data-tg-comments]')
+            sec = page.locator('#articleBody [data-tg-comments]')
+            check('P2 评论楼：标题「评论楼」+ 条数', '评论楼' in sec.locator('h4').inner_text(), n=len(cs), id=it['id'])
+            visible = page.evaluate("() => [...document.querySelectorAll('#articleBody [data-tg-comments] .comment')].filter(e => e.offsetParent).length")
+            if len(cs) > 10:
+                check('P2 评论楼：超过 10 条先折叠，只露最近 10 条', visible == 10, visible=visible, total=len(cs))
+                btn = sec.locator('[data-cmt-more]')
+                btn.scroll_into_view_if_needed()
+                btn.tap()
+                page.wait_for_timeout(300)
+                visible2 = page.evaluate("() => [...document.querySelectorAll('#articleBody [data-tg-comments] .comment')].filter(e => e.offsetParent).length")
+                check('P2 评论楼：点「展开更早的」后全部显示', visible2 == len(cs), visible=visible2)
+            else:
+                check('P2 评论楼：不到 10 条全部显示', visible == len(cs), visible=visible)
+            if any(x.get('reply_text') or x.get('reply_to') for x in cs):
+                n_r = sec.locator('.c-reply').count()
+                check('P2 评论楼：楼中楼显示被回复的人和原话', n_r == sum(bool(x.get('reply_text') or x.get('reply_to')) for x in cs), shown=n_r)
+            links = sec.locator('a.c-open').count()
+            check('P2 评论楼：每条有「原楼」链接到 t.me', links == sum(isinstance(x.get('id'), int) for x in cs), links=links)
+            sec.scroll_into_view_if_needed()
+            shot('p2-tg-thread')
+            page.locator('#btnBack').tap()
+            page.wait_for_timeout(300)
+        elif PHASE2_STRICT:
+            check('P2 评论楼：数据里有带评论的 TG 条目', False)
         check('页面无脚本错误', not errors, errors=errors[:5])
         check('无 4xx/5xx 请求', not bad, bad=bad[:5])
         browser.close()
