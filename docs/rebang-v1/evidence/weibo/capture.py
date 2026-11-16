@@ -64,7 +64,7 @@ def main():
         check('列表没有「未接入/待阿欢定/Cookie」类占位', not re.search(r'未接入|待阿欢定|Cookie|weibo-crawler', txt))
         check('数字 uid 不以 @ 形式出现', not re.search(r'@\d{6,}', txt))
         # 图片：sinaimg 原图且真实加载
-        imgs = page.locator('#bloggerList img[data-zoom]')
+        imgs = page.locator('#bloggerList .cell:not(.is-vid) img[data-zoom]')
         n = min(imgs.count(), 6)
         loaded = []
         for i in range(n):
@@ -76,7 +76,7 @@ def main():
               images=[{'w': x['w'], 'src': x['src'][:70]} for x in loaded])
         if n:
             imgs.first.scroll_into_view_if_needed()
-            imgs.first.tap()
+            imgs.first.tap(force=True)
             page.wait_for_selector('#zoomView.on', timeout=5000)
             page.wait_for_timeout(600)
             shot('weibo-zoom')
@@ -94,8 +94,8 @@ def main():
                 check('视频帖在列表里', False, id=vid['id'])
             else:
                 card.scroll_into_view_if_needed()
-                tile = card.locator('.cell.is-vid').first
-                tile.tap()
+                tile = card.locator('.cell.is-vid .vid-mark').first
+                tile.tap(force=True)
                 page.wait_for_timeout(2500)
                 st = page.evaluate("() => { const v = document.querySelector('#zoomView.on video'); return v ? {rs: v.readyState, err: v.error && v.error.code, src: (v.currentSrc||v.src).slice(0,60)} : null; }")
                 shot('weibo-video')
@@ -107,7 +107,7 @@ def main():
         else:
             check('视频帖：当前数据里没有视频帖（不算失败）', True)
         # 详情：原帖链接
-        page.locator('#bloggerList .tweet .t-body').first.tap()
+        page.locator('#bloggerList .tweet .t-body').first.tap(force=True)
         page.wait_for_timeout(800)
         hrefs = page.eval_on_selector_all('a[href*="weibo.com/"]', 'els => els.map(e => e.href)')
         shot('weibo-detail')

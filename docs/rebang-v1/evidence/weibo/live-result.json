@@ -1,0 +1,107 @@
+{
+ "base": "https://news.kwinweng.com/",
+ "checks": [
+  {
+   "check": "数据：微博 6 个博主都有帖子",
+   "ok": true,
+   "status": "ok",
+   "per_account": {
+    "karminski-牙医": 10,
+    "阑夕": 10,
+    "高飞": 10,
+    "Fenng（冯大辉）": 10,
+    "数字生命卡兹克": 10,
+    "钟文泽": 10
+   },
+   "last_ok_at": "2026-11-16T19:24:12+08:00"
+  },
+  {
+   "check": "微博人物行 = 全部 + 6 个博主",
+   "ok": true,
+   "people": [
+    "全部",
+    "karminski-牙医",
+    "阑夕",
+    "高飞",
+    "Fenng（冯大辉）",
+    "数字生命卡兹克",
+    "钟文泽"
+   ]
+  },
+  {
+   "check": "列表没有「未接入/待阿欢定/Cookie」类占位",
+   "ok": true
+  },
+  {
+   "check": "数字 uid 不以 @ 形式出现",
+   "ok": true
+  },
+  {
+   "check": "卡片图片是本站副本（media/weibo/）且加载成功",
+   "ok": true,
+   "images": [
+    {
+     "w": 1280,
+     "src": "https://news.kwinweng.com/media/weibo/14243ed75be84ea6.webp"
+    },
+    {
+     "w": 1280,
+     "src": "https://news.kwinweng.com/media/weibo/f847916549456298.webp"
+    },
+    {
+     "w": 1280,
+     "src": "https://news.kwinweng.com/media/weibo/683ab3f1da9d15cb.webp"
+    },
+    {
+     "w": 1280,
+     "src": "https://news.kwinweng.com/media/weibo/ea0e2766ddf3a2a4.webp"
+    },
+    {
+     "w": 1200,
+     "src": "https://news.kwinweng.com/media/weibo/b2cc6c8aa726cc41.webp"
+    },
+    {
+     "w": 1200,
+     "src": "https://news.kwinweng.com/media/weibo/30191be20635ba3b.webp"
+    }
+   ]
+  },
+  {
+   "check": "点图打开全屏查看器、原图加载",
+   "ok": true,
+   "img": {
+    "w": 1280,
+    "src": "https://news.kwinweng.com/media/weibo/14243ed75be84ea6.webp"
+   }
+  },
+  {
+   "check": "视频：能播，或播放被拒时查看器给出 weibo.com 原帖链接",
+   "ok": true,
+   "video": null,
+   "fallback_link": 1
+  },
+  {
+   "check": "详情有 weibo.com/<uid>/<mblogid> 原帖链接",
+   "ok": true,
+   "hrefs": [
+    "https://weibo.com/1560906700/RrFPzjLQi"
+   ]
+  },
+  {
+   "check": "没有图片/视频 4xx",
+   "ok": true,
+   "bad": []
+  },
+  {
+   "check": "没有脚本错误",
+   "ok": true,
+   "errors": []
+  }
+ ],
+ "shots": [
+  "live-01-weibo-list.png",
+  "live-02-weibo-zoom.png",
+  "live-03-weibo-video.png",
+  "live-04-weibo-detail.png"
+ ]
+}
