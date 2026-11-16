@@ -8,7 +8,6 @@ import pytest
 
 from rebang.bloggers import run as runmod
 from rebang.bloggers.feed import FeedError, feed_posts
-from rebang.bloggers.weibo import map_crawler_json
 from rebang.bloggers.x import load_dump, x_posts
 from rebang.contract.schema import load_bloggers, validate_item, validate_items_envelope
 from rebang.translate import Cache, Translator
@@ -313,31 +312,158 @@ def test_jike_post_mapping_strips_prefix_and_splits_quote():
     assert with_img and all(m['url'].startswith('https://cdnv2.ruguoapp.com/') for i in with_img for m in i['blogger']['media'])
 
 
-def test_weibo_cookie_path_only_checked_never_read(tmp_path):
-    cookie = tmp_path / 'weibo.cookie'
-    cookie.write_text('SECRET-SHOULD-NOT-BE-READ')
-    os.chmod(cookie, 0)  # 代码若尝试读取会 PermissionError
-    try:
-        env = runmod.run(('weibo',), http=fake_http(), now=NOW, opts=opts(tmp_path, weibo_cookie_file=str(cookie)), sleep=lambda s: None)
-    finally:
-        os.chmod(cookie, 0o600)
+WB = Path(__file__).parent / 'fixtures' / 'rebang' / 'weibo'
+WB_COOKIE = 'SUB=FAKE-TEST-COOKIE-VALUE; SUBP=FAKE2'
+
+
+def weibo_get(expire_after=None, fail_uid=None):
+    """假的 weibo.com ajax：每个 uid 都回阑夕的真实（裁剪过的）回包；可在第 N 次请求后模拟 Cookie 失效。"""
+    calls = []
+
+    def get(url, cookie):
+        calls.append(url)
+        assert cookie == WB_COOKIE   # Cookie 只作为参数传给请求函数
+        if expire_after is not None and len(calls) > expire_after:
+            from rebang.bloggers.weibo import WeiboError
+            raise WeiboError('login_expired')
+        if fail_uid and f'uid={fail_uid}&' in url:
+            from rebang.bloggers.weibo import WeiboError
+            raise WeiboError('network')
+        if '/ajax/statuses/mymblog?' in url:
+            return json.loads((WB / 'mymblog-1560906700.json').read_text())
+        if url.endswith('/ajax/statuses/longtext?id=RrFnBaNaI'):
+            return json.loads((WB / 'longtext-RrFnBaNaI.json').read_text())
+        if '/ajax/statuses/longtext?id=' in url:
+            return {'ok': 1, 'data': {}}   # 接口给不出长文时的真实形态
+        raise AssertionError(f'unexpected weibo call {url}')
+    get.calls = calls
+    return get
+
+
+def weibo_opts(tmp_path, get, **kw):
+    cookie = tmp_path / 'weibo-cookie.txt'
+    cookie.write_text(WB_COOKIE + '\n')
+    os.chmod(cookie, 0o600)
+    o = opts(tmp_path, weibo_cookie_file=str(cookie), weibo_output=str(tmp_path / 'wb-out'), **kw)
+    o.weibo_get = get
+    return o
+
+
+def test_weibo_real_sample_mapping():
+    from rebang.bloggers.weibo import map_posts
+    posts = json.loads((WB / 'mymblog-1560906700.json').read_text())['data']['list']
+    full = json.loads((WB / 'longtext-RrFnBaNaI.json').read_text())['data']['longTextContent']
+    items = map_posts(posts, platform('weibo'), account('weibo', '1560906700'), NOW.isoformat(), {'RrFnBaNaI': full})
+    assert len(items) == 4 and all(validate_item(i) == [] for i in items)
+    assert [i['published_at'] for i in items] == sorted((i['published_at'] for i in items), reverse=True)
+    by = {i['url'].rsplit('/', 1)[1]: i for i in items}
+    assert set(by) == {'RrFnBaNaI', 'RrEZhkirq', 'RrDKUkc9k', 'RrxEwgT4C'}
+    long_ = by['RrFnBaNaI']
+    assert long_['url'] == 'https://weibo.com/1560906700/RrFnBaNaI' and long_['published_at'] == '2026-11-16T17:57:50+08:00'
+    assert len(long_['body']) > len(posts[0]['text_raw']) and long_['body'].startswith('看到警方查实')   # 长文补全
+    assert long_['id'] == 'weibo-1560906700:5365939232572300' and long_['lang'] == 'zh'
+    b = long_['blogger']
+    assert b['handle'] == '1560906700' and b['display_name'] == '阑夕' and b['avatar'].startswith('https://') and '?' not in b['avatar']
+    assert b['metrics'] == {'like': 45, 'reply': 8, 'repost': 5}
+    one = by['RrDKUkc9k']['blogger']['media']
+    assert len(one) == 1 and one[0]['type'] == 'image' and '/large/' in one[0]['url'] and one[0]['url'].startswith('https://wx')
+    many = by['RrxEwgT4C']['blogger']['media']
+    assert len(many) == 12 and all(m['type'] == 'image' and m.get('width') for m in many)
+    rep = by['RrEZhkirq']
+    v = rep['blogger']['media'][0]
+    assert v['type'] == 'video' and v['url'].startswith('https://f.video.weibocdn.com/') and v['preview_url'].startswith('https://')
+    assert v['duration_ms'] == 9000 and rep['image']['url'] == v['preview_url']
+    q = rep['blogger']['quote']
+    assert q['handle'].isdigit() and q['display_name'] and q['text'] and q['url'].startswith('https://weibo.com/') and rep['body'] == '这是为啥'
+    assert not any('\u200b' in i['body'] for i in items)
+
+
+def test_weibo_run_reads_cookie_only_for_requests_and_never_outputs_it(tmp_path, capsys):
+    get = weibo_get()
+    o = weibo_opts(tmp_path, get)
+    slept = []
+    env = runmod.run(('weibo',), http=fake_http(), now=NOW, opts=o, sleep=slept.append)
+    assert validate_items_envelope(env) == []
     wb = next(p for p in env['platforms'] if p['id'] == 'weibo')
-    assert wb['status'] == 'not_configured'
-    assert {a['error'] for a in wb['accounts']} == {'weibo_crawler_output_missing'}
-    assert 'SECRET' not in json.dumps(env, ensure_ascii=False)
+    assert wb['status'] == 'ok' and len(wb['accounts']) == 6 and {a['status'] for a in wb['accounts']} == {'ok'}
+    # 6 个号各 1 次列表；两条长文各取一次（第二个号起命中缓存，空长文也缓存）；karminski 用配置里的数字 uid
+    assert sum('/mymblog?' in u for u in get.calls) == 6 and sum('/longtext?' in u for u in get.calls) == 2
+    assert any('uid=2169039837&' in u for u in get.calls) and not any('linfcstmr' in u for u in get.calls)
+    assert slept and min(slept) >= 3.0   # 请求之间至少隔 3 秒
+    out = tmp_path / 'wb-out'
+    assert (out / 'longtext-cache.json').exists() and (out / 'raw-2169039837.json').exists()
+    blob = json.dumps(env, ensure_ascii=False) + ''.join(f.read_text() for f in out.iterdir()) + ''.join(capsys.readouterr())
+    assert 'FAKE-TEST-COOKIE' not in blob and 'SUB=' not in blob
+    # 第二轮：长文走缓存，不再请求
+    get2 = weibo_get()
+    runmod.run(('weibo',), http=fake_http(), now=NOW, previous=env, opts=weibo_opts(tmp_path, get2), sleep=lambda s: None)
+    assert sum('/longtext?' in u for u in get2.calls) == 0
 
 
-def test_weibo_crawler_output_mapping(tmp_path):
-    data = {'user': {'id': '1560906700', 'screen_name': '阑夕', 'avatar_hd': 'https://tvax1.sinaimg.cn/a.jpg'},
-            'weibo': [{'id': '5001', 'bid': 'PabcD', 'user_id': '1560906700', 'screen_name': '阑夕',
-                       'text': '合成样本：一条测试正文', 'pics': 'https://wx1.sinaimg.cn/large/x.jpg,https://wx1.sinaimg.cn/large/y.jpg',
-                       'created_at': '2026-11-15 10:00:00', 'attitudes_count': 12, 'comments_count': '3', 'reposts_count': 0}]}
-    items = map_crawler_json(data, platform('weibo'), account('weibo', '1560906700'), NOW.isoformat())
-    assert len(items) == 1 and validate_item(items[0]) == []
-    b = items[0]['blogger']
-    assert b['metrics'] == {'like': 12, 'reply': 3, 'repost': 0} and len(b['media']) == 2
-    assert items[0]['url'] == 'https://weibo.com/1560906700/PabcD'
-    assert items[0]['published_at'] == '2026-11-15T10:00:00+08:00'
+def test_weibo_cookie_expired_keeps_last_good_and_stops_requests(tmp_path, capsys):
+    good = runmod.run(('weibo',), http=fake_http(), now=NOW, opts=weibo_opts(tmp_path, weibo_get()), sleep=lambda s: None)
+    assert len([i for i in good['items'] if i['blogger']['platform'] == 'weibo']) == 24
+    (tmp_path / 'wb-out' / 'longtext-cache.json').unlink()
+    get = weibo_get(expire_after=0)   # 第一次请求就失效（ok!=1 / 跳登录）
+    later = datetime.fromisoformat('2026-11-15T21:30:00+08:00')
+    env = runmod.run(('weibo',), http=fake_http(), now=later, previous=good, opts=weibo_opts(tmp_path, get), sleep=lambda s: None)
+    assert validate_items_envelope(env) == []
+    wb = next(p for p in env['platforms'] if p['id'] == 'weibo')
+    assert wb['status'] == 'login_expired' and 'Cookie 已失效' in wb['reason']
+    assert {a['error'] for a in wb['accounts']} == {'weibo_cookie_expired'}
+    assert all(a['stale'] and a['last_ok_at'] == good['generated_at'] for a in wb['accounts'])
+    assert len(get.calls) == 1   # 失效后不再请求其它号
+    kept = [i for i in env['items'] if i['blogger']['platform'] == 'weibo']
+    assert len(kept) == 24 and {i['id'] for i in kept} == {i['id'] for i in good['items']}
+    err = capsys.readouterr().err
+    assert 'weibo cookie expired' in err and 'FAKE' not in err
+
+
+def test_weibo_one_account_network_error_keeps_its_last_posts(tmp_path):
+    good = runmod.run(('weibo',), http=fake_http(), now=NOW, opts=weibo_opts(tmp_path, weibo_get()), sleep=lambda s: None)
+    env = runmod.run(('weibo',), http=fake_http(), now=NOW, previous=good,
+                     opts=weibo_opts(tmp_path, weibo_get(fail_uid='1233486457')), sleep=lambda s: None)
+    wb = next(p for p in env['platforms'] if p['id'] == 'weibo')
+    row = next(a for a in wb['accounts'] if a['handle'] == '1233486457')
+    assert wb['status'] == 'ok' and row['status'] == 'error' and row['error'] == 'weibo_fetch_failed' and row['stale']
+    assert len([i for i in env['items'] if i['source_id'] == 'weibo-1233486457']) == 4
+
+
+def test_weibo_http_json_detects_login_redirect_and_non_json(monkeypatch):
+    from rebang.bloggers import weibo as weibo_mod
+
+    class Resp:
+        def __init__(self, url, body):
+            self.url, self.body = url, body
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            return False
+        def geturl(self):
+            return self.url
+        def read(self):
+            return self.body
+    cases = [('https://passport.weibo.com/visitor/visitor?entry=miniblog', b'<html>'),
+             ('https://weibo.com/ajax/statuses/mymblog?uid=1', b'<html>login</html>'),
+             ('https://weibo.com/ajax/statuses/mymblog?uid=1', b'{"ok": -100, "url": "https://passport.weibo.com/"}')]
+    for final, body in cases:
+        monkeypatch.setattr(weibo_mod.urllib.request, 'urlopen', lambda req, timeout=0, f=final, b=body: Resp(f, b))
+        with pytest.raises(weibo_mod.WeiboError) as exc:
+            weibo_mod.http_json('https://weibo.com/ajax/statuses/mymblog?uid=1', WB_COOKIE)
+        assert exc.value.code == 'login_expired' and 'FAKE' not in str(exc.value)
+    monkeypatch.setattr(weibo_mod.urllib.request, 'urlopen', lambda req, timeout=0: Resp('https://weibo.com/x', b'{"ok": 1, "data": {}}'))
+    assert weibo_mod.http_json('https://weibo.com/x', WB_COOKIE)['ok'] == 1
+
+
+def test_weibo_empty_cookie_file_is_not_configured(tmp_path):
+    cookie = tmp_path / 'weibo-cookie.txt'
+    cookie.write_text('\n')
+    get = weibo_get()
+    o = opts(tmp_path, weibo_cookie_file=str(cookie), weibo_output=str(tmp_path / 'out'))
+    o.weibo_get = get
+    env = runmod.run(('weibo',), http=fake_http(), now=NOW, opts=o, sleep=lambda s: None)
+    wb = next(p for p in env['platforms'] if p['id'] == 'weibo')
+    assert wb['status'] == 'not_configured' and not get.calls
 
 
 # ---------- 翻译 ----------

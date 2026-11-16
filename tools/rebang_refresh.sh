@@ -1,6 +1,6 @@
 #!/bin/sh
 # 拾光热榜 v11 定时刷新（不需要任何 token / 模型）：
-#   t.me 附加信息 → TG/RSS/官方源入库 → 热搜 + 按日归档 → 博主（博客、公众号；X 只读 var/rebang/x-dump 里已有的转储）
+#   t.me 附加信息 → TG/RSS/官方源入库 → 热搜 + 按日归档 → 博主（博客、公众号、即刻、YouTube；有 Cookie 文件时加微博；X 只读 var/rebang/x-dump 里已有的转储）
 #   → 翻译缓存回填（入库时自动查 var/rebang/translate/cache.json）→ 建站 site-v11/ → 发布 gh-pages（rebang/ 子目录）
 # 幂等、加锁，可每 30 分钟跑一次。任何一步失败：保留上一份数据继续往下走；建站失败则不替换 site-v11、不发布。
 # 用法：sh tools/rebang_refresh.sh [--no-publish] [--no-fetch]
@@ -45,7 +45,7 @@ bloggers() {
     if [ -d var/rebang/x-dump ] && [ -n "$(ls -A var/rebang/x-dump 2>/dev/null)" ]; then platforms=$platforms,x; xdump='--x-dump var/rebang/x-dump'; fi
     weibo_cookie=${REBANG_WEIBO_COOKIE:-$HOME/.config/rebang/weibo-cookie.txt}
     weibo_out=${REBANG_WEIBO_OUTPUT:-var/rebang/weibo-crawler}
-    # 有 Cookie 文件才把微博纳入刷新；文件本身只把路径传下去，这里不读取、不打印
+    # 有 Cookie 文件才把微博纳入刷新；这里只传路径，不读取、不打印（Python 端发请求时才读进内存）
     if [ -f "$weibo_cookie" ]; then
         platforms=$platforms,weibo
         mkdir -p "$weibo_out"

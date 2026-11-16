@@ -191,3 +191,15 @@ test('推文视频：封面 + 播放标 + 时长，媒体清单带视频地址�
   assert.equal(L.fmtDur(0), '');
   assert.equal(L.fmtDur(125400), '2:05');
 });
+
+test('微博卡片：数字 uid 不显示「@」，个性域名照常显示；转发原帖只显示昵称', () => {
+  const post = {...base, kind: 'post', source_id: 'weibo-1560906700', summary: '这是为啥', body: '这是为啥',
+    blogger: {platform: 'weibo', handle: '1560906700', display_name: '阑夕', media: [],
+      quote: {handle: '1708942053', display_name: '都市报道', text: '原帖正文'}}};
+  const card = L.tweetCardHTML(post, false);
+  assert.match(card, /<div class="nm">阑夕 /);
+  assert.doesNotMatch(card, /@1560906700|@1708942053/);
+  assert.match(card, /<div class="nm">都市报道<\/div>/);
+  const custom = {...post, blogger: {...post.blogger, handle: 'linfcstmr', quote: null}};
+  assert.match(L.tweetCardHTML(custom, false), /@linfcstmr/);
+});

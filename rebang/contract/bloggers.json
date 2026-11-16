@@ -38,8 +38,8 @@
       {"handle": "160F8D03-E580-4799-8D02-B86B1A6FBF64", "name": "范冰_XDash"},
       {"handle": "83F8C091-4C46-43B7-B7AC-B90CD72255E7", "name": "Barret李靖"}
     ]},
-    {"id": "weibo", "name": "微博", "method": "weibo-crawler-secondary-account", "login": true, "secret": "Cookie 只放仓库外本机密钥文件（路径由运维提供），代码只接受路径参数，不读不打印内容", "accounts": [
-      {"handle": "linfcstmr", "name": "karminski-牙医", "home": "https://weibo.com/linfcstmr"},
+    {"id": "weibo", "name": "微博", "method": "weibo-ajax-secondary-account-cookie", "login": true, "secret": "Cookie 只放仓库外 ~/.config/rebang/weibo-cookie.txt（0600，一行 weibo.com 请求头里的值）；只在发请求时读进内存，不打印、不写日志、不进仓库", "note": "读 weibo.com 桌面版 /ajax/statuses/mymblog（第一页）+ /ajax/statuses/longtext 补长文，请求间隔至少 3 秒；m.weibo.cn 用这份 Cookie 不认登录，所以不用 weibo-crawler。linfcstmr 是个性域名，uid 2169039837 由 /ajax/profile/info?custom=linfcstmr 查得（2026-11-16）", "accounts": [
+      {"handle": "linfcstmr", "uid": "2169039837", "name": "karminski-牙医", "home": "https://weibo.com/linfcstmr"},
       {"handle": "1560906700", "name": "阑夕", "home": "https://weibo.com/u/1560906700"},
       {"handle": "1233486457", "name": "高飞", "home": "https://weibo.com/u/1233486457"},
       {"handle": "1577826897", "name": "Fenng（冯大辉）", "home": "https://weibo.com/u/1577826897"},

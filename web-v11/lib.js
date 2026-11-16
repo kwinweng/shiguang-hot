@@ -219,9 +219,10 @@
   function avatar(src, cls = '') {
     return src ? `<img class="${cls}" src="${esc(src)}" alt="">` : `<span class="av ${cls}"></span>`;
   }
-  /** 「@账号」只给 X、微博这类账号名可读的平台；即刻的账号是 UUID，YouTube 是频道 id，不显示 */
+  /** 「@账号」只给 X、微博这类账号名可读的平台；即刻的账号是 UUID，YouTube 是频道 id，微博的纯数字 uid 也不显示 */
   function atHandle(platform, handle) {
     if (!handle || !['x', 'weibo', 'blog'].includes(platform || 'x')) return '';
+    if (platform === 'weibo' && /^\d+$/.test(String(handle))) return '';
     return '@' + esc(handle);
   }
   /** 推文卡（v9/v10 样式）。拿不到的互动数不显示，不编数字 */
