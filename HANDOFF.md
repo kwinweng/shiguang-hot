@@ -12,7 +12,7 @@
 - **PR #74**（`f312142d`，11/17 01:28）：v16 视觉参考少数派，红色强调、白底、细分隔线、毛玻璃底栏，缩略图在右，X 头像无红边；热搜只叫百度/知乎/B站，日期用「今天」，顶栏无 logo，暗色跟随系统。旧 v10/v13 金色方向已被取代；实际令牌见 `web-v11/app.css`。
 - **PR #75**（`f060942a`，11/17 10:01）：FREE 中文、双语新闻从环球移到时事。时事为竹新社、我的一张大字报、FREE 中文、双语新闻；环球为 BBC World、卫报 World。来源只归属一个频道，以 `rebang/contract/channels.json` 为准。
 - **已定交互**：收藏、分享均长按卡片；横滑只切频道；图片可全屏、多图横滑；详情保留互动数、热门回复、TG 评论楼、X 引用卡片。
-- **接管顺序与授权**：阿欢要求当前会话在 Mac 接管；先手动刷新并发布，线上核实成功后回报，再由阿欢通知旧机器停刷新循环和例程；旧任务停止确认前不启用新定时任务。目标为普通刷新、X+翻译各每 30 分钟，今日重点每天 08:30 私聊阿欢、最多 5 条。不要把这项授权扩大成任意代码合并或后续部署。
+- **接管顺序与授权**：阿欢要求当前会话在 Mac 接管；先手动刷新并发布，线上核实成功后回报，再由阿欢通知旧机器停刷新循环和例程；旧任务停止确认前不启用新定时任务。目标为普通刷新、X+翻译各每 30 分钟。**08:30 私聊已由阿欢在 11/17 后续交接中取消，本机不创建；旧例程由阿欢在切换时暂停。** 站内今日重点整理来源保留。不要把这项授权扩大成任意代码合并或其他部署。
 
 ### 本机准备与阻塞
 
@@ -20,9 +20,10 @@
 - Mac 使用 `var/rebang/venv/bin/python`（Python 3.13），已安装现有运行依赖 beautifulsoup4、Pillow，以及验证/扫码所需 pytest、segno；安装 Homebrew `flock`。脚本运行需 `BOX_PYTHON="$PWD/var/rebang/venv/bin/python"`，PATH 需含 `/opt/homebrew/bin`。旧站已以 `NO_FETCH=1 SITE_MODE=public MAIL_DIGEST=0` 构建，并写出 `site/build-info.json`；没有运行会更新 `tg.db`、提交和发布的 `box_scrape.sh`。
 - 现有契约、站点、博主、今日重点测试 **105 passed**。首次真实刷新仅跑 `--no-publish`；第一次因 T3 重启在 tgmeta 阶段终止，核实无残留进程后重跑。重跑于 **11/17 23:08:16–23:13:36** 完成，tgmeta、三家热搜、bloggers、ingest、build 均返回成功，`var/rebang/logs/last-refresh.json` 的 `failed` 为空，但语义检查发现四份整理输入全部为空，见下条。新站为真实数据（`fixture:false`），2573 条新闻、460 条博主帖子，不能以此覆盖线上完整内容。
 - **本地发布打包通过，未推送**：`publish_pages.sh --already-built --dry-run` 打包 1700 个文件，包含 `rebang/`。媒体重定位后 23:14:53 重建，1095 个站内媒体 URL 全部有对应文件，无缺失；`rebang.push --dry-run` 出 5 条根地址深链，仅出稿、未发送（其中新英文条目仍待翻译）。准备阶段浏览器读到的线上 `built_at` 为 11/17 22:49:19，2577 条新闻、1027 条帖子，meta + X-Robots-Tag + robots.txt 均保留 noindex。这是旧机器版本，**不是本机发布验收；未发布、未创建新定时任务，不应通知旧机器停止**。
-- **不能用缓存包直接判断迁移完成**：包中 `in/bloggers.json` 有 465 条帖子，`in/ingest.json` 另有 562 条 Grok 整理帖子，合计与当时线上 1027 条一致。整理内容的四个原始投递目录没有随包迁移（位置见 `docs/rebang-v1/OPERATIONS.md`），重新 ingest 会缺这部分；`public-feeds/` 只有旧数据，不能当成新内容。
+- **四份整理输入已补交并恢复**：最初缓存包仅有合并后的数据，首次 ingest 会丢掉 562 条整理帖子。阿欢随后交付 `rebang-digests-20261117.tar.gz`（23:24 快照），已校验 SHA256 并恢复到 `var/rebang/digests/20261117T2324/`。通过现有四个目录环境变量真实 ingest，world 173、x 138、hot-daily 118、github 133，共 **562 条全部恢复**。`HOT-DAILY_FEED_DIR` 名称含连字符，用 `env` 或 subprocess env 字典传入；不需要改适配器或 `sources.json`。原始资料仍由原「资讯」bot 每日生产，持续只读接收方式尚未落地，不能把今晚快照当成同步完成，见 `OPERATIONS.md`。
 - **媒体迁移已验证**：包内 522 处本地媒体引用使用 `/workspace/shiguang-prod/...` 绝对路径；另有 699 处 TG 图片引用指向根目录 `media/`，这个目录不在 state 包内。已从现有 `origin/gh-pages` 的 `rebang/media/` 恢复缺少的公开图片（不改远端发布物）。原缓存 1221 处引用均能找到对应文件；刷新后的 bloggers 输入中仍有 517 处旧绝对路径，已仅对这些路径重定位到本机，修改前备份位于 `var/rebang/local-ops/before-media-relocation-20261117T231453/`。最终建站核对 1095 个站内媒体 URL，无缺失。后续再次恢复原包时仍需重定位，不能只看构建退出码。
-- **待配置**：DeepSeek `REBANG_TRANSLATE_API_KEY`（本次安全输入未收到值，只准 `deepseek-flash`）；X API v2 公开读取权限；微博副号 Cookie 文件；微信读书重新扫码；08:30 私聊投递渠道。凭据仅由阿欢本人配置，不读、不打印、不提交。X 仍仅读取已迁移的 dump，新的官方 API 抓取尚未接通；08:30 生成稿不等于已发送。
+- **登录与权限**：微信读书已由阿欢扫码登录，`weread status` 实测 `session:true, valid:true`，会话权限 `0600`。列表接口回 `-2041`，沿用现有 cover + 正文回退；首轮正文读取不稳定，复核时乱翻书、caoz 各抓到 1 条，夕小瑶公共源抓到 10 条；MacTalk、独立开发变现周刊、王建硕保留原快照各 1 条，未把缓存说成新抓取。恢复缓存时保留原 id 和时间，并修复 3 处旧媒体路径、补回 3 张原包图片。DeepSeek 密钥已由阿欢通过安全输入提供，仅传给翻译运行进程；23:38 实测 `deepseek-flash`（关闭思考）39/39 段成功、失败 0、pending 0，5 次请求、4182/2879 prompt/completion tokens。后续定时安全注入尚未配置。微博副号 Cookie 文件仍未到位，阿欢可直接拷到本机 `~/.config/rebang/weibo-cookie.txt`（0600），不经聊天；X API v2 新读取仍缺权限，不能转用旧 bot 的专有工具或擅自办理付费套餐。目前 X 仅读取已迁移的 dump。08:30 私聊已取消，无需投递渠道。凭据不查看、不打印、不提交。
+- **Mac 连续建站兼容修复（待合并）**：旧站首次构建正常，目标 `site/` 已存在时 Linux 专用 `renameat2` 在 macOS 报 `symbol not found`。`shiguang/site/build.py` 已对 Darwin 使用系统 `renamex_np(RENAME_SWAP)`，Linux 保持 `renameat2(RENAME_EXCHANGE)`，两者均保留整树原子交换与失败不替换的契约。Mac 上 4 项既有原子构建回归通过；真实旧站连续重建两次成功，相关测试合计 **109 passed**。没有改成先删旧目录，也没有改变服务器发布方式。
 - **TG 采集不能遗漏**：`rebang_refresh.sh` 的 ingest 只读 `tg.db`，tgmeta 只补公开元数据。新定时运行还需保留真正更新 `tg.db` 的既有采集步骤。`box_scrape.sh` 要求 `main` 且工作区干净，不能在有用户未跟踪文件的开发目录里强行运行或清理；旧机器仍写库时也不要启动第二个数据提交者。
 
 ## 11/16 历史状态
