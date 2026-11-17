@@ -13,10 +13,31 @@
 - 图标：favicon、apple-touch、PWA、启动图和 og:image 用袋鼠原图（`web-v11/brand/`，`python3 tools/build_rebang_icons.py`）；顶栏不放 logo，日期居左（PR #47）。
 - GitHub Pages 上的公开旧站尚未关掉，见 `HANDOFF.md`「下一步」。
 
-## 定时
-- 盒子没有 cron，定时都靠 bot 例程。现在 v11 由「X 博主 + 翻译」例程每 2 小时刷新并发布一次（提示词 `/workspace/rebang-v1-briefs/routine-x-translate.md`，翻译脚本 `/workspace/rebang-v1-briefs/tools/translate_deepseek.py`，每轮简报 `/workspace/rebang-v1-briefs/runs/`）；8:30 私聊例程的提示词是同目录的 `routine-0830.md`。
-- 30 分钟一次的刷新还没加：建议在工头「热榜抓取发布」例程里 `box_scrape.sh` 之后加一行 `sh tools/rebang_refresh.sh`，须阿欢批准。
-- 手动刷新：在 `/workspace/shiguang-prod` 跑 `sh tools/rebang_refresh.sh`（约 1–2 分钟）；有新英文条目时先 `python3 -m rebang.translate pending`，译好后 `fill`，再 `sh tools/rebang_refresh.sh --no-fetch`。
+## 定时与切换（2026-11-17）
+
+阿欢要求迁往 Mac 后：普通刷新每 30 分钟；X 博主抓取、回复和翻译每 30 分钟；今日重点每天北京时间 08:30 私聊阿欢、最多 5 条。**这些是接管后的目标；本机尚未启用。** 旧包 `routine-x-translate.md` 标题的「每 2 小时」和 `routine-0830.md` 的「尚未建例程」是历史文字，不代表当前指示。
+
+1. 先在新机器手动刷新、发布，打开线上核对本次版本及 noindex。
+2. 回报「新机器已发布成功」，由阿欢通知旧机器的管家停掉旧循环和例程。
+3. 收到旧任务已停的确认后，再启用新定时任务；切换前不启动第二个 `tg.db` 数据提交者，也不改旧机器任务。
+
+常规入口仍是仓库根目录 `sh tools/rebang_refresh.sh`。它仅读 `tg.db`，不会替代 `box_scrape.sh` 的真正 TG 采集；不能只迁刷新而漏掉数据库更新。`box_scrape.sh` 正常模式要求干净的 `main`，不要为了运行它删除开发目录里的用户文件。
+
+X 抓取保持 API v2 原始 JSON、16 位博主、最近 24 小时、排除转推/回复，引用和热门回复分开保存。dump 在 `var/rebang/x-dump/<时间>/`，回复缓存为 `var/rebang/x-replies/store.json`；接口错误不得写成成功空响应。沿用每分钟最多 30 次、每天最多 1000 次、搜索间隔至少 2.2 秒和每页最多 25 条的限额；30 分钟频率下还须按当天剩余额度限制每轮调用，不能把每轮 200 次上限当成全天预算。新机器的 API 读取方式尚未接通。
+
+翻译脚本从环境变量读 `REBANG_TRANSLATE_API_KEY`，只准 `deepseek-flash`，关闭思考，绝不用 Pro。移用旧脚本时需设置 `REBANG_REPO` 为新仓库根目录，并把 `--usage-log` 指向本机可写的日志目录；旧默认 `/workspace/...` 不适用于 Mac。翻译完成后 `sh tools/rebang_refresh.sh --no-fetch` 重建发布。脚本尚未取得本机密钥，不应把已有中文缓存视为翻译 API 已通过实测。
+
+`python3 -m rebang.push --site site-v11 --dry-run` 只出稿，不会发送。今日重点须使用脚本给出的根地址 `https://news.kwinweng.com/#/item/...`，不沿用旧例程里的 `/rebang/` 链接。私聊投递渠道仍待配置。
+
+## Mac 迁移检查
+
+- 本次缓存包为 `rebang-state-20261117.tar.gz`，运行说明包为 `rebang-ops-briefs-20261117.tar.gz`；解包前核对随包 SHA256，在各自新的空目录中检查，不执行包内 Linux 虚拟环境和软链接。缓存恢复到 `var/rebang/`，凭据不在包内。
+- 本机 Python：`var/rebang/venv/bin/python`。运行 shell 入口时设置 `BOX_PYTHON="$PWD/var/rebang/venv/bin/python"`，PATH 含 Homebrew 的 `/opt/homebrew/bin`（提供 `flock`）。
+- `site/` 和 `site/build-info.json` 也必须存在，服务器校验依赖它们。可先 `NO_FETCH=1 SITE_MODE=public MAIL_DIGEST=0 TZ=Asia/Shanghai "$BOX_PYTHON" pipeline.py`，再 `"$BOX_PYTHON" tools/write_build_info.py`；这只构建，不会更新 TG 数据库。
+- 缓存里旧的 `/workspace/shiguang-prod/var/rebang/media/...` 绝对路径在 Mac 上不存在，须对应到已恢复的本地文件。TG 根目录 `media/` 不在 state 包中，可从现有 gh-pages 的 `rebang/media/` 恢复公开图片；核对最终产物，不向服务器登录或改变路径权限。
+- **四个每日整理输入不在 state 包中**：推特爆款 `/workspace/x-digest/YYYY-MM-DD.json`（可用 `X_FEED_DIR` 指定新目录）；环球要闻 `/workspace/world-brief/YYYY-MM-DD/brief.json`（`WORLD_FEED_DIR`）；GitHub 热门 `/workspace/feeds-inbox/github/YYYY-MM-DD/feed.json`；今日重点 `/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json`。后二者在当前 `sources.json` 没有独立目录环境变量。重新 ingest 前必须安排这些输入的迁移或明确后续生产方式，不能静默丢弃原来已上站的整理内容。缓存 `in/ingest.json` 可用于核对，不能代替持续供稿。
+- 微博 Cookie 和微信读书会话仅放仓库外 `~/.config/rebang/`，权限 0600，不查看或打印内容。微博当前实现调用 `weibo.com` 桌面 ajax；交接中提到的 `m.weibo.cn` Cookie 能否用于此实现，需要收到阿欢配置后实测，不能先认定成功。
+- 接管成功必须同时具备：真实刷新结果、发布 SHA、本次线上 `built_at`/版本对应、关键内容与图片核对、页面 meta + `X-Robots-Tag` + robots.txt 的 noindex 核对。仅本地构建、dry-run 或 gh-pages 推送成功都不算切换完成。
 
 ## 回退
 1. 站点内容出问题：服务器上一版在 `/var/www/news.kwinweng.com.news-sync-previous`（news-sync 每次成功发布都会替换它）；或在 box 上把 `site-v11.prev` 换回 `site-v11` 后跑 `sh tools/publish_pages.sh --already-built`。
