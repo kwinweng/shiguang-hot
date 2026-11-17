@@ -1,16 +1,16 @@
 {
   "schema": "rebang.channels/1",
-  "note": "2026-11-15 阿欢确认的 6 个频道与来源划分（21:26 改：推特爆款/环球要闻/GitHub 热门/今日重点移到博主页「Grok bot」渠道；热搜移到底栏「热搜」页）。一个来源只进一个频道，第一期不按条拆源。改这里须回集成分支 feat/rebang-v1。",
+  "note": "2026-11-15 阿欢确认的 6 个频道与来源划分（21:26 改：推特爆款/环球要闻/GitHub 热门/今日重点移到博主页「Grok bot」渠道；热搜移到底栏「热搜」页；2026-11-17 改：FREE 中文、看新闻 学英语 双语新闻从环球调进时事，环球只留 BBC World 与卫报 World）。一个来源只进一个频道，第一期不按条拆源。改这里须回集成分支 feat/rebang-v1。",
   "channels": [
     {"slug": "current", "name": "时事", "order": 1, "sources": [
       {"id": "tnews365", "name": "竹新社", "type": "telegram", "handle": "tnews365", "stability": "mid"},
-      {"id": "myBigCharacterPoster", "name": "我的一张大字报", "type": "telegram", "handle": "myBigCharacterPoster", "stability": "mid"}
+      {"id": "myBigCharacterPoster", "name": "我的一张大字报", "type": "telegram", "handle": "myBigCharacterPoster", "stability": "mid"},
+      {"id": "freechinese", "name": "FREE 中文", "type": "telegram", "handle": "freechinese", "stability": "mid"},
+      {"id": "shuangyunews_rss", "name": "看新闻 学英语 双语新闻", "type": "telegram", "handle": "shuangyunews_rss", "stability": "mid"}
     ]},
     {"slug": "world", "name": "环球", "order": 2, "sources": [
       {"id": "bbc-world", "name": "BBC World", "type": "feed", "url": "https://feeds.bbci.co.uk/news/world/rss.xml", "stability": "stable"},
-      {"id": "guardian-world", "name": "卫报 World", "type": "feed", "url": "https://www.theguardian.com/world/rss", "stability": "stable"},
-      {"id": "freechinese", "name": "FREE 中文", "type": "telegram", "handle": "freechinese", "stability": "mid"},
-      {"id": "shuangyunews_rss", "name": "看新闻 学英语 双语新闻", "type": "telegram", "handle": "shuangyunews_rss", "stability": "mid"}
+      {"id": "guardian-world", "name": "卫报 World", "type": "feed", "url": "https://www.theguardian.com/world/rss", "stability": "stable"}
     ]},
     {"slug": "finance", "name": "财经", "order": 3, "sources": [
       {"id": "FinanceNewsDaily", "name": "华尔街见闻·财经时讯", "type": "telegram", "handle": "FinanceNewsDaily", "stability": "mid"},

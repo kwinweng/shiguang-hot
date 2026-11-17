@@ -48,6 +48,15 @@ class ChannelConfigTests(unittest.TestCase):
         self.assertEqual(load_hotsearch()['max_items_per_provider'], 51)
         self.assertNotIn('尚未最终确认', load_hotsearch()['note'])
 
+    def test_current_and_world_sources_20261117(self):
+        # 2026-11-17：FREE 中文、双语新闻从环球调进时事；环球只留 BBC 与卫报
+        channels = {c['slug']: [s['id'] for s in c['sources']] for c in load_channels()['channels']}
+        self.assertEqual(channels['current'],
+                         ['tnews365', 'myBigCharacterPoster', 'freechinese', 'shuangyunews_rss'])
+        self.assertEqual(channels['world'], ['bbc-world', 'guardian-world'])
+        self.assertEqual(source_channel('freechinese'), 'current')
+        self.assertEqual(source_channel('shuangyunews_rss'), 'current')
+
     def test_apple_in_digital(self):
         self.assertEqual(source_channel('apple-newsroom'), 'digital')
         self.assertIsNone(source_channel('reorx_share'))
