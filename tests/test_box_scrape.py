@@ -19,7 +19,7 @@ class BoxScrapeTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.base = Path(self.temp.name)
+        self.base = Path(self.temp.name).resolve()
         self.checkout = self.base / 'checkout'
         self.checkout.mkdir()
         (self.checkout / 'pipeline.py').write_text('# fixture')

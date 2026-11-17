@@ -27,12 +27,14 @@ X 抓取保持 API v2 原始 JSON、16 位博主、最近 24 小时、排除转�
 
 翻译脚本从环境变量读 `REBANG_TRANSLATE_API_KEY`，只准 `deepseek-flash`，关闭思考，绝不用 Pro。移用旧脚本时需设置 `REBANG_REPO` 为新仓库根目录，并把 `--usage-log` 指向本机可写的日志目录；旧默认 `/workspace/...` 不适用于 Mac。翻译完成后 `sh tools/rebang_refresh.sh --no-fetch` 重建发布。11/17 23:38 已通过阿欢安全输入的一次性进程环境实测：39 段全部译完、失败 0、remaining 0，5 次请求，prompt/completion tokens 为 4182/2879，thinking tokens 为 0。密钥不落仓库、不打印；后续定时运行的安全注入方式仍待配置，不能把本次进程验证当成长期凭据配置已完成。
 
+已实测的翻译脚本现纳入仓库 `tools/translate_deepseek.py`，默认根目录随仓库定位，usage log 为 `var/rebang/logs/deepseek-usage.jsonl`。运行入口为 `var/rebang/venv/bin/python tools/translate_deepseek.py --max-minutes 30`；密钥仍只从既有环境变量读取，本次未创建凭据存储或定时注入。仅允许精确模型名 `deepseek-flash`，默认关闭思考；缺密钥、非批准模型在写缓存或请求前退出。失败保留 pending，等待重试，不调用其他模型。原交接包脚本保留作来源记录。
+
 `python3 -m rebang.push --site site-v11 --dry-run` 只出稿，不会发送；命令仍保留，08:30 私聊任务已取消，无需配置投递渠道。脚本给出的链接为根地址 `https://news.kwinweng.com/#/item/...`，不要沿用旧例程里的 `/rebang/`。
 
 ## Mac 迁移检查
 
 - 本次缓存包为 `rebang-state-20261117.tar.gz`，运行说明包为 `rebang-ops-briefs-20261117.tar.gz`；解包前核对随包 SHA256，在各自新的空目录中检查，不执行包内 Linux 虚拟环境和软链接。缓存恢复到 `var/rebang/`，凭据不在包内。
-- 本机 Python：`var/rebang/venv/bin/python`。运行 shell 入口时设置 `BOX_PYTHON="$PWD/var/rebang/venv/bin/python"`，PATH 含 Homebrew 的 `/opt/homebrew/bin`（提供 `flock`）。
+- 本机 Python：`var/rebang/venv/bin/python`。Mac 入口为 `sh tools/rebang_mac_refresh.sh --no-fetch --no-publish`（仅本地入库建站），它统一设置 Python、Homebrew PATH、北京时间和四路整理目录。默认目录是交接快照 `var/rebang/digests/20261117T2324/`；持续接收接通后用 `REBANG_DIGEST_ROOT=<接收根目录绝对路径>` 切换。四个子目录缺任一个即退出，不会启动刷新。它沿用 `rebang_refresh.sh` 的参数；去掉 `--no-publish` 会发布，须遵守既有部署授权与切换条件。原本机 `var/rebang/local-ops/mac-refresh.sh` 已转发到此入口。直接运行旧 shell 入口时仍须设置 `BOX_PYTHON="$PWD/var/rebang/venv/bin/python"`，PATH 含 `/opt/homebrew/bin`（提供 `flock`）。
 - `site/` 和 `site/build-info.json` 也必须存在，服务器校验依赖它们。可先 `NO_FETCH=1 SITE_MODE=public MAIL_DIGEST=0 TZ=Asia/Shanghai "$BOX_PYTHON" pipeline.py`，再 `"$BOX_PYTHON" tools/write_build_info.py`；这只构建，不会更新 TG 数据库。
 - 缓存里旧的 `/workspace/shiguang-prod/var/rebang/media/...` 绝对路径在 Mac 上不存在，须对应到已恢复的本地文件。TG 根目录 `media/` 不在 state 包中，可从现有 gh-pages 的 `rebang/media/` 恢复公开图片；核对最终产物，不向服务器登录或改变路径权限。
 - **四份整理快照已补交并恢复**：`rebang-digests-20261117.tar.gz`（23:24 快照，SHA256 `9407aca45ddf9ea2b9a7b908a5dee0dec424f63fd0ff5b97abebef0616966d63`），原包在 `handoff-20261117/`，运行副本在 `var/rebang/digests/20261117T2324/`。该目录下包含 `x-digest/`、`world-brief/`、`feeds-inbox/github/`、`feeds-inbox/hot-daily/`，保持原始目录和适配器格式。通过已有 `X_FEED_DIR`、`WORLD_FEED_DIR`、`GITHUB_FEED_DIR`、`HOT-DAILY_FEED_DIR` 环境变量指定四个根目录，无需改 `sources.json`。后二者来自 `directory(source)` 的通用回退命名；`HOT-DAILY_FEED_DIR` 含连字符，须用 `env "HOT-DAILY_FEED_DIR=<目录>" ...` 或 subprocess 的 env 字典传递，不能用 shell `export`。真实 ingest 已核对恢复 world 173、x 138、github 133、hot-daily 118，共 562 条。

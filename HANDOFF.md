@@ -4,7 +4,7 @@
 ## 目标
 6 频道新版热榜按 `docs/rebang-v1/CONTRACT.md` 上线并稳定刷新。
 
-## 最新交接（2026-11-17，北京时间）
+## 最新交接（2026-11-18，北京时间）
 
 以下为当前状态；下面 11/16 的运行节奏、视觉和待办只作历史参考。
 
@@ -27,6 +27,16 @@
 - **Mac 连续建站兼容修复（待合并）**：旧站首次构建正常，目标 `site/` 已存在时 Linux 专用 `renameat2` 在 macOS 报 `symbol not found`。`shiguang/site/build.py` 已对 Darwin 使用系统 `renamex_np(RENAME_SWAP)`，Linux 保持 `renameat2(RENAME_EXCHANGE)`，两者均保留整树原子交换与失败不替换的契约。Mac 上 4 项既有原子构建回归通过；真实旧站连续重建两次成功，相关测试合计 **109 passed**。没有改成先删旧目录，也没有改变服务器发布方式。
 - **TG 采集不能遗漏**：`rebang_refresh.sh` 的 ingest 只读 `tg.db`，tgmeta 只补公开元数据。新定时运行还需保留真正更新 `tg.db` 的既有采集步骤。`box_scrape.sh` 要求 `main` 且工作区干净，不能在有用户未跟踪文件的开发目录里强行运行或清理；旧机器仍写库时也不要启动第二个数据提交者。
 - **持续供稿方案已验源，连接未落地**：独立技术方案来自 T3 子任务「四份每日整理持续供稿方案」，请求 `group/design-claude`，实测 `claude-opus-5-5`；`verify_t3_claude.py --task plan` 返回 `verified:true`，decision `57b8d9c3-adb7-49c7-a0ad-d7e5cb42de2f`。采用的准备方向是保留原资讯 bot 生产，新机器只读接收原始 JSON 与媒体，再用现有四个目录环境变量读取；不为源连接缺失另建生成器。尚缺四路实际源目录、可用且获授权的传输通道、产出时间/写入方式及媒体布局。本机手动入口已保留在 `var/rebang/local-ops/mac-refresh.sh`，固定当前 23:24 快照并传入 Python、PATH、时区和四路目录；仅做 shell 语法与目录检查，未再次运行发布，未创建调度。快照可验证发布链路，不能证明后续供稿或 X 实时读取就绪。方案较早的密钥/登录未就绪描述已由后续实测更新，当前状态以上方记录为准。
+
+### 11/18 无需本人配合的准备与验证
+
+- **本轮范围**：阿欢要求先完成不需要本人配合的部分。继续本地实现、真实只读采集及隔离验证；不据此合并 main、部署、切换旧任务或安装定时任务。
+- **TG 真实采集已隔离验证**：使用既有 `box_scrape.py --test-dir <仓库外新目录> --limit 3`。三个来源各 1 次请求，全部 `ok`，FinanceNewsDaily 新增 6 条；隔离副本真实建站成功，原 `tg.db` 的 SHA256 前后相同，没有 Git 数据提交或发布。临时副本已清理，日志和摘要留在 `var/rebang/local-ops/validation-20261118/tg-logs/` 与 `tg-isolation.json`。正式 TG 数据写入仍须等旧写入者停止，并使用满足既有要求的干净 main。
+- **公众号六个号本轮均实际抓取成功（00:23）**：先复现 MacTalk 正文读取 `network`，独立开发变现周刊正文约 3.6 MB；原代码吞掉正文错误，随后合并旧缓存并把本轮标 `ok`，会误更新 `last_ok_at`。现在正文请求启用 curl 压缩，正文错误或缺可验证发布时间交回原有失败保留逻辑：保留内容和上次成功时间，标本轮 error/stale。复测五个微信读书来源各取到 1 条、公共来源取到 10 条，缓存合并后共 16 条（MacTalk 2 条，其余保留原条数）。这证明本轮抓取成功，不代表每轮都有新发布文章。证据：`wechat-compressed-summary.json`。故障回归覆盖网络失败及正文无时间两条路径。
+- **运行入口已纳入仓库**：`tools/rebang_mac_refresh.sh` 固定传入 Python、PATH、时区和整理根目录，支持未来以 `REBANG_DIGEST_ROOT` 指向同步目录；缺任一输入目录提前退出，实测未启动刷新。旧本机入口转发到仓库脚本。`tools/translate_deepseek.py` 复用已实测批量实现，去掉旧机器专属默认路径、把 usage log 放本机日志目录，仅放行精确模型名 `deepseek-flash`。密钥仍从环境变量读取，未变更存储或创建长期注入；离线验证覆盖真实 pending→HTTP 边界→缓存/usage log、错误保留及密钥不输出。
+- **本地完整重建通过（00:25:10）**：使用 Mac 入口 `--no-fetch --no-publish`，ingest/build 全部成功，`fixture:false`，2575 条新闻、984 条博主内容，pending 0；扫描生成 JSON 中 3342 处媒体引用，无缺失。本轮跨日后按既有整理保留窗口收录 518 条，历史 562 条为 11/17 恢复时的数量，不要求跨日保持不变。没有再次发布。
+- **回归与 Mac 避坑**：相关既有测试加新增回归合计 **131 passed，8 subtests passed**。首次运行 box_scrape 测试有 1 项因 macOS `/var`→`/private/var` 的路径别名比较失败；测试临时根目录统一 `resolve()` 后通过，未改生产采集逻辑。
+- **YouTube 状态更正**：`DECISIONS.md` 11/16 15:49 已记本人确认 13 个频道全部启用，当前配置确有 13 个，缓存共 130 条。下方“名单为空/待确认”为更早历史，不是当前阻塞，无需再次找本人确认。
 
 ## 11/16 历史状态
 - **已上线**：https://news.kwinweng.com/ 根路径就是 v11（11/16 00:08 阿欢决定）；`/rebang/` 301 到根；全站 noindex（页面 meta、`X-Robots-Tag`、`robots.txt`）。旧的登录阅读器、`/mail/`、`/archive/` 已下线。`shiguang-reader-update.timer` 已于 00:32 `disable --now`（实际原是每 5 分钟跑，不是每天一次）；灵记 `lingji-news-source` 只读的 `topics.sqlite3` 从此不再更新。发布链路、服务器配置、回退见 `docs/rebang-v1/OPERATIONS.md`。2026-11-16 已按确认删除旧阅读器/旧站回滚备份；线上阅读器库和 unit 文件仍保留，因为灵记还在读这份库。
