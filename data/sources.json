@@ -44085,7 +44085,7 @@
         {
           "category": "其他",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 04:00",
           "id": "0773d75f3aa9540c3f01",
           "image": "",
@@ -44133,7 +44133,7 @@
         {
           "category": "国际",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 02:00",
           "id": "a77ef85ce8e2aa5297bc",
           "image": "",
@@ -94422,7 +94422,7 @@
         {
           "category": "国际",
           "day": "2026-10-23",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-23 07:00",
           "id": "eabf784429e8eab8cd74",
           "image": "",
