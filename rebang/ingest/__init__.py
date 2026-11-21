@@ -1,4 +1,4 @@
-"""拾光热榜 v1 资讯来源接入：channels.json 里全部资讯来源 → rebang.items/1 条目（整源一频道）。
+"""拾光资讯 v1 资讯来源接入：channels.json 里全部资讯来源 → rebang.items/1 条目（整源一频道）。
 
 - TG 18 个：只读 tg.db（现有 shiguang/ingest/telegram.py 采集写入），图片用 tg.db 旁 media/ 的 14 天缓存。
 - 官方订阅 6 个：shiguang.ingest.web.parse 解析；GitHub Trending：解析公开页。抓取结果缓存在

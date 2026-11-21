@@ -1,5 +1,5 @@
 #!/bin/sh
-# 拾光热榜 v11 定时刷新（不需要任何 token / 模型）：
+# 拾光资讯 v11 定时刷新（不需要任何 token / 模型）：
 #   t.me 附加信息 → TG/RSS/官方源入库 → 热搜 + 按日归档 → 博主（博客、公众号、即刻、YouTube；有 Cookie 文件时加微博；X 只读 var/rebang/x-dump 里已有的转储）
 #   → 翻译缓存回填（入库时自动查 var/rebang/translate/cache.json）→ 建站 site-v11/ → 发布 gh-pages（rebang/ 子目录）
 # 幂等、加锁，可每 30 分钟跑一次。任何一步失败：保留上一份数据继续往下走；建站失败则不替换 site-v11、不发布。

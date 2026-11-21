@@ -1,4 +1,4 @@
-# 拾光热榜 v1 数据契约
+# 拾光资讯 v1 数据契约
 
 要改字段、频道或目录，先改本契约和 `tests/test_rebang_contract.py`，再改生产者和前端。（11/15 开发期按功能分支划分，现已全部合入 main。）依据：`/workspace/deliverables/daily-site/docs/architecture-plan-v1-20261115.md`（2026-11-15）。
 

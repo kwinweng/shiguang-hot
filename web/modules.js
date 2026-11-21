@@ -263,7 +263,7 @@ if (typeof document !== 'undefined') (() => {
         html = back() + heading('设置') + '<p class="sub">只存在这台设备上</p><h2 class="sh">主题</h2><div class="options">' + [['system','跟随系统'],['light','亮色'],['dark','暗色']].map(([v,n])=>`<button data-theme-choice="${v}" aria-pressed="${storage.get('rebang-theme','system')===v}">${n}</button>`).join('') + '</div>';
       } else if (parts[0] === 'about') {
         area = 'me';
-        html = back() + `<div class="about"><img src="favicon.svg" alt="拾光热榜 Logo D"><h1>拾光热榜</h1><p class="sub">版本 0.3</p></div><h2 class="sh">数据多久更新</h2><p>实时流 · 每 30 分钟<br>热点 · 每天 22:00 日报后<br>回顾 · 次日 00:30<br>探索 · 每期编好后更新</p><a class="btn" href="#sources">查看全部来源</a>`;
+        html = back() + `<div class="about"><img src="favicon.svg" alt="拾光资讯 Logo D"><h1>拾光资讯</h1><p class="sub">版本 0.3</p></div><h2 class="sh">数据多久更新</h2><p>实时流 · 每 30 分钟<br>热点 · 每天 22:00 日报后<br>回顾 · 次日 00:30<br>探索 · 每期编好后更新</p><a class="btn" href="#sources">查看全部来源</a>`;
       } else if (parts[0] === 'sources' || parts[0] === 'source') {
         const doc = await load('data/sources.json', fresh);
         const source = doc.sources.find(s=>s.id===parts[1]);
