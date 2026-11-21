@@ -1,7 +1,7 @@
 {
  "schema": "rebang.search-index/1",
  "timezone": "Asia/Shanghai",
- "generated_at": "2026-11-22T05:11:29+08:00",
+ "generated_at": "2026-11-22T06:11:04+08:00",
  "entries": [
   {
    "id": "github-trending:HKUDS/CLI-Anything",
@@ -11,7 +11,7 @@
    "source_name": "GitHub Trending",
    "title": "HKUDS/CLI-Anything",
    "summary": "\"CLI-Anything: Making ALL Software Agent-Native\" -- CLI-Hub: https://clianything.cc/",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -30,7 +30,7 @@
    "source_name": "GitHub Trending",
    "title": "Tracer-Cloud/opensre",
    "summary": "The open-source agent for CI/CD reliability.",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -49,7 +49,7 @@
    "source_name": "GitHub Trending",
    "title": "XiaoYouChR/Ghost-Downloader-3",
    "summary": "The only downloader you need. 下载器的集大成者。",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "zh",
    "translated": false,
    "image": null,
@@ -68,7 +68,7 @@
    "source_name": "GitHub Trending",
    "title": "cathrynlavery/diagram-design",
    "summary": "Editorial diagram design for Claude Code, Codex, GitHub Copilot, Cursor, Factory Droid, Qoder, and Pi. 45 diagram types. Self-contained HTML + SVG. No shadows. No Mermaid slop.",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -87,7 +87,7 @@
    "source_name": "GitHub Trending",
    "title": "cursor/plugins",
    "summary": "Cursor plugin specification and official plugins",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -106,7 +106,7 @@
    "source_name": "GitHub Trending",
    "title": "elementalsouls/Claude-BugHunter",
    "summary": "A Claude Code skill bundle for bug hunting and external red-team work - 82 skills, 15 slash commands, 681 disclosed-report patterns curated across 24 core vulnerability classes, plus enterprise identity + infrastructure attack matrices.",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -125,7 +125,7 @@
    "source_name": "GitHub Trending",
    "title": "firecrawl/firecrawl",
    "summary": "Knowledge infrastructure to make your agents smarter. Search, scrape and access 550+ data providers through one API.",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -144,7 +144,7 @@
    "source_name": "GitHub Trending",
    "title": "google-labs-code/stitch-skills",
    "summary": "A library of Agent Skills designed to work with the Stitch MCP server. Each skill follows the Agent Skills open standard, for compatibility with coding agents such as Antigravity, Gemini CLI, Claude Code, Cursor.",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -163,7 +163,7 @@
    "source_name": "GitHub Trending",
    "title": "jingyaogong/minimind",
    "summary": "🧠 两小时从 0 训出你的 64M 大模型。Train your own 64M LLM from scratch in 2 hours.",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "zh",
    "translated": false,
    "image": null,
@@ -182,7 +182,7 @@
    "source_name": "GitHub Trending",
    "title": "mjmirza/app-store-compliance",
    "summary": "Avoid common App Store and Google Play rejections. Open playbook and pre-submission guard with 117 documented rejection patterns and fixes, privacy manifest and Data safety checks, 95 tracked deadlines (EU AI Act, DSA, COPPA, age laws), and a skill for AI coding agents.",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -201,7 +201,7 @@
    "source_name": "GitHub Trending",
    "title": "mvanhorn/last30days-skill",
    "summary": "AI agent skill that researches any topic across Reddit, X, YouTube, HN, Polymarket, and the web - then synthesizes a grounded summary",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -220,7 +220,7 @@
    "source_name": "GitHub Trending",
    "title": "nginx/nginx",
    "summary": "The official NGINX Open Source repository.",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -239,7 +239,7 @@
    "source_name": "GitHub Trending",
    "title": "obra/superpowers",
    "summary": "An agentic skills framework & software development methodology that works.",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -258,7 +258,7 @@
    "source_name": "GitHub Trending",
    "title": "openvinotoolkit/openvino",
    "summary": "OpenVINO™ is an open source toolkit for optimizing and deploying AI inference",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -277,7 +277,7 @@
    "source_name": "GitHub Trending",
    "title": "toeverything/AFFiNE",
    "summary": "There can be more than Notion and Miro. AFFiNE(pronounced [ə‘fain]) is a next-gen knowledge base that brings planning, sorting and creating all together. Privacy first, open-source, customizable and ready to use.",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -296,12 +296,33 @@
    "source_name": "GitHub Trending",
    "title": "zhouxiaoka/autoclip",
    "summary": "AutoClip｜一个链接，一键出片。开源 AI 视频剪辑桌面工具，将播客、访谈、课程等长视频自动剪成短视频，生成字幕、封面和发布文案，适配抖音、小红书、TikTok、Reels 与 YouTube Shorts。Open-source AI video clipping & content repurposing.",
-   "published_at": "2026-11-22T05:10:40+08:00",
+   "published_at": "2026-11-22T06:10:27+08:00",
    "lang": "zh",
    "translated": false,
    "image": null,
    "display_title": "zhouxiaoka/autoclip",
    "display_summary": "AutoClip｜一个链接，一键出片。开源 AI 视频剪辑桌面工具，将播客、访谈、课程等长视频自动剪成短视频，生成字幕、封面和发布文案，适配抖音、小红书、TikTok、Reels 与 YouTube Shorts。Open-source AI video clipping & content repurposing.",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "bbc-world:https://www.bbc.co.uk/news/articles/cwe9k23dpz0do#1",
+   "kind": "news",
+   "channel": "world",
+   "source_id": "bbc-world",
+   "source_name": "BBC World",
+   "title": "Lock of former US President George Washington's hair sells for $4,000",
+   "summary": "The hair was given as a sign of friendship shortly before Washington's death in 1799, according to a descendent of its former owner.",
+   "published_at": "2026-11-22T06:01:19+08:00",
+   "lang": "en",
+   "translated": false,
+   "image": {
+    "url": "https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/5138/live/c4d4d0c0-e5ec-11f1-ad4d-5dd9d517a6dd.jpg"
+   },
+   "display_title": "Lock of former US President George Washington's hair sells for $4,000",
+   "display_summary": "The hair was given as a sign of friendship shortly before Washington's death in 1799, according to a descendent of its former owner.",
    "translation_title": "",
    "translation_summary": "",
    "original_title": "",
@@ -335,7 +356,7 @@
    "source_id": "guardian-world",
    "source_name": "卫报 World",
    "title": "Two groups verify mathematician’s claim that Claude helped prove mathematics problem",
-   "summary": "Anthropic’s Levent Alpöge says it took six weeks for him using the AI tool to solve 19th-century Riemann hypothesis A mathematician at Anthropic has convincingly said that the San Francisco -based artificial intelligence (AI) company’s software has helped crack one of the most important unsolved pro…",
+   "summary": "Anthropic’s Levent Alpöge says it took six weeks for him using the AI tool to solve 19th-century Riemann hypothesis A mathematician at Anthropic has said that the San Francisco -based artificial intelligence (AI) company’s software has helped crack one of the most important unsolved problems in math…",
    "published_at": "2026-11-22T04:15:57+08:00",
    "lang": "en",
    "translated": false,
@@ -343,7 +364,7 @@
     "url": "https://i.guim.co.uk/img/media/d3154f68df589c297fc3d173e2bb3d95faca05c9/530_0_4678_3742/master/4678.jpg?width=140&quality=85&auto=format&fit=max&s=2be6ea0855df616ea30ffc89afed2e1f"
    },
    "display_title": "Two groups verify mathematician’s claim that Claude helped prove mathematics problem",
-   "display_summary": "Anthropic’s Levent Alpöge says it took six weeks for him using the AI tool to solve 19th-century Riemann hypothesis A mathematician at Anthropic has convincingly said that the San Francisco -based artificial intelligence (AI) company’s software has helped crack one of the most important unsolved pro…",
+   "display_summary": "Anthropic’s Levent Alpöge says it took six weeks for him using the AI tool to solve 19th-century Riemann hypothesis A mathematician at Anthropic has said that the San Francisco -based artificial intelligence (AI) company’s software has helped crack one of the most important unsolved problems in math…",
    "translation_title": "",
    "translation_summary": "",
    "original_title": "",
@@ -8764,7 +8785,9 @@
    "published_at": "2026-11-19T23:59:07+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://www.apple.com/newsroom/images/2026/11/apple-tv-becomes-the-new-us-home-of-f1-academy-the-all-female-racing-series/article/Apple-TV-F1-ACADEMY-hero_big.jpg.large.jpg"
+   },
    "display_title": "Apple TV becomes the new U.S. home of F1 ACADEMY™, the all-female racing series",
    "display_summary": "Apple and F1 ACADEMY™ today announced that the all-female racing series will stream on Apple TV in the United States beginning in 2027.",
    "translation_title": "",
@@ -14371,7 +14394,9 @@
    "published_at": "2026-11-18T21:59:20+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://www.apple.com/newsroom/images/2026/11/meet-the-2026-app-store-award-finalists/article/Apple-2026-App-Store-Awards-finalists-iPhone-App-of-the-Year_inline.jpg.large.jpg"
+   },
    "display_title": "Meet the 2026 App Store Award finalists",
    "display_summary": "Apple announced the finalists for the 2026 App Store Awards, recognizing 45 developers from around the world for exceptional apps and games.",
    "translation_title": "",
@@ -18946,7 +18971,9 @@
    "published_at": "2026-11-18T00:59:36+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://www.apple.com/newsroom/images/2026/11/formula-1-las-vegas-grand-prix-streams-live-on-apple-tv-this-weekend/article/Apple-F1-Las-Vegas-Grand-Prix-2026-Apple-TV_big.jpg.large.jpg"
+   },
    "display_title": "Formula 1® Las Vegas Grand Prix™ streams live on Apple TV this weekend",
    "display_summary": "Formula 1® returns to the U.S. this weekend for the FORMULA 1® HEINEKEN LAS VEGAS GRAND PRIX™ 2026, streaming live on Apple TV.",
    "translation_title": "",
@@ -20015,7 +20042,9 @@
    "published_at": "2026-11-17T18:59:28+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://www.apple.com/newsroom/images/2026/11/apple-podcasts-names-baby-this-is-keke-palmer-the-2026-show-of-the-year/article/Apple-Podcasts-Show-of-the-Year-2026_big.jpg.large.jpg"
+   },
    "display_title": "Apple Podcasts names Baby, this is Keke Palmer the 2026 Show of the Year",
    "display_summary": "Apple Podcasts names Baby, this is Keke Palmer as its 2026 Show of the Year, honoring the podcast for its exceptional quality and cultural impact.",
    "translation_title": "",
@@ -26904,7 +26933,9 @@
    "published_at": "2026-11-16T09:18:33+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://www.apple.com/newsroom/images/2026/11/apple-launches-research-study-to-explore-the-use-of-ai-for-health/article/Apple-Health-AI-Usage-Study-hero_big.jpg.large.jpg"
+   },
    "display_title": "Apple launches research study to explore the use of AI for health",
    "display_summary": "Apple today announced the launch of the Apple Health AI Usage Study in the United States, which includes a virtual research study and associated app.",
    "translation_title": "",
@@ -31360,7 +31391,9 @@
    "published_at": "2026-11-13T23:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://cdn.openai.com/mdx-assets/e193aefe-5e58-431c-8cd2-adadac0c1496/a8298611-fe6e-4853-90e1-7ec5b3bbdf5f.6a518def.png"
+   },
    "display_title": "Introducing ChatGPT Wallet",
    "display_summary": "Introducing ChatGPT Wallet, a secure way for agents in ChatGPT Work, Codex, and dots to complete purchases with user approval and existing card protections.",
    "translation_title": "",
@@ -31646,7 +31679,9 @@
    "published_at": "2026-11-13T21:59:07+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://www.apple.com/newsroom/images/2026/11/apple-homeview-available-today/article/Apple-HomeView-available-3up_big.jpg.large.jpg"
+   },
    "display_title": "Apple HomeView available today",
    "display_summary": "Customers can now purchase Apple HomeView and experience a new way to enjoy entertainment, stay connected, and manage their home.",
    "translation_title": "",
@@ -32894,7 +32929,9 @@
    "published_at": "2026-11-13T16:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/4CfbTP671OIBXAefIhFylo/55459081ad76a55d751bda065ff309f3/square.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Shield helps technicians hand off legacy portal work with OpenAI",
    "display_summary": "Shield uses OpenAI to help IT technicians hand off work in legacy portals. Its Forge agents navigate systems so technicians can focus on issues needing their judgment.",
    "translation_title": "",
@@ -34493,7 +34530,9 @@
    "published_at": "2026-11-13T06:54:52+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://github.blog/wp-content/uploads/2025/08/Andrea-Griffiths_avatar_1755783168-200x200.jpeg"
+   },
    "display_title": "Build once, run on any agent: A practical guide to agent skills",
    "display_summary": "Agent skills capture repeatable engineering work in files teams can review and reuse, while tools, project context, and permissions remain specific to the host that runs them. The post Build once, run on any agent: A practical guide to agent skills appeared first on The GitHub Blog .",
    "translation_title": "",
@@ -34649,7 +34688,9 @@
    "published_at": "2026-11-13T04:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/2BBTZsqFM3kvrX5Aq081SW/4636fa59c50e62172558d21effcaeca4/amplitude-wave-art-card.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "How Amplitude ships product improvements in 1–2 days with OpenAI",
    "display_summary": "Built primarily on OpenAI models, Amplitude’s proactive product agent, Wave, identifies what to build, helps teams ship changes with coding agents, and measures the impact.",
    "translation_title": "",
@@ -35647,7 +35688,9 @@
    "published_at": "2026-11-12T20:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/5B8tYqcVtztQ9PNAvMLPLO/8f2fc1472cb497b2d2b8ff82c0c1eeba/Gondola-Option-A-Art-Card-1080x1080.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Gondola doubles revenue as its team builds more with Codex",
    "display_summary": "Gondola helps creatives get credit and get hired, with Codex raising its lead engineer’s output by 50% and ChatGPT simplifying daily work.",
    "translation_title": "",
@@ -36109,7 +36152,9 @@
    "published_at": "2026-11-12T17:30:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/1pQ0jmmXO4srma6UqEuFtH/479d0a9d0ba2501f31c0dc3a0767430b/holiday-extras-hero.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Holiday Extras is rethinking what it can build with Codex",
    "display_summary": "With Codex, Holiday Extras is turning customer expertise into better apps, higher booking conversion and new possibilities for growth.",
    "translation_title": "",
@@ -38462,7 +38507,9 @@
    "published_at": "2026-11-12T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/mkN5DS8fsUZdCbrtXU5CJ/7ffd117eefcd930dd8a0dc4c82721d99/strengthening-nato-and-allied-cyber-defences-with-ai-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Supporting research on AI and children’s safety",
    "display_summary": "OpenAI commits $2 million to research on AI and children’s safety. The work supports shared tools to measure risks and opportunities for young people.",
    "translation_title": "",
@@ -38481,7 +38528,9 @@
    "published_at": "2026-11-12T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/34qb6se5e4WPds4qMTRVll/e5de73acb5100416606cc7cd390693bd/EF_Ep21_16.9.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Gilbert + Tobin rethinks the business of law with AI",
    "display_summary": "A conversation with Sam Nickless, Partner and Chief Executive Officer at Gilbert + Tobin.",
    "translation_title": "",
@@ -40791,7 +40840,9 @@
    "published_at": "2026-11-11T16:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/4SnfEKjmVoRPgSgiCy8IzI/1f454e874489f6c318c078766456ac70/le-groupe-figaro-and-openai-announce-partnership-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "ChatGPT Plus for veterans and servicemembers",
    "display_summary": "More than 20,000 veterans and transitioning service members have claimed a free year of ChatGPT Plus. See how they use it to prepare for civilian careers.",
    "translation_title": "",
@@ -42742,7 +42793,9 @@
    "published_at": "2026-11-11T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/6yXeyZ5Lph5wYnDiSxL1Rf/fe6264331b54720f59b3c7e90a05b2b8/EF_Ep20_16.9.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "JioStar’s chief architect on AI discovery at 500M-user scale",
    "display_summary": "JioStar’s Vijay Seshadri explains AI discovery at 500M-user scale. Read his lessons on evals, guardrails, and taking AI into production.",
    "translation_title": "",
@@ -43134,7 +43187,9 @@
    "published_at": "2026-11-11T00:00:26+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://www.apple.com/newsroom/images/2026/11/apple-tv-introduces-new-sign-language-interpretation-feature/article/Apple-TV-ASL-Sign-Language-interpretation_big.jpg.large.jpg"
+   },
    "display_title": "Apple TV introduces new Sign Language interpretation feature",
    "display_summary": "Today, Apple announced a new accessibility feature on the Apple TV app offering sign language interpretation for supported titles.",
    "translation_title": "",
@@ -43298,7 +43353,9 @@
    "published_at": "2026-11-10T22:59:45+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://www.apple.com/newsroom/images/2026/11/football-manager-and-other-hit-franchises-headline-apple-arcades-holiday-lineup/article/Apple-Arcade-LEGO-DUPLO-Playtime_big.jpg.large.jpg"
+   },
    "display_title": "Football Manager and other hit franchises headline Apple Arcade’s holiday lineup",
    "display_summary": "Today Apple Arcade welcomes Football Manager 27 Touch, plus four new games for every kind of player on December 3.",
    "translation_title": "",
@@ -43789,7 +43846,9 @@
    "published_at": "2026-11-10T20:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/6ewlK5oKVHp0phTezeh0rT/2c9454f9757b567c1837e07013ffe2f1/older-adults-art-card-v001.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Helping caregivers use AI in everyday life",
    "display_summary": "OpenAI Academy is bringing free, hands-on ChatGPT workshops to caregivers in five U.S. cities, helping them build practical AI skills for everyday life.",
    "translation_title": "",
@@ -44334,7 +44393,9 @@
    "published_at": "2026-11-10T18:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://cdn.openai.com/mdx-assets/e193aefe-5e58-431c-8cd2-adadac0c1496/a8298611-fe6e-4853-90e1-7ec5b3bbdf5f.6a518def.png"
+   },
    "display_title": "Introducing Businesses in ChatGPT",
    "display_summary": "Manage your business information, get insights about how your business shows up, and turn interest into action in ChatGPT.",
    "translation_title": "",
@@ -44650,7 +44711,9 @@
    "published_at": "2026-11-10T17:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/4SnfEKjmVoRPgSgiCy8IzI/1f454e874489f6c318c078766456ac70/le-groupe-figaro-and-openai-announce-partnership-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Closing the AI guidance gap in education",
    "display_summary": "New ThinkYoung research and lessons from OpenAI’s EMEA education partnerships on supporting teachers, AI literacy, and independent learning.",
    "translation_title": "",
@@ -45073,7 +45136,9 @@
    "published_at": "2026-11-10T16:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/14H7MTgTXxn9etfW0YapIZ/5bb0f93a51903db4fde86615f652d8cf/singapore-airlines-curved-satin-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Singapore Airlines elevates travel & work with OpenAI technology",
    "display_summary": "Discover how Singapore Airlines uses OpenAI models and API to enhance customer support, travel discovery, and employee productivity, doubling CSAT for its Kris chatbot.",
    "translation_title": "",
@@ -45458,7 +45523,9 @@
    "published_at": "2026-11-10T15:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/1yL4CfmdyLQPZCrhi5OGFK/f636c8bb5ecc42bb2bc219fb44a7af8e/ai-generated-video-icon.svg"
+   },
    "display_title": "Work at the Frontier: AI’s effect on freelance work",
    "display_summary": "New research from OpenAI and Upwork finds shifting demand for freelance work, new skill combinations, and larger budgets and more hours for AI-related projects.",
    "translation_title": "",
@@ -47277,7 +47344,9 @@
    "published_at": "2026-11-10T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/1b77wWqxMlNBg59VRDTuuQ/46601ae75270e4d037359127eb09a76c/cogent-security-cover-sienna.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Cogent and OpenAI build cyber defense factories for enterprises",
    "display_summary": "Cogent combines OpenAI models with enterprise context to help automatically remediate vulnerabilities with agents.",
    "translation_title": "",
@@ -47732,7 +47801,9 @@
    "published_at": "2026-11-10T03:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/3u4XKQVExOBSWxMiiPMmpg/31dffb070dae6251a5fac4e46ec241dc/Art_card.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "ChatGPT Enterprise now available in AWS Marketplace",
    "display_summary": "ChatGPT Enterprise is now available through AWS Marketplace, helping organizations simplify procurement through existing AWS purchasing and billing relationships.",
    "translation_title": "",
@@ -47812,7 +47883,9 @@
    "published_at": "2026-11-09T23:59:09+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://www.apple.com/newsroom/images/2026/11/olivia-dean-is-apple-musics-artist-of-the-year-for-2026/article/Apple-Music-Artist-of-the-Year-Olivia-Dean_big.jpg.large.jpg"
+   },
    "display_title": "Olivia Dean is Apple Music’s Artist of the Year for 2026",
    "display_summary": "Apple Music named Olivia Dean its 2026 Artist of the Year, recognizing her undeniable leap to stardom over the past year.",
    "translation_title": "",
@@ -48162,7 +48235,9 @@
    "published_at": "2026-11-09T21:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/43ZavE2amLHMmbxH8EL8VM/1464d0f68c0f3c45e9d255992aab32b1/how-we-detect-frontier-model-misalignment-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Control Room: A central system to track and stop model workloads across our research infrastructure",
    "display_summary": "Learn how OpenAI’s Control Room tracks model workloads across our research infrastructure and can rapidly stop them when safety or security concerns arise.",
    "translation_title": "",
