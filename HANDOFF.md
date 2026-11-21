@@ -4,6 +4,12 @@
 ## 目标
 6 频道资讯站按 `docs/rebang-v1/CONTRACT.md` 上线并稳定刷新。
 
+## 2026-11-21 对外更名一期（待审批）
+- [PR #78](https://github.com/kwinweng/shiguang-hot/pull/78) → `main`。新旧网页、PWA、分享、文档和测试统一为「拾光资讯」；`AGENTS.md` 按 14:47 确认改由 T3 agent 开发，审批红绿灯不变。
+- 更名相关 pytest 60 通过、1 跳过（无真实 `var/rebang/in`）；前端 43 通过。macOS 全量 pytest 427 通过、7 失败、2 跳过；7 项均在干净的 `6313e1e3` 复现，dark 子用例在两边均通过。全量离线测试会改写 `docs/rebang-v1/evidence/history-favorites-search/` 下三张跟踪截图，本次已恢复，未提交截图。
+- iOS 只在本地改显示名和提示并重新生成工程；主 Bundle ID 仍为 `com.kwinweng.shiguang-hot`，签名团队、描述文件、SKU 不变。仓库名、域名、`rebang` 路径和发布布局不变；未合并、部署、传 TestFlight 或操作采集例程。
+- 下一步：等阿欢分别批准是否首次入库 `ios/` 和是否合并/发布 #78。采集恢复是另一任务。
+
 ## 现在做到哪（2026-11-16）
 - **已上线**：https://news.kwinweng.com/ 根路径就是 v11（11/16 00:08 阿欢决定）；`/rebang/` 301 到根；全站 noindex（页面 meta、`X-Robots-Tag`、`robots.txt`）。旧的登录阅读器、`/mail/`、`/archive/` 已下线。`shiguang-reader-update.timer` 已于 00:32 `disable --now`（实际原是每 5 分钟跑，不是每天一次）；灵记 `lingji-news-source` 只读的 `topics.sqlite3` 从此不再更新。发布链路、服务器配置、回退见 `docs/rebang-v1/OPERATIONS.md`。2026-11-16 已按确认删除旧阅读器/旧站回滚备份；线上阅读器库和 unit 文件仍保留，因为灵记还在读这份库。
 - 合并记录：PR #40（v13 合入 main）、#41（TG 转发来源名）、#42（搜索索引加载竞态）、#44（public_base 改为根地址）、#45（文档审计）、#46（袋鼠图标）、#47（去掉顶栏袋鼠，日期回到最左边）。标签页、加到主屏、启动图和分享图仍是袋鼠；顶栏只有日期，没有 logo。
