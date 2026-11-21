@@ -186,11 +186,10 @@ main()
         self.assertEqual(info['database_sha256'], hashlib.sha256((root / 'tg.db').read_bytes()).hexdigest())
         self.assertFalse(git('ls-remote', '--heads', 'origin', 'gh-pages'))
 
-        # No new source item on the next cycle: same live content, new build time.
-        # macOS can do a first build, but an in-place exchange needs Linux renameat2.
-        if sys.platform != 'linux':
-            (root / 'site').rename(self.base / 'first-site')
+        # Use the same output; the second cycle must atomically exchange an existing tree.
+        inode = (root / 'site').stat().st_ino
         again = collect()
+        self.assertNotEqual((root / 'site').stat().st_ino, inode)
         self.assertEqual(again['messages'], live['messages'])
         self.assertGreater(datetime.fromisoformat(again['updated']), datetime.fromisoformat(live['updated']))
 

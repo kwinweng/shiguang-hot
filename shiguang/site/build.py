@@ -3,7 +3,7 @@
 `build()` is the one entry point. Pages themselves come from pages.py; this module owns the
 staging, the content-hashed asset names and the public-build privacy check.
 """
-import ctypes, fcntl, hashlib, os, shutil, signal, tempfile, threading
+import ctypes, fcntl, hashlib, os, shutil, signal, sys, tempfile, threading
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -37,12 +37,18 @@ def staged_output(destination):
                 shutil.copytree(destination, temporary, dirs_exist_ok=True, symlinks=True)
             yield temporary
             if destination.exists():
-                # Linux RENAME_EXCHANGE keeps the served path present throughout.
+                # Both platforms exchange whole trees atomically, keeping the served path present.
                 libc=ctypes.CDLL(None, use_errno=True)
-                exchange=libc.renameat2
-                exchange.argtypes=[ctypes.c_int,ctypes.c_char_p,ctypes.c_int,ctypes.c_char_p,ctypes.c_uint]
+                if sys.platform == 'darwin':
+                    exchange=libc.renamex_np
+                    exchange.argtypes=[ctypes.c_char_p,ctypes.c_char_p,ctypes.c_uint]
+                    args=(os.fsencode(temporary),os.fsencode(destination),2)  # RENAME_SWAP
+                else:
+                    exchange=libc.renameat2
+                    exchange.argtypes=[ctypes.c_int,ctypes.c_char_p,ctypes.c_int,ctypes.c_char_p,ctypes.c_uint]
+                    args=(-100,os.fsencode(temporary),-100,os.fsencode(destination),2)  # RENAME_EXCHANGE
                 exchange.restype=ctypes.c_int
-                if exchange(-100,os.fsencode(temporary),-100,os.fsencode(destination),2):
+                if exchange(*args):
                     error=ctypes.get_errno()
                     raise OSError(error,os.strerror(error),str(destination))
             else:

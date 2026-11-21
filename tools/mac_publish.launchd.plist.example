@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>local.shiguang.news-publish</string>
+    <key>UserName</key>
+    <string>shiguang-news</string>
+    <key>WorkingDirectory</key>
+    <string>/opt/shiguang-news/checkout</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>/opt/shiguang-news/checkout/tools/mac_publish.sh</string>
+        <string>--code-sha</string>
+        <string>REPLACE_WITH_APPROVED_FULL_SHA</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/shiguang-news/venv/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+        <key>BOX_PYTHON</key>
+        <string>/opt/shiguang-news/venv/bin/python3</string>
+        <key>HOME</key>
+        <string>/Users/shiguang-news</string>
+    </dict>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Minute</key>
+        <integer>5</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/opt/shiguang-news/log/publish.log</string>
+    <key>StandardErrorPath</key>
+    <string>/opt/shiguang-news/log/publish.err.log</string>
+</dict>
+</plist>

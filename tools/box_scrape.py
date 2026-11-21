@@ -91,7 +91,7 @@ def execute(args):
         return subprocess.check_output(['git', *values], cwd=root, text=True).strip()
     if git('branch', '--show-current') != 'main':
         raise RuntimeError('normal mode requires main')
-    if git('status', '--porcelain', '--untracked-files=normal'):
+    if git('--no-optional-locks', 'status', '--porcelain', '--untracked-files=normal'):
         raise RuntimeError('normal mode requires a clean worktree; preserve and resolve pending data first')
     subprocess.run(['git', 'fetch', 'origin', 'main'], cwd=root, check=True)
     local_commits = git('rev-list', 'origin/main..HEAD')
