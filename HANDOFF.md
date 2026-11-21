@@ -15,8 +15,13 @@
 - **微博 6 个博主已上线（PR #69，squash `e942ae97d`；11/16 19:26 建站发布，19:42 线上 built_at 19:26:16）**：用 weibo.com 桌面版 ajax + 副号 Cookie（`~/.config/rebang/weibo-cookie.txt`，0600，不进仓库/日志），不用 weibo-crawler（m.weibo.cn 不认这份 Cookie）。线上每人 10 条。sinaimg 对浏览器只认 weibo.com Referer，所以图、封面、头像在抓取时存成本地副本 `var/rebang/media/weibo/`（约 240 张 / 38MB）；视频站内播不了，查看器给「打开原帖」。Cookie 失效（ok≠1/跳登录）→ 微博标 login_expired、保留上次内容、日志打 `weibo cookie expired`；换 Cookie 文件即可恢复。线上 `docs/rebang-v1/evidence/weibo/capture.py` 10/10。细节见 `docs/rebang-v1/MODULES.md` 微博条。
 - **注意**：11/16 19:00 前后的建站数据里，公众号 6 个号有 5 个是 `login_expired`（微信读书会话失效），要阿欢重新扫码。
 
+## 2026-11-21 采集断更
+- 末次数据提交 `6313e1e3`，末次发布 `b0ed26e1`（11/20 01:20 北京时间）。旧采集例程暂停后，v11 刷新只重建新版产物，#77 按预期拒绝旧站 `live.json` 过期的组合包。盒子和服务器日志仍待核对；生产未恢复。
+- 恢复候选在[采集断更恢复方案](docs/rebang-v1/COLLECTION-RECOVERY.md)。用 `box_scrape.sh --no-publish` 先完成真实采集与持久化，再由 v11 一次发布；单一例程须用外层锁。候选经独立技术评审（已验源 Opus 5.5）有条件通过，条件为单写入/单发布、外层互斥和盒子生产验收，见方案。合并、部署、例程和任何服务器变更另批。
+- 本机用隔离 Git 和假 HTTP 验证真实旧流水线：新数据写入 `live.json`，#77 发布器 dry-run 通过，旧包仍拒绝。macOS 不能验证现有旧站的连续原子替换（main 用 Linux `renameat2`）；Mac 接管另做。采集测试夹具路径用 `resolve()`，避免 macOS `/var` 和 `/private/var` 指向同一临时目录却比较失败。
+
 ## 下一步
-1. 阿欢批准后：在工头「热榜抓取发布」例程里 `box_scrape.sh` 之后加 `sh tools/rebang_refresh.sh`（让 TG/热搜 30 分钟更新一次；现在 v11 只随 2 小时一次的 X+翻译例程发布）。X dump 超过 36 小时博主栏会标「未更新」。
+1. 阿欢按采集恢复方案核对盒子/服务器证据，再逐项批准恢复。不另启第二个数据写入或发布任务。X dump 超过 36 小时博主栏会标「未更新」。
 2. 旧推送停哪些由阿欢定（清单在 11/15 的上线报告里）。
 3. 第二期剩下：① 阿欢扫码微信读书：`cd /workspace/shiguang-prod && /workspace/rebang-v1-briefs/tools/.venv-qr/bin/python -m rebang.bloggers.weread login --qr-png /tmp/weread-login-qr.png --wait 600`，把打印的 confirm_url / 二维码发给他，微信里确认；成功后下一轮刷新核对 5 个号的真回包。② YouTube 名单等阿欢确认后写进 `bloggers.json` 的 `youtube.accounts`（handle 用 UC 频道号）。③ 微博：已用副号 Cookie 接通（PR #69）。
 4. GitHub Pages（https://kwinweng.github.io/shiguang-hot/ ）阿欢已批准关闭，但接口返回 422（`Deactivating GitHub pages for this repository is not allowed.`），站点仍是 200。需要阿欢在仓库 Settings → Pages 把发布源改为 None（只点 Unpublish 不够，下次 `publish_pages.sh` 推 gh-pages 会重新上线）。不要改或删 `gh-pages` 分支，news.kwinweng.com 靠它同步。
