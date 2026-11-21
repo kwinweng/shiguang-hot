@@ -1,7 +1,7 @@
 {
  "schema": "rebang.search-index/1",
  "timezone": "Asia/Shanghai",
- "generated_at": "2026-11-22T04:12:31+08:00",
+ "generated_at": "2026-11-22T05:11:29+08:00",
  "entries": [
   {
    "id": "github-trending:HKUDS/CLI-Anything",
@@ -11,7 +11,7 @@
    "source_name": "GitHub Trending",
    "title": "HKUDS/CLI-Anything",
    "summary": "\"CLI-Anything: Making ALL Software Agent-Native\" -- CLI-Hub: https://clianything.cc/",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -30,7 +30,7 @@
    "source_name": "GitHub Trending",
    "title": "Tracer-Cloud/opensre",
    "summary": "The open-source agent for CI/CD reliability.",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -49,7 +49,7 @@
    "source_name": "GitHub Trending",
    "title": "XiaoYouChR/Ghost-Downloader-3",
    "summary": "The only downloader you need. 下载器的集大成者。",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "zh",
    "translated": false,
    "image": null,
@@ -68,7 +68,7 @@
    "source_name": "GitHub Trending",
    "title": "cathrynlavery/diagram-design",
    "summary": "Editorial diagram design for Claude Code, Codex, GitHub Copilot, Cursor, Factory Droid, Qoder, and Pi. 45 diagram types. Self-contained HTML + SVG. No shadows. No Mermaid slop.",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -87,7 +87,7 @@
    "source_name": "GitHub Trending",
    "title": "cursor/plugins",
    "summary": "Cursor plugin specification and official plugins",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -106,7 +106,7 @@
    "source_name": "GitHub Trending",
    "title": "elementalsouls/Claude-BugHunter",
    "summary": "A Claude Code skill bundle for bug hunting and external red-team work - 82 skills, 15 slash commands, 681 disclosed-report patterns curated across 24 core vulnerability classes, plus enterprise identity + infrastructure attack matrices.",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -125,7 +125,7 @@
    "source_name": "GitHub Trending",
    "title": "firecrawl/firecrawl",
    "summary": "Knowledge infrastructure to make your agents smarter. Search, scrape and access 550+ data providers through one API.",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -144,7 +144,7 @@
    "source_name": "GitHub Trending",
    "title": "google-labs-code/stitch-skills",
    "summary": "A library of Agent Skills designed to work with the Stitch MCP server. Each skill follows the Agent Skills open standard, for compatibility with coding agents such as Antigravity, Gemini CLI, Claude Code, Cursor.",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -163,7 +163,7 @@
    "source_name": "GitHub Trending",
    "title": "jingyaogong/minimind",
    "summary": "🧠 两小时从 0 训出你的 64M 大模型。Train your own 64M LLM from scratch in 2 hours.",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "zh",
    "translated": false,
    "image": null,
@@ -182,7 +182,7 @@
    "source_name": "GitHub Trending",
    "title": "mjmirza/app-store-compliance",
    "summary": "Avoid common App Store and Google Play rejections. Open playbook and pre-submission guard with 117 documented rejection patterns and fixes, privacy manifest and Data safety checks, 95 tracked deadlines (EU AI Act, DSA, COPPA, age laws), and a skill for AI coding agents.",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -201,7 +201,7 @@
    "source_name": "GitHub Trending",
    "title": "mvanhorn/last30days-skill",
    "summary": "AI agent skill that researches any topic across Reddit, X, YouTube, HN, Polymarket, and the web - then synthesizes a grounded summary",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -220,7 +220,7 @@
    "source_name": "GitHub Trending",
    "title": "nginx/nginx",
    "summary": "The official NGINX Open Source repository.",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -239,7 +239,7 @@
    "source_name": "GitHub Trending",
    "title": "obra/superpowers",
    "summary": "An agentic skills framework & software development methodology that works.",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -258,7 +258,7 @@
    "source_name": "GitHub Trending",
    "title": "openvinotoolkit/openvino",
    "summary": "OpenVINO™ is an open source toolkit for optimizing and deploying AI inference",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -277,7 +277,7 @@
    "source_name": "GitHub Trending",
    "title": "toeverything/AFFiNE",
    "summary": "There can be more than Notion and Miro. AFFiNE(pronounced [ə‘fain]) is a next-gen knowledge base that brings planning, sorting and creating all together. Privacy first, open-source, customizable and ready to use.",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -296,12 +296,54 @@
    "source_name": "GitHub Trending",
    "title": "zhouxiaoka/autoclip",
    "summary": "AutoClip｜一个链接，一键出片。开源 AI 视频剪辑桌面工具，将播客、访谈、课程等长视频自动剪成短视频，生成字幕、封面和发布文案，适配抖音、小红书、TikTok、Reels 与 YouTube Shorts。Open-source AI video clipping & content repurposing.",
-   "published_at": "2026-11-22T04:11:33+08:00",
+   "published_at": "2026-11-22T05:10:40+08:00",
    "lang": "zh",
    "translated": false,
    "image": null,
    "display_title": "zhouxiaoka/autoclip",
    "display_summary": "AutoClip｜一个链接，一键出片。开源 AI 视频剪辑桌面工具，将播客、访谈、课程等长视频自动剪成短视频，生成字幕、封面和发布文案，适配抖音、小红书、TikTok、Reels 与 YouTube Shorts。Open-source AI video clipping & content repurposing.",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "bbc-world:https://www.bbc.co.uk/news/articles/ckz749ey0r75o#0",
+   "kind": "news",
+   "channel": "world",
+   "source_id": "bbc-world",
+   "source_name": "BBC World",
+   "title": "Mexican drug lord on FBI's 10 most wanted list arrested in shoot-out",
+   "summary": "Fausto Isidro \"Chapo Idisro\" Meza Flores, who is accused of drug trafficking and torture, is detained after gun fight with authorities.",
+   "published_at": "2026-11-22T05:05:29+08:00",
+   "lang": "en",
+   "translated": false,
+   "image": {
+    "url": "https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/5701/live/7ac9e270-e5ad-11f1-99a1-253766e7ad8b.jpg"
+   },
+   "display_title": "Mexican drug lord on FBI's 10 most wanted list arrested in shoot-out",
+   "display_summary": "Fausto Isidro \"Chapo Idisro\" Meza Flores, who is accused of drug trafficking and torture, is detained after gun fight with authorities.",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "guardian-world:https://www.theguardian.com/technology/2026/nov/21/anthropic-riemann-hypothesis-solved-claude-ai",
+   "kind": "news",
+   "channel": "world",
+   "source_id": "guardian-world",
+   "source_name": "卫报 World",
+   "title": "Two groups verify mathematician’s claim that Claude helped prove mathematics problem",
+   "summary": "Anthropic’s Levent Alpöge says it took six weeks for him using the AI tool to solve 19th-century Riemann hypothesis A mathematician at Anthropic has convincingly said that the San Francisco -based artificial intelligence (AI) company’s software has helped crack one of the most important unsolved pro…",
+   "published_at": "2026-11-22T04:15:57+08:00",
+   "lang": "en",
+   "translated": false,
+   "image": {
+    "url": "https://i.guim.co.uk/img/media/d3154f68df589c297fc3d173e2bb3d95faca05c9/530_0_4678_3742/master/4678.jpg?width=140&quality=85&auto=format&fit=max&s=2be6ea0855df616ea30ffc89afed2e1f"
+   },
+   "display_title": "Two groups verify mathematician’s claim that Claude helped prove mathematics problem",
+   "display_summary": "Anthropic’s Levent Alpöge says it took six weeks for him using the AI tool to solve 19th-century Riemann hypothesis A mathematician at Anthropic has convincingly said that the San Francisco -based artificial intelligence (AI) company’s software has helped crack one of the most important unsolved pro…",
    "translation_title": "",
    "translation_summary": "",
    "original_title": "",
@@ -571,27 +613,6 @@
    "image": null,
    "display_title": "黎曼猜想证明通过 Lean 验证",
    "display_summary": "2026 年 11 月 20 日，Levent Alpöge 发布黎曼猜想的 Lean 形式化证明，代码库约 1700 万行。11 月 21 日，Lean FRO 与 Mathlib Initiative 联合声明认证该命题与证明均正确：社区确认其命题与 Mathlib 的 RiemannHypothesis 一致、代码库可无错编译，且多个独立证明检查器验证证明有效。 Lean community blog ｜Lean (@leanprover) 🌸 科技圈· 茶馆 · 投稿",
-   "translation_title": "",
-   "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
-  },
-  {
-   "id": "guardian-world:https://www.theguardian.com/technology/2026/nov/21/anthropic-riemann-hypothesis-solved-claude-ai",
-   "kind": "news",
-   "channel": "world",
-   "source_id": "guardian-world",
-   "source_name": "卫报 World",
-   "title": "Anthropic mathematician claims he used Claude to prove 19th-century Riemann hypothesis",
-   "summary": "Levent Alpöge says it took six weeks for him using the AI tool to solve the math problem involving prime numbers A mathematician at Anthropic is contending that the San Francisco -based artificial intelligence (AI) company’s software has helped crack one of the most important unsolved problems in ma…",
-   "published_at": "2026-11-22T00:39:49+08:00",
-   "lang": "en",
-   "translated": false,
-   "image": {
-    "url": "https://i.guim.co.uk/img/media/d3154f68df589c297fc3d173e2bb3d95faca05c9/530_0_4678_3742/master/4678.jpg?width=140&quality=85&auto=format&fit=max&s=2be6ea0855df616ea30ffc89afed2e1f"
-   },
-   "display_title": "Anthropic mathematician claims he used Claude to prove 19th-century Riemann hypothesis",
-   "display_summary": "Levent Alpöge says it took six weeks for him using the AI tool to solve the math problem involving prime numbers A mathematician at Anthropic is contending that the San Francisco -based artificial intelligence (AI) company’s software has helped crack one of the most important unsolved problems in ma…",
    "translation_title": "",
    "translation_summary": "",
    "original_title": "",
@@ -959,27 +980,6 @@
    "image": null,
    "display_title": "周末，大家今天都在干嘛？👍",
    "display_summary": "",
-   "translation_title": "",
-   "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
-  },
-  {
-   "id": "bbc-world:https://www.bbc.co.uk/news/articles/ckz749ey0r75o#0",
-   "kind": "news",
-   "channel": "world",
-   "source_id": "bbc-world",
-   "source_name": "BBC World",
-   "title": "Mexican drug lord on FBI's 10 most wanted list arrested in shoot-out",
-   "summary": "Fausto Isidro \"Chapo Idisro\" Meza Flores, who is accused of drug trafficking and torture, is detained after gun fight with authorities.",
-   "published_at": "2026-11-21T21:15:21+08:00",
-   "lang": "en",
-   "translated": false,
-   "image": {
-    "url": "https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/5701/live/7ac9e270-e5ad-11f1-99a1-253766e7ad8b.jpg"
-   },
-   "display_title": "Mexican drug lord on FBI's 10 most wanted list arrested in shoot-out",
-   "display_summary": "Fausto Isidro \"Chapo Idisro\" Meza Flores, who is accused of drug trafficking and torture, is detained after gun fight with authorities.",
    "translation_title": "",
    "translation_summary": "",
    "original_title": "",
@@ -4881,7 +4881,9 @@
    "published_at": "2026-11-20T18:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/2j2sOeYR5anL69nJvTbPot/4758d44649f585b33d96cdf14742c0d4/hebbia-smoked-depth-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Combatting adversarial distillation",
    "display_summary": "OpenAI’s layered approach to adversarial distillation combines model training, safeguards, detection, and enforcement to protect against capability extraction.",
    "translation_title": "",
@@ -7849,7 +7851,9 @@
    "published_at": "2026-11-20T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/2j2sOeYR5anL69nJvTbPot/4758d44649f585b33d96cdf14742c0d4/hebbia-smoked-depth-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Hebbia sees improvements in financial research with GPT-6 Astra",
    "display_summary": "Hebbia tested GPT-6 Astra for financial research. Its prerelease evaluations found gains in source coverage, citation relevance, and presentation quality.",
    "translation_title": "",
@@ -7868,7 +7872,9 @@
    "published_at": "2026-11-20T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/6kbw4PSOhEqlbbiM3ZYhOb/1c770a466f57e0117f970cb124b921ee/introducing-medchembench-header-poster-4k.png?w=3840&q=50&fm=webp"
+   },
    "display_title": "Can AI help scientists identify promising drug candidates?",
    "display_summary": "MedChemBench evaluates how well AI models interpret molecular structures, reason from experimental evidence, and select compounds in early drug discovery.",
    "translation_title": "",
@@ -11189,7 +11195,9 @@
    "published_at": "2026-11-19T16:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/17rE7b6kMUdw2yIiz0HMiL/55db38c36cab045cc6b9b67093560f14/inside-the-codex-sandbox-art-card.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "How OpenAI’s Performance Factory keeps ChatGPT fast",
    "display_summary": "Learn how OpenAI built the Performance Factory, a system of Codex-powered workflows that finds and fixes performance issues to help keep ChatGPT fast.",
    "translation_title": "",
@@ -13369,7 +13377,9 @@
    "published_at": "2026-11-19T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/4UR2EaD3NPPhGHpAh7Jwu5/8d21aff44d75bd501b7794cff4851288/how-workers-use-chatgpt-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Deploying Daybreak Red",
    "display_summary": "Explore a reference architecture for supervised security investigations with Daybreak Red, including safety controls, setup, and monitoring.",
    "translation_title": "",
@@ -15632,7 +15642,9 @@
    "published_at": "2026-11-18T18:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/6rQTHf1q0hsSrYapYJaOJQ/66ed5c49d6bfe279ae089d6fecfc9de4/future-of-the-firm-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "The Silent Consensus",
    "display_summary": "Dean Ball, Head of Strategic Futures at OpenAI, examines how more capable AI could reshape society and how people can retain control of their institutions.",
    "translation_title": "",
@@ -16409,7 +16421,9 @@
    "published_at": "2026-11-18T16:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/7tR8joMsjUp2pNkjxkAB2i/f9951f263252041c48afa0b4d33c7959/sumitomo-life-layered-paper-art-card.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "How Sumitomo Life’s leaders helped teams adopt ChatGPT Enterprise",
    "display_summary": "Sumitomo Life uses ChatGPT Enterprise to research insurers, prepare proposals, and draft code for investment analysis. Early use by executives helped drive adoption.",
    "translation_title": "",
@@ -16428,7 +16442,9 @@
    "published_at": "2026-11-18T16:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/iYpBFP2nteJOaNG1v5Rrp/e0eb5dbefa86d133c3392df5983e45a3/performance-factory-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Inside the Codex sandbox",
    "display_summary": "See how Codex runs commands on your machine while enforcing the filesystem and network limits you control across macOS, Linux, and Windows.",
    "translation_title": "",
@@ -16447,7 +16463,9 @@
    "published_at": "2026-11-18T16:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/4GWchdof3kw2l5OtMIvGt4/56144e08b813d6af76ae93adc2cefc1b/introducing-medchembench-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Research acceleration: The jagged frontier",
    "display_summary": "OpenAI measures how coding agents are accelerating AI research, where their performance remains uneven, and what this signals about recursive self-improvement.",
    "translation_title": "",
@@ -16909,7 +16927,9 @@
    "published_at": "2026-11-18T14:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/1YAlC4a6FgYc9r73SDH0Ef/bcd6bdf945006094fbc327ac46dee04d/new-approach-to-research-model-containment-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Managing frontier AI risk: From training to deployment",
    "display_summary": "OpenAI explains how it manages frontier AI risk from training through deployment with model alignment, sandboxing, blocking safeguards, and monitoring.",
    "translation_title": "",
@@ -18324,7 +18344,9 @@
    "published_at": "2026-11-18T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/4GWchdof3kw2l5OtMIvGt4/56144e08b813d6af76ae93adc2cefc1b/introducing-medchembench-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Advancing chip design with OpenAI models",
    "display_summary": "OpenAI models optimized circuits used in Jalapeño silicon and improved RISC‑V core designs, showing progress in AI-assisted chip design with GPT‑6 Astra.",
    "translation_title": "",
@@ -18343,7 +18365,9 @@
    "published_at": "2026-11-18T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/1Hxi3uH1AJ6fUnzQ0erHqG/11f533e3fa6e55246949941ca27888c9/astra-law-legal-intelligence-card-smooth.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Le Groupe Figaro and OpenAI partner to bring Le Figaro journalism to ChatGPT",
    "display_summary": "Le Groupe Figaro and OpenAI partner to bring Le Figaro’s journalism to ChatGPT through summaries and excerpts, with links to original stories.",
    "translation_title": "",
@@ -20766,7 +20790,9 @@
    "published_at": "2026-11-17T16:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/2TCcE1IdEPpWT2vaC3PDWu/e78bceb30c38422b1461a2326838e762/Art_Card___1_1_1080x1080.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Introducing ChatGPT for Sales",
    "display_summary": "Explore the new Sales plugin and 30+ new and expanded partner plugins in ChatGPT to research prospects, prepare pitches, update your CRM, and move deals forward.",
    "translation_title": "",
@@ -22803,7 +22829,9 @@
    "published_at": "2026-11-17T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/4SnfEKjmVoRPgSgiCy8IzI/1f454e874489f6c318c078766456ac70/le-groupe-figaro-and-openai-announce-partnership-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Astra for Law leads in legal intelligence",
    "display_summary": "Astra for Law ranked first in a launch evaluation spanning 24 areas of law. Every ChatGPT Enterprise customer can now request access.",
    "translation_title": "",
@@ -22822,7 +22850,9 @@
    "published_at": "2026-11-17T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/2DbgwJ93neBePatQjKO2h7/d63008264f83f3dcc786fe98410151be/government-blog-card-option-051-review-1080x1080.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Introducing OpenAI for Chile",
    "display_summary": "OpenAI and the Government of Chile are partnering to support responsible AI adoption, build public-sector skills and help local startups develop AI applications.",
    "translation_title": "",
@@ -22841,7 +22871,9 @@
    "published_at": "2026-11-17T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/5c0RdO1eMpASEH79fHuJkt/2d8c656bd772ba036a6049d7cf9a2f0e/introducing-openai-for-chile-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Strengthening NATO and allied cyber defenses with AI",
    "display_summary": "How OpenAI is working with NATO and allied cyber agencies to help trusted defenders find vulnerabilities, test fixes and protect essential systems.",
    "translation_title": "",
@@ -23096,7 +23128,9 @@
    "published_at": "2026-11-17T01:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/4GWchdof3kw2l5OtMIvGt4/56144e08b813d6af76ae93adc2cefc1b/introducing-medchembench-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Broadening access to AI for scientists",
    "display_summary": "We’re expanding our ChatGPT for Academic Researchers program to offer 200,000 researchers worldwide free access to our frontier models.",
    "translation_title": "",
@@ -23115,7 +23149,9 @@
    "published_at": "2026-11-17T01:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/6phKwsBa1TVzc2XxxUJSNQ/ff62c0fb3cea0b4e799a7177210c1a19/strengthening-online-child-safety-inline-warning.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Strengthening the fight against online child sexual abuse with new tools and support",
    "display_summary": "New tools, practical guidance, and partnerships will help prevent, detect and respond to online child sexual exploitation and abuse.",
    "translation_title": "",
@@ -23700,7 +23736,9 @@
    "published_at": "2026-11-16T20:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/4GWchdof3kw2l5OtMIvGt4/56144e08b813d6af76ae93adc2cefc1b/introducing-medchembench-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Science at the Frontier: How scientists use ChatGPT",
    "display_summary": "Explore how more than 1,800 scientists use ChatGPT in research. See findings on daily workflows, reported productivity, and expectations for discovery.",
    "translation_title": "",
@@ -24307,7 +24345,9 @@
    "published_at": "2026-11-16T17:30:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/4hoSVzGnXTL7t0Lc8leJTZ/bc394d73a743bc7c555a0ef89df90c2a/square.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "How Revolut raises ambition without lowering the bar",
    "display_summary": "Discover how Revolut uses OpenAI models and Codex to cut coding time by 30–60%, scale financial crime investigations, and innovate without compromising security.",
    "translation_title": "",
@@ -24759,7 +24799,9 @@
    "published_at": "2026-11-16T16:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/3q9FXuH69IDGjPgpzj2Ayv/95477fdeea31ffb7eae01ec1c191b1f0/research-acceleration-the-jagged-frontier-of-rsi-cover.png"
+   },
    "display_title": "Our first phase of embedded assessments",
    "display_summary": "OpenAI begins embedded assessments with Apollo Research, METR, and Transluce, and Goodfire to independently evaluate model alignment, safeguards, and monitoring systems.",
    "translation_title": "",
@@ -25495,7 +25537,9 @@
    "published_at": "2026-11-16T14:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://cdn.openai.com/mdx-assets/e193aefe-5e58-431c-8cd2-adadac0c1496/a8298611-fe6e-4853-90e1-7ec5b3bbdf5f.6a518def.png"
+   },
    "display_title": "Advancing computer-use agents for healthcare teams",
    "display_summary": "",
    "translation_title": "",
@@ -25514,7 +25558,9 @@
    "published_at": "2026-11-16T14:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://files.openai.com/content?id=file_00000000910881f782057a26289550c7&cdn=1&cp=pi&ma=31449600&ts=0&p=pi&cid=8&sig=864c122a6bd0c093c722e66ef496e33153b81fbbece4bb66c04a49c2604a436a&v=0"
+   },
    "display_title": "More ways to move care forward with ChatGPT for Healthcare",
    "display_summary": "Introducing computer-use agents, improved clinical answers, and new healthcare plugins that work across healthcare software to get real work done.",
    "translation_title": "",
@@ -27121,7 +27167,9 @@
    "published_at": "2026-11-16T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/1pQ0jmmXO4srma6UqEuFtH/479d0a9d0ba2501f31c0dc3a0767430b/holiday-extras-hero.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "At Holiday Extras, dots get to work before anyone asks",
    "display_summary": "Dots deliver launch reports unprompted, flag issues people might miss, and talk through upcoming meetings on the commute to work.",
    "translation_title": "",
@@ -27140,7 +27188,9 @@
    "published_at": "2026-11-16T08:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/mkN5DS8fsUZdCbrtXU5CJ/7ffd117eefcd930dd8a0dc4c82721d99/strengthening-nato-and-allied-cyber-defences-with-ai-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "The King’s Trust and OpenAI launch £1m partnership",
    "display_summary": "The King’s Trust and OpenAI launch a £1m partnership to help up to 25,000 young people across the UK build practical AI skills for work.",
    "translation_title": "",
@@ -27311,7 +27361,9 @@
    "published_at": "2026-11-16T06:00:01+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/4GWchdof3kw2l5OtMIvGt4/56144e08b813d6af76ae93adc2cefc1b/introducing-medchembench-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "A step toward defining the Standard Model on a lattice",
    "display_summary": "Explore a candidate nonperturbative lattice definition of the Standard Model and how GPT-6 Astra helped turn the idea into a detailed proof.",
    "translation_title": "",
@@ -27330,7 +27382,9 @@
    "published_at": "2026-11-16T06:00:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.ctfassets.net/kftzwdyauwt9/77i38N8Ov2vmY2uJ4pWRIQ/5f6f3eceaf8751f07fc23f179ad14c32/from-ai-results-to-scientific-understanding-cover.png?w=3840&q=90&fm=webp"
+   },
    "display_title": "Our new blog for science",
    "display_summary": "The OpenAI science blog shares new findings, practical methods, and firsthand accounts from researchers using AI to advance scientific discovery.",
    "translation_title": "",
