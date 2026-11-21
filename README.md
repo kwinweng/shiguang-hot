@@ -1,8 +1,8 @@
-# 拾光热榜
+# 拾光资讯
 
 多来源资讯聚合站。仓库里有两套站点，共用同一个 Telegram 采集库 `tg.db`：
 
-| | 拾光热榜 v11（现行） | 旧站（保留运行，不再对外主推） |
+| | 拾光资讯 v11（现行） | 旧站（保留运行，不再对外主推） |
 |---|---|---|
 | 线上 | https://news.kwinweng.com/ （2026-11-16 起根路径；`/rebang/` 301 到根；全站 noindex） | 仍随 gh-pages 根目录发布到 https://kwinweng.github.io/shiguang-hot/ （阿欢已批准关闭，API 无法关掉，需在仓库 Settings → Pages 把源改为 None）；news.kwinweng.com 不再提供 |
 | 内容 | 6 频道（时事/环球/财经/科技与 AI/数码/工具与项目）+ 博主 + 热搜 + 收藏 + 搜索 | 资讯 / 探索 / 我的 |

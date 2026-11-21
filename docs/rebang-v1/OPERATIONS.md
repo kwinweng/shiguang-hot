@@ -1,4 +1,4 @@
-# 拾光热榜 v11 上线与运维
+# 拾光资讯 v11 上线与运维
 
 2026-11-15 上线到 `/rebang/`；2026-11-16 00:08 阿欢决定根路径 `https://news.kwinweng.com/` 改为 v11，旧的登录阅读器（shiguang-reader）和 `/mail/`、`/archive/` 下线，保留 noindex。
 

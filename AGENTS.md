@@ -2,9 +2,9 @@
 
 本仓库的协作规则。入口与代码位置见 [`README.md`](README.md)，当前进度见 [`HANDOFF.md`](HANDOFF.md)。
 
-## 谁来做（2026-11-15 阿欢指示起）
+## 谁来做（2026-11-21 14:47 阿欢确认）
 
-- 规划、评审、编码、测试全程只用 **Grok Bot**（自身额度），按阿欢的 app-flow 流程（正本在阿欢 Mac 的 `~/.codex/skills/app-flow/SKILL.md`，每个开发回合先读）。不启动 Codex、Claude、Magpie 或云端代理。取代旧规则「只有 Codex 写代码」。
+- 规划、编码、测试由阿欢在 **T3 Code** 里派的 agent 完成，按阿欢的 app-flow 流程（正本在阿欢 Mac 的 `~/.codex/skills/app-flow/SKILL.md`，每个开发回合先读）。本规定取代 2026-11-15 的「只用 Grok Bot」；审批红绿灯不变。
 - 不读 `.env`、密钥、Cookie 文件内容；不存密码；不编造账号、链接或内容。微博 Cookie 只放本机仅自己可读的文件，不进仓库。
 
 ## 审批红绿灯（2026-11-08 本人确认；与下文冲突时以本节为准）
