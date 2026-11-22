@@ -1,6 +1,27 @@
 {
   "hours": [
     {
+      "hour": "2026-11-22 23:00",
+      "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 23:00",
+          "id": "5313d5c9074cb9e5ff75",
+          "image": "media/zaihuapd/45302_1.webp",
+          "link": "https://t.me/zaihuapd/45302",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "据 VideoCardz 转述，摩尔线程 MTT S80 产品经理称，下一代庐山游戏 GPU 的显存将超过目前任何在售消费级显卡；按其此前\"4 倍于 S80 的 16 GB\"的说法推算为 64 GB，是 RTX 5090 的 32 GB 的两倍。该表态并非公司官方发布。\n\n庐山沿用 MDC 2025 披露的目标：相对 S80 的 AAA 游戏性能 15 倍、光追 50 倍、AI 算力 64 倍。公司称将在 12 月 29—30 日于北京举行的 MDC 2026 上由 CEO 张建中发布新旗舰产品。\n\nTom's Hardware\n\n🌸 科技圈· 茶馆 · 投稿",
+          "text": "据 VideoCardz 转述，摩尔线程 MTT S80 产品经理称，下一代庐山游戏 GPU 的显存将超过目前任何在售消费级显卡；按其此前\"4 倍于 S80 的 16 GB\"的说法推算为 64 GB，是 RTX 5090 的 32 GB 的两倍。该表态并非公司官方发布。\n\n庐山沿用 MDC 2025 披露的目标：相对 S80 的 AAA 游戏性能 15 倍、光追 50 倍、AI 算力 64 倍。公司称将在 12 月 29—30 日于北京举行的 MDC 2026 上由 CEO 张建中发布新旗舰产品。\n\nTom's Hardware\n\n🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-22T23:11:55+08:00",
+          "title": "摩尔线程产品经理：庐山 GPU 显存 64 GB",
+          "type": "telegram"
+        }
+      ]
+    },
+    {
       "hour": "2026-11-22 22:00",
       "messages": [
         {
@@ -39150,7 +39171,7 @@
           "hot": false,
           "hour": "2026-11-08 23:00",
           "id": "d3a5e7b40742a63df937",
-          "image": "media/pelosi3/30095_1.webp",
+          "image": "",
           "link": "https://t.me/pelosi3/30095",
           "source": "pelosi3",
           "source_name": "敏感经济信息分享",
@@ -129395,6 +129416,22 @@
       "category": "科技",
       "day": "2026-11-22",
       "hot": false,
+      "hour": "2026-11-22 23:00",
+      "id": "5313d5c9074cb9e5ff75",
+      "image": "media/zaihuapd/45302_1.webp",
+      "link": "https://t.me/zaihuapd/45302",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "据 VideoCardz 转述，摩尔线程 MTT S80 产品经理称，下一代庐山游戏 GPU 的显存将超过目前任何在售消费级显卡；按其此前\"4 倍于 S80 的 16 GB\"的说法推算为 64 GB，是 RTX 5090 的 32 GB 的两倍。该表态并非公司官方发布。\n\n庐山沿用 MDC 2025 披露的目标：相对 S80 的 AAA 游戏性能 15 倍、光追 50 倍、AI 算力 64 倍。公司称将在 12 月 29—30 日于北京举行的 MDC 2026 上由 CEO 张建中发布新旗舰产品。\n\nTom's Hardware\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "据 VideoCardz 转述，摩尔线程 MTT S80 产品经理称，下一代庐山游戏 GPU 的显存将超过目前任何在售消费级显卡；按其此前\"4 倍于 S80 的 16 GB\"的说法推算为 64 GB，是 RTX 5090 的 32 GB 的两倍。该表态并非公司官方发布。\n\n庐山沿用 MDC 2025 披露的目标：相对 S80 的 AAA 游戏性能 15 倍、光追 50 倍、AI 算力 64 倍。公司称将在 12 月 29—30 日于北京举行的 MDC 2026 上由 CEO 张建中发布新旗舰产品。\n\nTom's Hardware\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-11-22T23:11:55+08:00",
+      "title": "摩尔线程产品经理：庐山 GPU 显存 64 GB",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-22",
+      "hot": false,
       "hour": "2026-11-22 22:00",
       "id": "8e8aef34839abdf490cf",
       "image": "media/zaihuapd/45298_1.webp",
@@ -167013,7 +167050,7 @@
       "hot": false,
       "hour": "2026-11-08 23:00",
       "id": "d3a5e7b40742a63df937",
-      "image": "media/pelosi3/30095_1.webp",
+      "image": "",
       "link": "https://t.me/pelosi3/30095",
       "source": "pelosi3",
       "source_name": "敏感经济信息分享",
@@ -253377,5 +253414,5 @@
     }
   ],
   "sample": false,
-  "updated": "2026-11-22T23:05:08.542826+08:00"
+  "updated": "2026-11-23T00:05:07.843898+08:00"
 }
