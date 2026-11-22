@@ -16,6 +16,10 @@
 - 部署后要做线上核实：确认线上版本包含这次提交，没核实就不算完成。
 - `main` 有盒子全局 pre-push 钩子挡直推：走分支 + 合并请求；不用 `--no-verify`。只有 `tools/persist_action_data.sh` 的数据提交带 `ALLOW_MAIN_PUSH=publish`。
 
+## 仓库改名（仅方案）
+
+`shiguang-hot` → `shiguang-news` 的需求、停点和回退见[改名方案](docs/superpowers/plans/2026-11-22-shiguang-news-rename.md)。与拾光日记迁移分开。本轮仅写本地分支；在确认生产同步不会断、更名不会触发部署并取得阿欢批准前，不改 GitHub 仓库名。不得通过改 Pages 设置、停例程或合并 `main` 绕过停点。
+
 ## 其他规则
 
 1. **动效卡片库**：做动效、过渡、加载或空状态反馈前，先查工头盒子上的 `/workspace/dev-sop/motion-cards.md`，优先用卡片方案。没有合适卡片时，按"新的关键交互"处理，先做一个关键页面确认方向。

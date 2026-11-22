@@ -27,6 +27,11 @@
 - `shiguang-hot-ios` 的 `HotWebSession` 加载同一个线上网页，已允许内联媒体。共享改动影响 App，但不需改原生代码；未做 iOS 真机验收。未合并、部署或操作 LaunchAgent。未来获批合并前先安排在同一发布锁下核对 `main`、`gh-pages`、数据库和 `HALT`，另行校准检查点并确认固定运行代码如何切换；不要手删保护标记。
 - 验证：Python 3.11 全量 445 通过、2 跳过，另有 87 个子测试通过；前端 39 通过。macOS 的默认 Python 3.9 不满足发布器的 Python 3.11+ 要求（缺 `hashlib.file_digest`），首次全跑还有 Steam RDF 失败；切到隔离的 3.11 环境后均通过。全量浏览器测试会重写 `docs/rebang-v1/evidence/history-favorites-search/` 三张历史截图，验完不要把这些产物混入 PR。
 
+## 拾光资讯仓库改名（11/22 盘点；尚未实施）
+- `docs/shiguang-news-rename-plan` 仅记录[改名与回退方案](docs/superpowers/plans/2026-11-22-shiguang-news-rename.md)，与拾光日记迁移分开。GitHub、本地目录、remote、T3 路径和发布配置均未切换，未部署。
+- 改名前只读基线：11/22 约 23:42（北京时间），`news.kwinweng.com` 首页、CSS、JS、`data/meta.json` 均 `200`，`/rebang/` 旧入口正常 `301`；公开数据时间 `23:09:09`。域名由独立 nginx 提供，不是 Pages 自定义域名。
+- 停点：生产同步脚本硬编码旧 `codeload` 地址；需核对服务器现装版本、确认同步不中断且改名不触发部署，再报阿欢批准。Air 未链接，待补查本机引用。
+
 ## 下一步
 1. 阿欢按采集恢复方案核对盒子/服务器证据，再逐项批准恢复。不另启第二个数据写入或发布任务。X dump 超过 36 小时博主栏会标「未更新」。
 2. 旧推送停哪些由阿欢定（清单在 11/15 的上线报告里）。
