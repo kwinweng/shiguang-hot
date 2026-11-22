@@ -14363,7 +14363,7 @@
         {
           "category": "科技",
           "day": "2026-10-24",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-24 07:00",
           "id": "fd0e00fc0f6319ff7a9c",
           "image": "",
@@ -58549,7 +58549,7 @@
           "hot": false,
           "hour": "2026-11-09 02:00",
           "id": "5781c7b1d4ac64c71661",
-          "image": "media/CE_Observe/44620_1.webp",
+          "image": "",
           "link": "https://t.me/CE_Observe/44620",
           "source": "CE_Observe",
           "source_name": "每日消费电子观察",
@@ -109325,7 +109325,7 @@
         {
           "category": "科技",
           "day": "2026-10-24",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-24 01:00",
           "id": "9617ce2457fb4dca6b1e",
           "image": "",
