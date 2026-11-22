@@ -1,6 +1,62 @@
 {
   "messages": [
     {
+      "category": "看展活动",
+      "day": "",
+      "id": "trial-0ad303bea659a22769e5",
+      "image": "",
+      "link": "https://www.douban.com/event/38016090/",
+      "section": "play",
+      "source": "douban-events",
+      "source_name": "豆瓣同城·北京本周",
+      "summary": "",
+      "text": "",
+      "time": "",
+      "title": "致敬巨匠：尼古拉·费欣绘画精品展"
+    },
+    {
+      "category": "软件与 App",
+      "day": "2026-11-22",
+      "id": "trial-2ee321485d33e634053b",
+      "image": "https://cdn5.telesco.pe/file/u3ZbL-pRuV2vHOaokBZI86p7iII-LImYVC56lNFr1EErU79R3b-CKBIXsRb93-GezuRdhLPdqQtwbJZvqKFVxmEwH0d4JHfu2_0SHQBz5d4Rk2XYMCY8T8GJXSubOyDTTGjyYa2APn-m8bO2rKrjLUY_O38VVUSjWURDDhM0ZBarM-Z4L7ygJT9jlmdZ2aB5Lg3YPT2x7B2n1O6sYv87FkWUv1P56LON-PPKTy33bqyKMlF-kKi8w_x2e27WnaBFOgTFFFTaW45v5M9N-Zrd3o5v3sMcWFzf9hi__R-tnL7gjDm3mdpIFlz6vADJiFhlo89Hz6TK-3JcYKJ8myhFJQ.jpg",
+      "link": "https://t.me/Apps_Share/1794",
+      "section": "play",
+      "source": "Apps_Share",
+      "source_name": "iOS 限免 & 降价",
+      "summary": "标签： 内测分享、社交、资讯浏览、第三方客户端\n\n备注： TestFlight常会限制加入名额，请尽快加入\n\n推荐： by @owlmonster\n\n链接： 今日第6款软件 下载链接\n\n群组： @Appshare_Group · 投稿",
+      "text": "标签： 内测分享、社交、资讯浏览、第三方客户端\n\n备注： TestFlight常会限制加入名额，请尽快加入\n\n推荐： by @owlmonster\n\n链接： 今日第6款软件 下载链接\n\n群组： @Appshare_Group · 投稿",
+      "time": "2026-11-22T08:51:07+00:00",
+      "title": "标签： 内测分享、社交、资讯浏览、第三方客户端"
+    },
+    {
+      "category": "软件与 App",
+      "day": "2026-11-22",
+      "id": "trial-3f232d4e275548f3cd51",
+      "image": "",
+      "link": "https://www.appinn.com/racknerd-cheap-vps-latest-deals/",
+      "section": "play",
+      "source": "appinn",
+      "source_name": "小众软件",
+      "summary": "RackNerd 是一家高性价比（廉价）VPS 提供商，最近上架黑五优惠，可选多地机房，售价 15.98 美元/年，折合人民币 107 元/年。@Appinn 2026年黑五特别优惠 RackNerd 上线了2026年黑五优惠页面（RackNerd BlackFriday VPS Specials）",
+      "text": "RackNerd 是一家高性价比（廉价）VPS 提供商，最近上架黑五优惠，可选多地机房，售价 15.98 美元/年，折合人民币 107 元/年。@Appinn 2026年黑五特别优惠 RackNerd 上线了2026年黑五优惠页面（RackNerd BlackFriday VPS Specials）",
+      "time": "2026-11-22T08:29:06+00:00",
+      "title": "RackNerd 2026 黑五特价 15.98 刀/年，高性价比（廉价）VPS 提供商，支持支付宝、银联卡[2026.11.22]"
+    },
+    {
+      "category": "软件与 App",
+      "day": "2026-11-22",
+      "id": "trial-fa27afe5e83b929d714f",
+      "image": "",
+      "link": "https://www.appinn.com/totk-recomp-0-5-0/",
+      "section": "play",
+      "source": "appinn",
+      "source_name": "小众软件",
+      "summary": "《塞尔达传说：王国之泪》PC（Windows/Linux）原生移植项目 TotK Recomp 发布了 v0.5.0 版本。 这次更新带来了 AMD FSR 3.1、帧生成、自由视角、快速存档等新功能，还有不少性能优化。 新增 AMD FSR 3.1，支持游戏插帧 新版本内置了 AMD FSR 3.",
+      "text": "《塞尔达传说：王国之泪》PC（Windows/Linux）原生移植项目 TotK Recomp 发布了 v0.5.0 版本。 这次更新带来了 AMD FSR 3.1、帧生成、自由视角、快速存档等新功能，还有不少性能优化。 新增 AMD FSR 3.1，支持游戏插帧 新版本内置了 AMD FSR 3.",
+      "time": "2026-11-22T07:37:24+00:00",
+      "title": "《塞尔达传说：王国之泪》PC 原生版 TotK Recomp 0.5.0 更新：支持插帧、自由视角、快速存档"
+    },
+    {
       "category": "软件与 App",
       "day": "2026-11-22",
       "id": "trial-7c9c72285468a43d9f70",
