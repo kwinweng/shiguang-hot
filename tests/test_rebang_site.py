@@ -232,7 +232,7 @@ if __name__ == '__main__':
 
 
 class RevisionBuildTests(unittest.TestCase):
-    """2026-11-15 21:26 阿欢改版：热搜按日归档、博主「查看更多」分页、Grok bot 渠道、频道不再嵌热搜。"""
+    """热搜按日归档、博主分页、频道不嵌热搜。"""
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -252,27 +252,31 @@ class RevisionBuildTests(unittest.TestCase):
         item.update(extra)
         return item
 
-    def test_blogger_preview_pages_and_grok_platform(self):
-        posts = [self.post('grok', 'world', '环球要闻', n) for n in range(45)] + [self.post('grok', 'x', '推特爆款', 1)]
+    def test_blogger_preview_pages_exclude_removed_platform(self):
+        posts = [self.post('x', 'dotey', '宝玉', n) for n in range(45)] + [self.post('x', 'simonw', 'Simon Willison', 1)]
+        posts.append(self.post('grok', 'world', '环球要闻', 1))  # 仍在磁盘上的旧输入不能进入新站
         (self.inp / 'ingest.json').write_text(json.dumps(envelope([news('tnews365', 'current', 1)] + posts)), encoding='utf-8')
         (self.inp / 'hotsearch.json').write_text(json.dumps(hotsearch()), encoding='utf-8')
         out = self.dir / 'site'
         site.build(out, self.inp, now=NOW, hot_archive_dir=self.dir / 'hot')
         data = out / 'data'
         bl = json.loads((data / 'bloggers.json').read_text(encoding='utf-8'))
-        grok = next(p for p in bl['platforms'] if p['id'] == 'grok')
-        self.assertEqual((grok['name'], grok['count'], grok['curated'], grok['icon']), ('Grok bot', 46, True, 'icons/grok.svg'))
-        world = next(a for a in grok['accounts'] if a['handle'] == 'world')
-        self.assertEqual((world['total'], world['key']), (45, site.blogger_key('world')))
-        self.assertLessEqual(sum(1 for i in bl['items'] if i['blogger']['handle'] == 'world'), site.BLOGGER_PREVIEW)
-        p1 = json.loads((data / 'blogger/grok' / world['key'] / 'page-1.json').read_text(encoding='utf-8'))
-        p2 = json.loads((data / 'blogger/grok' / world['key'] / 'page-2.json').read_text(encoding='utf-8'))
+        self.assertFalse(any(p['id'] == 'grok' for p in bl['platforms']))
+        self.assertFalse((data / 'blogger/grok').exists())
+        self.assertFalse((out / 'icons/grok.svg').exists())
+        x = next(p for p in bl['platforms'] if p['id'] == 'x')
+        self.assertEqual((x['name'], x['count'], x['icon']), ('X', 46, 'icons/x.svg'))
+        dotey = next(a for a in x['accounts'] if a['handle'] == 'dotey')
+        self.assertEqual((dotey['total'], dotey['key']), (45, site.blogger_key('dotey')))
+        self.assertLessEqual(sum(1 for i in bl['items'] if i['blogger']['handle'] == 'dotey'), site.BLOGGER_PREVIEW)
+        p1 = json.loads((data / 'blogger/x' / dotey['key'] / 'page-1.json').read_text(encoding='utf-8'))
+        p2 = json.loads((data / 'blogger/x' / dotey['key'] / 'page-2.json').read_text(encoding='utf-8'))
         self.assertEqual((len(p1['items']), p1['has_more'], len(p2['items']), p2['has_more']), (30, True, 15, False))
-        allp = json.loads((data / 'blogger/grok/all/page-2.json').read_text(encoding='utf-8'))
+        allp = json.loads((data / 'blogger/x/all/page-2.json').read_text(encoding='utf-8'))
         self.assertEqual(allp['total'], 46)
         idx = json.loads((data / 'id-index.json').read_text(encoding='utf-8'))
-        oldest = 'world:0'
-        self.assertEqual(idx[oldest], 'blogger/grok/all/page-2.json', '不在预览里的帖子深链也能找到')
+        self.assertNotIn('world:1', idx)
+        self.assertEqual(idx['dotey:0'], 'blogger/x/all/page-2.json', '不在预览里的帖子深链也能找到')
         meta = json.loads((data / 'meta.json').read_text(encoding='utf-8'))
         self.assertFalse(any('hotsearch' in c for c in meta['channels']))
 

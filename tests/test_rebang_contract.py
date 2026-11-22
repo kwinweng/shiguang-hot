@@ -84,7 +84,7 @@ class HotsearchConfigTests(unittest.TestCase):
 class BloggerConfigTests(unittest.TestCase):
     def test_counts(self):
         counts = {p['id']: len(p['accounts']) for p in load_bloggers()['platforms']}
-        self.assertEqual(counts, {'x': 16, 'grok': 4, 'blog': 7, 'jike': 9, 'weibo': 6, 'wechat': 6, 'youtube': 13, 'zhihu': 0})
+        self.assertEqual(counts, {'x': 16, 'blog': 7, 'jike': 9, 'weibo': 6, 'wechat': 6, 'youtube': 13, 'zhihu': 0})
 
 
 class ItemTests(unittest.TestCase):
@@ -146,14 +146,15 @@ class IntegrationContractTests(unittest.TestCase):
     """集成阶段并入的契约变更（INTEGRATION-NOTES 各分支请求）。"""
 
     def base_post(self):
-        return {'id': 'x:1', 'kind': 'post', 'channel': None, 'source_id': 'x', 'source_name': '推特爆款',
+        return {'id': 'x-simonw:1', 'kind': 'post', 'channel': None, 'source_id': 'x-simonw', 'source_name': 'Simon Willison',
                 'title': 't', 'summary': '', 'url': '', 'published_at': '2026-11-15T08:00:00+08:00', 'lang': 'und',
-                'blogger': {'platform': 'grok', 'handle': 'x', 'display_name': '推特爆款', 'media': []}}
+                'blogger': {'platform': 'x', 'handle': 'simonw', 'display_name': 'Simon Willison', 'media': []}}
 
-    def test_grok_platform_post_and_lang_und_valid(self):
-        self.assertEqual(validate_item(self.base_post()), [])
-        self.assertEqual([a['name'] for a in next(p for p in load_bloggers()['platforms'] if p['id'] == 'grok')['accounts']],
-                         ['今日重点', '推特爆款', '环球要闻', 'GitHub 热门'])
+    def test_lang_und_valid_but_removed_platform_invalid(self):
+        item = self.base_post()
+        self.assertEqual(validate_item(item), [])
+        item['blogger']['platform'] = 'grok'
+        self.assertTrue(any('blogger.platform' in e for e in validate_item(item)))
 
     def test_image_local_and_comments_and_quote_extras(self):
         item = self.base_post()

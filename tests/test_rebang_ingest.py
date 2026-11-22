@@ -91,10 +91,8 @@ class IngestTests(unittest.TestCase):
         for item in news:
             self.assertEqual(item['channel'], source_channel(item['source_id']), item['id'])
         self.assertEqual({i['channel'] for i in news}, {'current', 'world', 'finance', 'tech-ai', 'digital', 'tools'})
-        # 4 份 Grok bot 成品（2026-11-15 21:26 阿欢定）只作博主页帖子，不进频道
-        posts = [i for i in env['items'] if i['kind'] == 'post']
-        self.assertEqual({i['source_id'] for i in posts}, {'x', 'world', 'github', 'hot-daily'})
-        self.assertTrue(all(i['channel'] is None and i['blogger']['platform'] == 'grok' for i in posts))
+        self.assertEqual(len(env['items']), len(news))
+        self.assertFalse({'x', 'world', 'github'} & {s['id'] for s in env['sources']})
 
     def test_all_18_telegram_sources_reported_and_reorx_excluded(self):
         env = self.run_collect()
@@ -125,8 +123,40 @@ class IngestTests(unittest.TestCase):
         self.assertEqual(fresh['image_local']['rel'], 'media/tnews365/101_1.webp')
         self.assertEqual((fresh['image_local']['width'], fresh['image_local']['height']), (64, 36))
         self.assertNotIn('image_local', old)  # 文件还在但消息超过 14 天
-        world = next(i for i in items.values() if i['source_id'] == 'world')
-        self.assertEqual(world['image_local']['alt'], '示意')
+
+    def test_tg_media_reaches_news_without_overwriting_cached_cover(self):
+        from rebang.tgmeta import parse_page
+        meta = parse_page('''
+          <div class="tgme_widget_message" data-post="tnews365/101">
+            <a class="tgme_widget_message_reply"><i class="tgme_widget_message_photo_wrap"
+              style="background-image:url('https://cdn.test/reply.jpg')"></i></a>
+            <a class="tgme_widget_message_video_player">
+              <i class="tgme_widget_message_video_thumb" style="background-image:url('https://cdn.test/cover.jpg')"></i>
+              <video class="tgme_widget_message_video blured" src="https://cdn.test/spoiler.mp4"></video>
+              <div class="tgme_widget_message_video_wrap">
+                <video class="tgme_widget_message_video js-message_video" src="https://cdn.test/full.mp4"></video>
+              </div>
+            </a>
+            <a class="tgme_widget_message_photo_wrap" style="background-image:url('//cdn.test/album.jpg')"></a>
+            <a class="tgme_widget_message_video_player not_supported">
+              <i class="tgme_widget_message_video_thumb" style="background-image:url('https://cdn.test/large-cover.jpg')"></i>
+              <div class="tgme_widget_message_video_wrap"></div>
+            </a>
+          </div>
+        ''')
+        env = self.run_collect(tgmeta={'tnews365/101': meta[101]})
+        self.assertEqual(validate_items_envelope(env), [])
+        item = self.by_source(env)['tnews365'][0]
+        self.assertEqual(item['image_local']['rel'], 'media/tnews365/101_1.webp')
+        self.assertEqual(item['tg']['media'], [
+            {'type': 'video', 'url': 'https://cdn.test/full.mp4', 'preview_url': 'https://cdn.test/cover.jpg'},
+            {'type': 'image', 'url': 'https://cdn.test/album.jpg'},
+            {'type': 'image', 'url': 'https://cdn.test/large-cover.jpg'},
+        ])
+        self.assertTrue(item['tg']['video_unavailable'])
+        (self.dir / 'media/tnews365/101_1.webp').unlink()
+        item = self.by_source(self.run_collect(tgmeta={'tnews365/101': meta[101]}))['tnews365'][0]
+        self.assertEqual(item['image'], {'url': 'https://cdn.test/cover.jpg'})
 
     def test_db_opened_read_only(self):
         before = hashlib.sha256(self.db.read_bytes()).hexdigest()
@@ -164,24 +194,12 @@ class IngestTests(unittest.TestCase):
                     'github-trending'):
             self.assertEqual((status[sid]['status'], status[sid]['count']), ('not_fetched', 0))
 
-    def test_inbox_products_dedupe_and_window(self):
-        items = self.by_source(self.run_collect())
-        self.assertEqual(len(items['world']), 1)
-        self.assertEqual([i['title'] for i in items['github']], ['owner/repo'])
-        self.assertEqual(items['x'][0]['published_at'], '2026-11-14T07:12:00+08:00')
-        self.assertIsNone(items['x'][0]['channel'])
-        self.assertEqual(items['x'][0]['blogger'], {'platform': 'grok', 'handle': 'x', 'display_name': '推特爆款', 'media': []})
-
     def test_highlight_rule(self):
         env = self.run_collect()
         items = {i['id']: i for i in env['items']}
         self.assertTrue(items['tnews365:101']['highlight'])
         self.assertEqual(items['tnews365:101']['highlight_date'], '2026-11-14')
-        # 今日重点不再拆进频道：整份是 Grok bot 渠道帖子，没命中的也不造频道条目
-        hot_posts = [i for i in env['items'] if i['source_id'] == 'hot-daily']
-        self.assertTrue(hot_posts and all(i['kind'] == 'post' and i['channel'] is None for i in hot_posts))
-        self.assertFalse(any(i.get('highlight') for i in hot_posts))
-        self.assertFalse(any(i['kind'] == 'news' and i['source_id'] == 'hot-daily' for i in env['items']))
+        self.assertFalse(any(i['source_id'] == 'hot-daily' for i in env['items']))
         hot = next(s for s in env['sources'] if s['id'] == 'hot-daily' and s.get('role') == 'highlight-marks')
         self.assertEqual((hot['marked'], hot['unmatched']), (1, 2))
 

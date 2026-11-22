@@ -30,7 +30,7 @@ REASONS = {
     'wechat_weread_qr': '需要微信读书扫码登录，已准备好、等扫码',
     'wechat_weread_expired': '微信读书登录已失效，待重新扫码',
     'wechat_book_not_found': '微信读书里没搜到这个公众号',
-    'x_dump_missing': '还没有公开 X 读取工具写入的原始数据',
+    'x_dump_missing': '这次没有收到 X 博主的原始数据',
     'x_dump_stale': '公开 X 读取数据超过 36 小时未更新',
     'no_accounts': '本期名单为空',
     'youtube_pending_confirm': '频道名单待确认，确认前不抓',
@@ -374,7 +374,9 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
                 row['last_ok_at'] = fetched_at
             else:
                 row['last_ok_at'] = prev.get('last_ok_at')
-                kept = prev_items.get(sid, []) if row['status'] in ('error', 'login_expired') else []
+                # A missing X export is an upstream outage, not an instruction to remove existing posts.
+                keep = row['status'] in ('error', 'login_expired') or (pid == 'x' and row.get('error') == 'x_dump_missing')
+                kept = prev_items.get(sid, []) if keep else []
                 if kept:
                     row['stale'] = True  # 站上保留上次成功内容，并按 last_ok_at 标日期
                     row['count'] = len(kept)
