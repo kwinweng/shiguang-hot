@@ -1,10 +1,13 @@
-"""Runner checks use mocks only: no scraping and no remote Git operations."""
+"""Runner checks use synthetic sources and local Git only."""
 import contextlib
+from datetime import datetime, timezone
 import fcntl
+import hashlib
 import io
 import os
 import json
 from pathlib import Path
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -19,7 +22,7 @@ class BoxScrapeTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.base = Path(self.temp.name)
+        self.base = Path(self.temp.name).resolve()
         self.checkout = self.base / 'checkout'
         self.checkout.mkdir()
         (self.checkout / 'pipeline.py').write_text('# fixture')
@@ -34,7 +37,8 @@ class BoxScrapeTests(unittest.TestCase):
         for extra in (['--limit', '0'], ['--limit', '-1'], ['--limit', 'wat'],
                       ['--limit', '1'], ['--unknown'], ['--test-dir'],
                       ['--test-dir', str(self.checkout)],
-                      ['--test-dir', str(self.checkout / 'nested')]):
+                      ['--test-dir', str(self.checkout / 'nested')],
+                      ['--no-publish', '--test-dir', str(self.base / 'trial')]):
             with self.subTest(extra=extra), contextlib.redirect_stderr(io.StringIO()):
                 with self.assertRaises(SystemExit):
                     self.args(*extra)
@@ -94,6 +98,107 @@ class BoxScrapeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('dry-run: no execution', result.stdout)
 
+    def test_no_publish_stage_failure_is_reported_and_stops(self):
+        for stage, expected in (
+            ('pipeline', ['fetch', 'merge', 'pipeline']),
+            ('tools/persist_action_data.sh', ['fetch', 'merge', 'pipeline', 'tools/persist_action_data.sh']),
+            ('tools/write_build_info.py', ['fetch', 'merge', 'pipeline', 'tools/persist_action_data.sh',
+                                           'tools/write_build_info.py']),
+        ):
+            with self.subTest(stage=stage):
+                calls = []
+
+                def run(name):
+                    calls.append(name)
+                    if name == stage:
+                        raise RuntimeError('fixture failure')
+
+                with patch.object(box_scrape.subprocess, 'check_output', side_effect=['main', '', '']), \
+                     patch.object(box_scrape.subprocess, 'run', side_effect=lambda cmd, **kw: run(cmd[1])), \
+                     patch.object(box_scrape, 'run_pipeline', side_effect=lambda root: run('pipeline')), \
+                     contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(box_scrape.main(['--checkout', str(self.checkout), '--no-publish']), 1)
+                self.assertEqual(calls, expected)
+
+    def test_no_publish_collects_and_prepares_live_data_for_pages(self):
+        root = self.checkout
+        source = Path(box_scrape.__file__).resolve().parents[1]
+        for name in ('shiguang', 'web'):
+            shutil.copytree(source / name, root / name, ignore=shutil.ignore_patterns('__pycache__'))
+        shutil.copy2(source / 'pipeline.py', root / 'actual_pipeline.py')
+        shutil.copy2(source / '.gitignore', root)
+        (root / 'public-feeds').mkdir()
+        (root / 'public-feeds/.gitkeep').touch()
+        (root / 'tools').mkdir()
+        for name in ('persist_action_data.sh', 'write_build_info.py', 'publish_pages.sh'):
+            shutil.copy2(source / 'tools' / name, root / 'tools')
+        (root / 'trial-sources.json').write_text('{"categories": [], "sources": []}')
+        (root / 'sources.json').write_text(json.dumps({'sources': [dict(
+            id='CE_Observe', name='Fixture', type='telegram', channel='CE_Observe', visibility='public',
+        )]}))
+        # Stub the HTTP boundary; the collector, database, site builder and publisher are real.
+        (root / 'pipeline.py').write_text('''
+from datetime import datetime, timezone
+from actual_pipeline import main
+from shiguang.ingest import http
+
+def request(url, headers=None):
+    assert url == 'https://t.me/s/CE_Observe', url
+    now = datetime.now(timezone.utc).replace(second=0, microsecond=0).isoformat()
+    body = ('<div class="tgme_widget_message" data-post="CE_Observe/101">'
+            f'<time datetime="{now}"></time>'
+            '<div class="tgme_widget_message_text">Fresh fixture story</div></div>')
+    return http.Response(200, {}, body.encode())
+
+http.request = request
+main()
+''')
+        remote = self.base / 'remote.git'
+
+        def git(*args):
+            return subprocess.check_output(['git', *args], cwd=root, text=True).strip()
+
+        git('init', '--bare', str(remote))
+        git('init', '-b', 'main')
+        git('config', 'user.name', 'Fixture')
+        git('config', 'user.email', 'fixture@localhost')
+        git('add', '.')
+        git('commit', '-m', 'Synthetic checkout')
+        git('remote', 'add', 'origin', str(remote))
+        git('push', 'origin', 'main')
+        env = dict(os.environ, BOX_PYTHON=sys.executable, SAMPLE_DATA='0')
+
+        def collect():
+            result = subprocess.run(['sh', str(source / 'tools/box_scrape.sh'), '--checkout', str(root), '--no-publish'],
+                                    cwd=root, env=env, capture_output=True, text=True)
+            if result.returncode != 0:
+                self.fail((result.stdout, result.stderr,
+                           [p.read_text() for p in (root / 'logs/box-scrape').glob('*.log')]))
+            return json.loads((root / 'site/data/live.json').read_text())
+
+        before = datetime.now(timezone.utc)
+        live = collect()
+        self.assertIs(live['sample'], False)
+        self.assertGreaterEqual(datetime.fromisoformat(live['updated']), before)
+        self.assertEqual([message['title'] for message in live['messages']], ['Fresh fixture story'])
+        info = json.loads((root / 'site/build-info.json').read_text())
+        self.assertEqual(info['source_commit'], git('--git-dir', str(remote), 'rev-parse', 'main'))
+        self.assertEqual(info['database_sha256'], hashlib.sha256((root / 'tg.db').read_bytes()).hexdigest())
+        self.assertFalse(git('ls-remote', '--heads', 'origin', 'gh-pages'))
+
+        # Use the same output; the second cycle must atomically exchange an existing tree.
+        inode = (root / 'site').stat().st_ino
+        again = collect()
+        self.assertNotEqual((root / 'site').stat().st_ino, inode)
+        self.assertEqual(again['messages'], live['messages'])
+        self.assertGreater(datetime.fromisoformat(again['updated']), datetime.fromisoformat(live['updated']))
+
+        result = subprocess.run(['sh', 'tools/publish_pages.sh', '--already-built', '--dry-run'],
+                                cwd=root, env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('dry-run=1', result.stdout)
+        self.assertFalse(git('ls-remote', '--heads', 'origin', 'gh-pages'))
+
     def test_publish_failure_preserves_persistence_success(self):
         calls = []
         def run(command, **kwargs):
@@ -125,6 +230,7 @@ class BoxScrapeTests(unittest.TestCase):
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             with patch.object(box_scrape, 'execute') as execute, contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(box_scrape.main(['--checkout', str(self.checkout)]), 0)
+                self.assertEqual(box_scrape.main(['--checkout', str(self.checkout), '--no-publish']), 1)
             execute.assert_not_called()
 
     def test_limit_saves_first_page_and_counts_only_http_attempts_offline(self):

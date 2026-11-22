@@ -7,7 +7,7 @@ if [ "$(git branch --show-current)" != main ]; then
     exit 1
 fi
 check_clean() {
-    if [ -n "$(git status --porcelain --untracked-files=normal -- . ':!tg.db')" ]; then
+    if [ -n "$(git --no-optional-locks status --porcelain --untracked-files=normal -- . ':!tg.db')" ]; then
         echo 'Refusing reset: changes outside tg.db; preserve and resolve them first.' >&2
         exit 1
     fi
