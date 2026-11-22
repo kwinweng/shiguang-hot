@@ -1,6 +1,20 @@
 {
   "messages": [
     {
+      "category": "软件与 App",
+      "day": "2026-11-22",
+      "id": "trial-e850590ce0674945e404",
+      "image": "",
+      "link": "https://www.appinn.com/gta-6-pc-port-leonida/",
+      "section": "play",
+      "source": "appinn",
+      "source_name": "小众软件",
+      "summary": "《GTA 6》还没登陆 PC，已经有人开始研究，如何让 Xbox Series 版本直接在 Windows 电脑上运行。 此前《赛尔代传说·时之笛》的开发者最近放出了一个名为 Leonida 的开源项目，继续通过「静态重编译」技术，将 Xbox Series 版《GTA 6》转换成可以在 Windo",
+      "text": "《GTA 6》还没登陆 PC，已经有人开始研究，如何让 Xbox Series 版本直接在 Windows 电脑上运行。 此前《赛尔代传说·时之笛》的开发者最近放出了一个名为 Leonida 的开源项目，继续通过「静态重编译」技术，将 Xbox Series 版《GTA 6》转换成可以在 Windo",
+      "time": "2026-11-22T13:26:10+00:00",
+      "title": "《GTA 6》已出现早期 PC 开源移植项目：Leonida"
+    },
+    {
       "category": "观星",
       "day": "2026-11-22",
       "id": "trial-4437fc61423ccbce25b8",
