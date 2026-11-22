@@ -14523,7 +14523,7 @@
         {
           "category": "国际",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 12:00",
           "id": "9fa285cb8c184e6cd4dc",
           "image": "",
@@ -43045,7 +43045,7 @@
         {
           "category": "科技",
           "day": "2026-10-24",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-24 03:00",
           "id": "db6f73ac595609dde29c",
           "image": "",
@@ -43845,7 +43845,7 @@
         {
           "category": "财经",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 12:00",
           "id": "b51b2fc271216f3c4591",
           "image": "",
@@ -56029,8 +56029,24 @@
     },
     {
       "id": "CE_Observe",
-      "last_update": "2026-11-22T01:50:42+08:00",
+      "last_update": "2026-11-22T13:03:13+08:00",
       "messages": [
+        {
+          "category": "其他",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 13:00",
+          "id": "2c88d23c585273a54f55",
+          "image": "",
+          "link": "https://t.me/CE_Observe/44756",
+          "source": "CE_Observe",
+          "source_name": "每日消费电子观察",
+          "summary": "全新独立构建操作系统Impossible OS亮相：可运行Windows与Linux 应用，计划2028年发布",
+          "text": "全新独立构建操作系统Impossible OS亮相：可运行Windows与Linux 应用，计划2028年发布",
+          "time": "2026-11-22T13:03:13+08:00",
+          "title": "全新独立构建操作系统Impossible OS亮相：可运行Windows与Linux 应用，计划2028年发布",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-22",
@@ -58181,7 +58197,7 @@
           "hot": false,
           "hour": "2026-11-08 12:00",
           "id": "d4d8a6a96ac2107228b3",
-          "image": "media/CE_Observe/44618_1.webp",
+          "image": "",
           "link": "https://t.me/CE_Observe/44618",
           "source": "CE_Observe",
           "source_name": "每日消费电子观察",
@@ -63425,17 +63441,81 @@
         }
       ],
       "name": "每日消费电子观察",
-      "seven_day_count": 67,
+      "seven_day_count": 68,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 1,
+      "today_count": 2,
       "type": "telegram",
       "url": "https://t.me/CE_Observe"
     },
     {
       "id": "freechinese",
-      "last_update": "2026-11-22T11:52:05+08:00",
+      "last_update": "2026-11-22T12:19:31+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 12:00",
+          "id": "0eb61220cb7ab78846fd",
+          "image": "media/freechinese/113512_1.webp",
+          "link": "https://t.me/freechinese/113512",
+          "source": "freechinese",
+          "source_name": "FREE 中文",
+          "summary": "特朗普又开始回味在中国受到热情欢迎",
+          "text": "特朗普又开始回味在中国受到热情欢迎",
+          "time": "2026-11-22T12:19:31+08:00",
+          "title": "特朗普又开始回味在中国受到热情欢迎",
+          "type": "telegram"
+        },
+        {
+          "category": "其他",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 12:00",
+          "id": "f6271e290d02ba2af49d",
+          "image": "media/freechinese/113511_1.webp",
+          "link": "https://t.me/freechinese/113511",
+          "source": "freechinese",
+          "source_name": "FREE 中文",
+          "summary": "自恋川",
+          "text": "自恋川",
+          "time": "2026-11-22T12:15:59+08:00",
+          "title": "自恋川",
+          "type": "telegram"
+        },
+        {
+          "category": "国际",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 12:00",
+          "id": "4a95d88d868f18f921cf",
+          "image": "media/freechinese/113510_1.webp",
+          "link": "https://t.me/freechinese/113510",
+          "source": "freechinese",
+          "source_name": "FREE 中文",
+          "summary": "特朗普在 Truth Social 连发多个对比照",
+          "text": "特朗普在 Truth Social 连发多个对比照",
+          "time": "2026-11-22T12:15:40+08:00",
+          "title": "特朗普在 Truth Social 连发多个对比照",
+          "type": "telegram"
+        },
+        {
+          "category": "国际",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 12:00",
+          "id": "462f5c4460b66cb74a70",
+          "image": "media/freechinese/113509_1.webp",
+          "link": "https://t.me/freechinese/113509",
+          "source": "freechinese",
+          "source_name": "FREE 中文",
+          "summary": "特朗普又开始自恋了",
+          "text": "特朗普又开始自恋了",
+          "time": "2026-11-22T12:13:41+08:00",
+          "title": "特朗普又开始自恋了",
+          "type": "telegram"
+        },
         {
           "category": "其他",
           "day": "2026-11-22",
@@ -76670,10 +76750,10 @@
         }
       ],
       "name": "FREE 中文",
-      "seven_day_count": 117,
+      "seven_day_count": 121,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 4,
+      "today_count": 8,
       "type": "telegram",
       "url": "https://t.me/freechinese"
     },
@@ -98904,8 +98984,24 @@
     },
     {
       "id": "zaihuapd",
-      "last_update": "2026-11-22T11:48:52+08:00",
+      "last_update": "2026-11-22T12:34:32+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 12:00",
+          "id": "f4a66bdbd11ddb1470ab",
+          "image": "media/zaihuapd/45289_1.webp",
+          "link": "https://t.me/zaihuapd/45289",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "美商务部将定稿规则，封堵中国 AI 公司远程用芯，管制扩展至新加坡等东南亚国家 美国商务部正敲定一项规则，阻止中国 AI 公司通过境外数据中心远程使用先进 AI 芯片，最早可能本月公布。管制将从现有半导体出口限制扩展至马来西亚、新加坡、泰国等七个国家，以封堵远程访问和芯片走私；商务部正与其他政府机构磋商后定稿。 白宫此前已要求国会立法，要求商务部制定这一规则。英伟达曾游说反对封堵这一远程访问缺口，称美国 AI 基础设施需在全球取胜。 The Information | The Defiant 🌸 科技圈·…",
+          "text": "美商务部将定稿规则，封堵中国 AI 公司远程用芯，管制扩展至新加坡等东南亚国家 美国商务部正敲定一项规则，阻止中国 AI 公司通过境外数据中心远程使用先进 AI 芯片，最早可能本月公布。管制将从现有半导体出口限制扩展至马来西亚、新加坡、泰国等七个国家，以封堵远程访问和芯片走私；商务部正与其他政府机构磋商后定稿。 白宫此前已要求国会立法，要求商务部制定这一规则。英伟达曾游说反对封堵这一远程访问缺口，称美国 AI 基础设施需在全球取胜。 The Information | The Defiant 🌸 科技圈·…",
+          "time": "2026-11-22T12:34:32+08:00",
+          "title": "美商务部将定稿规则，封堵中国 AI 公司远程用芯，管制扩展至新加坡等东南亚国家 美国商务部正敲定一项规则，阻止中国 AI 公司通过境外数据中心远程使用先进 AI 芯片，最早…",
+          "type": "telegram"
+        },
         {
           "category": "财经",
           "day": "2026-11-22",
@@ -108669,7 +108765,7 @@
         {
           "category": "科技",
           "day": "2026-10-23",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-23 15:00",
           "id": "1dc373876b7cb712a5c8",
           "image": "",
@@ -113500,10 +113596,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 141,
+      "seven_day_count": 142,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 6,
+      "today_count": 7,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -125841,7 +125937,7 @@
         {
           "category": "科技",
           "day": "2026-10-24",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-24 11:00",
           "id": "038e556d66ee560817d6",
           "image": "",
@@ -126081,7 +126177,7 @@
         {
           "category": "科技",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 16:00",
           "id": "d7d851274f85685dd2c3",
           "image": "",
@@ -126177,7 +126273,7 @@
         {
           "category": "科技",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 12:00",
           "id": "995a34bda55e0bc989ec",
           "image": "",
@@ -126193,7 +126289,7 @@
         {
           "category": "科技",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 12:00",
           "id": "658571547b38f7a03497",
           "image": "",
@@ -126209,7 +126305,7 @@
         {
           "category": "财经",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 12:00",
           "id": "a4fd32ec9c0644195882",
           "image": "",
