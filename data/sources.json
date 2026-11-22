@@ -14587,7 +14587,7 @@
         {
           "category": "数码",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 10:00",
           "id": "183069f27720abdef749",
           "image": "",
@@ -22960,8 +22960,24 @@
     },
     {
       "id": "FinanceNewsDaily",
-      "last_update": "2026-11-21T21:01:12+08:00",
+      "last_update": "2026-11-22T09:25:09+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 09:00",
+          "id": "15bab1827d59e7c73c16",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/496956",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "问：美东时间11月19日，美国联邦通信委员会（FCC）投票通过有关规则，拟禁止中国电信、中国联通、中国移动等被列入“覆盖清单”的电信运营商直接获取美国互联网电话号码资源。请问商务部对此有何评论？\n\n答：我们注意到有关情况。美国联邦通信委员会滥用监管权力，泛化所谓国家安全风险，在缺乏事实依据的情况下，违反非歧视和公平竞争原则，肆意污蔑、恶意打压中国电信企业在美运营。该机构近期持续推动中美两国在电信、通信和检测认证领域脱钩断链，有关做法违背两国元首达成的重要共识，破坏中美经贸稳定局面，中方对此坚决反对。\n\n中方敦促美方立即撤销有关措施，回到通过磋商解决问题的正确道路上。中方将采取必要措施，坚定维护自身利益。（商务部）",
+          "text": "问：美东时间11月19日，美国联邦通信委员会（FCC）投票通过有关规则，拟禁止中国电信、中国联通、中国移动等被列入“覆盖清单”的电信运营商直接获取美国互联网电话号码资源。请问商务部对此有何评论？\n\n答：我们注意到有关情况。美国联邦通信委员会滥用监管权力，泛化所谓国家安全风险，在缺乏事实依据的情况下，违反非歧视和公平竞争原则，肆意污蔑、恶意打压中国电信企业在美运营。该机构近期持续推动中美两国在电信、通信和检测认证领域脱钩断链，有关做法违背两国元首达成的重要共识，破坏中美经贸稳定局面，中方对此坚决反对。\n\n中方敦促美方立即撤销有关措施，回到通过磋商解决问题的正确道路上。中方将采取必要措施，坚定维护自身利益。（商务部）",
+          "time": "2026-11-22T09:25:09+08:00",
+          "title": "商务部新闻发言人就美国联邦通信委员会拟禁止中国电信运营商直接获取美国互联网电话号码资源答记者问",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-21",
@@ -55988,10 +56004,10 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 308,
+      "seven_day_count": 309,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 0,
+      "today_count": 1,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
@@ -70895,7 +70911,7 @@
         {
           "category": "数码",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 10:00",
           "id": "343da5ec39fc80886f48",
           "image": "",
@@ -78452,8 +78468,56 @@
     },
     {
       "id": "pelosi3",
-      "last_update": "2026-11-22T08:36:51+08:00",
+      "last_update": "2026-11-22T09:59:34+08:00",
       "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 09:00",
+          "id": "85d93cdb985b8d7b0448",
+          "image": "media/pelosi3/30382_1.webp",
+          "link": "https://t.me/pelosi3/30382",
+          "source": "pelosi3",
+          "source_name": "敏感经济信息分享",
+          "summary": "》，痛批“境外媒体和机构围绕中国经济频频发难”。",
+          "text": "》，痛批“境外媒体和机构围绕中国经济频频发难”。",
+          "time": "2026-11-22T09:59:34+08:00",
+          "title": "11月21日，人民日报发文《唱空中国经济者终会落空",
+          "type": "telegram"
+        },
+        {
+          "category": "其他",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 09:00",
+          "id": "8e0c6a23cdd57a04b7f6",
+          "image": "media/pelosi3/30379_1.webp",
+          "link": "https://t.me/pelosi3/30379",
+          "source": "pelosi3",
+          "source_name": "敏感经济信息分享",
+          "summary": "为让外国友人吃鱼不吐刺，15个顺德人练了一个月",
+          "text": "为让外国友人吃鱼不吐刺，15个顺德人练了一个月",
+          "time": "2026-11-22T09:55:52+08:00",
+          "title": "为让外国友人吃鱼不吐刺，15个顺德人练了一个月",
+          "type": "telegram"
+        },
+        {
+          "category": "科技",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 09:00",
+          "id": "4d301585e65501311de0",
+          "image": "",
+          "link": "https://t.me/pelosi3/30378",
+          "source": "pelosi3",
+          "source_name": "敏感经济信息分享",
+          "summary": "川普一再淡化黄乐危害性，媒体不断爆光黄乐新罪证。今天《金融时报》爆光黄乐竟然与太子集团也有芯片业务联系。这个黄乐究竟是个什么样的人？",
+          "text": "川普一再淡化黄乐危害性，媒体不断爆光黄乐新罪证。今天《金融时报》爆光黄乐竟然与太子集团也有芯片业务联系。这个黄乐究竟是个什么样的人？",
+          "time": "2026-11-22T09:12:26+08:00",
+          "title": "树欲静而风不止",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-22",
@@ -89384,10 +89448,10 @@
         }
       ],
       "name": "敏感经济信息分享",
-      "seven_day_count": 102,
+      "seven_day_count": 105,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 2,
+      "today_count": 5,
       "type": "telegram",
       "url": "https://t.me/pelosi3"
     },
@@ -98752,7 +98816,7 @@
         {
           "category": "其他",
           "day": "2026-10-23",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-23 13:00",
           "id": "d0c17567225512e19be8",
           "image": "",
@@ -98776,8 +98840,40 @@
     },
     {
       "id": "zaihuapd",
-      "last_update": "2026-11-22T08:03:10+08:00",
+      "last_update": "2026-11-22T09:47:26+08:00",
       "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 09:00",
+          "id": "3f224420c17223181f3a",
+          "image": "media/zaihuapd/45286_1.webp",
+          "link": "https://t.me/zaihuapd/45286",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "《GTA 6》预购破 1700 万份，PS5 占 75% Sensor Tower 估算，《GTA 6》发售前预购达 1707 万份，收入约 16.5 亿美元，其中 PS5 版 1273 万份占 75%，Xbox Series X|S 版 435 万份占 25%。 游戏于 2026 年 11 月 19 日登陆 PS5 和 Xbox Series X|S，PC 版暂未推出。发售当天部分第三方商家 PS5 Pro 报价上涨，天猫自营国行数字版 9498 元、港版 14579 元。 GameSpot | 手机新浪网…",
+          "text": "《GTA 6》预购破 1700 万份，PS5 占 75% Sensor Tower 估算，《GTA 6》发售前预购达 1707 万份，收入约 16.5 亿美元，其中 PS5 版 1273 万份占 75%，Xbox Series X|S 版 435 万份占 25%。 游戏于 2026 年 11 月 19 日登陆 PS5 和 Xbox Series X|S，PC 版暂未推出。发售当天部分第三方商家 PS5 Pro 报价上涨，天猫自营国行数字版 9498 元、港版 14579 元。 GameSpot | 手机新浪网…",
+          "time": "2026-11-22T09:47:26+08:00",
+          "title": "《GTA 6》预购破 1700 万份，PS5 占 75% Sensor Tower 估算，《GTA 6》发售前预购达 1707 万份，收入约 16.5 亿美元，其中 PS5…",
+          "type": "telegram"
+        },
+        {
+          "category": "科技",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 09:00",
+          "id": "3eadbc4f7958ae226257",
+          "image": "media/zaihuapd/45285_1.webp",
+          "link": "https://t.me/zaihuapd/45285",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "Gemini 团队发布通知称，将在未来几周内用两项新设置取代 Gemini 应用的“保留活动记录”：一项控制历史记录保存时长，另一项单独决定对话内容（含文字与附件）是否用于训练生成式 AI 模型，用户可保留记录但关闭训练授权。\n\n关闭“历史记录”后，新的 Gemini 对话约保存 2 个月，并在人工审核员的协助下，用于回复你、处理反馈，以及保护 Google、Google 用户和公众。变更生效时，两项设置按原开关状态同步开关；音频与 Gemini Live 录音默认仍不用于改进 Google 服务。\n\nGoogle\n\n🌸 科技圈· 茶馆 · 投稿",
+          "text": "Gemini 团队发布通知称，将在未来几周内用两项新设置取代 Gemini 应用的“保留活动记录”：一项控制历史记录保存时长，另一项单独决定对话内容（含文字与附件）是否用于训练生成式 AI 模型，用户可保留记录但关闭训练授权。\n\n关闭“历史记录”后，新的 Gemini 对话约保存 2 个月，并在人工审核员的协助下，用于回复你、处理反馈，以及保护 Google、Google 用户和公众。变更生效时，两项设置按原开关状态同步开关；音频与 Gemini Live 录音默认仍不用于改进 Google 服务。\n\nGoogle\n\n🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-22T09:24:26+08:00",
+          "title": "🤖 Google Gemini 将可以单独关闭模型训练数据留存而不影响历史记录保存",
+          "type": "telegram"
+        },
         {
           "category": "其他",
           "day": "2026-11-22",
@@ -113308,10 +113404,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 137,
+      "seven_day_count": 139,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 2,
+      "today_count": 4,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -126065,7 +126161,7 @@
         {
           "category": "科技",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 09:00",
           "id": "db9aad5f1c2e2285a8dd",
           "image": "",
@@ -126081,7 +126177,7 @@
         {
           "category": "科技",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 09:00",
           "id": "6cc3b1fb745b5348535f",
           "image": "",
@@ -128120,7 +128216,7 @@
           "hot": false,
           "hour": "2026-11-08 09:00",
           "id": "55669f1efcefc3aa0343",
-          "image": "media/AwesomeChatGPT/3271_1.webp",
+          "image": "",
           "link": "https://t.me/AwesomeChatGPT/3271",
           "source": "AwesomeChatGPT",
           "source_name": "ChatGPT 精选",

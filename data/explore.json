@@ -1,6 +1,34 @@
 {
   "messages": [
     {
+      "category": "看展活动",
+      "day": "",
+      "id": "trial-b5baedcba273a95e1f90",
+      "image": "",
+      "link": "https://www.douban.com/event/37883578/",
+      "section": "play",
+      "source": "douban-events",
+      "source_name": "豆瓣同城·北京本周",
+      "summary": "",
+      "text": "",
+      "time": "",
+      "title": "喜剧部落【三里屯爆笑脱口秀】解压脱口秀(全国知名脱口秀演员|漫才即兴盲盒"
+    },
+    {
+      "category": "软件与 App",
+      "day": "2026-11-22",
+      "id": "trial-9da0987881deb15e2c53",
+      "image": "https://cdn5.telesco.pe/file/GNMbP78tzy7kV-RAq9c7dpsfvK3SzowH9TDESWkRAHDyF0QhJR37pP9VZDDI3Ct5xuPo6Fcqt_GqhDAGoKD4JMk_X3gWlt7NJip4Rlh4F1Yj4BysG93ZUFszEuqLcwvw3za4WOHt2haeofi9Hmkc1Q_6YhqAH0LnBvq22ejITw7xsG_C5QQD9kFZQ_pBfm9cpha3M2my0KE0npd9-CvoUo6J1M1LwRkZumKqK1R9Zy4XGhxvUS2_s2Z8ccXvGdjG78ngQW9vCpn7pmNybEH71prRtIl90nZd2a-ArLHuNq682tWMKx-4iykdnvSZyxM-dj876ZiK6h_MSli2YxWFHA.jpg",
+      "link": "https://t.me/Apps_Share/1789",
+      "section": "play",
+      "source": "Apps_Share",
+      "source_name": "iOS 限免 & 降价",
+      "summary": "标签： 内测分享、影视、短剧、娱乐\n\n备注： TestFlight常会限制加入名额，请尽快加入\n\n链接： 应用下载 (今日第1款)\n\n群组： @Appshare_Group",
+      "text": "标签： 内测分享、影视、短剧、娱乐\n\n备注： TestFlight常会限制加入名额，请尽快加入\n\n链接： 应用下载 (今日第1款)\n\n群组： @Appshare_Group",
+      "time": "2026-11-22T01:35:42+00:00",
+      "title": "标签： 内测分享、影视、短剧、娱乐"
+    },
+    {
       "category": "苹果数码",
       "day": "2026-11-21",
       "id": "trial-af91479be4c537a4dff7",
