@@ -43397,7 +43397,7 @@
         {
           "category": "财经",
           "day": "2026-10-23",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-23 20:00",
           "id": "5dcb7ade8e086c4fbd6d",
           "image": "",
@@ -43461,7 +43461,7 @@
         {
           "category": "财经",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 19:00",
           "id": "29b00b06d620a3ee1c71",
           "image": "",
@@ -77047,8 +77047,24 @@
     },
     {
       "id": "TimeHorizonX",
-      "last_update": "2026-11-21T23:15:55+08:00",
+      "last_update": "2026-11-22T19:44:40+08:00",
       "messages": [
+        {
+          "category": "其他",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 19:00",
+          "id": "af5449886891669487b6",
+          "image": "media/TimeHorizonX/1998_1.webp",
+          "link": "https://t.me/TimeHorizonX/1998",
+          "source": "TimeHorizonX",
+          "source_name": "Time经济观察",
+          "summary": "在10月这波离岸信托补税加持下，今年前十月的个税收入已经超过去年全年了",
+          "text": "在10月这波离岸信托补税加持下，今年前十月的个税收入已经超过去年全年了",
+          "time": "2026-11-22T19:44:40+08:00",
+          "title": "在10月这波离岸信托补税加持下，今年前十月的个税收入已经超过去年全年了",
+          "type": "telegram"
+        },
         {
           "category": "其他",
           "day": "2026-11-21",
@@ -78891,10 +78907,10 @@
         }
       ],
       "name": "Time经济观察",
-      "seven_day_count": 22,
+      "seven_day_count": 23,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 0,
+      "today_count": 1,
       "type": "telegram",
       "url": "https://t.me/TimeHorizonX"
     },
@@ -109069,7 +109085,7 @@
         {
           "category": "科技",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 19:00",
           "id": "21221362d51be87918f8",
           "image": "",
@@ -116079,8 +116095,24 @@
     },
     {
       "id": "yxzbp",
-      "last_update": "2026-11-22T17:49:56+08:00",
+      "last_update": "2026-11-22T19:24:03+08:00",
       "messages": [
+        {
+          "category": "其他",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 19:00",
+          "id": "c9f2b52b5e867671c1bb",
+          "image": "media/yxzbp/10293_1.webp",
+          "link": "https://t.me/yxzbp/10293",
+          "source": "yxzbp",
+          "source_name": "严选君综合福利社",
+          "summary": "━━━━━━━━━━━━━━━━━\n💡 亮点：一个不存在的操作系统，装满了沙雕彩蛋\n\n📖 简介：\nWindows 93 是一个复古像素风恶搞网页操作系统，模拟90年代Windows界面，但里面全是脑洞彩蛋：可以玩迷你游戏、打开虚拟浏览器、用奇怪软件、听合成音乐，甚至发现隐藏的整蛊程序。点击开始菜单就像开盲盒，适合课间摸鱼、和朋友一起探索，每次都能发现新笑点，完全免费且打开即玩。\n\n🏷️ 标签：复古彩蛋解压\n\n🔗 👉 点击直达\n━━━━━━━━━━━━━━━━━\n@yxzbpTool",
+          "text": "━━━━━━━━━━━━━━━━━\n💡 亮点：一个不存在的操作系统，装满了沙雕彩蛋\n\n📖 简介：\nWindows 93 是一个复古像素风恶搞网页操作系统，模拟90年代Windows界面，但里面全是脑洞彩蛋：可以玩迷你游戏、打开虚拟浏览器、用奇怪软件、听合成音乐，甚至发现隐藏的整蛊程序。点击开始菜单就像开盲盒，适合课间摸鱼、和朋友一起探索，每次都能发现新笑点，完全免费且打开即玩。\n\n🏷️ 标签：复古彩蛋解压\n\n🔗 👉 点击直达\n━━━━━━━━━━━━━━━━━\n@yxzbpTool",
+          "time": "2026-11-22T19:24:03+08:00",
+          "title": "🚀 Windows 93",
+          "type": "telegram"
+        },
         {
           "category": "其他",
           "day": "2026-11-22",
@@ -117635,10 +117667,10 @@
         }
       ],
       "name": "严选君综合福利社",
-      "seven_day_count": 17,
+      "seven_day_count": 18,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 2,
+      "today_count": 3,
       "type": "telegram",
       "url": "https://t.me/yxzbp"
     },
