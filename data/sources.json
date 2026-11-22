@@ -5014,8 +5014,24 @@
     },
     {
       "id": "xhqcankao",
-      "last_update": "2026-11-22T17:50:16+08:00",
+      "last_update": "2026-11-22T20:49:09+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 20:00",
+          "id": "553a114f80797456e7a6",
+          "image": "",
+          "link": "https://t.me/xhqcankao/33277",
+          "source": "xhqcankao",
+          "source_name": "风向旗参考快讯",
+          "summary": "据朝鲜官媒报道，在10月19日至30日于平壤举行的全国信息技术成就展上，金日成综合大学人工智能技术研究所与Phurunhanul贸易公司共同推出了一款名为“人工智能服务系统1.0《智慧之泉》”的聊天机器人。该系统主要用于科学技术领域，支持韩语和英语问答及翻译。其界面类似于ChatGPT，并内置内容过滤器，禁止询问社会政治议题。专家分析认为，虽然朝鲜宣称这是“自主风格”研发，但其核心引擎极可能基于谷歌Gemma或阿里巴巴Qwen等开源模型构建。\n\n—— 38 North",
+          "text": "据朝鲜官媒报道，在10月19日至30日于平壤举行的全国信息技术成就展上，金日成综合大学人工智能技术研究所与Phurunhanul贸易公司共同推出了一款名为“人工智能服务系统1.0《智慧之泉》”的聊天机器人。该系统主要用于科学技术领域，支持韩语和英语问答及翻译。其界面类似于ChatGPT，并内置内容过滤器，禁止询问社会政治议题。专家分析认为，虽然朝鲜宣称这是“自主风格”研发，但其核心引擎极可能基于谷歌Gemma或阿里巴巴Qwen等开源模型构建。\n\n—— 38 North",
+          "time": "2026-11-22T20:49:09+08:00",
+          "title": "朝鲜展示首款AI聊天机器人“智慧之泉”",
+          "type": "telegram"
+        },
         {
           "category": "数码",
           "day": "2026-11-22",
@@ -20938,10 +20954,10 @@
         }
       ],
       "name": "风向旗参考快讯",
-      "seven_day_count": 154,
+      "seven_day_count": 155,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 9,
+      "today_count": 10,
       "type": "telegram",
       "url": "https://t.me/xhqcankao"
     },
@@ -23104,8 +23120,56 @@
     },
     {
       "id": "FinanceNewsDaily",
-      "last_update": "2026-11-22T18:45:09+08:00",
+      "last_update": "2026-11-22T21:01:08+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 21:00",
+          "id": "05a98b1b366a09f30749",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/496964",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "🌍 宏观经济\n• 商务部就FCC拟禁止中国电信、联通、移动获取美国互联网号码资源表态：坚决反对，敦促美方立即撤销\n• 韩国财政部称已备好市场稳定基金，三个月内放宽每日股票回购限额并严查非法卖空\n\n📈 市场行情\n• 融资保证金比例下限降至80%，机构测算有望释放约4000亿元增量资金\n• 沪深北交易所同步调整融资保证金比例，提升资金使用效率\n• 沪深交易所组合式推出新一批降费措施，助力激发市场主体活力\n• 深交所就创业板做市交易业务相关规则公开征求意见\n\n💡 今日洞察\n融资保证金下调叠加交易所降费组合拳，监管呵护流动性意图明确，A股资金面迎暖风。\n\n共收录 7 条新闻 | @FinanceNewsDaily",
+          "text": "🌍 宏观经济\n• 商务部就FCC拟禁止中国电信、联通、移动获取美国互联网号码资源表态：坚决反对，敦促美方立即撤销\n• 韩国财政部称已备好市场稳定基金，三个月内放宽每日股票回购限额并严查非法卖空\n\n📈 市场行情\n• 融资保证金比例下限降至80%，机构测算有望释放约4000亿元增量资金\n• 沪深北交易所同步调整融资保证金比例，提升资金使用效率\n• 沪深交易所组合式推出新一批降费措施，助力激发市场主体活力\n• 深交所就创业板做市交易业务相关规则公开征求意见\n\n💡 今日洞察\n融资保证金下调叠加交易所降费组合拳，监管呵护流动性意图明确，A股资金面迎暖风。\n\n共收录 7 条新闻 | @FinanceNewsDaily",
+          "time": "2026-11-22T21:01:08+08:00",
+          "title": "📰见闻日报· 2026/11/22",
+          "type": "telegram"
+        },
+        {
+          "category": "财经",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 20:00",
+          "id": "699d314bebf93e5de624",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/496963",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "人民日报文章指出，今年以来，一些境外媒体和机构围绕中国经济频频发难。一会儿渲染所谓“通缩陷阱”，断言中国经济增长难以为继；一会儿炒作“中国冲击2.0”，声称中国制造威胁全球产业。说辞换了一茬又一茬，唯有悲观的结论像是提前写好了一般。",
+          "text": "人民日报文章指出，今年以来，一些境外媒体和机构围绕中国经济频频发难。一会儿渲染所谓“通缩陷阱”，断言中国经济增长难以为继；一会儿炒作“中国冲击2.0”，声称中国制造威胁全球产业。说辞换了一茬又一茬，唯有悲观的结论像是提前写好了一般。",
+          "time": "2026-11-22T20:09:59+08:00",
+          "title": "人民日报：唱空中国经济者终会落空",
+          "type": "telegram"
+        },
+        {
+          "category": "财经",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 20:00",
+          "id": "404007f80edb3f2b5757",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/496962",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "11月22日，上交所发布《关于进一步减免相关费用的通知》，推出新一批降费措施，包括免收交易单元使用费，减免数据中心相关服务费用等，并将今年初已发布的免收上市费、债券经手费等措施有效期再延长两年。本次新推出的降费措施预计向市场让利13.68亿元，预计本年度沪市整体降费金额超过24亿元。",
+          "text": "11月22日，上交所发布《关于进一步减免相关费用的通知》，推出新一批降费措施，包括免收交易单元使用费，减免数据中心相关服务费用等，并将今年初已发布的免收上市费、债券经手费等措施有效期再延长两年。本次新推出的降费措施预计向市场让利13.68亿元，预计本年度沪市整体降费金额超过24亿元。",
+          "time": "2026-11-22T20:09:47+08:00",
+          "title": "上交所组合式推出新一批降费措施，助力激发市场主体活力",
+          "type": "telegram"
+        },
         {
           "category": "其他",
           "day": "2026-11-22",
@@ -43397,7 +43461,7 @@
         {
           "category": "财经",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 20:00",
           "id": "5dcb7ade8e086c4fbd6d",
           "image": "",
@@ -56228,10 +56292,10 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 314,
+      "seven_day_count": 317,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 6,
+      "today_count": 9,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
@@ -67186,7 +67250,7 @@
           "hot": false,
           "hour": "2026-11-08 21:00",
           "id": "d780585d762588578f5b",
-          "image": "media/freechinese/113241_1.webp",
+          "image": "",
           "link": "https://t.me/freechinese/113241",
           "source": "freechinese",
           "source_name": "FREE 中文",
@@ -71183,7 +71247,7 @@
         {
           "category": "数码",
           "day": "2026-10-24",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-24 09:00",
           "id": "6aa9b52c4647097bea97",
           "image": "",
@@ -82748,7 +82812,7 @@
           "hot": false,
           "hour": "2026-11-08 20:00",
           "id": "0167afe09d892365acbc",
-          "image": "media/pelosi3/30092_1.webp",
+          "image": "",
           "link": "https://t.me/pelosi3/30092",
           "source": "pelosi3",
           "source_name": "敏感经济信息分享",
@@ -99320,8 +99384,24 @@
     },
     {
       "id": "zaihuapd",
-      "last_update": "2026-11-22T18:31:38+08:00",
+      "last_update": "2026-11-22T20:36:30+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 20:00",
+          "id": "1c89639033c9a62611ea",
+          "image": "media/zaihuapd/45295_1.webp",
+          "link": "https://t.me/zaihuapd/45295",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "腾讯推出 AI 输入工具 Chatterfly，主打“不必想好，开口就成稿”。目前产品正限时内测，已开放 Windows、macOS 和 Android 版下载，iOS 版即将发布。\n\n它不只是语音转文字，还能理解上下文和场景，把零散口语整理成流畅表达，甚至直接执行任务。即便在轻声、嘈杂或弱网环境下也能准确识别，并支持随时唤起和积累词库。\n\nChatterfly\n\n🌸 科技圈· 茶馆 · 投稿",
+          "text": "腾讯推出 AI 输入工具 Chatterfly，主打“不必想好，开口就成稿”。目前产品正限时内测，已开放 Windows、macOS 和 Android 版下载，iOS 版即将发布。\n\n它不只是语音转文字，还能理解上下文和场景，把零散口语整理成流畅表达，甚至直接执行任务。即便在轻声、嘈杂或弱网环境下也能准确识别，并支持随时唤起和积累词库。\n\nChatterfly\n\n🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-22T20:36:30+08:00",
+          "title": "腾讯 AI 语音输入工具 Chatterfly 开启限时内测",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-22",
@@ -108941,7 +109021,7 @@
         {
           "category": "科技",
           "day": "2026-10-24",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-24 08:00",
           "id": "445947e184290afa7741",
           "image": "",
@@ -113996,10 +114076,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 146,
+      "seven_day_count": 147,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 11,
+      "today_count": 12,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -115623,7 +115703,7 @@
         {
           "category": "财经",
           "day": "2026-10-23",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-23 21:00",
           "id": "98951f480ddd5129b9c7",
           "image": "",
@@ -127097,8 +127177,24 @@
     },
     {
       "id": "reorx_share",
-      "last_update": "2026-11-22T11:42:41+08:00",
+      "last_update": "2026-11-22T20:51:39+08:00",
       "messages": [
+        {
+          "category": "其他",
+          "day": "2026-11-22",
+          "hot": false,
+          "hour": "2026-11-22 20:00",
+          "id": "98822979694272742582",
+          "image": "media/reorx_share/7244_1.webp",
+          "link": "https://t.me/reorx_share/7244",
+          "source": "reorx_share",
+          "source_name": "Reorx’s Forge",
+          "summary": "[图片]",
+          "text": "[图片]",
+          "time": "2026-11-22T20:51:39+08:00",
+          "title": "[图片]",
+          "type": "telegram"
+        },
         {
           "category": "其他",
           "day": "2026-11-22",
@@ -128701,10 +128797,10 @@
         }
       ],
       "name": "Reorx’s Forge",
-      "seven_day_count": 31,
+      "seven_day_count": 32,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 1,
+      "today_count": 2,
       "type": "telegram",
       "url": "https://t.me/reorx_share"
     },

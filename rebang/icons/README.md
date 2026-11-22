@@ -4,6 +4,5 @@
 |---|---|---|
 | `x.svg` `weibo.svg` `zhihu.svg` `wechat.svg` `blog.svg` `youtube.svg` | [Simple Icons](https://simpleicons.org/) 16.x（`x`、`sinaweibo`、`zhihu`、`wechat`、`rss`、`youtube`），原文件在 `src/`；这里只是把官方字形放进品牌色圆角底 | Simple Icons 本身 CC0-1.0；各图形是对应公司的商标，只用于标明来源平台 |
 | `jike.svg` | 即刻网页版官方 favicon `https://web.okjike.com/assets/jike-logo-BSni2x2V.svg`（2026-11-15 下载，原样） | 即刻（北京心光流美）商标，只用于标明来源平台 |
-| `grok.svg` | Grok 官方 favicon `https://grok.com/images/favicon.svg`（2026-11-15 下载，原样） | xAI 商标；「Grok bot」频道放的是我们自己的 Grok bot 整理内容，图标只表示出处 |
 
 博客（`blog`）不是品牌平台，用通用 RSS 图标。
