@@ -6,7 +6,7 @@ import sys
 import time
 import uuid
 
-REPO = 'kwinweng/shiguang-hot'
+REPO = 'kwinweng/shiguang-news'
 WORKFLOW = 'hourly.yml'
 
 
