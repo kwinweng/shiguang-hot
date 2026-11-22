@@ -8,7 +8,7 @@
 |---|---|
 | `rebang/contract/channels.json` | 6 个频道（current 时事 / world 环球 / finance 财经 / tech-ai 科技与 AI / digital 数码 / tools 工具与项目）与来源映射；18 个 TG（不含 reorx_share）；今日重点只给频道里同链接条目打标（2026-11-15 21:26 起不再进频道） |
 | `rebang/contract/hotsearch.json` | 热搜提供方 baidu、zhihu、bilibili（11/15 20:41 阿欢确认；不要微博），可替换；每家最多 51 条（百度 = 置顶 1 + 普通 50）；展示在底栏「热搜」页（`view:hot`），按北京日期归档（`archive.dir/keep`） |
-| `rebang/contract/bloggers.json` | 博主平台与名单：X 16、Grok bot 4（今日重点/推特爆款/环球要闻/GitHub 热门，`curated-inbox`，11/15 21:26 从主题频道移来）、博客 7、即刻 9、微博 6、公众号 6、YouTube 0（名单待阿欢确认，候选见 `youtube-candidates.md`）、知乎 0 |
+| `rebang/contract/bloggers.json` | 博主平台与名单：X 16、博客 7、即刻 9、微博 6、公众号 6、YouTube 13、知乎 0 |
 | `rebang/contract/schema.py` | 纯标准库校验：`validate_item` / `validate_items_envelope` / `validate_hotsearch` |
 
 旧 `sources.json` 和 `shiguang/` 继续驱动 TG 采集（写 `tg.db`）和旧站（现状见 `docs/legacy/README.md`），新版**复用**而不改它们的行为。
@@ -36,7 +36,7 @@
 | `highlight` / `highlight_date` | 否 | 今日重点标记（站上不单开栏） |
 | `blogger` | post 必填 | `{platform, handle, display_name, avatar?, verified?, metrics{reply,repost,like,quote,bookmark,view}?, media[{type:image|video|gif|youtube,url,preview_url?,duration_ms?}]（`youtube` 的 url 是 `https://www.youtube-nocookie.com/embed/<视频号>`，preview_url 是封面，站内查看器用嵌入播放器）, quote{handle,text,display_name?,published_at?,url?,...}|null, comments[{handle,text,display_name?,avatar?,published_at?,url?,like?,text_zh?}]?}`；评论最多 10 条，按点赞排序。`like` 是非负整数，拿不到不写。英文回复译文在 `text_zh`，原文留在 `text`。拿不到的字段不写，不编数字。Grok bot 的 4 类整理内容是 `platform:"grok"`、`handle` = 来源 id（hot-daily/x/world/github）、`channel:null` |
 | `quote` | 否（news） | v13：TG 引用/转发的原帖。`{kind: forward|reply, source_name, url, text}`。`forward` = 频道转发别人的帖子，频道自己没写话时 `summary/body` 为空串，前端标「转发」；`reply` = 频道引用了某条帖子，`title/summary/body` 是频道自己的话，`quote.text` 是被引用的原文（≤1500 字）。来自 t.me 公开页面，拿不到不写 |
-| `tg` | 否（news） | v13：t.me 公开页面上的互动数。`{views?, views_label?, reactions[{emoji,count,label}]?, comments_total?, comments[{display_name,text,id?,published_at?,reply_to?,reply_to_id?,reply_text?}]?, fetched_at}`。付费星星记为 ⭐，自定义表情（没有字符）跳过；评论只在频道开了公开讨论区、挂件里能看到时才写，否则不写，**不编** |
+| `tg` | 否（news） | Telegram 公开页面上的附加信息。`{views?, views_label?, reactions[{emoji,count,label}]?, comments_total?, comments[{display_name,text,id?,published_at?,reply_to?,reply_to_id?,reply_text?}]?, media[{type:image\|video,url,preview_url?}]?, video_unavailable?, fetched_at?}`。媒体地址仅来自公开页面；只有封面时不假造视频源。付费星星记为 ⭐，自定义表情（没有字符）跳过；评论只在频道开了公开讨论区、挂件里能看到时才写，否则不写，**不编** |
 | `blocks` | 否 | 公众号/博客文章，以及从公开新闻页抽出的正文，按原文顺序：`p{text}`、`h{text,level}`、`quote{text}`、`ul/ol{items}`、`pre{text}`、`hr`、`img{src,width?,height?,alt?,local?,missing?}`。`blocks` 存在时 `body` = 块里的文字。公众号图片在 bloggers 运行时不带 Referer 下载到 `var/rebang/media/wechat/`（`local{path,rel,width,height}`），站点构建复制到 `media/wechat/…` 并去掉 `local`；没下下来的公众号图标 `missing:true`，前端如实写「这张图没存下来」，不外链（外站引用公众号图床会变成「未经允许不可引用」占位图）。Wechat2RSS 加的开头「原创/作者/日期/属地」行、封面图、结尾「跳转微信打开」都去掉 |
 
 ### 2.1 TG 公开页面附加信息（`rebang.tgmeta/1`，v13）

@@ -2,7 +2,6 @@
    交互以 v10 设计稿为准：两种翻法、频道顶部 banner、信息流、时事热搜块、整页正文 + 返回原位、无限加载、刷新/下拉刷新。
    收藏 / 搜索由 web-v11/features/*.js 通过 Rebang.register(name, mount) 挂到 #view-favorites / #search-panel。
    2026-11-15 21:26 阿欢改：底栏「历史」→「热搜」（当前热搜 + 按北京日期回看），时事频道不再嵌热搜；
-   博主页加「Grok bot」渠道（今日重点/推特爆款/环球要闻/GitHub 热门）。
    2026-11-16 阿欢改：频道区、博主区各是一条一直往下刷的长流（见「一直往下刷」段），去掉「查看更多」整页；卡片去掉横滑收藏/分享，只留长按菜单。
    2026-11-15 22:08–22:11 阿欢改（v13）：各页标题吸顶；TG 引用/转发卡、表情回应/浏览/公开评论；详情上一条/下一条；
    卡片手势（左滑收藏、右滑分享、长按菜单）、详情左边缘右滑返回、所有列表下拉刷新、双击底栏回顶部；公众号正文按原文顺序；
@@ -794,21 +793,23 @@
   }
   function articleHTML(it) {
     const d = L.display(it);
-    const isGrok = it.kind === 'post' && it.blogger && it.blogger.platform === 'grok';
     const blocks = d.blocks || (d.bodyPending ? null : it.blocks);
     const title = d.title ? `<h3 class="art-title">${L.esc(d.title)}</h3>` : '';
     const cover = it.image && it.image.url ? `<img class="cover" src="${L.esc(it.image.url)}" alt="${L.esc(it.image.alt || '')}" data-zoom="${L.esc(it.image.url)}">` : '';
-    if (d.bodyPending && !(d.blocks && d.blocks.length) && !(it.kind === 'post' && !isGrok)) {
+    const tgMedia = it.tg && it.tg.media;
+    const gallery = tgMedia && (tgMedia.length > 1 || tgMedia.some(m => m.type === 'video')) ? L.mediaGrid(tgMedia, it.url) : cover;
+    const media = gallery + (it.tg && it.tg.video_unavailable ? `<p class="muted"><a href="${L.esc(it.url)}" target="_blank" rel="noopener">在 Telegram 查看无法内播的视频</a></p>` : '');
+    if (d.bodyPending && !(d.blocks && d.blocks.length) && it.kind !== 'post') {
       // 全文译文没好时，原文照样能看
       const ob = d.orig ? (it.blocks && it.blocks.length ? `<div class="art-blocks">${L.blocksHTML(it.blocks)}</div>` : L.esc(d.orig.body || d.orig.summary || '')) : '';
-      return `${title}${artMeta(it)}${mtRow(d, ob ? `<h4>${L.esc(d.orig.title || '')}</h4>${ob}` : '')}${cover}<p class="art-pending">${L.esc(L.BODY_PENDING)}</p>${d.summary ? `<div class="art-text">${paras(d.summary)}</div>` : ''}${artActions(it)}`;
+      return `${title}${artMeta(it)}${mtRow(d, ob ? `<h4>${L.esc(d.orig.title || '')}</h4>${ob}` : '')}${media}<p class="art-pending">${L.esc(L.BODY_PENDING)}</p>${d.summary ? `<div class="art-text">${paras(d.summary)}</div>` : ''}${artActions(it)}`;
     }
-    if (blocks && blocks.length && !(it.kind === 'post' && isGrok)) {
+    if (blocks && blocks.length) {
       // 公众号 / 博客 / 抽出的新闻正文：按原文顺序；有译文 blocks 时直接显示中文，原文可展开
       const origBlocks = d.translated && it.blocks && d.blocks ? `<div class="art-blocks">${L.blocksHTML(it.blocks)}</div>` : '';
-      return `${title}${artMeta(it)}${mtRow(d, origBlocks)}<div class="art-blocks" data-blocks>${L.blocksHTML(blocks)}</div>${artActions(it)}`;
+      return `${title}${artMeta(it)}${mtRow(d, origBlocks)}${it.tg ? media : ''}<div class="art-blocks" data-blocks>${L.blocksHTML(blocks)}</div>${artActions(it)}`;
     }
-    if (it.kind === 'post' && !isGrok) return `${L.tweetCardHTML(it, false)}${artActions(it)}`;
+    if (it.kind === 'post') return `${L.tweetCardHTML(it, false)}${artActions(it)}`;
     let text = (d.body || d.summary || '').trim();
     // TG 正文第一行常是「【标题】」，标题已单独显示，正文里不再重复
     const first = text.split('\n')[0].replace(/[【】\s]/g, '');
@@ -818,7 +819,7 @@
     const pending = d.bodyPending ? `<p class="art-pending">${L.esc(L.BODY_PENDING)}</p>` : '';
     const main = bare ? '<div class="fwd-tag">转发</div>' :
       `${pending}${text || !it.quote ? `<div class="art-text${text ? '' : ' none'}">${text ? paras(text) : `<p>${L.esc(L.NO_BODY)}</p>`}</div>` : ''}`;
-    return `${bare ? '' : title}${artMeta(it)}${mtRow(d, orig)}${cover}${main}${L.quoteCardHTML(it, true)}${L.tgStatsHTML(it, true)}${commentsHTML(it)}${artActions(it)}`;
+    return `${bare ? '' : title}${artMeta(it)}${mtRow(d, orig)}${media}${main}${L.quoteCardHTML(it, true)}${L.tgStatsHTML(it, true)}${commentsHTML(it)}${artActions(it)}`;
   }
   /** 评论数：TG 评论总数 / 抓到的评论 / X 回复数；都没有就 0（按钮上只写「评论」） */
   function cmtCount(it) {
@@ -935,8 +936,7 @@
     if (!opts.keepNav && !opts.fromPop) navList = opts.list ? {ids: opts.list} : null;
     if (!opts.fromPop && !(articleOpen && articleId === id)) returnState = articleOpen ? returnState : captureScroll();
     $('#search-panel').classList.remove('on');
-    const grok = it.kind === 'post' && it.blogger && it.blogger.platform === 'grok';
-    $('#articleTitle').textContent = it.kind === 'post' && !grok ? ((it.blogger && it.blogger.display_name) || '帖子') : (L.display(it).title || '正文');
+    $('#articleTitle').textContent = it.kind === 'post' ? ((it.blogger && it.blogger.display_name) || '帖子') : (L.display(it).title || '正文');
     const body = $('#articleBody');
     body.innerHTML = articleHTML(it);
     const slot = body.querySelector('[data-fav-slot]');

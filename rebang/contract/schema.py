@@ -157,6 +157,18 @@ def _tg(value, errors, where):
     if not isinstance(value, dict):
         errors.append(f'{where}: tg 必须是对象')
         return
+    if 'media' in value:
+        media = value['media']
+        if not isinstance(media, list):
+            errors.append(f'{where}: tg.media 必须是数组')
+        else:
+            for i, m in enumerate(media):
+                if not (isinstance(m, dict) and m.get('type') in ('image', 'video')
+                        and _is_url(m.get('url'), allow_empty=False)
+                        and _is_url(m.get('preview_url', ''))):
+                    errors.append(f'{where}: tg.media[{i}] 必须是带 http(s) 地址的图片或视频')
+    if 'video_unavailable' in value and not isinstance(value['video_unavailable'], bool):
+        errors.append(f'{where}: tg.video_unavailable 必须是布尔')
     if 'views' in value and not _nonneg_int(value['views']):
         errors.append(f'{where}: tg.views 必须是非负整数')
     for i, r in enumerate(value.get('reactions') or []):
