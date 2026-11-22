@@ -1,0 +1,73 @@
+name: ShiguangHot
+options:
+  deploymentTarget:
+    iOS: "18.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+targets:
+  ShiguangHot:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+        excludes:
+          - ChannelScreen.swift
+          - HorizontalStepPan.swift
+          - ReadingUI.swift
+          - SecondaryScreens.swift
+    info:
+      path: build/Info.plist
+      properties:
+        CFBundleDisplayName: 拾光资讯
+        CFBundleDevelopmentRegion: zh_CN
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kwinweng.shiguang-hot
+        TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+  ShiguangHotTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests
+    dependencies:
+      - target: ShiguangHot
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+  GesturePreview:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - Prototype
+    settings:
+      base:
+        CODE_SIGNING_ALLOWED: NO
+        PRODUCT_BUNDLE_IDENTIFIER: com.kwinweng.shiguang-hot.gesture-preview
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: 资讯手势预览
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+schemes:
+  ShiguangHot:
+    build:
+      targets:
+        ShiguangHot: all
+    test:
+      targets:
+        - ShiguangHotTests
+  GesturePreview:
+    build:
+      targets:
+        GesturePreview: all
