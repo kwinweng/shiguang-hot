@@ -98,9 +98,9 @@ def publish(content, out):
         names[name] = hashed
     html = '''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>拾光热榜 · 资讯与探索</title>'''
+<title>拾光资讯 · 资讯与探索</title>'''
     html += ''.join(f'<link rel="stylesheet" href="{names[name]}">' for name in ('news-tokens.css', 'news.css'))
-    html += '''<link rel="icon" href="favicon.svg"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest"></head><body><header class="brand"><a href="index.html"><img src="logo-d-tab.svg" alt="">拾光热榜</a>
+    html += '''<link rel="icon" href="favicon.svg"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest"></head><body><header class="brand"><a href="index.html"><img src="logo-d-tab.svg" alt="">拾光资讯</a>
 <button id="theme" aria-label="切换到深色模式" title="切换到深色模式"></button></header><main class="pg" id="news" aria-live="polite">
 <div class="skeleton" aria-label="加载中"></div></main><div id="refresh-status" role="status" aria-live="polite"></div><noscript>请启用 JavaScript 查看实时流。
 <a href="archive/''' + content.today + '''.html">查看静态文字页</a></noscript>

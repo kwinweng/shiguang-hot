@@ -480,7 +480,7 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog='python3 -m rebang.site', description='构建拾光热榜 v1 新版静态站')
+    parser = argparse.ArgumentParser(prog='python3 -m rebang.site', description='构建拾光资讯 v1 新版静态站')
     parser.add_argument('--out', default=str(ROOT / 'site-v11'))
     parser.add_argument('--in', dest='in_dir', default=str(DEFAULT_IN))
     parser.add_argument('--fixture', action='store_true', help='强制用契约 fixture')

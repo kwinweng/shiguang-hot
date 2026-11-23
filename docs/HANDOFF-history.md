@@ -2,6 +2,8 @@
 
 ## 2026-11-15 拾光热榜 v11 开发与上线（原 HANDOFF 内容）
 
+现产品名为「拾光资讯」；本节保留历史名称和上线记录。
+
 - 集成分支 `feat/rebang-v1`（基于 origin/main 8b5c6735e）先写数据契约 `rebang/contract/`，再依次合入 6 个功能分支（顺序做的，不是并行）：sources-ingest 4d7969412、hotsearch 4716f832b、bloggers 730dd665f、frontend-v11 25ab6022e、history-favorites-search 04b3652f3、push-0830 cd1110730。各模块现状见 `docs/rebang-v1/MODULES.md`。
 - 21:35 实抓：资讯 2584 条；热搜百度 51 / 知乎 30 / B 站 50；博主 151 条（英文 68/68 已译）。
 - 21:26 改版 5 处（历史→热搜、博主页 Grok bot、查看更多、官方图标、英文全部机器翻译）；22:10–22:11 v13 七处（含顶栏日期只显示一次、居左）。设计检查点预览 daily-site-mocks `/rebang-v12/`、`/rebang-v13/`（一次性快照）。

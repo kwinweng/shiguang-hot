@@ -1,4 +1,4 @@
-# 拾光热榜 · 旧站架构
+# 拾光资讯 · 旧站架构
 
 本文是旧站（`pipeline.py` + `shiguang/` + `web/` → `site/`）的架构。它仍负责 TG 采集（写 `tg.db`）和 gh-pages 根目录的旧站树，但 news.kwinweng.com 已改由 v11 提供，现状见 [`README.md`](README.md)；v11 见 [`docs/rebang-v1/`](../rebang-v1/)。
 

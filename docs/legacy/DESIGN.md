@@ -1,4 +1,4 @@
-# 拾光热榜视觉系统（旧站 `web/`）
+# 拾光资讯视觉系统（旧站 `web/`）
 
 适用于旧站（`pipeline.py` 生成的 `site/`），现状见 [`README.md`](README.md)。**v11（`web-v11/`）不按本文**：v11 是深色杂志风、金色 `#d6b36a`，以盒子上的设计稿 v10/v13（daily-site-mocks `/rebang-v10.html`、`/rebang-v13/`）和 [`docs/rebang-v1/DESIGN-SYSTEM.md`](../rebang-v1/DESIGN-SYSTEM.md) 为准。
 
