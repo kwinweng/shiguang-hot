@@ -40,9 +40,8 @@ ingest() {
     mv -f "$out.tmp" "$out"
 }
 bloggers() {
-    platforms=blog,wechat,jike,youtube
-    xdump=''
-    if [ -d var/rebang/x-dump ] && [ -n "$(ls -A var/rebang/x-dump 2>/dev/null)" ]; then platforms=$platforms,x; xdump='--x-dump var/rebang/x-dump'; fi
+    # X 只读现有转储。始终运行适配器，让 CLI 处理 REBANG_X_DUMP 并报告缺少原稿，而不是跳过整个平台。
+    platforms=blog,wechat,jike,youtube,x
     weibo_cookie=${REBANG_WEIBO_COOKIE:-$HOME/.config/rebang/weibo-cookie.txt}
     weibo_out=${REBANG_WEIBO_OUTPUT:-var/rebang/weibo-crawler}
     # 有 Cookie 文件才把微博纳入刷新；这里只传路径，不读取、不打印（Python 端发请求时才读进内存）
@@ -50,8 +49,7 @@ bloggers() {
         platforms=$platforms,weibo
         mkdir -p "$weibo_out"
     fi
-    # shellcheck disable=SC2086
-    "$PY" -m rebang.bloggers --out var/rebang/in/bloggers.json --platform "$platforms" $xdump \
+    "$PY" -m rebang.bloggers --out var/rebang/in/bloggers.json --platform "$platforms" \
         --weibo-cookie-file "$weibo_cookie" --weibo-output "$weibo_out" --translate-engine cache
 }
 build() {

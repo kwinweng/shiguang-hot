@@ -81,6 +81,39 @@ def _reactions(msg):
     return out
 
 
+def _media_url(node):
+    if node is None:
+        return ''
+    match = re.search(r"background-image\s*:\s*url\(\s*(['\"]?)(.*?)\1\s*\)", node.get('style', ''), re.I)
+    url = node.get('src') or (match[2] if match else '')
+    if url.startswith('//'):
+        url = 'https:' + url
+    return url if re.match(r'https://[^\s/]+/', url) else ''
+
+
+def _media(msg):
+    items = []
+    unavailable = False
+    for node in msg.select('.tgme_widget_message_photo_wrap, .tgme_widget_message_video_player'):
+        # A reply can show somebody else's thumbnail; only include media attached to this post.
+        if node.find_parent(class_='tgme_widget_message_reply'):
+            continue
+        if 'tgme_widget_message_photo_wrap' in node['class']:
+            if url := _media_url(node):
+                items.append({'type': 'image', 'url': url})
+        else:
+            # The blurred <video> is a spoiler preview, not the actual video.
+            url = _media_url(node.select_one('video.js-message_video, video.tgme_widget_message_video:not(.blured)'))
+            poster = _media_url(node.select_one('.tgme_widget_message_video_thumb'))
+            if url:
+                items.append({'type': 'video', 'url': url, **({'preview_url': poster} if poster else {})})
+            else:
+                unavailable = True
+                if poster:
+                    items.append({'type': 'image', 'url': poster})
+    return items, unavailable
+
+
 def parse_page(html):
     """t.me/s/<频道> 一页 → {消息号: meta}。meta 见模块说明，拿不到的键不写。"""
     soup = BeautifulSoup(html, 'html.parser')
@@ -118,6 +151,11 @@ def parse_page(html):
         if views and parse_count(views.get_text(strip=True)) is not None:
             meta['views_label'] = views.get_text(strip=True)
             meta['views'] = parse_count(meta['views_label'])
+        media, unavailable = _media(msg)
+        if media:
+            meta['media'] = media
+        if unavailable:
+            meta['video_unavailable'] = True
         out[mid] = meta
     return out
 
@@ -311,7 +349,7 @@ def merge_meta(meta):
     elif meta.get('reply'):
         r = meta['reply']
         out['quote'] = {'kind': 'reply', 'source_name': r.get('name') or '', 'url': r.get('url') or '', 'text': r.get('text') or ''}
-    tg = {}
+    tg = {key: meta[key] for key in ('media', 'video_unavailable') if key in meta}
     if meta.get('views') is not None:
         tg['views'] = meta['views']
         tg['views_label'] = meta.get('views_label') or str(meta['views'])

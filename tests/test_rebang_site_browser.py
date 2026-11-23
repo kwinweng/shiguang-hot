@@ -476,6 +476,18 @@ class SiteBrowserTests(unittest.TestCase):
         # 普通图片：点一下仍然关闭
         self.page.locator('#zoomClose').tap()
 
+    def test_telegram_article_plays_video_opens_photo_and_links_unsupported(self):
+        self.open('#/item/tnews365%3A8')
+        article = self.page.locator('#articleView.on #articleBody')
+        self.assertEqual(article.get_by_text('在 Telegram 查看无法内播的视频').get_attribute('href'), 'https://t.me/tnews365/8')
+        article.locator('.media-grid .cell.is-vid').tap()
+        video = self.page.locator('#zoomStage video')
+        video.evaluate('v => v.play()')
+        self.page.wait_for_function("document.querySelector('#zoomStage video').currentTime > 0.3")
+        self.page.locator('#zoomNext').tap()
+        self.assertEqual(self.page.locator('#zoomStage > img').get_attribute('src'), 'https://img.test/p0.png')
+        self.page.wait_for_function("document.querySelector('#zoomStage > img').naturalWidth > 0")
+
     def test_zoom_bar_buttons_do_not_close_viewer_on_touch(self):
         self.open()
         self.page.locator('.tabbar [data-view=blogger]').click()

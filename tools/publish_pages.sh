@@ -58,6 +58,31 @@ touch "$worktree/.nojekyll"
 if [ -n "${PAGES_CNAME:-}" ]; then
     printf '%s\n' "$PAGES_CNAME" > "$worktree/CNAME"
 fi
+# Check the exact packaged legacy file, not the v11 build time. The receiver
+# (deploy/news-sync.sh) allows at most 2 hours old or 10 minutes into the future.
+"${BOX_PYTHON:-python3}" -I - "$worktree/data/live.json" <<'PY'
+from datetime import datetime, timedelta, timezone
+import json
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+prefix = 'publish refused: site/data/live.json: '
+if path.parent.is_symlink() or path.is_symlink() or not path.is_file():
+    sys.exit(prefix + 'missing or non-regular file')
+try:
+    updated = datetime.fromisoformat(json.loads(path.read_text(encoding='utf-8'))['updated'].replace('Z', '+00:00'))
+except (OSError, ValueError, KeyError, TypeError, AttributeError):
+    sys.exit(prefix + 'invalid updated timestamp')
+if updated.tzinfo is None:
+    sys.exit(prefix + 'timestamp must include a timezone')
+now = datetime.now(timezone.utc)
+if now - updated > timedelta(hours=2):
+    sys.exit(prefix + f'updated={updated.isoformat()} is older than 2 hours; rebuild the legacy site before publishing')
+if updated > now + timedelta(minutes=10):
+    sys.exit(prefix + f'updated={updated.isoformat()} is more than 10 minutes in the future')
+PY
+
 git -C "$worktree" add --all --force
 tree=$(git -C "$worktree" write-tree)
 commit=$(printf 'Publish public site\n' | git -C "$worktree" -c user.name='Pages publisher' -c user.email='pages@localhost' commit-tree "$tree")

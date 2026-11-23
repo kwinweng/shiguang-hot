@@ -191,11 +191,19 @@ def test_x_accounts_without_posts_are_empty_not_invented(tmp_path):
     assert not [i for i in env['items'] if i['source_id'] == 'x-karpathy']
 
 
-def test_x_missing_dump_is_not_configured(tmp_path):
-    env = run_all(tmp_path, x_dump=str(tmp_path / 'nope'))
+def test_x_missing_dump_is_not_configured_and_keeps_last_good(tmp_path):
+    missing = str(tmp_path / 'nope')
+    env = run_all(tmp_path, x_dump=missing)
     x = next(p for p in env['platforms'] if p['id'] == 'x')
-    assert x['status'] == 'not_configured' and '公开 X' in x['reason']
+    assert x['status'] == 'not_configured' and '原始数据' in x['reason']
+    assert all(a['error'] == 'x_dump_missing' for a in x['accounts'])
     assert not [i for i in env['items'] if i['blogger']['platform'] == 'x']
+    good = run_all(tmp_path)
+    env = run_all(tmp_path, x_dump=missing, previous=good)
+    good_ids = {i['id'] for i in good['items'] if i['blogger']['platform'] == 'x'}
+    assert good_ids and {i['id'] for i in env['items'] if i['blogger']['platform'] == 'x'} == good_ids
+    x = next(p for p in env['platforms'] if p['id'] == 'x')
+    assert x['last_ok_at'] == good['generated_at']
 
 
 def test_x_stale_dump_is_error_and_keeps_last_good(tmp_path):
