@@ -181,12 +181,20 @@ def main(argv=None):
     consecutive = 0
     stopped = None
 
+    def num(v):
+        try:
+            return int(v or 0)
+        except (TypeError, ValueError):
+            return 0
+
     def add_usage(u):
+        u = u if isinstance(u, dict) else {}
+        details = u.get('completion_tokens_details')
         stats['requests'] += 1
-        stats['prompt_tokens'] += int(u.get('prompt_tokens') or 0)
-        stats['completion_tokens'] += int(u.get('completion_tokens') or 0)
-        stats['cache_hit_tokens'] += int(u.get('prompt_cache_hit_tokens') or 0)
-        stats['reasoning_tokens'] += int((u.get('completion_tokens_details') or {}).get('reasoning_tokens') or 0)
+        stats['prompt_tokens'] += num(u.get('prompt_tokens'))
+        stats['completion_tokens'] += num(u.get('completion_tokens'))
+        stats['cache_hit_tokens'] += num(u.get('prompt_cache_hit_tokens'))
+        stats['reasoning_tokens'] += num(details.get('reasoning_tokens') if isinstance(details, dict) else 0)
 
     def work(batch):
         """返回 [(row, zh|None)], usages, err。失败一次则拆成两半各试一次。"""

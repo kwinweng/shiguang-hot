@@ -168,3 +168,99 @@ def test_refresh_keeps_site_when_build_cannot_start(tmp_path):
     assert result.returncode != 0
     assert (tmp_path / 'site-v11/index.html').read_text() == 'previous'
     assert not (tmp_path / 'site-v11.prev').exists()
+
+
+def test_unreadable_cache_is_not_overwritten(tmp_path):
+    import os
+    if os.geteuid() == 0:
+        pytest.skip('root can read mode-000 files')
+    cache = Cache(tmp_path / 'translate/cache.json')
+    cache.put('Old', 'en', '旧', 'x')
+    cache.save()
+    os.chmod(cache.path, 0)
+    try:
+        writer = Cache(cache.path)  # 读不了，内存里是空的
+        writer.want('New', 'en')
+        with pytest.raises(PermissionError):
+            writer.save()
+    finally:
+        os.chmod(cache.path, 0o600)
+    assert Cache(cache.path).get('Old', 'en')['zh'] == '旧'
+    assert oct(cache.path.stat().st_mode & 0o777) == '0o600'
+
+
+def test_save_keeps_file_mode_and_only_merges_own_changes(tmp_path):
+    import os
+    path = tmp_path / 'translate/cache.json'
+    first = Cache(path)
+    first.want('Title', 'en', kind='title')
+    first.save()
+    os.chmod(path, 0o600)
+    stale = Cache(path)            # 拿到旧快照的另一写入者
+    fresh = Cache(path)
+    fresh.put('Title', 'en', '标题', 'x')
+    fresh.save()
+    stale.want('Other', 'en')
+    stale.save()                   # 不能把已译的 Title 又排回待译
+    final = Cache(path)
+    assert final.get('Title', 'en')['zh'] == '标题'
+    assert set(r['src'] for r in final.pending.values()) == {'Other'}
+    assert oct(path.stat().st_mode & 0o777) == '0o600'
+
+
+def test_pending_already_translated_is_dropped_on_load(tmp_path):
+    import json as _json
+    from rebang.translate import text_key
+    path = tmp_path / 'cache.json'
+    k = text_key('Done', 'en')
+    path.write_text(_json.dumps({'entries': {k: {'src': 'Done', 'src_lang': 'en', 'zh': '完', 'engine': 'x'}}}))
+    path.with_name('pending.json').write_text(_json.dumps({'pending': {k: {'src': 'Done', 'src_lang': 'en'}}}))
+    assert Cache(path).pending == {}
+
+
+def test_bad_usage_values_do_not_crash_accounting(configured, monkeypatch, capsys):
+    configured.want('One', 'en')
+    configured.save()
+    replies = iter([
+        {'choices': [{'finish_reason': 'length', 'message': {'content': ''}}], 'usage': {'prompt_tokens': 'unknown'}},
+        {'choices': [{'finish_reason': 'stop', 'message': {'content': '{"1":"一"}'}}], 'usage': {'prompt_tokens': 7}},
+    ])
+    monkeypatch.setattr(runner.OPENER, 'open', lambda request, timeout: io.BytesIO(json.dumps(next(replies)).encode()))
+    assert runner.main(['--cache', str(configured.path), '--threads', '1']) == 0
+    summary = json.loads(capsys.readouterr().out)
+    assert (summary['done'], summary['requests'], summary['prompt_tokens']) == (1, 2, 7)
+
+
+def test_refresh_stops_when_old_prev_cannot_be_removed(tmp_path):
+    import os
+    import shutil
+    import subprocess
+    from pathlib import Path
+    if os.geteuid() == 0:
+        pytest.skip('root ignores directory permissions')
+    path = '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin'
+    if not shutil.which('flock', path=path):
+        pytest.skip('flock not installed')
+    repo = Path(__file__).resolve().parents[1]
+    (tmp_path / 'tools').mkdir()
+    shutil.copy(repo / 'tools/rebang_refresh.sh', tmp_path / 'tools/')
+    fake = tmp_path / 'fakepy'
+    fake.write_text('#!/bin/sh\nwhile [ $# -gt 0 ]; do [ "$1" = --out ] && out=$2; shift; done\n'
+                    'case "$out" in site-v11.tmp-*) mkdir -p "$out/data"; echo new > "$out/index.html"; echo {} > "$out/data/meta.json";; '
+                    '*) mkdir -p "$(dirname "$out")"; echo {} > "$out";; esac\n')
+    fake.chmod(0o755)
+    (tmp_path / 'site-v11').mkdir()
+    (tmp_path / 'site-v11/index.html').write_text('previous')
+    prev = tmp_path / 'site-v11.prev'
+    (prev / 'locked').mkdir(parents=True)
+    (prev / 'locked/f').write_text('x')
+    os.chmod(prev / 'locked', 0o555)
+    try:
+        result = subprocess.run(['sh', 'tools/rebang_refresh.sh', '--no-fetch', '--no-publish'], cwd=tmp_path,
+                                env={'PATH': path, 'HOME': str(tmp_path), 'BOX_PYTHON': str(fake)},
+                                capture_output=True, text=True)
+    finally:
+        os.chmod(prev / 'locked', 0o755)
+    assert result.returncode != 0
+    assert (tmp_path / 'site-v11/index.html').read_text() == 'previous'
+    assert not (prev / 'site-v11').exists()
