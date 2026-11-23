@@ -8,6 +8,7 @@
 - **线上**：https://news.kwinweng.com/ ，每小时 :10 左右由「Shiguang publisher」用 `origin/main` 最新代码建站发布（gh-pages `build-info.json` 的 `source_commit` 即线上代码版本）。11/23 23:10 一版：新闻 2471 条、博主内容 293 条。
 - **采集缺口（11/23 23:10）**：X 16 个博主 0 条（没收到原始转储）；微博 6 个 0 条（疑似 Cookie 失效）；公众号 6 个只有「夕小瑶科技说」有内容（其余 5 个等微信读书扫码）。即刻、YouTube、博客、6 个新闻频道正常。
 - **第 0 步**（`chore/t3-handover-rules`）：规则改为 T3 Code 接手、测试通过直接合并上线（见 `AGENTS.md`、`DECISIONS.md` 11/23）；合并积压的 #76（Mac 接管运行、Mac 原子建站、公众号正文失败不再误报成功、仓库内翻译脚本）和 #78（对外名统一为「拾光资讯」）。旧交接内容移到 `docs/HANDOFF-history.md`。
+- **合并后线上发布要 mini 配合（阿欢 11/24 选「先合进去，再请 mini 上的助手换成新版本、清掉停止标记」）**：每小时发布跑在 Mac mini 的专用 clone（`tools/mac_publish.py`，代码固定在 `--code-sha`，见 `docs/rebang-v1/MAC-PUBLISH.md`）。`main` 一有非它自己推的提交，下一轮就写 `.git/mac-publish/HALT` 并停发。合并第 0 步后，须由 mini 上的助手核对远端两个 ref、把固定代码换成合并后的 `main`、更新检查点并清掉 `HALT`，手动跑一轮后核实线上。开发这台电脑看不到也操作不了 mini。以后每次合并代码都会触发同样的停发，第 1 步前要和阿欢定一个长期做法。
 - **测试环境**：全量测试需 Python 3.11+，装 pytest、beautifulsoup4、lxml、Pillow、segno、playwright（含 chromium）。缺 lxml 时 `test_rebang_extract` 会失败，缺浏览器时 `test_rebang_site_browser` 全部报错，都不是代码问题。全量浏览器测试会改写 `docs/rebang-v1/evidence/history-favorites-search/` 三张截图，验完还原，不要提交。`test_news_browser` 的胶囊时钟用例偶发失败，重跑即过。
 
 ## 串行计划（阿欢 11/23 确认；一步一分支，合并并核验线上后再开下一步）
