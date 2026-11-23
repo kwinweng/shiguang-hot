@@ -12,6 +12,7 @@
   REBANG_TRANSLATE_KEY_ENV（默认 REBANG_TRANSLATE_API_KEY）。密钥只在请求时从环境变量取，
   不落盘、不打印、不写进错误信息。结果同样写入缓存。
 """
+import fcntl
 import hashlib
 import json
 import os
@@ -61,7 +62,16 @@ class Cache:
             rec['kind'] = kind
 
     def save(self):
-        """先并入盘上最新内容再写（ingest 与 bloggers 共用一份缓存，先后或同时跑都不互相覆盖）。"""
+        """先并入盘上最新内容再写（ingest、bloggers、翻译脚本共用一份缓存，先后或同时跑都不互相覆盖）。
+
+        读-合并-写整段持有同目录的 .cache.lock，写文件用临时文件 + 替换，避免并发写入时丢条目。
+        """
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.path.with_name('.cache.lock'), 'a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            self._merge_and_write()
+
+    def _merge_and_write(self):
         disk = Cache.__new__(Cache)
         disk.path, disk.pending_path = self.path, self.pending_path
         disk.entries, disk.pending = {}, {}
@@ -75,11 +85,14 @@ class Cache:
             pass
         self.entries = {**disk.entries, **self.entries}
         self.pending = {k: v for k, v in {**disk.pending, **self.pending}.items() if k not in self.entries}
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps({'schema': 'rebang.translate-cache/1', 'entries': self.entries},
-                                        ensure_ascii=False, indent=1), encoding='utf-8')
-        self.pending_path.write_text(json.dumps({'schema': 'rebang.translate-pending/1', 'pending': self.pending},
-                                                ensure_ascii=False, indent=1), encoding='utf-8')
+        _write_atomic(self.path, {'schema': 'rebang.translate-cache/1', 'entries': self.entries})
+        _write_atomic(self.pending_path, {'schema': 'rebang.translate-pending/1', 'pending': self.pending})
+
+
+def _write_atomic(path, data):
+    tmp = path.with_name(f'.{path.name}.{os.getpid()}.tmp')
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding='utf-8')
+    os.replace(tmp, path)
 
 
 class Translator:

@@ -19,6 +19,7 @@ import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from urllib.parse import urlsplit
 
 REPO = os.environ.get('REBANG_REPO', str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, REPO)
@@ -40,6 +41,24 @@ SYSTEM = (
 )
 
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    """不跟随任何跳转：urllib 跳转时会把 Authorization 头原样带到新地址。"""
+
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+OPENER = urllib.request.build_opener(NoRedirect)
+
+
+class CallError(RuntimeError):
+    """一次请求失败；usage 为服务端已返回的用量（没有回包时为空）。"""
+
+    def __init__(self, msg, usage=None):
+        super().__init__(msg)
+        self.usage = usage or {}
+
+
 def die(code, msg):
     print(json.dumps({'error': msg}, ensure_ascii=False))
     sys.exit(code)
@@ -50,7 +69,7 @@ class DeepSeek:
         self.url, self.model, self._key, self.effort, self.timeout = url, model, key, effort, timeout
 
     def call(self, texts):
-        """texts: list[str] -> (list[str], usage dict)。失败抛异常（异常信息不含密钥）。"""
+        """texts: list[str] -> (list[str], usage dict)。失败抛 CallError（信息不含密钥，带已返回的用量）。"""
         payload = {str(i + 1): t for i, t in enumerate(texts)}
         n_chars = sum(len(t) for t in texts)
         body = {
@@ -70,26 +89,32 @@ class DeepSeek:
                                      headers={'Content-Type': 'application/json',
                                               'Authorization': 'Bearer ' + self._key})
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+            with OPENER.open(req, timeout=self.timeout) as resp:
                 reply = json.loads(resp.read())
         except urllib.error.HTTPError as e:
-            raise RuntimeError('http %s' % e.code) from None
+            raise CallError('http %s' % e.code) from None
         except Exception as e:  # noqa: BLE001
-            raise RuntimeError('network %s' % type(e).__name__) from None
-        choice = reply['choices'][0]
-        if choice.get('finish_reason') not in (None, 'stop'):
-            raise RuntimeError('finish %s' % choice.get('finish_reason'))
-        content = (choice['message'].get('content') or '').strip()
-        if content.startswith('```'):
-            content = content.strip('`').split('\n', 1)[-1]
-        out = json.loads(content)
+            raise CallError('network %s' % type(e).__name__) from None
+        usage = (reply.get('usage') if isinstance(reply, dict) else None) or {}
+        try:
+            choice = reply['choices'][0]
+            if choice.get('finish_reason') not in (None, 'stop'):
+                raise CallError('finish %s' % choice.get('finish_reason'), usage)
+            content = (choice['message'].get('content') or '').strip()
+            if content.startswith('```'):
+                content = content.strip('`').split('\n', 1)[-1]
+            out = json.loads(content)
+        except CallError:
+            raise
+        except Exception as e:  # noqa: BLE001
+            raise CallError('bad reply %s' % type(e).__name__, usage) from None
         res = []
         for i, src in enumerate(texts):
             zh = out.get(str(i + 1)) if isinstance(out, dict) else None
             if not isinstance(zh, str) or not zh.strip():
-                raise RuntimeError('missing item')
+                raise CallError('missing item', usage)
             res.append(zh.strip())
-        return res, reply.get('usage') or {}
+        return res, usage
 
 
 def batches(rows, max_items, max_chars):
@@ -127,7 +152,10 @@ def main(argv=None):
     model = os.environ.get('REBANG_TRANSLATE_MODEL', 'deepseek-flash')
     key = os.environ.get(os.environ.get('REBANG_TRANSLATE_KEY_ENV', 'REBANG_TRANSLATE_API_KEY'))
     if model != MODEL:
-        die(4, 'model must be DeepSeek Flash (got %s)' % model)
+        die(4, 'model must be exactly %s' % MODEL)  # 不回显输入值，以免误填的密钥被打印
+    parts = urlsplit(url)
+    if parts.scheme != 'https' or not parts.hostname:
+        die(4, 'translate url must be https')
     if not key:
         die(4, 'api key env not set')
     engine = 'openai-compatible:%s' % model
@@ -162,27 +190,31 @@ def main(argv=None):
 
     def work(batch):
         """返回 [(row, zh|None)], usages, err。失败一次则拆成两半各试一次。"""
-        usages = []
-        try:
-            out, u = client.call([r['src'] for r in batch])
+        usages = []  # 每次请求记一条（失败也记，带服务端已返回的用量）
+
+        def attempt(rows_):
+            try:
+                out, u = client.call([r['src'] for r in rows_])
+            except Exception as e:  # noqa: BLE001
+                usages.append(getattr(e, 'usage', None) or {})
+                raise
             usages.append(u)
-            return list(zip(batch, out)), usages, None
+            return out
+
+        try:
+            return list(zip(batch, attempt(batch))), usages, None
         except Exception as e:  # noqa: BLE001
             err = str(e)
         if len(batch) == 1:
             try:
-                out, u = client.call([batch[0]['src']])
-                usages.append(u)
-                return [(batch[0], out[0])], usages, None
+                return [(batch[0], attempt(batch)[0])], usages, None
             except Exception as e:  # noqa: BLE001
                 return [(batch[0], None)], usages, str(e)
         mid = len(batch) // 2
         res, last_err = [], err
         for half in (batch[:mid], batch[mid:]):
             try:
-                out, u = client.call([r['src'] for r in half])
-                usages.append(u)
-                res.extend(zip(half, out))
+                res.extend(zip(half, attempt(half)))
             except Exception as e:  # noqa: BLE001
                 last_err = str(e)
                 res.extend((r, None) for r in half)

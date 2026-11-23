@@ -32,6 +32,44 @@ def test_refuses_every_model_except_approved_flash(configured, monkeypatch, caps
     assert not configured.path.exists()
 
 
+def test_model_rejection_does_not_echo_the_value(configured, monkeypatch, capsys):
+    monkeypatch.setenv('REBANG_TRANSLATE_MODEL', 'sk-accidentally-pasted-key')
+    with pytest.raises(SystemExit):
+        runner.main(['--cache', str(configured.path)])
+    assert 'sk-accidentally-pasted-key' not in capsys.readouterr().out
+
+
+def test_refuses_plain_http_endpoint(configured, monkeypatch, capsys):
+    monkeypatch.setenv('REBANG_TRANSLATE_URL', 'http://api.deepseek.com/chat/completions')
+    with pytest.raises(SystemExit) as stopped:
+        runner.main(['--cache', str(configured.path)])
+    assert stopped.value.code == 4
+    assert not configured.path.exists()
+
+
+def test_redirects_are_not_followed_so_the_key_stays_put():
+    assert runner.NoRedirect().redirect_request(None, None, 302, 'Found', {}, 'https://evil.example/') is None
+    assert any(isinstance(h, runner.NoRedirect) for h in runner.OPENER.handlers)
+
+
+def test_usage_counts_failed_attempts(configured, monkeypatch, capsys):
+    configured.want('One', 'en')
+    configured.want('Two', 'en')
+    configured.save()
+    replies = iter([
+        {'choices': [{'finish_reason': 'length', 'message': {'content': ''}}],
+         'usage': {'prompt_tokens': 10, 'completion_tokens': 10}},
+        {'choices': [{'finish_reason': 'stop', 'message': {'content': '{"1":"一"}'}}],
+         'usage': {'prompt_tokens': 10, 'completion_tokens': 10}},
+        {'choices': [{'finish_reason': 'stop', 'message': {'content': '{"1":"二"}'}}],
+         'usage': {'prompt_tokens': 10, 'completion_tokens': 10}},
+    ])
+    monkeypatch.setattr(runner.OPENER, 'open', lambda request, timeout: io.BytesIO(json.dumps(next(replies)).encode()))
+    assert runner.main(['--cache', str(configured.path), '--threads', '1']) == 0
+    summary = json.loads(capsys.readouterr().out)
+    assert (summary['done'], summary['requests'], summary['prompt_tokens']) == (2, 3, 30)
+
+
 def test_missing_key_exits_before_creating_cache(configured, monkeypatch, capsys):
     monkeypatch.delenv('REBANG_TRANSLATE_API_KEY')
     with pytest.raises(SystemExit) as stopped:
@@ -58,7 +96,7 @@ def test_real_pending_is_filled_and_usage_logged(configured, monkeypatch, capsys
             'usage': {'prompt_tokens': 12, 'completion_tokens': 5},
         }).encode())
 
-    monkeypatch.setattr(runner.urllib.request, 'urlopen', urlopen)
+    monkeypatch.setattr(runner.OPENER, 'open', urlopen)
     assert runner.main(['--cache', str(configured.path), '--threads', '1']) == 0
     output = capsys.readouterr().out
     assert 'test-key-do-not-log' not in output
@@ -81,7 +119,7 @@ def test_network_failure_keeps_pending_and_does_not_log_key(configured, monkeypa
         attempts.append(1)
         raise urllib.error.URLError('test-key-do-not-log')
 
-    monkeypatch.setattr(runner.urllib.request, 'urlopen', fail)
+    monkeypatch.setattr(runner.OPENER, 'open', fail)
     assert runner.main(['--cache', str(configured.path), '--threads', '1']) == 2
     output = capsys.readouterr().out
     assert 'test-key-do-not-log' not in output
@@ -91,3 +129,42 @@ def test_network_failure_keeps_pending_and_does_not_log_key(configured, monkeypa
     restored = Cache(configured.path)
     assert restored.get('New update', 'en') is None
     assert len(restored.pending) == 1
+
+
+def test_cache_save_holds_the_shared_lock(tmp_path):
+    import fcntl
+    import threading
+    import time
+    cache = Cache(tmp_path / 'translate/cache.json')
+    cache.want('Queued by ingest', 'en')
+    cache.path.parent.mkdir(parents=True)
+    done = threading.Event()
+    with open(cache.path.with_name('.cache.lock'), 'a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        worker = threading.Thread(target=lambda: (cache.save(), done.set()))
+        worker.start()
+        time.sleep(0.2)
+        assert not done.is_set()  # 另一写入者持锁时必须等待
+    worker.join(5)
+    assert done.is_set()
+    assert len(Cache(cache.path).pending) == 1
+
+
+def test_refresh_keeps_site_when_build_cannot_start(tmp_path):
+    import shutil
+    import subprocess
+    from pathlib import Path
+    repo = Path(__file__).resolve().parents[1]
+    (tmp_path / 'tools').mkdir()
+    shutil.copy(repo / 'tools/rebang_refresh.sh', tmp_path / 'tools/')
+    (tmp_path / 'site-v11').mkdir()
+    (tmp_path / 'site-v11/index.html').write_text('previous')
+    path = '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin'
+    if not shutil.which('flock', path=path):
+        pytest.skip('flock not installed')
+    result = subprocess.run(['sh', 'tools/rebang_refresh.sh', '--no-fetch', '--no-publish'], cwd=tmp_path,
+                            env={'PATH': path, 'HOME': str(tmp_path), 'BOX_PYTHON': str(tmp_path / 'missing-python')},
+                            capture_output=True, text=True)
+    assert result.returncode != 0
+    assert (tmp_path / 'site-v11/index.html').read_text() == 'previous'
+    assert not (tmp_path / 'site-v11.prev').exists()
