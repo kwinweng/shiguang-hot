@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""拾光热榜：用 DeepSeek Flash（OpenAI 兼容接口）清 var/rebang/translate/pending.json。
+"""拾光资讯：用 DeepSeek Flash（OpenAI 兼容接口）清 var/rebang/translate/pending.json。
 
 沿用已实测的批量翻译实现。密钥只从环境变量读（默认 REBANG_TRANSLATE_API_KEY），
 只放在内存里的请求头，不打印、不写盘。默认使用本仓库，不依赖旧机器目录。
