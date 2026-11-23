@@ -852,6 +852,37 @@ def test_youtube_keeps_previous_videos_when_page_fallback_returns_fewer(tmp_path
 
 
 
+@pytest.mark.parametrize('failure', ['network', 'content_time_missing'])
+def test_weread_cover_failure_preserves_content_and_last_success(tmp_path, failure):
+    from rebang.bloggers import weread
+    body = json.loads((FX / 'weread_mp_articles.json').read_text(encoding='utf-8'))
+    good = runmod.run(('wechat',), http=fake_http(), now=NOW,
+                      opts=weread_opts(tmp_path, lambda *a, **k: body), sleep=lambda s: None)
+
+    def get(url, **kwargs):
+        if '/web/mp/articles?' in url:
+            return {'errCode': -2041}
+        return {'reviewId': 'MP_WXS_123_latest', 'title': '最新文章'}
+
+    def get_text(*args, **kwargs):
+        if failure == 'network':
+            raise weread.WereadError('network')
+        return '<html>没有可验证的发布时间</html>'
+
+    config = weread_opts(tmp_path, get)
+    config.weread_get_text = get_text
+    later = datetime.fromisoformat('2026-11-15T22:00:00+08:00')
+    env = runmod.run(('wechat',), http=fake_http(), now=later, previous=good,
+                     opts=config, sleep=lambda s: None)
+    assert validate_items_envelope(env) == []
+    row = next(a for p in env['platforms'] if p['id'] == 'wechat'
+               for a in p['accounts'] if a['handle'] == 'MacTalk')
+    assert row['status'] == 'error' and row['detail'] == failure and row['stale'] is True
+    assert row['last_ok_at'] == NOW.isoformat()
+    assert [i for i in env['items'] if i['source_id'] == 'wechat-MacTalk'] == [
+        i for i in good['items'] if i['source_id'] == 'wechat-MacTalk']
+
+
 def test_weread_content_meta_reads_time_and_url():
     from rebang.bloggers import weread
     html = """<meta property="og:url" content="https://mp.weixin.qq.com/s?__biz=MjM5MDczODM3Mw==&amp;mid=1#rd">

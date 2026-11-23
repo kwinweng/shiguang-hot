@@ -12,6 +12,7 @@
   REBANG_TRANSLATE_KEY_ENV（默认 REBANG_TRANSLATE_API_KEY）。密钥只在请求时从环境变量取，
   不落盘、不打印、不写进错误信息。结果同样写入缓存。
 """
+import fcntl
 import hashlib
 import json
 import os
@@ -33,6 +34,8 @@ class Cache:
         self.pending_path = self.path.with_name('pending.json')
         self.entries = {}
         self.pending = {}
+        self._dirty_entries = set()  # 本实例新写的译文 / 新排的待译，保存时只合并这些键
+        self._dirty_pending = set()
         if self.path.exists():
             try:
                 self.entries = json.loads(self.path.read_text(encoding='utf-8')).get('entries', {})
@@ -43,6 +46,8 @@ class Cache:
                 self.pending = json.loads(self.pending_path.read_text(encoding='utf-8')).get('pending', {})
             except (ValueError, OSError):
                 self.pending = {}
+        # 上次中断在两份文件之间时，已译的不要再排进待译（避免重复付费请求）
+        self.pending = {k: v for k, v in self.pending.items() if k not in self.entries}
 
     def get(self, text, src_lang):
         entry = self.entries.get(text_key(text, src_lang))
@@ -53,33 +58,61 @@ class Cache:
     def put(self, text, src_lang, zh, engine):
         self.entries[text_key(text, src_lang)] = {'src': text, 'src_lang': src_lang, 'zh': zh, 'engine': engine}
         self.pending.pop(text_key(text, src_lang), None)
+        self._dirty_entries.add(text_key(text, src_lang))
 
     def want(self, text, src_lang, kind=None):
         key = text_key(text, src_lang)
         rec = self.pending.setdefault(key, {'src': text, 'src_lang': src_lang})
         if kind and not rec.get('kind'):
             rec['kind'] = kind
+        self._dirty_pending.add(key)
 
     def save(self):
-        """先并入盘上最新内容再写（ingest 与 bloggers 共用一份缓存，先后或同时跑都不互相覆盖）。"""
+        """先并入盘上最新内容再写（ingest、bloggers、翻译脚本共用一份缓存，先后或同时跑都不互相覆盖）。
+
+        读-合并-写整段持有同目录的 .cache.lock，写文件用临时文件 + 替换，避免并发写入时丢条目。
+        """
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.path.with_name('.cache.lock'), 'a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            self._merge_and_write()
+
+    def _merge_and_write(self):
         disk = Cache.__new__(Cache)
         disk.path, disk.pending_path = self.path, self.pending_path
-        disk.entries, disk.pending = {}, {}
-        try:
-            disk.entries = json.loads(self.path.read_text(encoding='utf-8')).get('entries', {})
-        except (ValueError, OSError):
-            pass
-        try:
-            disk.pending = json.loads(self.pending_path.read_text(encoding='utf-8')).get('pending', {})
-        except (ValueError, OSError):
-            pass
-        self.entries = {**disk.entries, **self.entries}
-        self.pending = {k: v for k, v in {**disk.pending, **self.pending}.items() if k not in self.entries}
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps({'schema': 'rebang.translate-cache/1', 'entries': self.entries},
-                                        ensure_ascii=False, indent=1), encoding='utf-8')
-        self.pending_path.write_text(json.dumps({'schema': 'rebang.translate-pending/1', 'pending': self.pending},
-                                                ensure_ascii=False, indent=1), encoding='utf-8')
+        # 盘上文件存在却读不了（权限等）就报错，不能当成空缓存整份覆盖；内容坏掉（JSON 错）沿用旧行为当空
+        disk.entries = _read_section(self.path, 'entries')
+        disk.pending = _read_section(self.pending_path, 'pending')
+        mine = {k: self.entries[k] for k in self._dirty_entries if k in self.entries}
+        self.entries = {**disk.entries, **mine}
+        pending = dict(disk.pending)
+        for k in self._dirty_pending:
+            if k in self.pending:
+                pending[k] = {**self.pending[k], **pending.get(k, {})}  # 盘上已有的 kind 等优先
+        self.pending = {k: v for k, v in pending.items() if k not in self.entries}
+        _write_atomic(self.path, {'schema': 'rebang.translate-cache/1', 'entries': self.entries})
+        _write_atomic(self.pending_path, {'schema': 'rebang.translate-pending/1', 'pending': self.pending})
+
+
+def _read_section(path, section):
+    try:
+        raw = path.read_text(encoding='utf-8')
+    except FileNotFoundError:
+        return {}
+    try:
+        return json.loads(raw).get(section, {})
+    except (ValueError, AttributeError):
+        return {}
+
+
+def _write_atomic(path, data):
+    tmp = path.with_name(f'.{path.name}.{os.getpid()}.tmp')
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding='utf-8')
+    try:
+        os.chmod(tmp, path.stat().st_mode & 0o7777)  # 保留原文件权限
+    except FileNotFoundError:
+        pass
+    os.replace(tmp, path)
 
 
 class Translator:

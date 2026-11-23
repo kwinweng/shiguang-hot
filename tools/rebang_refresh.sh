@@ -55,11 +55,14 @@ bloggers() {
 build() {
     tmp=site-v11.tmp-$$
     rm -rf "$tmp"
-    "$PY" -m rebang.site --in var/rebang/in --out "$tmp" --hot-archive var/rebang/hotsearch-archive --public-base "$BASE"
-    [ -f "$tmp/index.html" ] && [ -f "$tmp/data/meta.json" ]
+    # step 在 if 里调用本函数，set -e 不生效：每步失败都要显式返回，不能轮换 site-v11
+    "$PY" -m rebang.site --in var/rebang/in --out "$tmp" --hot-archive var/rebang/hotsearch-archive --public-base "$BASE" || { rm -rf "$tmp"; return 1; }
+    [ -f "$tmp/index.html" ] && [ -f "$tmp/data/meta.json" ] || { rm -rf "$tmp"; return 1; }
     rm -rf site-v11.prev
-    if [ -d site-v11 ]; then mv site-v11 site-v11.prev; fi
-    mv "$tmp" site-v11
+    # .prev 删不掉时 mv 会把旧站挪进它里面，必须先停
+    [ ! -e site-v11.prev ] || { rm -rf "$tmp"; return 1; }
+    if [ -d site-v11 ]; then mv site-v11 site-v11.prev || { rm -rf "$tmp"; return 1; }; fi
+    mv "$tmp" site-v11 || { [ -d site-v11.prev ] && [ ! -e site-v11 ] && mv site-v11.prev site-v11; rm -rf "$tmp"; return 1; }
 }
 pub() {
     if [ ! -f site/index.html ] || [ ! -f site/build-info.json ]; then
