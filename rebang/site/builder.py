@@ -194,7 +194,7 @@ def blogger_key(handle):
 def build_bloggers(posts, status=None, preview=BLOGGER_PREVIEW):
     """status：bloggers 生产者信封里的 platforms[]（每平台/每人 status、reason），有就并进来给前端显示真实空状态。
     返回 (bloggers.json 内容, 分页 {(平台, key): [帖子…]})。bloggers.json 只带每平台、每人最新 preview 条。"""
-    status = {p.get('id'): p for p in (status or []) if isinstance(p, dict) and p.get('id') != 'grok'}
+    status = {p.get('id'): p for p in (status or []) if isinstance(p, dict)}
     platforms, pages, keep = [], {}, set()
     for platform in schema.load_bloggers()['platforms']:
         mine = [p for p in posts if p['blogger']['platform'] == platform['id']]
@@ -213,7 +213,7 @@ def build_bloggers(posts, status=None, preview=BLOGGER_PREVIEW):
                                 if k in acc_status.get(a['handle'], {})}})
         platforms.append({
             'id': platform['id'], 'name': platform['name'], 'login': bool(platform.get('login')),
-            'curated': bool(platform.get('curated')), 'icon': f'icons/{platform["id"]}.svg',
+            'icon': f'icons/{platform["id"]}.svg',
             'connected': bool(mine), 'count': len(mine), 'status': got.get('status') or ('ok' if mine else None),
             'reason': got.get('reason'), 'last_ok_at': got.get('last_ok_at'), 'accounts': accounts,
         })

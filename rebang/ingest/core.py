@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from rebang.contract import ITEMS_SCHEMA, load_bloggers, load_channels
+from rebang.contract import ITEMS_SCHEMA, load_channels
 
 ROOT = Path(__file__).resolve().parents[2]
 BEIJING = ZoneInfo('Asia/Shanghai')
@@ -33,16 +33,11 @@ def _iso(moment):
     return _aware(moment).astimezone(BEIJING).isoformat(timespec='seconds')
 
 
-def _parse_when(value, fallback_day=None):
-    """'2026-11-14T08:13:18+08:00' / '2026-11-14 10:20' / '2026-11-14' → 北京时间 aware；都不行用 fallback_day 当天 00:00。"""
-    for raw in (str(value or '').strip().replace('Z', '+00:00'), str(fallback_day or '').strip()):
-        if not raw:
-            continue
-        try:
-            return _aware(datetime.fromisoformat(raw)).astimezone(BEIJING)
-        except ValueError:
-            continue
-    return None
+def _parse_when(value):
+    try:
+        return _aware(datetime.fromisoformat(str(value or '').strip().replace('Z', '+00:00'))).astimezone(BEIJING)
+    except ValueError:
+        return None
 
 
 def _plain(text, cap=None):
@@ -107,14 +102,6 @@ def strip_leading_urls(text):
 
 def guess_lang(*texts):
     return 'zh' if _CJK.search(' '.join(t or '' for t in texts)) else 'en'
-
-
-def grok_sources():
-    """博主页 Grok bot 渠道的 4 份每日成品（bloggers.json platforms[id=grok].accounts）。"""
-    for platform in load_bloggers()['platforms']:
-        if platform['id'] == 'grok':
-            return [{'id': a['handle'], 'name': a['name'], 'type': 'inbox'} for a in platform['accounts']]
-    return []
 
 
 def _news(source, channel, native_id, title, summary, url, published, now, lang='zh', body=None, image=None,
@@ -226,6 +213,10 @@ def telegram_items(db_path, media_root, sources, now, floor, tgmeta=None):
                 if published is None or published < floor:
                     continue
                 title, rest, body, quote, tg = _tg_parts(handle, text, (tgmeta or {}).get(f'{handle}/{msg_id}'))
+                media = (tg or {}).get('media', [])
+                has_video = (tg or {}).get('video_unavailable') or any(m['type'] == 'video' for m in media)
+                if has_video and title in ('', '[图片]'):
+                    title, body = '[视频]', ''
                 if not title:
                     continue
                 image_local = None
@@ -233,9 +224,11 @@ def telegram_items(db_path, media_root, sources, now, floor, tgmeta=None):
                     image_local = _local_image(media_root / rel, published, now, media_root)
                     if image_local:
                         break
+                poster = next((m.get('preview_url') or m['url'] for m in media
+                               if m.get('preview_url') or m['type'] == 'image'), None)
                 item = _news(cfg, channel, str(msg_id), title, _plain(rest, SUMMARY_CHARS),
                              f'https://t.me/{handle}/{msg_id}', published, now, body=body,
-                             image_local=image_local)
+                             image={'url': poster} if poster and not image_local else None, image_local=image_local)
                 if quote:
                     item['quote'] = quote
                 if tg:
@@ -373,83 +366,42 @@ def default_inbox_loader(source_id):
         return load_issues(_legacy_sources()[source_id], local=True)
 
 
-def _issue_entries(issues, floor):
-    for feed, base in issues:
-        day = feed.get('date')
-        start = _parse_when(day)
-        if start is None or start < floor.replace(hour=0, minute=0, second=0, microsecond=0):
-            continue
-        for section in feed.get('sections') or []:
-            for entry in section.get('items') or []:
-                if isinstance(entry, dict):
-                    yield day, Path(base), entry
-
-
-def inbox_items(sources, now, floor, loader):
-    """Grok bot 每日成品 → kind=post（blogger.platform=grok，handle=成品 id），不进 6 个频道。"""
-    items, statuses = [], []
-    for channel, cfg in sources:
-        try:
-            issues = loader(cfg['id'])
-        except Exception as ex:
-            statuses.append(_status(cfg, channel, 'error', error=type(ex).__name__))
-            continue
-        seen, count = set(), 0
-        for day, base, entry in _issue_entries(issues, floor):
-            title, body, url = _plain(entry.get('title')), str(entry.get('body') or '').strip(), _http_url(entry.get('link'))
-            if not title:
-                continue
-            native = _sha(_norm_url(url)) if url else _sha(f'{day}|{title}')
-            if native in seen:   # 新→旧遍历，同一链接只留最新一期
-                continue
-            seen.add(native)
-            published = _parse_when(entry.get('date'), day) or _parse_when(day)
-            image_local = None
-            for im in entry.get('images') or []:
-                if isinstance(im, dict) and isinstance(im.get('file'), str) and '/' not in im['file'] and not im['file'].startswith('.'):
-                    image_local = _local_image(base / im['file'], published, now)
-                    if image_local:
-                        image_local['alt'] = str(im.get('alt') or '')
-                        break
-            item = _news(cfg, None, native, title, _plain(body, SUMMARY_CHARS), url, published, now,
-                         lang=guess_lang(title, body), body=body or None, image_local=image_local)
-            item['kind'] = 'post'
-            item['blogger'] = {'platform': 'grok', 'handle': cfg['id'], 'display_name': cfg['name'], 'media': []}
-            items.append(item)
-            count += 1
-        latest = issues[0][0].get('date') if issues else None
-        statuses.append(dict(_status(cfg, channel, 'ok' if count else 'empty', count), latest_issue=latest))
-    return items, statuses
-
-
-def apply_highlights(items, now, floor, loader, table=None):
-    """channels.json.highlights.rule：今日重点不进频道（整份是 Grok bot 渠道的帖子）；频道里同链接的条目只打 highlight 标。"""
+def apply_highlights(items, floor, loader):
+    """今日重点不单独成条，只给频道里同链接的条目打标。"""
     rule = load_channels()['highlights']
     hid = rule['source_id']
     cfg = {'id': hid, 'name': rule['name'], 'type': 'inbox'}
     try:
         issues = loader(hid)
     except Exception as ex:
-        return [], _status(cfg, None, 'error', error=type(ex).__name__)
+        return _status(cfg, None, 'error', error=type(ex).__name__)
     by_url = {}
     for item in items:
         if item['kind'] == 'news' and item['url']:
             by_url.setdefault(_norm_url(item['url']), item)
     marked = unmatched = 0
-    for day, _base, entry in _issue_entries(issues, floor):
-        url = _http_url(entry.get('link'))
-        target = by_url.get(_norm_url(url)) if url else None
-        if target is None:
-            unmatched += 1
+    cut = floor.replace(hour=0, minute=0, second=0, microsecond=0)
+    for feed, _ in issues:
+        day = feed.get('date')
+        start = _parse_when(day)
+        if start is None or start < cut:
             continue
-        if not target.get('highlight'):
-            marked += 1
-        target['highlight'] = True
-        target['highlight_date'] = max(day, target.get('highlight_date') or day)
+        for section in feed.get('sections') or []:
+            for entry in section.get('items') or []:
+                if not isinstance(entry, dict):
+                    continue
+                url = _http_url(entry.get('link'))
+                target = by_url.get(_norm_url(url)) if url else None
+                if target is None:
+                    unmatched += 1
+                    continue
+                if not target.get('highlight'):
+                    marked += 1
+                target['highlight'] = True
+                target['highlight_date'] = max(day, target.get('highlight_date') or day)
     latest = issues[0][0].get('date') if issues else None
-    status = dict(_status(cfg, None, 'ok' if marked else 'empty', 0), marked=marked, unmatched=unmatched,
-                  latest_issue=latest, role='highlight-marks')
-    return [], status
+    return dict(_status(cfg, None, 'ok' if marked else 'empty', 0), marked=marked, unmatched=unmatched,
+                latest_issue=latest, role='highlight-marks')
 
 
 # ---------- 翻译（rebang/translate 由 bloggers 分支提供；没有就留 translated=false） ----------
@@ -667,10 +619,7 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
     got, st = remote_items(by_type.get('feed', []) + by_type.get('page', []), now, floor, fetch=fetch, cache=cache,
                            http_get=http_get or default_http_get)
     items += got; statuses += st
-    got, st = inbox_items([(None, cfg) for cfg in grok_sources()], now, floor, loader)
-    items += got; statuses += st
-    extra, hstatus = apply_highlights(items, now, floor, loader, table)
-    items += extra; statuses.append(hstatus)
+    statuses.append(apply_highlights(items, floor, loader))
     if translator == 'default':
         translator = default_translator()
     from rebang.extract import apply_extraction

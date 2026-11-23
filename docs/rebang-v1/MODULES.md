@@ -11,7 +11,7 @@
 tg.db（旧站采集写入）──┐
 t.me 公开页 → tgmeta ──┼→ ingest → var/rebang/in/ingest.json ─┐
 官方订阅 / Trending ───┤                                        │
-盒子上的 4 个每日成品 ─┘                                        ├→ rebang.site → site-v11/ → publish_pages.sh（gh-pages 的 rebang/）
+今日重点原稿（仅打标）──┘                                       ├→ rebang.site → site-v11/ → publish_pages.sh（gh-pages 的 rebang/）
 百度 / 知乎 / B 站 → hotsearch → var/rebang/in/hotsearch.json ──┤
 博客 / Wechat2RSS / X dump → bloggers → var/rebang/in/bloggers.json ┘
                      翻译缓存 var/rebang/translate/cache.json（ingest、bloggers 入库时自动套用）
@@ -19,7 +19,7 @@ t.me 公开页 → tgmeta ──┼→ ingest → var/rebang/in/ingest.json ─�
 
 ## tgmeta：TG 附加信息
 - `python3 -m rebang.tgmeta [--store var/rebang/cache/tgmeta.json] [--channels a,b] [--fixtures DIR]`。
-- 读 t.me/s 公开页，补频道自己的话、引用/转发原帖、表情、浏览数、公开评论；按 `<频道>/<消息号>` 由 ingest 合进条目，`tg.db` 不动。
+- 读 t.me/s 公开页，补频道自己的话、引用/转发原帖、表情、浏览数、公开评论及公开的图、视频地址；按 `<频道>/<消息号>` 由 ingest 合进条目，`tg.db` 不动。沿用原页面请求和刷新范围，不额外下载视频。Telegram 网页仅给封面（如文件太大）时，正文给原帖入口。CDN 播放失败同样可回原帖。旧缓存条目要等对应页被重新读取才会有媒体字段。
 - 评论楼（2026-11-16）：开了公开讨论区的频道（现为 zaihuapd、xhqcankao、FinanceNewsDaily、CE_Observe、myBigCharacterPoster）每条最多存 30 条评论；详情页「评论楼」按时间从早到晚，先放最近 10 条，「展开更早的 N 条」看其余，楼中楼显示被回复的人和原话，每条有「原楼」链接回 t.me。
 - 坑：`?before=` 翻页时转发头的名字有时为空。空名会退回作者名，新值缺失或变空时保留旧值（PR #41）。
 
@@ -45,7 +45,7 @@ t.me 公开页 → tgmeta ──┼→ ingest → var/rebang/in/ingest.json ─�
   - 扫码：`python3 -m rebang.bloggers.weread login --qr-png /tmp/weread-login-qr.png --wait 600`（生成二维码要 segno，盒子上用 `/workspace/rebang-v1-briefs/tools/.venv-qr/bin/python`）。命令打印 `confirm_url` 和二维码图；在微信里扫码（或在微信里打开 confirm_url），手机上点确认。`getLoginInfo` 是长轮询，约 56 秒回一次 `{logicCode: LOGIN_TIMEOUT, canRetry: true}`，这只表示这一轮等完了，同一个二维码仍有效，命令用同一个 uid 接着等到 `--wait` 用完（11/16 前两次扫码失败就是把它当过期退出了）；只有没有 `canRetry` 时才换新码（覆盖同一个 PNG、打印 `"step": "refreshed"`）。输出每行即时 flush。要验证码时命令会打印带 `--uid … --otp <码>` 的重跑命令。
   - 会话只存 vid/skey，写在仓库外 `~/.config/rebang/weread-session.json`（0600，可用 `REBANG_WEREAD_SESSION` 改路径），通过 curl 标准输入传 Cookie，不进命令行、不打印。`python3 -m rebang.bloggers.weread status` 只回报 ok / login_expired。
   - 列表回包和 cover/正文页都用真数据核过（2026-11-16）；列表通的时候用列表，不通时 cover 兜底。测试覆盖两种路径，以及 `-2041` 不把登录判死。
-- **X 16 人**：Python 里调不到 Grok Bot 的公开 X 读取工具，所以适配器只读工具写好的原始响应 `var/rebang/x-dump/<YYYYMMDDTHHMM>/`（X API v2 结构；`quotes*`、`replies*`、`refs*` 开头的文件只作引用/评论参考；可选 `_dump.json` 写 `generated_at`）。取最新子目录；超过 36 小时标 `x_dump_stale` 并保留上次内容；没有 dump 是 `not_configured`。dump 由「X 博主 + 翻译」例程每 2 小时写一次（提示词在盒子 `/workspace/rebang-v1-briefs/routine-x-translate.md`）。
+- **X 16 人**：Python 里调不到 Grok Bot 的公开 X 读取工具，所以适配器只读工具写好的原始响应 `var/rebang/x-dump/<YYYYMMDDTHHMM>/`（X API v2 结构；`quotes*`、`replies*`、`refs*` 开头的文件只作引用/评论参考；可选 `_dump.json` 写 `generated_at`）。取最新子目录；限 36 小时。可用 `REBANG_X_DUMP` 指向现有原稿目录或文件；缺失和过期均报告原因并保留上次成功内容。历史上原稿由盒子「X 博主 + 翻译」例程写入；Mac 刷新是读者，不会替它产生新原稿。
 - **即刻 9 人**（2026-11-16 接通）：公共 RSSHub 实例的 `/jike/user/<UUID>`，不登录、不带 Cookie。实例清单在 `bloggers.json` 的 `rsshub_mirrors`，每个账号错开起点轮换，失败（超时、5xx、回错误页）换下一个，全挂才标 `jike_mirrors_down` 并保留上次内容；账号行写 `via` 记下这次用的实例。`--jike-rsshub`（或 `REBANG_JIKE_RSSHUB`，逗号分隔）可覆盖清单。`rebang/bloggers/jike.py` 去掉「发布了/转发了」前缀（即刻帖子没有标题），转发的原帖进 `blogger.quote`，频道头像来自订阅源的 `<image>`。公共实例是第三方服务，随时可能限流或下线。
 - **微博**：2026-11-16 试过公开方式都不通：公共 RSSHub 的微博路由全部 503，`m.weibo.cn` 免登录接口返回 `ok:-100` 跳登录，`weibo.com/ajax` 403，无头浏览器停在游客验证页。阿欢 2026-11-16 15:49：「微博用小号 Cookie，我回头给你」；18:03 起用副号在盒子浏览器登录 weibo.com 后存了 Cookie。
   - **Cookie**：仓库外 `~/.config/rebang/weibo-cookie.txt`（`REBANG_WEIBO_COOKIE` 可改），0600，一行 weibo.com 请求头里的 Cookie 值（不带 `Cookie:` 前缀）。只在发请求时读进内存；不打印、不写日志、不进仓库/输出文件，测试里断言过。这份 Cookie 是桌面 weibo.com 的，`m.weibo.cn/api/config` 不认登录，所以**不用 weibo-crawler**（它走 m.weibo.cn）。
@@ -76,6 +76,8 @@ t.me 公开页 → tgmeta ──┼→ ingest → var/rebang/in/ingest.json ─�
 - 只挑过去 24 小时已上站的条目，最多 5 条（`rebang/push/select.py` 的 `MAX_ITEMS`），优先 `highlight`，再按频道轮转补足；排除邮件和未上站内容；没有新内容如实写。链接用 `data/meta.json` 的 `public_base`。
 - 博主平台登录失效时，同一条稿子里提醒一次。创意雷达不在这里生成。
 
-## 已知缺口
+## 历史供稿记录
+
+2026-11-22 修复分支移除博主页 Grok bot 分组及其供稿入口；旧站来源、8:30 稿和「今日重点」只给同链接打标的规则不变。下列为旧记录，不是现行配置。
 - `public-feeds/` 只到 2026-10-23（`/workspace/tg-local/sync.sh` 改为 `publish_public.py --no-push`）；4 个每日成品直接读盒子上的原始目录：推特爆款 `/workspace/x-digest/YYYY-MM-DD.json`、环球要闻 `/workspace/world-brief/YYYY-MM-DD/brief.json`、GitHub 热门 `/workspace/feeds-inbox/github/YYYY-MM-DD/feed.json`、今日重点 `/workspace/feeds-inbox/hot-daily/YYYY-MM-DD/feed.json`（11/15 核对时的位置）。
 - 微博未接通（公开方式都要登录/游客验证）；5 个公众号的微信读书管道已备好、等扫码；YouTube 管道已备好、频道名单待确认。站上显示真实空状态。

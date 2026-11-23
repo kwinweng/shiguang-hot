@@ -23,7 +23,10 @@ def arguments(argv=None):
     parser.add_argument('--checkout', type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument('--log-dir', type=Path, default=None)
     parser.add_argument('--dry-run', action='store_true', help='validate and print plan; no scrape or git')
-    parser.add_argument('--test-dir', type=Path, help='new directory for isolated database, media and site; never git')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--no-publish', action='store_true',
+                      help='collect, persist and build the legacy site without pushing Pages')
+    mode.add_argument('--test-dir', type=Path, help='new directory for isolated database, media and site; never git')
     parser.add_argument('--limit', type=positive,
                         help='sample up to N public sources, first page only, no media; '
                              'at most N logical HTTP attempts; requires --test-dir')
@@ -88,7 +91,7 @@ def execute(args):
         return subprocess.check_output(['git', *values], cwd=root, text=True).strip()
     if git('branch', '--show-current') != 'main':
         raise RuntimeError('normal mode requires main')
-    if git('status', '--porcelain', '--untracked-files=normal'):
+    if git('--no-optional-locks', 'status', '--porcelain', '--untracked-files=normal'):
         raise RuntimeError('normal mode requires a clean worktree; preserve and resolve pending data first')
     subprocess.run(['git', 'fetch', 'origin', 'main'], cwd=root, check=True)
     local_commits = git('rev-list', 'origin/main..HEAD')
@@ -112,8 +115,13 @@ def execute(args):
         subprocess.run(['git', 'merge', '--ff-only', 'origin/main'], cwd=root, check=True)
     run_pipeline(root)
     subprocess.run(['sh', 'tools/persist_action_data.sh'], cwd=root, check=True)
+    build_info = [sys.executable, 'tools/write_build_info.py']
+    if args.no_publish:
+        # The next stage may publish only after this round has recorded its build inputs.
+        subprocess.run(build_info, cwd=root, check=True)
+        return
     try:
-        subprocess.run([sys.executable, 'tools/write_build_info.py'], cwd=root, check=True)
+        subprocess.run(build_info, cwd=root, check=True)
         subprocess.run(['sh', 'tools/publish_pages.sh', '--already-built'], cwd=root, check=True)
     except Exception as error:
         print(f'Pages publish failed (data persistence succeeded): {error}', flush=True)
@@ -122,7 +130,8 @@ def execute(args):
 def main(argv=None):
     args = arguments(argv)
     if args.dry_run:
-        print(f'checkout={args.checkout} output={args.test_dir or args.checkout} limit={args.limit} push={not bool(args.test_dir)}; dry-run: no execution')
+        print(f'checkout={args.checkout} output={args.test_dir or args.checkout} limit={args.limit} '
+              f'push={not bool(args.test_dir)} pages={not (args.no_publish or args.test_dir)}; dry-run: no execution')
         return 0
     logs = (args.log_dir or args.checkout / 'logs/box-scrape').resolve()
     logs.mkdir(parents=True, exist_ok=True)
@@ -134,7 +143,7 @@ def main(argv=None):
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             print('box scrape busy; skipped')
-            return 0
+            return 1 if args.no_publish else 0
         logfile = logs / (datetime.now().strftime('%Y-%m-%dT%H%M%S') + f'-{os.getpid()}.log')
         print(f'log={logfile}', flush=True)
         with logfile.open('a', buffering=1) as output, redirect_stdout(output), redirect_stderr(output):

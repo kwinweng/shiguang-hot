@@ -30,7 +30,13 @@ def site_items():
     items = []
     for n in range(70):
         image = img(n) if n < 7 else (img(n, 200, 100) if n == 8 else None)
-        items.append(news('tnews365', 'current', n, minutes=n * 5, image=image, summary='' if n == 9 else '合成摘要，测试用。'))
+        item = news('tnews365', 'current', n, minutes=n * 5, image=image, summary='' if n == 9 else '合成摘要，测试用。')
+        if n == 8:
+            item.update(url='https://t.me/tnews365/8', tg={'media': [
+                {'type': 'video', 'url': 'https://vid.test/v1.webm', 'preview_url': 'https://img.test/v1.png'},
+                {'type': 'image', 'url': 'https://img.test/p0.png'},
+            ], 'video_unavailable': True})
+        items.append(item)
     items.append(news('bbc-world', 'world', 1, title='Synthetic headline', lang='en', translated=True,
                       translation={'title': '合成译文标题', 'summary': '合成译文摘要。', 'engine': 'test', 'label': '机器翻译'}))
     for slug in ('finance', 'tech-ai', 'digital', 'tools'):
