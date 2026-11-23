@@ -21226,17 +21226,33 @@
         }
       ],
       "name": "风向旗参考快讯",
-      "seven_day_count": 155,
+      "seven_day_count": 128,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 17,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/xhqcankao"
     },
     {
       "id": "tnews365",
-      "last_update": "2026-11-23T22:23:45+08:00",
+      "last_update": "2026-11-24T00:04:35+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-24",
+          "hot": false,
+          "hour": "2026-11-24 00:00",
+          "id": "6a89ec6f6d8a3378dde7",
+          "image": "media/tnews365/35806_1.webp",
+          "link": "https://t.me/tnews365/35806",
+          "source": "tnews365",
+          "source_name": "竹新社",
+          "summary": "芬兰军方认为，此次袭击应该是乌克兰实施的。 俄罗斯22日袭击基辅附近一座村庄的公寓楼，造成至少2人死亡、4人受伤。 靠近波兰和立陶宛的俄罗斯飞地加里宁格勒11月21日晚响起了罕见的防空警报，系俄罗斯全面入侵乌克兰以来的首次。 一艘停泊在利比亚班加西海军基地的俄罗斯船只22日凌晨遭无人机袭击。消息人士称，乌克兰国家安全局策划了此次远程打击。 （路透社，美联社，新华社）",
+          "text": "芬兰军方认为，此次袭击应该是乌克兰实施的。 俄罗斯22日袭击基辅附近一座村庄的公寓楼，造成至少2人死亡、4人受伤。 靠近波兰和立陶宛的俄罗斯飞地加里宁格勒11月21日晚响起了罕见的防空警报，系俄罗斯全面入侵乌克兰以来的首次。 一艘停泊在利比亚班加西海军基地的俄罗斯船只22日凌晨遭无人机袭击。消息人士称，乌克兰国家安全局策划了此次远程打击。 （路透社，美联社，新华社）",
+          "time": "2026-11-24T00:04:35+08:00",
+          "title": "芬兰海岸警卫队11月22日称，俄罗斯一艘被无人机击中的货船目前正在被救援船拖出芬兰海域",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-23",
@@ -23463,17 +23479,49 @@
         }
       ],
       "name": "竹新社",
-      "seven_day_count": 13,
+      "seven_day_count": 12,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 5,
+      "today_count": 1,
       "type": "telegram",
       "url": "https://t.me/tnews365"
     },
     {
       "id": "FinanceNewsDaily",
-      "last_update": "2026-11-23T22:45:05+08:00",
+      "last_update": "2026-11-23T23:55:06+08:00",
       "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-23",
+          "hot": false,
+          "hour": "2026-11-23 23:00",
+          "id": "13998485c7051e8daa5a",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497021",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "•WTI原油日内跌幅超过4.0%，失守80美元/桶关口；布伦特原油日内跌幅达4.0%，报88.8美元/桶。",
+          "text": "•WTI原油日内跌幅超过4.0%，失守80美元/桶关口；布伦特原油日内跌幅达4.0%，报88.8美元/桶。",
+          "time": "2026-11-23T23:55:06+08:00",
+          "title": "💱 外汇数据汇总",
+          "type": "telegram"
+        },
+        {
+          "category": "国际",
+          "day": "2026-11-23",
+          "hot": false,
+          "hour": "2026-11-23 23:00",
+          "id": "ab41de84bef44b538a18",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497020",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "美国参议院民主党成员Ruben Gallego：总统特朗普可能已经开启了人工智能泡沫的破裂",
+          "text": "美国参议院民主党成员Ruben Gallego：总统特朗普可能已经开启了人工智能泡沫的破裂",
+          "time": "2026-11-23T23:20:03+08:00",
+          "title": "美国参议院民主党成员Ruben Gallego：总统特朗普可能已经开启了人工智能泡沫的破裂",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-23",
@@ -57476,17 +57524,65 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 317,
+      "seven_day_count": 275,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 52,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
     {
       "id": "CE_Observe",
-      "last_update": "2026-11-23T22:03:52+08:00",
+      "last_update": "2026-11-23T23:14:49+08:00",
       "messages": [
+        {
+          "category": "其他",
+          "day": "2026-11-23",
+          "hot": false,
+          "hour": "2026-11-23 23:00",
+          "id": "3682029603805ef085fd",
+          "image": "",
+          "link": "https://t.me/CE_Observe/44776",
+          "source": "CE_Observe",
+          "source_name": "每日消费电子观察",
+          "summary": "英国网络部队指挥官首次公开承认对外国对手实施进攻性网络行动",
+          "text": "英国网络部队指挥官首次公开承认对外国对手实施进攻性网络行动",
+          "time": "2026-11-23T23:14:49+08:00",
+          "title": "英国网络部队指挥官首次公开承认对外国对手实施进攻性网络行动",
+          "type": "telegram"
+        },
+        {
+          "category": "科技",
+          "day": "2026-11-23",
+          "hot": false,
+          "hour": "2026-11-23 23:00",
+          "id": "dfab63bdfed74a5ba495",
+          "image": "",
+          "link": "https://t.me/CE_Observe/44775",
+          "source": "CE_Observe",
+          "source_name": "每日消费电子观察",
+          "summary": "闹剧结束了\n英明良善的AI时代掌舵人黄仁勋，回到了他忠诚的英伟达»",
+          "text": "闹剧结束了\n英明良善的AI时代掌舵人黄仁勋，回到了他忠诚的英伟达»",
+          "time": "2026-11-23T23:12:48+08:00",
+          "title": "每日消费电子观察 pinned «英伟达董事会恢复黄仁勋的总裁、首席执行官和董事职位",
+          "type": "telegram"
+        },
+        {
+          "category": "其他",
+          "day": "2026-11-23",
+          "hot": false,
+          "hour": "2026-11-23 23:00",
+          "id": "1c745f9c451002d40af7",
+          "image": "media/CE_Observe/44774_1.webp",
+          "link": "https://t.me/CE_Observe/44774",
+          "source": "CE_Observe",
+          "source_name": "每日消费电子观察",
+          "summary": "容器平台Docker更换新的品牌形象，由可爱的彩色鲸鱼变成黑色抽象鲸鱼",
+          "text": "容器平台Docker更换新的品牌形象，由可爱的彩色鲸鱼变成黑色抽象鲸鱼",
+          "time": "2026-11-23T23:07:41+08:00",
+          "title": "容器平台Docker更换新的品牌形象，由可爱的彩色鲸鱼变成黑色抽象鲸鱼",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-23",
@@ -65169,10 +65265,10 @@
         }
       ],
       "name": "每日消费电子观察",
-      "seven_day_count": 67,
+      "seven_day_count": 60,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 14,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/CE_Observe"
     },
@@ -78734,10 +78830,10 @@
         }
       ],
       "name": "FREE 中文",
-      "seven_day_count": 121,
+      "seven_day_count": 97,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 10,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/freechinese"
     },
@@ -80699,10 +80795,10 @@
         }
       ],
       "name": "Time经济观察",
-      "seven_day_count": 25,
+      "seven_day_count": 21,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 6,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/TimeHorizonX"
     },
@@ -92088,10 +92184,10 @@
         }
       ],
       "name": "敏感经济信息分享",
-      "seven_day_count": 108,
+      "seven_day_count": 96,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 19,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/pelosi3"
     },
@@ -101506,10 +101602,10 @@
         }
       ],
       "name": "看新闻 学英语 双语新闻",
-      "seven_day_count": 33,
+      "seven_day_count": 25,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 5,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/shuangyunews_rss"
     },
@@ -116572,10 +116668,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 147,
+      "seven_day_count": 122,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 16,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -118726,10 +118822,10 @@
         }
       ],
       "name": "Newlearnerの自留地",
-      "seven_day_count": 22,
+      "seven_day_count": 18,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 4,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/NewlearnerChannel"
     },
@@ -120339,10 +120435,10 @@
         }
       ],
       "name": "严选君综合福利社",
-      "seven_day_count": 18,
+      "seven_day_count": 16,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 2,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/yxzbp"
     },
@@ -130048,10 +130144,10 @@
         }
       ],
       "name": "动察Beating AI News",
-      "seven_day_count": 138,
+      "seven_day_count": 114,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 18,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/OneMillion_AI"
     },
@@ -131693,10 +131789,10 @@
         }
       ],
       "name": "Reorx’s Forge",
-      "seven_day_count": 28,
+      "seven_day_count": 23,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 1,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/reorx_share"
     },
