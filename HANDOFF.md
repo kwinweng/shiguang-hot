@@ -20,7 +20,7 @@
 3. `chore/source-audit-archive`：盘点 `sources.json`、`trial-sources.json`、`rebang/contract/*.json` 与旧站代码（TG 采集仍靠 `pipeline.py`/`shiguang/`，先迁移再归档），出「在用 / 归档 / 删除」清单和「环球」等薄弱频道的免登录来源建议。**清单先给阿欢过目再执行。**
 4. `feat/blogger-twitter-feed`：博主页改成推特/微博手机版式信息流 + 个人用户流。**先做样页给阿欢确认。**
 5. `feat/dedup-and-auto-highlights`：跨来源去重、同类事件合并（主条 + 折叠同源）；「今日重点」自动打分（多源交叉、来源权重、时效），只做筛选不做热点排行。**先确认打分偏好。**
-6. 名字统一成 News（阿欢 11/25 扩大范围）：GitHub 仓库、本地主仓与工作树、T3、remotes、服务器同步脚本、Air、产品英文名统一为 `shiguang-news` / Shiguang News，中文「拾光资讯」不变，`rebang` 路径不改。方案 `docs/rebang-v1/NEWS-RENAME-PLAN.md`，分段批准执行。
+6. 名字统一成 News、清除 hot/热榜（阿欢 11/25 01:36 定，取代「rebang 不改」）：产品叫「拾光资讯」，英文和技术标识一律 `shiguang-news`。清除范围含 GitHub 仓库、本地主仓与工作树、T3、remotes、服务器同步脚本、Air，以及 `rebang/` 模块、`site-v11` 产物、`gh-pages` 里的 `rebang/`、站点 `/rebang/`、`docs/rebang-v1`、`rebang_refresh.sh` 和测试/文档里的有效引用；历史记录保留原文。线上分「新旧并存 → 服务器切新路径并核验自然同步 → 删旧路径」三段，每段可回退；GitHub 改名、服务器/nginx、定时任务、删文件逐段请阿欢批准。方案 `docs/rebang-v1/NEWS-RENAME-PLAN.md`（重写中）。
 
 ## 其他待办
 1. 采集断更恢复方案见 `docs/rebang-v1/COLLECTION-RECOVERY.md`（11/21）；11/22 晚起每小时数据提交与发布已恢复，执行主机待第 2 步一并查清。
