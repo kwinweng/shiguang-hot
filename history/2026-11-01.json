@@ -19,13 +19,30 @@
           "time": "2026-11-01T23:41:22+08:00",
           "title": "",
           "type": "telegram"
+        },
+        {
+          "category": "其他",
+          "day": "2026-11-01",
+          "hot": false,
+          "hour": "2026-11-01 08:00",
+          "id": "b63afec06cc49093be95",
+          "image": "",
+          "link": "https://t.me/reorx_share/7165",
+          "source": "reorx_share",
+          "source_name": "Reorx’s Forge",
+          "summary": "",
+          "text": "",
+          "time": "2026-11-01T08:53:39+08:00",
+          "title": "",
+          "type": "telegram"
         }
       ],
       "original_links": [
-        "https://t.me/scitech_fans/420"
+        "https://t.me/scitech_fans/420",
+        "https://t.me/reorx_share/7165"
       ],
-      "source_count": 1,
-      "summary": "。本事件整理自当天 1 条原消息，请结合原文核对。",
+      "source_count": 2,
+      "summary": "。本事件整理自当天 2 条原消息，请结合原文核对。",
       "title": ""
     },
     {
@@ -83,6 +100,60 @@
       "title": "10月俄军14次打击乌克兰军工系统使用的变电站"
     },
     {
+      "category": "数码",
+      "messages": [
+        {
+          "category": "数码",
+          "day": "2026-11-01",
+          "hot": false,
+          "hour": "2026-11-01 14:00",
+          "id": "64b88f6d97f866d5a901",
+          "image": "",
+          "link": "https://t.me/zaihuapd/44837",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "关键在于，不管用户此前购买了多少 TB 的云盘容量，如今真正能够用于自己上传文件、手机照片备份和文件夹自动备份的空间，都只有这 1 TB「专业空间」。原有的大容量空间则主要只能用于转存他人文件，相当于把“自己上传”和“转存”彻底拆成了两套容量 更离谱的是，转存他人或被他人转存的单个文件还要求小于 10 GB。对于动辄几十 GB 甚至上百 GB 的原盘 4K 视频来说，这一限制直接影…",
+          "text": "关键在于，不管用户此前购买了多少 TB 的云盘容量，如今真正能够用于自己上传文件、手机照片备份和文件夹自动备份的空间，都只有这 1 TB「专业空间」。原有的大容量空间则主要只能用于转存他人文件，相当于把“自己上传”和“转存”彻底拆成了两套容量 更离谱的是，转存他人或被他人转存的单个文件还要求小于 10 GB。对于动辄几十 GB 甚至上百 GB 的原盘 4K 视频来说，这一限制直接影…",
+          "time": "2026-11-01T14:50:47+08:00",
+          "title": "123 云盘调整存储规则：自传空间仅剩 1 TB 123 云盘近期调整存储规则，额外新增一个仅 1 TB 的「专业空间」",
+          "type": "telegram"
+        }
+      ],
+      "original_links": [
+        "https://t.me/zaihuapd/44837"
+      ],
+      "source_count": 1,
+      "summary": "关键在于，不管用户此前购买了多少 TB 的云盘容量，如今真正能够用于自己上传文件、手机照片备份和文件夹自动备份的空间，都只有这 1 TB「专业空间」。原有的大容量空间则主要只能用于转存他人文件，相当于把“自己上传”和“转存”彻底拆成了两套容量 更离谱的是，转存他人或被他人转存的单个文件还要求小于 10 GB。本事件整理自当天 1 条原消息，请结合原文核对。",
+      "title": "123 云盘调整存储规则：自传空间仅剩 1 TB 123 云盘近期调整存储规则，额外新增一个仅 1 TB 的「专业空间」"
+    },
+    {
+      "category": "其他",
+      "messages": [
+        {
+          "category": "其他",
+          "day": "2026-11-01",
+          "hot": false,
+          "hour": "2026-11-01 21:00",
+          "id": "2bb7755cf53a6416e5c7",
+          "image": "",
+          "link": "https://t.me/zaihuapd/44840",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "春节放假9天、国庆放假7天。 中国政府网 🍀在花频道 🍵茶馆 📮投稿新鲜事",
+          "text": "春节放假9天、国庆放假7天。 中国政府网 🍀在花频道 🍵茶馆 📮投稿新鲜事",
+          "time": "2026-11-01T21:01:17+08:00",
+          "title": "2026年放假安排来了",
+          "type": "telegram"
+        }
+      ],
+      "original_links": [
+        "https://t.me/zaihuapd/44840"
+      ],
+      "source_count": 1,
+      "summary": "春节放假9天、国庆放假7天。中国政府网 🍀在花频道 🍵茶馆 📮投稿新鲜事。本事件整理自当天 1 条原消息，请结合原文核对。",
+      "title": "2026年放假安排来了"
+    },
+    {
       "category": "科技",
       "messages": [
         {
@@ -108,6 +179,33 @@
       "source_count": 1,
       "summary": "据Tom's Hardware报道，Anthropic已悄然限制Claude AI处理涉及视频游戏反向工程、反编译及模组开发的相关指令。近年来，AI技术大幅降低了游戏破解与非法移植的门槛，例如将跨平台游戏混搭或在非原生硬件上运行独占大作，引发了游戏开发商对版权的强烈担忧。本事件整理自当天 1 条原消息，请结合原文核对。",
       "title": "Anthropic 采取措施阻止 Claude 对视频游戏进行逆向工程"
+    },
+    {
+      "category": "财经",
+      "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-01",
+          "hot": false,
+          "hour": "2026-11-01 11:00",
+          "id": "f392ce3ef3f26a3fc96f",
+          "image": "",
+          "link": "https://t.me/OneMillion_AI/5648",
+          "source": "OneMillion_AI",
+          "source_name": "动察Beating AI News",
+          "summary": "AI 推理平台 Baseten 正筹划约 20 亿美元新融资。彭博社披露，本轮拟分两档定价：第一档估值 260 亿美元，第二档 300 亿美元。现有投资者 Sands Capital 预计领投，交易尚未完成。\n\nBaseten 今年 1 月估值只有 50 亿美元，6 月刚以 130 亿美元估值完成 15 亿美元融资。如果新一轮按最高档成交，9 个月内估值将升至原来的 6 倍。值得注意的是，6 月那轮融资也曾被报道采用双档定价，分别为 110 亿和 130 亿美元。\n\nBaseten 主要帮企业部署和运行 AI 模型，处理 GPU 算力调度、推理优化等工作。Cursor、Notion、OpenEvidence 等都是其客户。公司今年 6 月披露，过去一年收入增长 20 倍，推理用量增长 40 倍。\n\n随着企业大量部署开源和定制模型，推理平台迎来快速增长。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "text": "AI 推理平台 Baseten 正筹划约 20 亿美元新融资。彭博社披露，本轮拟分两档定价：第一档估值 260 亿美元，第二档 300 亿美元。现有投资者 Sands Capital 预计领投，交易尚未完成。\n\nBaseten 今年 1 月估值只有 50 亿美元，6 月刚以 130 亿美元估值完成 15 亿美元融资。如果新一轮按最高档成交，9 个月内估值将升至原来的 6 倍。值得注意的是，6 月那轮融资也曾被报道采用双档定价，分别为 110 亿和 130 亿美元。\n\nBaseten 主要帮企业部署和运行 AI 模型，处理 GPU 算力调度、推理优化等工作。Cursor、Notion、OpenEvidence 等都是其客户。公司今年 6 月披露，过去一年收入增长 20 倍，推理用量增长 40 倍。\n\n随着企业大量部署开源和定制模型，推理平台迎来快速增长。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "time": "2026-11-01T11:16:39+08:00",
+          "title": "Baseten拟融资20亿美元，最高估值300亿：4个月身价翻倍有余",
+          "type": "telegram"
+        }
+      ],
+      "original_links": [
+        "https://t.me/OneMillion_AI/5648"
+      ],
+      "source_count": 1,
+      "summary": "AI 推理平台 Baseten 正筹划约 20 亿美元新融资。彭博社披露，本轮拟分两档定价：第一档估值 260 亿美元，第二档 300 亿美元。本事件整理自当天 1 条原消息，请结合原文核对。",
+      "title": "Baseten拟融资20亿美元，最高估值300亿：4个月身价翻倍有余"
     },
     {
       "category": "科技",
@@ -137,6 +235,33 @@
       "title": "DeepSeek发布Super-agent设计探索：AI指挥AI的自主智能体架构"
     },
     {
+      "category": "科技",
+      "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-01",
+          "hot": false,
+          "hour": "2026-11-01 11:00",
+          "id": "7b740b5a2da64b9767f9",
+          "image": "",
+          "link": "https://t.me/OneMillion_AI/5651",
+          "source": "OneMillion_AI",
+          "source_name": "动察Beating AI News",
+          "summary": "Meta 与上海傅利叶智能合作，仅用三个月造出人形机器人原型 Max。Max 基于傅利叶前三代人形机器人的硬件和技术积累开发，Meta 主要调整了机身比例、头部设计和摄像头，并增加了双手等部件。Meta 机器人产品副总裁还在傅利叶上海工厂待了近两个月，8 月底完成内部展示。\n\nMeta 去年成立机器人团队时，就想做机器人界的「安卓」：自己研发 AI 软件，让不同厂商的机器人都能使用。CTO Bosworth 当时指出，机器人跑跳已经不算最难，真正的瓶颈是精细操作。比如拿起一杯水，既不能捏碎杯子，也不能把水洒出来。这需要 AI 理解物理世界，并掌握对力度和动作的精确控制。\n\n与傅利叶合作，让 Meta 不必从零开发机器人本体，就能更快开展这类实验。Max 高约 1.5 米，搭载英伟达 Jetson Thor 芯片，五指手可以拿起小瓶子和玩具。双方 9 月又启动 Max 2，重点改进双手操作和上下楼梯能力。\n\nMeta 希望未来让 Muse AI 智能体拥有身体，进入家庭完成实际任务。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "text": "Meta 与上海傅利叶智能合作，仅用三个月造出人形机器人原型 Max。Max 基于傅利叶前三代人形机器人的硬件和技术积累开发，Meta 主要调整了机身比例、头部设计和摄像头，并增加了双手等部件。Meta 机器人产品副总裁还在傅利叶上海工厂待了近两个月，8 月底完成内部展示。\n\nMeta 去年成立机器人团队时，就想做机器人界的「安卓」：自己研发 AI 软件，让不同厂商的机器人都能使用。CTO Bosworth 当时指出，机器人跑跳已经不算最难，真正的瓶颈是精细操作。比如拿起一杯水，既不能捏碎杯子，也不能把水洒出来。这需要 AI 理解物理世界，并掌握对力度和动作的精确控制。\n\n与傅利叶合作，让 Meta 不必从零开发机器人本体，就能更快开展这类实验。Max 高约 1.5 米，搭载英伟达 Jetson Thor 芯片，五指手可以拿起小瓶子和玩具。双方 9 月又启动 Max 2，重点改进双手操作和上下楼梯能力。\n\nMeta 希望未来让 Muse AI 智能体拥有身体，进入家庭完成实际任务。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "time": "2026-11-01T11:48:05+08:00",
+          "title": "Meta联手傅利叶3个月造出人形机器人原型，想给Muse装上手和脚",
+          "type": "telegram"
+        }
+      ],
+      "original_links": [
+        "https://t.me/OneMillion_AI/5651"
+      ],
+      "source_count": 1,
+      "summary": "Meta 与上海傅利叶智能合作，仅用三个月造出人形机器人原型 Max。Max 基于傅利叶前三代人形机器人的硬件和技术积累开发，Meta 主要调整了机身比例、头部设计和摄像头，并增加了双手等部件。本事件整理自当天 1 条原消息，请结合原文核对。",
+      "title": "Meta联手傅利叶3个月造出人形机器人原型，想给Muse装上手和脚"
+    },
+    {
       "category": "其他",
       "messages": [
         {
@@ -162,114 +287,6 @@
       "source_count": 1,
       "summary": "OPEC+下属小组将于11月29日举行下一次月度会议。本事件整理自当天 1 条原消息，请结合原文核对。",
       "title": "OPEC+声明：OPEC+同意在12月维持产量配额不变"
-    },
-    {
-      "category": "科技",
-      "messages": [
-        {
-          "category": "科技",
-          "day": "2026-11-01",
-          "hot": false,
-          "hour": "2026-11-01 21:00",
-          "id": "80af63f19ebda26224dc",
-          "image": "",
-          "link": "https://t.me/xhqcankao/32833",
-          "source": "xhqcankao",
-          "source_name": "风向旗参考快讯",
-          "summary": "从今年 12 月起，OpenAI 将调整 Plus、Pro 和 Business 套餐的使用额度规则。随着 Work 的智能体功能逐步整合进 ChatGPT，ChatGPT 和 Codex 将开始共用同一份使用额度。\n\n调整后，ChatGPT 和 Codex 的使用量将统一以 Token 计算。实际消耗多少额度，取决于你使用的模型以及任务的复杂程度。一般来说，模型能力越强、任务越复杂，消耗的额度就越多。不过，Instant（即时）模式下的日常聊天不会消耗这部分额度。\n\n如果额度用完，可以等待额度恢复，也可以升级订阅套餐，或额外购买使用积分，继续使用支持该付费方式的功能。\n\n—— OpenAI",
-          "text": "从今年 12 月起，OpenAI 将调整 Plus、Pro 和 Business 套餐的使用额度规则。随着 Work 的智能体功能逐步整合进 ChatGPT，ChatGPT 和 Codex 将开始共用同一份使用额度。\n\n调整后，ChatGPT 和 Codex 的使用量将统一以 Token 计算。实际消耗多少额度，取决于你使用的模型以及任务的复杂程度。一般来说，模型能力越强、任务越复杂，消耗的额度就越多。不过，Instant（即时）模式下的日常聊天不会消耗这部分额度。\n\n如果额度用完，可以等待额度恢复，也可以升级订阅套餐，或额外购买使用积分，继续使用支持该付费方式的功能。\n\n—— OpenAI",
-          "time": "2026-11-01T21:04:10+08:00",
-          "title": "OpenAI 将进一步合并 ChatGPT 与 Codex 共享额度并统一以 Token 计算",
-          "type": "telegram"
-        }
-      ],
-      "original_links": [
-        "https://t.me/xhqcankao/32833"
-      ],
-      "source_count": 1,
-      "summary": "从今年 12 月起，OpenAI 将调整 Plus、Pro 和 Business 套餐的使用额度规则。随着 Work 的智能体功能逐步整合进 ChatGPT，ChatGPT 和 Codex 将开始共用同一份使用额度。本事件整理自当天 1 条原消息，请结合原文核对。",
-      "title": "OpenAI 将进一步合并 ChatGPT 与 Codex 共享额度并统一以 Token 计算"
-    },
-    {
-      "category": "科技",
-      "messages": [
-        {
-          "category": "科技",
-          "day": "2026-11-01",
-          "hot": false,
-          "hour": "2026-11-01 18:00",
-          "id": "e8adaede707a3cbf210a",
-          "image": "",
-          "link": "https://t.me/xhqcankao/32830",
-          "source": "xhqcankao",
-          "source_name": "风向旗参考快讯",
-          "summary": "OpenAI、谷歌、微软和Anthropic共同宣布，将支持一种全新的标准，允许网站发布者通过统一的“策略令牌”（policy token）一次性拒绝被多家AI公司爬取内容用于模型训练。该标准由Anthropic技术负责人Kevin Kelley向互联网工程任务组（IETF）提出，并将集成在网站的robots.txt文件中。目前，网站需向每家公司单独声明训练偏好，新标准旨在简化这一流程。Anthropic已率先采纳，OpenAI计划在未来几个月内落实，谷歌和微软则预计于明年支持。Meta发言人Andy Stone也表示支持建立此类通用信号，但未明确具体落地计划。各方强调，该设置仅针对AI训练…\n\n—— The Verge",
-          "text": "OpenAI、谷歌、微软和Anthropic共同宣布，将支持一种全新的标准，允许网站发布者通过统一的“策略令牌”（policy token）一次性拒绝被多家AI公司爬取内容用于模型训练。该标准由Anthropic技术负责人Kevin Kelley向互联网工程任务组（IETF）提出，并将集成在网站的robots.txt文件中。目前，网站需向每家公司单独声明训练偏好，新标准旨在简化这一流程。Anthropic已率先采纳，OpenAI计划在未来几个月内落实，谷歌和微软则预计于明年支持。Meta发言人Andy Stone也表示支持建立此类通用信号，但未明确具体落地计划。各方强调，该设置仅针对AI训练…\n\n—— The Verge",
-          "time": "2026-11-01T18:06:58+08:00",
-          "title": "OpenAI、谷歌、微软和Anthropic联手推行AI数据抓取退出标准",
-          "type": "telegram"
-        }
-      ],
-      "original_links": [
-        "https://t.me/xhqcankao/32830"
-      ],
-      "source_count": 1,
-      "summary": "OpenAI、谷歌、微软和Anthropic共同宣布，将支持一种全新的标准，允许网站发布者通过统一的“策略令牌”（policy token）一次性拒绝被多家AI公司爬取内容用于模型训练。该标准由Anthropic技术负责人Kevin Kelley向互联网工程任务组（IETF）提出，并将集成在网站的robots。本事件整理自当天 1 条原消息，请结合原文核对。",
-      "title": "OpenAI、谷歌、微软和Anthropic联手推行AI数据抓取退出标准"
-    },
-    {
-      "category": "科技",
-      "messages": [
-        {
-          "category": "科技",
-          "day": "2026-11-01",
-          "hot": true,
-          "hour": "2026-11-01 06:00",
-          "id": "b2e4c7907a7685415bd5",
-          "image": "",
-          "link": "https://t.me/xhqcankao/32823",
-          "source": "xhqcankao",
-          "source_name": "风向旗参考快讯",
-          "summary": "OpenAI将新一轮融资目标削减100亿美元至约200亿美元，估值也从1.4万亿美元下调至1.25万亿美元。\n\n知情人士称，OpenAI要求投资者在周五前作出认购承诺，但由于部分投资者调低了认购额度，截至周五的首批认购资金预计不足200亿美元。\n\n周五，纳斯达克100指数下跌3.5%，二级市场的AI抛售潮和头号对手Anthropic即将上市，给这轮融资蒙上阴影。\n\n—— 华尔街见闻",
-          "text": "OpenAI将新一轮融资目标削减100亿美元至约200亿美元，估值也从1.4万亿美元下调至1.25万亿美元。\n\n知情人士称，OpenAI要求投资者在周五前作出认购承诺，但由于部分投资者调低了认购额度，截至周五的首批认购资金预计不足200亿美元。\n\n周五，纳斯达克100指数下跌3.5%，二级市场的AI抛售潮和头号对手Anthropic即将上市，给这轮融资蒙上阴影。\n\n—— 华尔街见闻",
-          "time": "2026-11-01T06:52:58+08:00",
-          "title": "OpenAI大幅削减融资金额 从300亿降到200亿",
-          "type": "telegram"
-        }
-      ],
-      "original_links": [
-        "https://t.me/xhqcankao/32823"
-      ],
-      "source_count": 1,
-      "summary": "OpenAI将新一轮融资目标削减100亿美元至约200亿美元，估值也从1。4万亿美元下调至1。本事件整理自当天 1 条原消息，请结合原文核对。",
-      "title": "OpenAI大幅削减融资金额 从300亿降到200亿"
-    },
-    {
-      "category": "科技",
-      "messages": [
-        {
-          "category": "科技",
-          "day": "2026-11-01",
-          "hot": false,
-          "hour": "2026-11-01 10:00",
-          "id": "d198396e17cf39fe448a",
-          "image": "",
-          "link": "https://t.me/CE_Observe/44542",
-          "source": "CE_Observe",
-          "source_name": "每日消费电子观察",
-          "summary": "RTX40与20系显卡AI性能解锁方案相继出现",
-          "text": "RTX40与20系显卡AI性能解锁方案相继出现",
-          "time": "2026-11-01T10:48:26+08:00",
-          "title": "RTX40与20系显卡AI性能解锁方案相继出现",
-          "type": "telegram"
-        }
-      ],
-      "original_links": [
-        "https://t.me/CE_Observe/44542"
-      ],
-      "source_count": 1,
-      "summary": "RTX40与20系显卡AI性能解锁方案相继出现。本事件整理自当天 1 条原消息，请结合原文核对。",
-      "title": "RTX40与20系显卡AI性能解锁方案相继出现"
     }
   ],
   "messages": [
@@ -407,7 +424,7 @@
       "hot": false,
       "hour": "2026-11-01 22:00",
       "id": "23bd0d3feb153099bbaa",
-      "image": "media/TimeHorizonX/1917_1.webp",
+      "image": "",
       "link": "https://t.me/TimeHorizonX/1917",
       "source": "TimeHorizonX",
       "source_name": "Time经济观察",
@@ -423,7 +440,7 @@
       "hot": false,
       "hour": "2026-11-01 22:00",
       "id": "caae5e4d66c3511f95cd",
-      "image": "media/freechinese/113100_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113100",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -452,7 +469,7 @@
     {
       "category": "国际",
       "day": "2026-11-01",
-      "hot": false,
+      "hot": true,
       "hour": "2026-11-01 21:00",
       "id": "a9efc24e2f0302ee8cde",
       "image": "",
@@ -519,7 +536,7 @@
       "hot": false,
       "hour": "2026-11-01 21:00",
       "id": "2d1b72c449639223eddb",
-      "image": "media/CE_Observe/44543_1.webp",
+      "image": "",
       "link": "https://t.me/CE_Observe/44543",
       "source": "CE_Observe",
       "source_name": "每日消费电子观察",
@@ -527,6 +544,22 @@
       "text": "米哈游今日正式宣布，旗下游戏《星布谷地》（Petit Planet）将于2027年登陆Nintendo Switch 2平台。官方在公告中表示，关于Switch 2版本，目前开发团队正在锐意推进开发工作。\n\n想问问另一款旷世巨作什么时候登陆ns 🤣👉",
       "time": "2026-11-01T21:02:11+08:00",
       "title": "米哈游《星布谷地》官宣登陆Switch2 2027年上线",
+      "type": "telegram"
+    },
+    {
+      "category": "其他",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 21:00",
+      "id": "2bb7755cf53a6416e5c7",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44840",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "春节放假9天、国庆放假7天。 中国政府网 🍀在花频道 🍵茶馆 📮投稿新鲜事",
+      "text": "春节放假9天、国庆放假7天。 中国政府网 🍀在花频道 🍵茶馆 📮投稿新鲜事",
+      "time": "2026-11-01T21:01:17+08:00",
+      "title": "2026年放假安排来了",
       "type": "telegram"
     },
     {
@@ -631,7 +664,7 @@
       "hot": false,
       "hour": "2026-11-01 20:00",
       "id": "ebcd0506fce5ad535f61",
-      "image": "media/xhqcankao/32832_1.webp",
+      "image": "",
       "link": "https://t.me/xhqcankao/32832",
       "source": "xhqcankao",
       "source_name": "风向旗参考快讯",
@@ -658,6 +691,22 @@
       "type": "telegram"
     },
     {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": true,
+      "hour": "2026-11-01 19:00",
+      "id": "e5d68db8eef0a8879bf1",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5654",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "《华尔街日报》将 Meta 的扎克伯格、SpaceX 的马斯克和 Anthropic 的 Dario Amodei 画成古代君主，称我们正生活在「帝国 CEO」时代。\n\n所谓「帝国 CEO」，并不只是公司老板权力大，而是这些科技巨头越来越像围绕创始人意志运转的王国。他们可以押上数百亿美元，追逐近乎科幻的技术愿景。即便上市融资，也不必像传统企业高管那样受到股东的直接约束。\n\n扎克伯格曾豪赌元宇宙，投入数百亿美元，如今又大举押注 AI。Meta 董事会最近甚至为他设计了新的无投票权股票，以应对潜在的加州富豪税，同时保住他的控制权。\n\n马斯克手中的 SpaceX 已将火箭、星链、X 和 Grok 纳入同一商业版图，上市后依然由他主导。\n\nAnthropic 则准备让七名创始人与独立信托共同把持公司治理，试图让 AI 安全路线不受短期股价压力左右。\n\n硅谷推崇这种敢于豪赌的「创始人模式」，投资者也愿意为之买单。但赌对了，投资者可能获得惊人回报；赌错了，外部股东却很难纠正方向。\n\n当科技巨头的决策影响越来越多人的生活，谁来约束这些「帝国 CEO」，便不再只是股东自己的问题。\n\n信源\n\n动察 Be",
+      "text": "《华尔街日报》将 Meta 的扎克伯格、SpaceX 的马斯克和 Anthropic 的 Dario Amodei 画成古代君主，称我们正生活在「帝国 CEO」时代。\n\n所谓「帝国 CEO」，并不只是公司老板权力大，而是这些科技巨头越来越像围绕创始人意志运转的王国。他们可以押上数百亿美元，追逐近乎科幻的技术愿景。即便上市融资，也不必像传统企业高管那样受到股东的直接约束。\n\n扎克伯格曾豪赌元宇宙，投入数百亿美元，如今又大举押注 AI。Meta 董事会最近甚至为他设计了新的无投票权股票，以应对潜在的加州富豪税，同时保住他的控制权。\n\n马斯克手中的 SpaceX 已将火箭、星链、X 和 Grok 纳入同一商业版图，上市后依然由他主导。\n\nAnthropic 则准备让七名创始人与独立信托共同把持公司治理，试图让 AI 安全路线不受短期股价压力左右。\n\n硅谷推崇这种敢于豪赌的「创始人模式」，投资者也愿意为之买单。但赌对了，投资者可能获得惊人回报；赌错了，外部股东却很难纠正方向。\n\n当科技巨头的决策影响越来越多人的生活，谁来约束这些「帝国 CEO」，便不再只是股东自己的问题。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-11-01T19:20:29+08:00",
+      "title": "WSJ：我们正生活在「帝国 CEO」时代，科技巨头越来越像私人王国",
+      "type": "telegram"
+    },
+    {
       "category": "国际",
       "day": "2026-11-01",
       "hot": false,
@@ -679,7 +728,7 @@
       "hot": false,
       "hour": "2026-11-01 18:00",
       "id": "7756deb6bb1561ad5707",
-      "image": "media/freechinese/113096_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113096",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -703,6 +752,22 @@
       "text": "教皇利奥十四世在周五的教皇致辞中呼吁“解除”人工智能系统的武装，并敦促联合国成员国在下月日内瓦会议上采取具体行动，禁止致命性自主武器。他强调“机器是工具而非人”，警告赋予人工智能法律主体地位的危险性，并指出涉及人类生命与自由的决定必须由人类进行有效监督。教皇重申，决策过程应建立在共同标准、独立监管及明确的问责机制之上，以保障人类共同福祉并应对人工智能带来的风险。\n\n—— The Verge",
       "time": "2026-11-01T18:39:58+08:00",
       "title": "教皇利奥呼吁解除人工智能武装：机器是工具而非人",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 18:00",
+      "id": "14895bd63a780edb13a6",
+      "image": "",
+      "link": "https://t.me/yxzbp/10223",
+      "source": "yxzbp",
+      "source_name": "严选君综合福利社",
+      "summary": "━━━━━━━━━━━━━━━━━\n💡 亮点：在线录播客神器，本地高清录制不掉线\n\n📖 简介：\nRiverside 是一个专为播客和视频访谈设计的在线录制平台，最大亮点是本地录制：即使网络卡顿，每个人的音视频也会以高清无损质量保存在本地，事后自动同步到云端。支持分轨下载、AI 自动转录、自动生成字幕和短视频切片，还能一键去除静音和填充词。免费版每月有录制时长额度，适合做访谈类短视频或播客的年轻人。\n\n🏷️ 标签：播客录制视频访谈短视频工具AI转录\n\n🔗 👉 点击直达\n━━━━━━━━━━━━━━━━━\n@yxzbpTool",
+      "text": "━━━━━━━━━━━━━━━━━\n💡 亮点：在线录播客神器，本地高清录制不掉线\n\n📖 简介：\nRiverside 是一个专为播客和视频访谈设计的在线录制平台，最大亮点是本地录制：即使网络卡顿，每个人的音视频也会以高清无损质量保存在本地，事后自动同步到云端。支持分轨下载、AI 自动转录、自动生成字幕和短视频切片，还能一键去除静音和填充词。免费版每月有录制时长额度，适合做访谈类短视频或播客的年轻人。\n\n🏷️ 标签：播客录制视频访谈短视频工具AI转录\n\n🔗 👉 点击直达\n━━━━━━━━━━━━━━━━━\n@yxzbpTool",
+      "time": "2026-11-01T18:27:00+08:00",
+      "title": "🚀 Riverside.fm",
       "type": "telegram"
     },
     {
@@ -759,7 +824,7 @@
       "hot": false,
       "hour": "2026-11-01 17:00",
       "id": "9d9b0116d5b8fe04d672",
-      "image": "media/NewlearnerChannel/16087_1.webp",
+      "image": "",
       "link": "https://t.me/NewlearnerChannel/16087",
       "source": "NewlearnerChannel",
       "source_name": "Newlearnerの自留地",
@@ -767,6 +832,22 @@
       "text": "✈️ 【11.1 更新】 自留地导航页\n\n📩 投稿 & 编辑申请：@newlearner_pm_bot\n\n👀 本周盘点：\n\n• 苹果悄然更新 iPad mini 第八代 / 苹果悄然更新 iMac 2026 / 苹果悄然更新 MacBook Pro 14 英寸 2026 / 苹果欣然发布 MacBook Pro with PROLED XDR\n• 潮流周刊（第287期） - 杭州金桂\n• Python 潮流周刊第 172 期\n• Mac.apk：走 Wine 路线的 macOS 原生运行 Android 应用工具\n• HomePlay：它会看着你，并将 CarPlay 带到 Mac 上\n• HelloGitHub：面向入门爱好者的开源项目月刊，近日更新第 127 期\n• ego(lite)：让 AI Agent 带着你的登录状态，在独立工作区里操作网页\n• 小扫帚：卸载 App，也把留下的零碎一起带走\n• 聊聊我的直营店 iPhone Duo 上手体验\n\n🎬 流媒体周报：第 31 届釜山电影节获奖名单公布，第 21 届罗马电影节获奖名单揭晓，《珠穆朗玛：云中彼岸》《时间里的爱人》《沙丘 3》内地定档等\n\n🍂 霜降之后，天气越来越有秋天的样子了。时至深秋，早晨的雾多了起来，周末的阴雨天气，也让气温凉了，非常期待本月中下旬多彩的世界。本周末没有做太多的事情，去超市采购、看了《疾速追杀》重映，又在家看了《黑球》和《突如其来》。一些电影节的好片子逐渐释出，影迷仿佛过年一般，还有《托尼》《茫然女王》《害群之马》等电影待看，和秋冬也很搭\n\n🍎 Apple 本周继续保持了现场发布的节奏，带来了新 iPad mini、MacBook Pro 14 英寸、iMac 以及触屏 MacBook Pro。可以观察到，大家对这些新品褒贬不一，各抒己见，这样真实鲜活的声音在 AI 时代并不多见了。实际上，除了一些设计大变革（譬如 iPad Pro 2018）以及加量不加价（譬如 iPhone 17）的时候，大多数的 Apple 新品从发布开始就会有各种争议，直到一段时间之后市场用销量给出答案\n\n我个人对 iPad mini 未上高刷表示遗憾，同时比较好奇触屏 MacBook Pro 铰链的手感到底如何、屏幕反复触碰之后会成什么样子、又有哪些 UI 适配触屏用途的细节之处，这些在媒体的简单上手中鲜有提及。正如之前在新闻稿所说，MacBook Pro 引入触屏，只是面向创作者和年轻一代多了一种交互方式，和当年「选择高端 = 选择 Touch Bar = 选择失去实体按键」不可同日而语\n\n此外，数码爱好者到底应不应该发声、应不应该把情感倾泻于电子产品这种（相对）快消品？面对越来越多的 AI 和商业稿件，社区当然应该有它自己的声音和态度，我想这也是大家聚集到一起的初衷。至于情感倾斜，抛开 重启感性 不谈，回顾频道一路走来，正是电子产品 —— 或者说 iPhone 和 Mac 让自留地成为了今天的模样；即便时过境迁，它们只占据生活中的一小部分，我们也不能忘记真正的根基和共识是什么\n\n享受物质带来的生活，而不局限于物品本身 —— 并不是一句漂亮话。当你真正历经了这些之后，那些美学、情感、思辨、求真，会潜移默化地影响着自己，推动你去做一些有意思的事 —— 无论是文字表达还是 Vibe Coding。一直有想法重启一次征文活动，就聊聊我们自身与电子产品之间的故事、联结，重新把刺眼的「情绪价值」拆解为尊重、欣赏、陪伴、赞美、包容等具象化的品质\n\n🤖 过去的一个月，一直在研究如何自动处理和过滤 附属群聊 以及投稿机器人的广告问题，后者已经和大家详细分享过。针对前者，我们开发了一套黑盒程序，经过半个月的测试准确率已经高于 99%，所以在本周已经正式投入自动化运行。我会尽快通过推送和大家分享一些其中的细节，如有进群误伤或无法进群的情况，可以通过投稿机器人 @newlearner_pm_bot 与我取得联系\n\n频道：@NewlearnerChannel",
       "time": "2026-11-01T17:59:01+08:00",
       "title": "telegramBlogChannel",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 17:00",
+      "id": "36788e72a26e0d39b52e",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44839",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "🤖 ChatGPT 与 Codex 用量额度将共享，将以词元（token）为单位进行计量 OpenAI 在连续 28 天更新的第 27 天更新：自 12 月起 ChatGPT 与 Codex 的用量额度将在 Plus、Pro 和 Business 计划间共享，因为 Work 的智能体能力将并入 ChatGPT 主体验。 额度以词元（token）计量，模型越先进、任务越复杂，消耗越大；即时聊天不占用额度。用户可在设置中查看合并剩余用量与重置时间，超出后可等待重置、升级套餐或购买积分。 🤖 Tibo 称今日的重置卡已发放。…",
+      "text": "🤖 ChatGPT 与 Codex 用量额度将共享，将以词元（token）为单位进行计量 OpenAI 在连续 28 天更新的第 27 天更新：自 12 月起 ChatGPT 与 Codex 的用量额度将在 Plus、Pro 和 Business 计划间共享，因为 Work 的智能体能力将并入 ChatGPT 主体验。 额度以词元（token）计量，模型越先进、任务越复杂，消耗越大；即时聊天不占用额度。用户可在设置中查看合并剩余用量与重置时间，超出后可等待重置、升级套餐或购买积分。 🤖 Tibo 称今日的重置卡已发放。…",
+      "time": "2026-11-01T17:41:48+08:00",
+      "title": "🤖 ChatGPT 与 Codex 用量额度将共享，将以词元（token）为单位进行计量 OpenAI 在连续 28 天更新的第 27 天更新：自 12 月起 ChatGP…",
       "type": "telegram"
     },
     {
@@ -783,6 +864,38 @@
       "text": "在近期接受《连线》杂志采访时，于9月初正式出任苹果CEO的约翰·特努斯回应了外界关于苹果AI进展滞后的质疑。特努斯表示，他对苹果目前的处境非常满意。他强调，苹果绝不会“为了AI而做AI”，真正的成功在于产品是否能让用户喜爱，而非仅仅展示技术。他认为，当AI技术应用得当时，用户甚至无需察觉其背后是AI驱动还是传统软件。此外，针对AI Agent可能取代App的猜测，特努斯坚持认为产品创造本质上是极其人性化且个人的过程，苹果对此充满热情。\n\n—— TechCrunch",
       "time": "2026-11-01T17:34:51+08:00",
       "title": "苹果回应AI进展滞后：公司不想为了AI而做AI 对当前处境非常满意",
+      "type": "telegram"
+    },
+    {
+      "category": "其他",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 17:00",
+      "id": "109649a20dc5f303093b",
+      "image": "",
+      "link": "https://t.me/yxzbp/10222",
+      "source": "yxzbp",
+      "source_name": "严选君综合福利社",
+      "summary": "━━━━━━━━━━━━━━━━━\n💡 亮点：耶鲁大学免费公开课，不用考托福也能上！\n\n📖 简介：\n耶鲁大学官方免费公开课平台，提供数十门完整本科课程的视频、音频和讲义，涵盖哲学、心理学、天文学、政治学等。没有广告，没有付费墙，注册都不需要，直接就能看。想系统学点东西又不想被网课平台割韭菜？这个是真·名校教授原汁原味的课堂录像。\n\n🏷️ 标签：在线课程耶鲁大学免费学习公开课\n\n🔗 👉 点击直达\n━━━━━━━━━━━━━━━━━\n@yxzbpTool",
+      "text": "━━━━━━━━━━━━━━━━━\n💡 亮点：耶鲁大学免费公开课，不用考托福也能上！\n\n📖 简介：\n耶鲁大学官方免费公开课平台，提供数十门完整本科课程的视频、音频和讲义，涵盖哲学、心理学、天文学、政治学等。没有广告，没有付费墙，注册都不需要，直接就能看。想系统学点东西又不想被网课平台割韭菜？这个是真·名校教授原汁原味的课堂录像。\n\n🏷️ 标签：在线课程耶鲁大学免费学习公开课\n\n🔗 👉 点击直达\n━━━━━━━━━━━━━━━━━\n@yxzbpTool",
+      "time": "2026-11-01T17:18:30+08:00",
+      "title": "🚀 Open Yale Courses",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 17:00",
+      "id": "d7fd767cf13480133c73",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44838",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "《广东省未成年人保护条例》修订草案修改稿公开征求意见，拟禁止任何组织或个人以夏令营、冬令营、特训营、校外培训等形式或名义，开展未成年人不良行为教育矫治类活动。\n\n意见征集截止至 2026 年 11 月 25 日。\n\n广东人大网\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "《广东省未成年人保护条例》修订草案修改稿公开征求意见，拟禁止任何组织或个人以夏令营、冬令营、特训营、校外培训等形式或名义，开展未成年人不良行为教育矫治类活动。\n\n意见征集截止至 2026 年 11 月 25 日。\n\n广东人大网\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-11-01T17:08:17+08:00",
+      "title": "广东拟禁止以“戒网瘾”等名义开展矫治未成年人活动",
       "type": "telegram"
     },
     {
@@ -903,7 +1016,7 @@
       "hot": false,
       "hour": "2026-11-01 15:00",
       "id": "56eb7777343a2d5bb9f7",
-      "image": "media/freechinese/113093_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113093",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -951,7 +1064,7 @@
       "hot": false,
       "hour": "2026-11-01 14:00",
       "id": "ce6a88b7c6b95e311c6b",
-      "image": "media/pelosi3/29987_1.webp",
+      "image": "",
       "link": "https://t.me/pelosi3/29987",
       "source": "pelosi3",
       "source_name": "敏感经济信息分享",
@@ -959,6 +1072,22 @@
       "text": "东北狗简简单单常规操作一下😁",
       "time": "2026-11-01T14:52:33+08:00",
       "title": "即使只是一个大厅服务员",
+      "type": "telegram"
+    },
+    {
+      "category": "数码",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 14:00",
+      "id": "64b88f6d97f866d5a901",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44837",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "关键在于，不管用户此前购买了多少 TB 的云盘容量，如今真正能够用于自己上传文件、手机照片备份和文件夹自动备份的空间，都只有这 1 TB「专业空间」。原有的大容量空间则主要只能用于转存他人文件，相当于把“自己上传”和“转存”彻底拆成了两套容量 更离谱的是，转存他人或被他人转存的单个文件还要求小于 10 GB。对于动辄几十 GB 甚至上百 GB 的原盘 4K 视频来说，这一限制直接影…",
+      "text": "关键在于，不管用户此前购买了多少 TB 的云盘容量，如今真正能够用于自己上传文件、手机照片备份和文件夹自动备份的空间，都只有这 1 TB「专业空间」。原有的大容量空间则主要只能用于转存他人文件，相当于把“自己上传”和“转存”彻底拆成了两套容量 更离谱的是，转存他人或被他人转存的单个文件还要求小于 10 GB。对于动辄几十 GB 甚至上百 GB 的原盘 4K 视频来说，这一限制直接影…",
+      "time": "2026-11-01T14:50:47+08:00",
+      "title": "123 云盘调整存储规则：自传空间仅剩 1 TB 123 云盘近期调整存储规则，额外新增一个仅 1 TB 的「专业空间」",
       "type": "telegram"
     },
     {
@@ -994,6 +1123,22 @@
       "type": "telegram"
     },
     {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": true,
+      "hour": "2026-11-01 13:00",
+      "id": "463599964060ad6f56cb",
+      "image": "",
+      "link": "https://t.me/dps_build/728",
+      "source": "dps_build",
+      "source_name": "DPS Build",
+      "summary": "然后又把之前和 ChatGPT 聊过的训练建议也放到了本地。\n\n都交给本地模型分析。",
+      "text": "然后又把之前和 ChatGPT 聊过的训练建议也放到了本地。\n\n都交给本地模型分析。",
+      "time": "2026-11-01T13:58:07+08:00",
+      "title": "今天从 Apple health 里把多年的数据都导出了，包含 Apple watch 的监测数据以及 Apple Fitness 的训练数据",
+      "type": "telegram"
+    },
+    {
       "category": "国际",
       "day": "2026-11-01",
       "hot": false,
@@ -1010,12 +1155,76 @@
       "type": "telegram"
     },
     {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 12:00",
+      "id": "12128c0d4cfd28bd44ae",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44836",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "xAI 宣布为 Grok 生成的文本加入水印，目前正在全球范围推送。此前 xAI 是最后一家未对文本加水印的主要厂商，据 Andrew Curran 的说法，如今只剩北美地区的 ChatGPT 尚未加水印。\n\nAndrew Curran\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "xAI 宣布为 Grok 生成的文本加入水印，目前正在全球范围推送。此前 xAI 是最后一家未对文本加水印的主要厂商，据 Andrew Curran 的说法，如今只剩北美地区的 ChatGPT 尚未加水印。\n\nAndrew Curran\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-11-01T12:39:11+08:00",
+      "title": "🤖 xAI 为 Grok 文本加水印并全球推送",
+      "type": "telegram"
+    },
+    {
+      "category": "数码",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 12:00",
+      "id": "ca4d5fda7f674d3e1afb",
+      "image": "",
+      "link": "https://t.me/yxzbp/10221",
+      "source": "yxzbp",
+      "source_name": "严选君综合福利社",
+      "summary": "电报群组&频道\n翻墙世界的梯子\n某咕咕机场测评站（真实机场测评）\nMagazine-期刊杂志\n分享社_破解软件/公益机场VPN\n独特吧-破解软件游戏资源分享\n奇趣吃瓜\nJBCAT优质壁纸走私\n App Store 限免应用\n\n电报频道索引\n互推：@miaomiao333bot",
+      "text": "电报群组&频道\n翻墙世界的梯子\n某咕咕机场测评站（真实机场测评）\nMagazine-期刊杂志\n分享社_破解软件/公益机场VPN\n独特吧-破解软件游戏资源分享\n奇趣吃瓜\nJBCAT优质壁纸走私\n App Store 限免应用\n\n电报频道索引\n互推：@miaomiao333bot",
+      "time": "2026-11-01T12:01:42+08:00",
+      "title": "频道互推群组推荐",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 11:00",
+      "id": "e5e4c02e5a89ba08f988",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5653",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "马斯克披露，孟菲斯超级计算集群Colossus 2计划在年底前部署约120万块英伟达Blackwell GPU。接下来还有两座设施投运：Gun Range预计11月底上线22万块GB300，用于模型训练；Spam 由一座原本存放午餐肉等食品的仓库改造而来，计划部署约20万块GB300，专门用于AI推理。\n\n目前，Macrohard配有11万块GB200和22万块GB300，Macroharder、Minihard各有22万块GB300。加上接下来计划新增的42万块，五个集群合计约119万块。\n\n训练和推理对网络的要求也不同。Macroharder、Minihard 和 Gun Range 均采用 800Gbps 网卡，而 Spam 的推理任务不需要同等规模的高速互联。马斯克称，其网络配置更简单，所需光纤不到训练设施的一半。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "马斯克披露，孟菲斯超级计算集群Colossus 2计划在年底前部署约120万块英伟达Blackwell GPU。接下来还有两座设施投运：Gun Range预计11月底上线22万块GB300，用于模型训练；Spam 由一座原本存放午餐肉等食品的仓库改造而来，计划部署约20万块GB300，专门用于AI推理。\n\n目前，Macrohard配有11万块GB200和22万块GB300，Macroharder、Minihard各有22万块GB300。加上接下来计划新增的42万块，五个集群合计约119万块。\n\n训练和推理对网络的要求也不同。Macroharder、Minihard 和 Gun Range 均采用 800Gbps 网卡，而 Spam 的推理任务不需要同等规模的高速互联。马斯克称，其网络配置更简单，所需光纤不到训练设施的一半。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-11-01T11:58:49+08:00",
+      "title": "马斯克称Colossus 2年底将部署120万块Blackwell，20万块专门跑推理",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 11:00",
+      "id": "9caf175f58424e971c89",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44835",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "德国黑红执政联盟正讨论对 AI 创造的营收征税。CDU 副主席、家庭部长普里恩向《明星》周刊表示，当价值创造主要靠 AI 实现时就必须征税，「否则行不通」。\n\n数字部长维尔德贝格尔呼吁开征 AI 税应对就业流失，随后让步称应先等增长；经济部长赖歇主张先引入 AI 再征税，总理默茨态度审慎。SPD 9 月已表态支持对利润的公平征税，联盟暂无具体方案；盖茨也长期呼吁对机器人和 AI 征税。\n\ntagesschau.de\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "德国黑红执政联盟正讨论对 AI 创造的营收征税。CDU 副主席、家庭部长普里恩向《明星》周刊表示，当价值创造主要靠 AI 实现时就必须征税，「否则行不通」。\n\n数字部长维尔德贝格尔呼吁开征 AI 税应对就业流失，随后让步称应先等增长；经济部长赖歇主张先引入 AI 再征税，总理默茨态度审慎。SPD 9 月已表态支持对利润的公平征税，联盟暂无具体方案；盖茨也长期呼吁对机器人和 AI 征税。\n\ntagesschau.de\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-11-01T11:55:11+08:00",
+      "title": "德国执政联盟讨论开征人工智能税",
+      "type": "telegram"
+    },
+    {
       "category": "财经",
       "day": "2026-11-01",
       "hot": false,
       "hour": "2026-11-01 11:00",
       "id": "ae2d154c7e7d518d3526",
-      "image": "media/pelosi3/29986_1.webp",
+      "image": "",
       "link": "https://t.me/pelosi3/29986",
       "source": "pelosi3",
       "source_name": "敏感经济信息分享",
@@ -1023,6 +1232,38 @@
       "text": "1.OpenAI的融资周末爆雷，本来计划融资300亿美金，结果投资人只愿意给110亿美金，\n连一半都不到。\nOpenAI为了完成融资降到了200亿规模。\n2.Anthropic的上市前股票评级投资机构给了一个“垃圾”级😂，因为公司隐性债务规模9000亿美金。",
       "time": "2026-11-01T11:54:18+08:00",
       "title": "这周的俩件事，",
+      "type": "telegram"
+    },
+    {
+      "category": "国际",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 11:00",
+      "id": "d4d3c663ae067ee7dbdd",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5652",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "xAI 更新开发文档，宣布从 11 月 7 日起，为 Grok 4.7、4.6、4.5、4.3 及三款 Grok 4.20 模型的 API 输出默认加入隐形文字水印。不只欧盟，全球及区域 API 都在覆盖范围内，连结构化输出和工具调用参数也会被标记。目前尚未明确 Grok 网页版和 X 内置聊天是否同步启用。\n\n这种水印通过在模型生成文本时，轻微调整选词概率，让整段文字留下可识别的统计规律。直接复制粘贴不会消除水印，但缩短文本、大幅改写会降低检测可靠性。\n\n背后是欧盟《AI 法案》的透明度要求，相关规定已于 8 月 2 日开始适用。虽然 xAI 没有签署欧盟的自愿性透明准则，但仍须遵守适用的法律义务。开发者团队可以按模型关闭水印，不过必须确认符合相关法律豁免，并自行承担标记和披露责任。\n\nGoogle 早在 2024 年就将 SynthID 文字水印用于 Gemini，Anthropic 今年 8 月开始为 Claude 新模型在全球启用水印。OpenAI 则在 10 月宣布，逐步为欧盟地区的 ChatGPT 和 Codex 加水印，同时允许全球 API 用户主动开启，默认仍关闭。\n\n",
+      "text": "xAI 更新开发文档，宣布从 11 月 7 日起，为 Grok 4.7、4.6、4.5、4.3 及三款 Grok 4.20 模型的 API 输出默认加入隐形文字水印。不只欧盟，全球及区域 API 都在覆盖范围内，连结构化输出和工具调用参数也会被标记。目前尚未明确 Grok 网页版和 X 内置聊天是否同步启用。\n\n这种水印通过在模型生成文本时，轻微调整选词概率，让整段文字留下可识别的统计规律。直接复制粘贴不会消除水印，但缩短文本、大幅改写会降低检测可靠性。\n\n背后是欧盟《AI 法案》的透明度要求，相关规定已于 8 月 2 日开始适用。虽然 xAI 没有签署欧盟的自愿性透明准则，但仍须遵守适用的法律义务。开发者团队可以按模型关闭水印，不过必须确认符合相关法律豁免，并自行承担标记和披露责任。\n\nGoogle 早在 2024 年就将 SynthID 文字水印用于 Gemini，Anthropic 今年 8 月开始为 Claude 新模型在全球启用水印。OpenAI 则在 10 月宣布，逐步为欧盟地区的 ChatGPT 和 Codex 加水印，同时允许全球 API 用户主动开启，默认仍关闭。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-11-01T11:51:33+08:00",
+      "title": "xAI没签欧盟透明准则，Grok API却要在全球默认加文字水印",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 11:00",
+      "id": "7b740b5a2da64b9767f9",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5651",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "Meta 与上海傅利叶智能合作，仅用三个月造出人形机器人原型 Max。Max 基于傅利叶前三代人形机器人的硬件和技术积累开发，Meta 主要调整了机身比例、头部设计和摄像头，并增加了双手等部件。Meta 机器人产品副总裁还在傅利叶上海工厂待了近两个月，8 月底完成内部展示。\n\nMeta 去年成立机器人团队时，就想做机器人界的「安卓」：自己研发 AI 软件，让不同厂商的机器人都能使用。CTO Bosworth 当时指出，机器人跑跳已经不算最难，真正的瓶颈是精细操作。比如拿起一杯水，既不能捏碎杯子，也不能把水洒出来。这需要 AI 理解物理世界，并掌握对力度和动作的精确控制。\n\n与傅利叶合作，让 Meta 不必从零开发机器人本体，就能更快开展这类实验。Max 高约 1.5 米，搭载英伟达 Jetson Thor 芯片，五指手可以拿起小瓶子和玩具。双方 9 月又启动 Max 2，重点改进双手操作和上下楼梯能力。\n\nMeta 希望未来让 Muse AI 智能体拥有身体，进入家庭完成实际任务。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "Meta 与上海傅利叶智能合作，仅用三个月造出人形机器人原型 Max。Max 基于傅利叶前三代人形机器人的硬件和技术积累开发，Meta 主要调整了机身比例、头部设计和摄像头，并增加了双手等部件。Meta 机器人产品副总裁还在傅利叶上海工厂待了近两个月，8 月底完成内部展示。\n\nMeta 去年成立机器人团队时，就想做机器人界的「安卓」：自己研发 AI 软件，让不同厂商的机器人都能使用。CTO Bosworth 当时指出，机器人跑跳已经不算最难，真正的瓶颈是精细操作。比如拿起一杯水，既不能捏碎杯子，也不能把水洒出来。这需要 AI 理解物理世界，并掌握对力度和动作的精确控制。\n\n与傅利叶合作，让 Meta 不必从零开发机器人本体，就能更快开展这类实验。Max 高约 1.5 米，搭载英伟达 Jetson Thor 芯片，五指手可以拿起小瓶子和玩具。双方 9 月又启动 Max 2，重点改进双手操作和上下楼梯能力。\n\nMeta 希望未来让 Muse AI 智能体拥有身体，进入家庭完成实际任务。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-11-01T11:48:05+08:00",
+      "title": "Meta联手傅利叶3个月造出人形机器人原型，想给Muse装上手和脚",
       "type": "telegram"
     },
     {
@@ -1039,6 +1280,38 @@
       "text": "惠誉评级表示，新兴市场发行人在第三季度展现出韧性，但若美联储政策立场进一步转向鹰派、发达市场主权债券收益率上升，相关发行人可能面临挑战。惠誉称：“我们的基准预期是，2027年大多数新兴市场的融资环境将更加宽松。随着全球通胀压力缓解，各国央行面临的政策压力也将减轻，但我们的预测仍面临重大风险。”惠誉最新预测显示，不包括中国在内的新兴市场经济体2027年经济增速将达到3.3%，低于经上调后的2026年3.6%。",
       "time": "2026-11-01T11:47:27+08:00",
       "title": "惠誉：新兴市场融资环境面临挑战",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 11:00",
+      "id": "33d210a31c7905a7ba18",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5650",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "OpenAI、Google、微软和 Anthropic 达成一致：以后网站只需在 `robots.txt` 中添加 `User-Agent: __usage_ai-training` 和 `Disallow: /` 两条规则，就能同时告诉这几家公司，不要拿自己的内容训练 AI。过去，网站需要分别针对 GPTBot、ClaudeBot 等爬虫设置规则。\n\n这套规则只针对 AI 训练，不会一并禁止爬虫抓取网站，也不一定影响 AI 在回答中引用网站内容。它由 Anthropic 工程师提出，目前还是互联网工程任务组（IETF）的技术草案。\n\n各家公司对规则的执行方式不完全一样。微软允许网站单独禁止 AI 训练，同时保留内容被 AI 搜索引用的机会。Google 则计划把这条规则与现有的 Google-Extended 设置绑定，可能连 Gemini 引用网站内容也一起限制。\n\nAnthropic 已开始采用，微软计划在 2027 年 2 月生效，Google 计划 2027 年支持，OpenAI 也将在未来数月上线。\n\n但这些规则不能撤回此前已经用于训练的数据，也无法强制 AI 公司遵守。\n",
+      "text": "OpenAI、Google、微软和 Anthropic 达成一致：以后网站只需在 `robots.txt` 中添加 `User-Agent: __usage_ai-training` 和 `Disallow: /` 两条规则，就能同时告诉这几家公司，不要拿自己的内容训练 AI。过去，网站需要分别针对 GPTBot、ClaudeBot 等爬虫设置规则。\n\n这套规则只针对 AI 训练，不会一并禁止爬虫抓取网站，也不一定影响 AI 在回答中引用网站内容。它由 Anthropic 工程师提出，目前还是互联网工程任务组（IETF）的技术草案。\n\n各家公司对规则的执行方式不完全一样。微软允许网站单独禁止 AI 训练，同时保留内容被 AI 搜索引用的机会。Google 则计划把这条规则与现有的 Google-Extended 设置绑定，可能连 Gemini 引用网站内容也一起限制。\n\nAnthropic 已开始采用，微软计划在 2027 年 2 月生效，Google 计划 2027 年支持，OpenAI 也将在未来数月上线。\n\n但这些规则不能撤回此前已经用于训练的数据，也无法强制 AI 公司遵守。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-11-01T11:42:07+08:00",
+      "title": "OpenAI、Google等四巨头统一AI训练拒绝规则，网站不用再逐家设置",
+      "type": "telegram"
+    },
+    {
+      "category": "其他",
+      "day": "2026-11-01",
+      "hot": true,
+      "hour": "2026-11-01 11:00",
+      "id": "3055b39dae3b8c17aefb",
+      "image": "",
+      "link": "https://t.me/reorx_share/7168",
+      "source": "reorx_share",
+      "source_name": "Reorx’s Forge",
+      "summary": "“穿越到剑仙世界的 Tony Hawk”",
+      "text": "“穿越到剑仙世界的 Tony Hawk”",
+      "time": "2026-11-01T11:37:14+08:00",
+      "title": "“穿越到剑仙世界的 Tony Hawk”",
       "type": "telegram"
     },
     {
@@ -1077,9 +1350,57 @@
       "category": "国际",
       "day": "2026-11-01",
       "hot": false,
+      "hour": "2026-11-01 11:00",
+      "id": "651a37adc70363ecaede",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5649",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "YC 孵化的初创公司 Subvocal 宣布累计获得 130 万美元融资，正在开发一副「无声打字」眼镜。用户只要轻轻做出说话口型，不必发声或碰键盘，文字就能输入电脑。写电邮、记笔记，甚至给 AI Agent 下指令都可以这样完成。团队宣称，原型每分钟能连续转写超过 200 个词。\n\n眼镜通过低功率射频信号，捕捉面部发音肌肉的细微运动，再由 AI 模型解码。用户依然得动嘴，只是不需要发出声音。\n\n类似技术并非首次出现。MIT 早在 2018 年就推出过 AlterEgo，靠贴在面部的电极识别无声语音，但当时主要在约 20 词的限定词表中测试。Subvocal 想进一步实现无接触、不限词汇的持续输入。\n\n不过，产品距离真正上市还有一段距离。目前的演示原型仍拖着外置电路板，和计划推出的眼镜形态差别不小。每分钟超过 200 词的速度，也没有经过公开的独立评测验证。\n\nSubvocal 已在美国开放预订，早鸟总价 499 美元，先付可退款的 199 美元订金。公司预计 2027 年第一季度开始发货，仍需获得 FCC 批准。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "YC 孵化的初创公司 Subvocal 宣布累计获得 130 万美元融资，正在开发一副「无声打字」眼镜。用户只要轻轻做出说话口型，不必发声或碰键盘，文字就能输入电脑。写电邮、记笔记，甚至给 AI Agent 下指令都可以这样完成。团队宣称，原型每分钟能连续转写超过 200 个词。\n\n眼镜通过低功率射频信号，捕捉面部发音肌肉的细微运动，再由 AI 模型解码。用户依然得动嘴，只是不需要发出声音。\n\n类似技术并非首次出现。MIT 早在 2018 年就推出过 AlterEgo，靠贴在面部的电极识别无声语音，但当时主要在约 20 词的限定词表中测试。Subvocal 想进一步实现无接触、不限词汇的持续输入。\n\n不过，产品距离真正上市还有一段距离。目前的演示原型仍拖着外置电路板，和计划推出的眼镜形态差别不小。每分钟超过 200 词的速度，也没有经过公开的独立评测验证。\n\nSubvocal 已在美国开放预订，早鸟总价 499 美元，先付可退款的 199 美元订金。公司预计 2027 年第一季度开始发货，仍需获得 FCC 批准。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-11-01T11:25:38+08:00",
+      "title": "YC支持的「无声打字」眼镜：号称每分钟200词，原型还拖着电路板",
+      "type": "telegram"
+    },
+    {
+      "category": "财经",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 11:00",
+      "id": "f392ce3ef3f26a3fc96f",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5648",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "AI 推理平台 Baseten 正筹划约 20 亿美元新融资。彭博社披露，本轮拟分两档定价：第一档估值 260 亿美元，第二档 300 亿美元。现有投资者 Sands Capital 预计领投，交易尚未完成。\n\nBaseten 今年 1 月估值只有 50 亿美元，6 月刚以 130 亿美元估值完成 15 亿美元融资。如果新一轮按最高档成交，9 个月内估值将升至原来的 6 倍。值得注意的是，6 月那轮融资也曾被报道采用双档定价，分别为 110 亿和 130 亿美元。\n\nBaseten 主要帮企业部署和运行 AI 模型，处理 GPU 算力调度、推理优化等工作。Cursor、Notion、OpenEvidence 等都是其客户。公司今年 6 月披露，过去一年收入增长 20 倍，推理用量增长 40 倍。\n\n随着企业大量部署开源和定制模型，推理平台迎来快速增长。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "AI 推理平台 Baseten 正筹划约 20 亿美元新融资。彭博社披露，本轮拟分两档定价：第一档估值 260 亿美元，第二档 300 亿美元。现有投资者 Sands Capital 预计领投，交易尚未完成。\n\nBaseten 今年 1 月估值只有 50 亿美元，6 月刚以 130 亿美元估值完成 15 亿美元融资。如果新一轮按最高档成交，9 个月内估值将升至原来的 6 倍。值得注意的是，6 月那轮融资也曾被报道采用双档定价，分别为 110 亿和 130 亿美元。\n\nBaseten 主要帮企业部署和运行 AI 模型，处理 GPU 算力调度、推理优化等工作。Cursor、Notion、OpenEvidence 等都是其客户。公司今年 6 月披露，过去一年收入增长 20 倍，推理用量增长 40 倍。\n\n随着企业大量部署开源和定制模型，推理平台迎来快速增长。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-11-01T11:16:39+08:00",
+      "title": "Baseten拟融资20亿美元，最高估值300亿：4个月身价翻倍有余",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 11:00",
+      "id": "ced469aa2f72f988624d",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5647",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "开源 AI 编程工具 OpenCode 在 v2.2.3 中重新支持 Claude 订阅。用户只需安装并登录 Claude Code，再到 OpenCode 中选择「Claude Agent」，就能直接使用原有订阅额度，无需额外购买 API。\n\n今年 3 月，OpenCode 曾因 Anthropic 的法务要求，移除内置的 Claude 订阅登录插件。这次改走官方 Claude Agent SDK，调用用户本机安装的 Claude Code，由后者直接向 Anthropic 发送模型请求。OpenCode 不读取登录凭证。\n\n开发者 Daniel Smolsky 还在 GitHub 上明确表示，团队已获得 Anthropic 许可，符合服务条款。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "开源 AI 编程工具 OpenCode 在 v2.2.3 中重新支持 Claude 订阅。用户只需安装并登录 Claude Code，再到 OpenCode 中选择「Claude Agent」，就能直接使用原有订阅额度，无需额外购买 API。\n\n今年 3 月，OpenCode 曾因 Anthropic 的法务要求，移除内置的 Claude 订阅登录插件。这次改走官方 Claude Agent SDK，调用用户本机安装的 Claude Code，由后者直接向 Anthropic 发送模型请求。OpenCode 不读取登录凭证。\n\n开发者 Daniel Smolsky 还在 GitHub 上明确表示，团队已获得 Anthropic 许可，符合服务条款。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-11-01T11:06:43+08:00",
+      "title": "OpenCode重新支持Claude订阅：3月被迫移除，这次拿到了许可",
+      "type": "telegram"
+    },
+    {
+      "category": "国际",
+      "day": "2026-11-01",
+      "hot": false,
       "hour": "2026-11-01 10:00",
       "id": "61a2a9bc2c115c0710cb",
-      "image": "media/freechinese/113092_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113092",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -1087,6 +1408,22 @@
       "text": "”",
       "time": "2026-11-01T10:54:43+08:00",
       "title": "网友：“这是美国哪里",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 10:00",
+      "id": "2ed15459ea45459a53e4",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44834",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "菲尔兹奖得主邓煜批评 AI 公司：你不能在蒸馏全人类知识的时候才支持蒸馏行为 菲尔兹奖得主、芝加哥大学教授邓煜在“知识分子”“赛先生”论坛演讲称，AI 能凭无限知识面和极低试错成本推进数学，但只是工具。同时批评 AI 公司一方面蒸馏全人类的文献，另一方面因为抵触蒸馏而拒绝提供思维链的行为。 他进一步批评某 AI 公司 10 月 6 日发布 300 多个问题、700 多篇文章却不公开思维链、未标注沿用人类思路且缺乏正确性验证，部分论文已撤回。并主张用户可选择数据是否用于训练、成果可追溯，数学界应发展自己…",
+      "text": "菲尔兹奖得主邓煜批评 AI 公司：你不能在蒸馏全人类知识的时候才支持蒸馏行为 菲尔兹奖得主、芝加哥大学教授邓煜在“知识分子”“赛先生”论坛演讲称，AI 能凭无限知识面和极低试错成本推进数学，但只是工具。同时批评 AI 公司一方面蒸馏全人类的文献，另一方面因为抵触蒸馏而拒绝提供思维链的行为。 他进一步批评某 AI 公司 10 月 6 日发布 300 多个问题、700 多篇文章却不公开思维链、未标注沿用人类思路且缺乏正确性验证，部分论文已撤回。并主张用户可选择数据是否用于训练、成果可追溯，数学界应发展自己…",
+      "time": "2026-11-01T10:54:22+08:00",
+      "title": "菲尔兹奖得主邓煜批评 AI 公司：你不能在蒸馏全人类知识的时候才支持蒸馏行为 菲尔兹奖得主、芝加哥大学教授邓煜在“知识分子”“赛先生”论坛演讲称，AI 能凭无限知识面和极低…",
       "type": "telegram"
     },
     {
@@ -1127,7 +1464,7 @@
       "hot": false,
       "hour": "2026-11-01 10:00",
       "id": "f3a7e47498a8f3e89851",
-      "image": "media/freechinese/113090_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113090",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -1151,6 +1488,22 @@
       "text": "美国总统特朗普10月31日在佛罗里达州海湖庄园对媒体表示，他会邀请乌克兰总统泽连斯基参加将于12月举行的二十国集团领导人峰会。\n\n特朗普已邀请俄罗斯总统普京出席将于12月在佛罗里达州迈阿密举行的二十国集团领导人峰会。\n\n在被问及是否也会邀请泽连斯基时，特朗普回答道：“我会的，没问题。”\n\n美国国务卿鲁比奥10月31日在美国亚特兰大举行的二十国集团外长会闭幕记者会上说，俄方尚未确认普京是否参会。",
       "time": "2026-11-01T10:45:16+08:00",
       "title": "特朗普已邀请普京出席G20",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 10:00",
+      "id": "ca2a3b9d6322c1cc743d",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5646",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "此前被「光头哥」Tibor Blaho 从 ChatGPT 订阅页面扒出的共享额度规则，现在得到了官方确认。\n\nOpenAI 最新帮助文档明确，12 月起 Plus、Pro 和 Business 用户的 ChatGPT 与 Codex 将共用一份额度，同时把 ChatGPT Work 的 Agent 能力整合进普通聊天界面。\n\n届时，使用量将统一按 Token 计算，模型越强、任务越复杂，消耗的额度通常越多。不过 Instant 模式聊天不扣共享额度。用户可以在设置中查看剩余额度和重置时间。\n\n讽刺的是，OpenAI 前脚才宣布 Pro 等套餐额度翻倍，后脚就确认要把聊天和编程放进同一个额度池。\n\n官方还安慰用户，预计大多数用户不会比现在更频繁地耗尽额度。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "此前被「光头哥」Tibor Blaho 从 ChatGPT 订阅页面扒出的共享额度规则，现在得到了官方确认。\n\nOpenAI 最新帮助文档明确，12 月起 Plus、Pro 和 Business 用户的 ChatGPT 与 Codex 将共用一份额度，同时把 ChatGPT Work 的 Agent 能力整合进普通聊天界面。\n\n届时，使用量将统一按 Token 计算，模型越强、任务越复杂，消耗的额度通常越多。不过 Instant 模式聊天不扣共享额度。用户可以在设置中查看剩余额度和重置时间。\n\n讽刺的是，OpenAI 前脚才宣布 Pro 等套餐额度翻倍，后脚就确认要把聊天和编程放进同一个额度池。\n\n官方还安慰用户，预计大多数用户不会比现在更频繁地耗尽额度。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-11-01T10:43:20+08:00",
+      "title": "OpenAI官宣12月合并ChatGPT和Codex额度：普通聊天也要抢编程额度，但Instant除外",
       "type": "telegram"
     },
     {
@@ -1191,7 +1544,7 @@
       "hot": false,
       "hour": "2026-11-01 10:00",
       "id": "767dd9ecdfe0cff67800",
-      "image": "media/pelosi3/29983_1.webp",
+      "image": "",
       "link": "https://t.me/pelosi3/29983",
       "source": "pelosi3",
       "source_name": "敏感经济信息分享",
@@ -1218,6 +1571,22 @@
       "type": "telegram"
     },
     {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 10:00",
+      "id": "56f83190f8629d73969d",
+      "image": "",
+      "link": "https://t.me/reorx_share/7167",
+      "source": "reorx_share",
+      "source_name": "Reorx’s Forge",
+      "summary": "感谢 DeepSeek 开放理论思想，这比代码有用多了",
+      "text": "感谢 DeepSeek 开放理论思想，这比代码有用多了",
+      "time": "2026-11-01T10:32:46+08:00",
+      "title": "感谢 DeepSeek 开放理论思想，这比代码有用多了",
+      "type": "telegram"
+    },
+    {
       "category": "国际",
       "day": "2026-11-01",
       "hot": false,
@@ -1234,12 +1603,60 @@
       "type": "telegram"
     },
     {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": true,
+      "hour": "2026-11-01 09:00",
+      "id": "f9ef130669ea73b2ad70",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44833",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "🤖 ChatGPT 推出多账号切换功能，最多支持同时登录 2 个账号 OpenAI 在连续 28 天更新的第 26 天更新：已在网页端、iOS 和 Android 端推出 ChatGPT 账号切换功能，并计划很快上线桌面端。用户最多可同时保持 2 个账号登录，无需退出即可直接切换。切换账号后，聊天记录、记忆、文件、工作区和订阅账单均保持完全独立，不会互通或合并。移动端还支持同时接收 2 个登录账号的通知，点击对应通知即可直接跳转至该账号。 🤖 Tibo 同时预告称，接下来的两天都会是重置卡；28天内目…",
+      "text": "🤖 ChatGPT 推出多账号切换功能，最多支持同时登录 2 个账号 OpenAI 在连续 28 天更新的第 26 天更新：已在网页端、iOS 和 Android 端推出 ChatGPT 账号切换功能，并计划很快上线桌面端。用户最多可同时保持 2 个账号登录，无需退出即可直接切换。切换账号后，聊天记录、记忆、文件、工作区和订阅账单均保持完全独立，不会互通或合并。移动端还支持同时接收 2 个登录账号的通知，点击对应通知即可直接跳转至该账号。 🤖 Tibo 同时预告称，接下来的两天都会是重置卡；28天内目…",
+      "time": "2026-11-01T09:29:19+08:00",
+      "title": "🤖 ChatGPT 推出多账号切换功能，最多支持同时登录 2 个账号 OpenAI 在连续 28 天更新的第 26 天更新：已在网页端、iOS 和 Android 端推出 …",
+      "type": "telegram"
+    },
+    {
+      "category": "其他",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 09:00",
+      "id": "d43c7fd2a0ecf50f0263",
+      "image": "",
+      "link": "https://t.me/reorx_share/7166",
+      "source": "reorx_share",
+      "source_name": "Reorx’s Forge",
+      "summary": "关于近期 Opus 5.5 开始拒绝使用 REA 以及不再允许复刻游戏，虽然我不会为了获利去复刻或逆向商业软件，也理解这样可以保护游戏开发商的利益，但这种能力被限制的感觉还是很不爽，主动选择不做和被强制不能做意义完全不同\n\non the other hand, have a taste of censorship western bitches",
+      "text": "关于近期 Opus 5.5 开始拒绝使用 REA 以及不再允许复刻游戏，虽然我不会为了获利去复刻或逆向商业软件，也理解这样可以保护游戏开发商的利益，但这种能力被限制的感觉还是很不爽，主动选择不做和被强制不能做意义完全不同\n\non the other hand, have a taste of censorship western bitches",
+      "time": "2026-11-01T09:02:32+08:00",
+      "title": "关于近期 Opus 5.5 开始拒绝使用 REA 以及不再允许复刻游戏，虽然我不会为了获利去复刻或逆向商业软件，也理解这样可以保护游戏开发商的利益，但这种能力被限制的感觉还…",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 08:00",
+      "id": "a0149b4e75e7f986d1d0",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5645",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "Alphabet 近期财报显示，谷歌搜索查询量同比增速达到五年来最高，但 AI Mode 变现水平仍然偏低，拖累搜索业务收入表现。谷歌第三季度搜索收入同比增长 12%，但低于市场预期；包含搜索等业务的谷歌服务部门收入为 963 亿美元，也未达到分析师预期的 985 亿美元。\n\n谷歌首席商务官菲利普·辛德勒表示，AI Mode 查询量增长强劲，但目前变现水平较低。AI Mode 中的查询平均长度约为传统搜索的 3 倍，约五分之一的查询通过语音、图片或文档完成。CEO 皮查伊称，公司将优先改善搜索体验，再逐步推进商业化。\n\n为寻找新的收入增长点，谷歌正探索在 AI 购物流程中引入商品比较、优惠和赞助链接，让 AI 代理负责搜集信息、筛选商品，同时保留用户比较品牌、价格和服务的环节。谷歌此前已测试在旅行规划中展示优惠，以及在 AI 生成的商品列表中加入明确标识的赞助链接，并计划将 AI Mode 和 AI Overviews 中的广告扩展至更多查询。\n\n皮查伊还表示，谷歌将把代理功能进一步引入搜索和 Gemini，并扩展至 Chrome、Android 和 Workspace 等产品。\n\n信",
+      "text": "Alphabet 近期财报显示，谷歌搜索查询量同比增速达到五年来最高，但 AI Mode 变现水平仍然偏低，拖累搜索业务收入表现。谷歌第三季度搜索收入同比增长 12%，但低于市场预期；包含搜索等业务的谷歌服务部门收入为 963 亿美元，也未达到分析师预期的 985 亿美元。\n\n谷歌首席商务官菲利普·辛德勒表示，AI Mode 查询量增长强劲，但目前变现水平较低。AI Mode 中的查询平均长度约为传统搜索的 3 倍，约五分之一的查询通过语音、图片或文档完成。CEO 皮查伊称，公司将优先改善搜索体验，再逐步推进商业化。\n\n为寻找新的收入增长点，谷歌正探索在 AI 购物流程中引入商品比较、优惠和赞助链接，让 AI 代理负责搜集信息、筛选商品，同时保留用户比较品牌、价格和服务的环节。谷歌此前已测试在旅行规划中展示优惠，以及在 AI 生成的商品列表中加入明确标识的赞助链接，并计划将 AI Mode 和 AI Overviews 中的广告扩展至更多查询。\n\n皮查伊还表示，谷歌将把代理功能进一步引入搜索和 Gemini，并扩展至 Chrome、Android 和 Workspace 等产品。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-11-01T08:59:46+08:00",
+      "title": "谷歌正探索在AI购物流程中引入商品比较、优惠和赞助链接",
+      "type": "telegram"
+    },
+    {
       "category": "财经",
       "day": "2026-11-01",
       "hot": false,
       "hour": "2026-11-01 08:00",
       "id": "41a89b4b933af729cdf3",
-      "image": "media/NewlearnerChannel/16086_1.webp",
+      "image": "",
       "link": "https://t.me/NewlearnerChannel/16086",
       "source": "NewlearnerChannel",
       "source_name": "Newlearnerの自留地",
@@ -1247,6 +1664,22 @@
       "text": "早上好☀️，今天是 11 月的第一天\n\n🎉 转眼间频道已经七年又两个半月了，喜迎近 68000 订阅，感谢各位的关注和转发！\n\n十一月值得关注的日子：\n\n11月1日：万圣节\n11月7日：立冬\n11月11日：光棍节\n11月22日：小雪\n11月23日：下元节\n11月26日：感恩节\n11月27日：黑色星期五\n\n👨🏻‍💻 过去的一个月真快，感觉还沉浸在国庆假期没有走出，转眼间已经到了 11 月。我对 10 月的开头当然是不满意的，为了装修和一些琐事没能按照计划外出旅行，和去年落差太大了。同样的，Can Festival 也没有成行，即便听说整体体验不如前几届好，但还是没能和远方的朋友们半年见上一面。有时候常常想，难道真的过了某个「黄金节点」，朝着「腻了」和「中年」奔去了吗？\n\n🥳 不过，换个角度来看，这段时间同样见证了最好的朋友的婚礼，为他们拍照、送上祝福，看他们在台上念诗、回忆一起去看后朋克的现场、手拉起手，开心到几乎落泪。与朋友们一起调酒，和酒单设计师聊了聊新酒单，她告诉我原来容祖儿是拉拉，收获了两首歌《黄色大门》与《红屋顶》。作为 发达星期四 的老观众，去看了主理人邱阳的新乐队现场，邱阳站在我身边、狂野地摆弄吉他琴弦，有一种不真实的感觉。久久回味这些瞬间，它们塑造我成为我\n\n🛒 今年双十一倒是有一些想买的东西，主要就是把车子的两个前胎换掉了，顺手把鼠标也送去维修了一下。还在观察索尼发布的 100-400mm 长焦镜头，价格便宜得有些出奇，上手试了一下后发现最长端还是比较肉的。心心念念的 Apple Watch S12 陶瓷既没有太多折扣，更没有现货，目前在认真考虑是不是找时机买一只铝合金的算了。具体我会在双十一专栏再和大家分享，也欢迎你们投稿「好物」分享\n\n❄️ 送走了秋天最后一个节气，马上要迎来立冬了。今年没有参加一些疯狂的万圣节派对，而是试着在日常中感受秋天的气味和色彩。捡落叶、吃南瓜、晒太阳，在车里静静看落叶被风吹下，对象发来路上看到的彩虹照片和大橘猫，就这样做好了和秋天告别的心理建设。期望 11 月底能有个好天气，去栖霞山看看红叶\n\n频道：@NewlearnerChannel",
       "time": "2026-11-01T08:59:01+08:00",
       "title": "monthsdays",
+      "type": "telegram"
+    },
+    {
+      "category": "其他",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 08:00",
+      "id": "b63afec06cc49093be95",
+      "image": "",
+      "link": "https://t.me/reorx_share/7165",
+      "source": "reorx_share",
+      "source_name": "Reorx’s Forge",
+      "summary": "",
+      "text": "",
+      "time": "2026-11-01T08:53:39+08:00",
+      "title": "",
       "type": "telegram"
     },
     {
@@ -1287,7 +1720,7 @@
       "hot": false,
       "hour": "2026-11-01 07:00",
       "id": "3b5a78879bd50409d99e",
-      "image": "media/freechinese/113088_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113088",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -1303,7 +1736,7 @@
       "hot": false,
       "hour": "2026-11-01 07:00",
       "id": "5483b8e11732fafcfdd7",
-      "image": "media/freechinese/113087_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113087",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -1319,7 +1752,7 @@
       "hot": false,
       "hour": "2026-11-01 07:00",
       "id": "c3620ad6eaf157df1023",
-      "image": "media/freechinese/113085_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113085",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -1335,7 +1768,7 @@
       "hot": false,
       "hour": "2026-11-01 07:00",
       "id": "4115c2a5e3f34e7724bf",
-      "image": "media/pelosi3/29981_1.webp",
+      "image": "",
       "link": "https://t.me/pelosi3/29981",
       "source": "pelosi3",
       "source_name": "敏感经济信息分享",
@@ -1392,6 +1825,22 @@
       "time": "2026-11-01T00:40:10+08:00",
       "title": "中国人形机器人占全球出货量 97%，上半年遥遥领先 2026 年上半年，中国人形机器人制造商占据全球出货量的 97% 以上",
       "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-01",
+      "hot": false,
+      "hour": "2026-11-01 00:00",
+      "id": "465818a229ff4d1bd632",
+      "image": "",
+      "link": "https://t.me/reorx_share/7164",
+      "source": "reorx_share",
+      "source_name": "Reorx’s Forge",
+      "summary": "感谢 DeepSeek 开放理论思想，这比代码有用多了",
+      "text": "感谢 DeepSeek 开放理论思想，这比代码有用多了",
+      "time": "2026-11-01T00:23:56+08:00",
+      "title": "感谢 DeepSeek 开放理论思想，这比代码有用多了",
+      "type": "telegram"
     }
   ],
   "provider": "mock",
@@ -1399,25 +1848,29 @@
   "schema": 1,
   "stats": {
     "categories": {
-      "其他": 24,
-      "国际": 17,
-      "数码": 4,
-      "科技": 9,
-      "财经": 16
+      "其他": 29,
+      "国际": 19,
+      "数码": 6,
+      "科技": 26,
+      "财经": 17
     },
     "sources": {
       "CE_Observe": 6,
       "FinanceNewsDaily": 8,
       "HuaErJie1": 15,
       "NewlearnerChannel": 2,
+      "OneMillion_AI": 10,
       "TimeHorizonX": 1,
+      "dps_build": 1,
       "freechinese": 15,
       "pelosi3": 9,
+      "reorx_share": 5,
       "scitech_fans": 1,
       "xhqcankao": 12,
-      "zaihuapd": 1
+      "yxzbp": 3,
+      "zaihuapd": 9
     },
-    "total": 70
+    "total": 97
   },
   "summary": "；04年男子拒服兵役被罚61051元；10月俄军14次打击乌克兰军工系统使用的变电站"
 }

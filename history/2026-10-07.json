@@ -7,7 +7,7 @@
         {
           "category": "其他",
           "day": "2026-10-07",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-07 17:00",
           "id": "00484682f9ef6a20605b",
           "image": "",
@@ -115,7 +115,7 @@
         {
           "category": "财经",
           "day": "2026-10-07",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-07 06:00",
           "id": "92c79cd89f4ebc8df54d",
           "image": "",
@@ -548,7 +548,7 @@
     {
       "category": "其他",
       "day": "2026-10-07",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-07 17:00",
       "id": "00484682f9ef6a20605b",
       "image": "",
@@ -756,7 +756,7 @@
     {
       "category": "科技",
       "day": "2026-10-07",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-07 13:00",
       "id": "771977b6c047825a9f23",
       "image": "",
@@ -772,7 +772,7 @@
     {
       "category": "科技",
       "day": "2026-10-07",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-07 13:00",
       "id": "7dfc4cadf0ef2cf4fcc4",
       "image": "",
@@ -980,7 +980,7 @@
     {
       "category": "财经",
       "day": "2026-10-07",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-07 06:00",
       "id": "92c79cd89f4ebc8df54d",
       "image": "",

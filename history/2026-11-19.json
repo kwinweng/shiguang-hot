@@ -534,7 +534,7 @@
     {
       "category": "科技",
       "day": "2026-11-19",
-      "hot": false,
+      "hot": true,
       "hour": "2026-11-19 22:00",
       "id": "cb455356b27b92adb832",
       "image": "media/pelosi3/30345_1.webp",
@@ -2521,7 +2521,7 @@
       "hot": false,
       "hour": "2026-11-19 14:00",
       "id": "88e0f57162d58ffd0a88",
-      "image": "media/CE_Observe/44733_1.webp",
+      "image": "",
       "link": "https://t.me/CE_Observe/44733",
       "source": "CE_Observe",
       "source_name": "每日消费电子观察",

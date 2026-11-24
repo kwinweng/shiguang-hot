@@ -1,4 +1,4 @@
-/* 拾光热榜 v1 前端纯函数（无 DOM 依赖，node --test 可直接 require）。
+/* 拾光资讯 v1 前端纯函数（无 DOM 依赖，node --test 可直接 require）。
    时间一律按北京时间（Asia/Shanghai）显示；文案「不编」：没有正文就如实说没有。 */
 (function (root) {
   'use strict';

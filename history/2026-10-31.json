@@ -46,6 +46,50 @@
       "title": "伊朗最高领袖：要对敌方威胁立即采取有效应对措施"
     },
     {
+      "category": "科技",
+      "messages": [
+        {
+          "category": "科技",
+          "day": "2026-10-31",
+          "hot": false,
+          "hour": "2026-10-31 09:00",
+          "id": "aedce0319c8a4e1a3449",
+          "image": "",
+          "link": "https://t.me/OneMillion_AI/5633",
+          "source": "OneMillion_AI",
+          "source_name": "动察Beating AI News",
+          "summary": "苹果和阿里巴巴今日宣布达成合作，将千问集成至 Apple 智能，中国用户可以在 Siri、写作工具及视觉智能中，直接调用千问的文本与图像理解、内容生成等能力。\n\n这些功能将于 11 月 4 日起随最新的 iOS 开发者 Beta 版开放测试，并将于 12 月 iOS 27.3 正式发布时面向中国用户推出。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "text": "苹果和阿里巴巴今日宣布达成合作，将千问集成至 Apple 智能，中国用户可以在 Siri、写作工具及视觉智能中，直接调用千问的文本与图像理解、内容生成等能力。\n\n这些功能将于 11 月 4 日起随最新的 iOS 开发者 Beta 版开放测试，并将于 12 月 iOS 27.3 正式发布时面向中国用户推出。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "time": "2026-10-31T09:53:01+08:00",
+          "title": "苹果官宣：Apple智能接入阿里千问，11月4日开放测试",
+          "type": "telegram"
+        },
+        {
+          "category": "科技",
+          "day": "2026-10-31",
+          "hot": false,
+          "hour": "2026-10-31 08:00",
+          "id": "0d670d167ab2e3c87180",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/495990",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "10月31日，苹果和阿里巴巴宣布达成合作，将千问集成至Apple智能，中国用户可以在Siri、写作工具及视觉智能中，直接调用千问的文本与图像理解、内容生成等能力。这些功能将于11月4日起随最新的iOS 开发者 Beta 版开放测试，并将于 12 月 iOS 27.3 正式发布时面向中国用户推出。（硬AI）",
+          "text": "10月31日，苹果和阿里巴巴宣布达成合作，将千问集成至Apple智能，中国用户可以在Siri、写作工具及视觉智能中，直接调用千问的文本与图像理解、内容生成等能力。这些功能将于11月4日起随最新的iOS 开发者 Beta 版开放测试，并将于 12 月 iOS 27.3 正式发布时面向中国用户推出。（硬AI）",
+          "time": "2026-10-31T08:00:06+08:00",
+          "title": "苹果官宣：Apple智能接入阿里千问，11月4日开放测试",
+          "type": "telegram"
+        }
+      ],
+      "original_links": [
+        "https://t.me/OneMillion_AI/5633",
+        "https://t.me/FinanceNewsDaily/495990"
+      ],
+      "source_count": 2,
+      "summary": "苹果和阿里巴巴今日宣布达成合作，将千问集成至 Apple 智能，中国用户可以在 Siri、写作工具及视觉智能中，直接调用千问的文本与图像理解、内容生成等能力。这些功能将于 11 月 4 日起随最新的 iOS 开发者 Beta 版开放测试，并将于 12 月 iOS 27。本事件整理自当天 2 条原消息，请结合原文核对。",
+      "title": "苹果官宣：Apple智能接入阿里千问，11月4日开放测试"
+    },
+    {
       "category": "数码",
       "messages": [
         {
@@ -98,6 +142,87 @@
       "source_count": 1,
       "summary": "近期，《美国医学会杂志》刊发综述指出：超90%的胃癌患者会出现体重减轻和腹痛两大症状。北京大学人民医院胃肠外科主任医师高志冬表示，我国85%~90%的胃癌患者也会出现新研究提醒的两种典型表现，只是症状轻重、出现时间略有差异。本事件整理自当天 1 条原消息，请结合原文核对。",
       "title": "90%胃癌患者有两种症状"
+    },
+    {
+      "category": "科技",
+      "messages": [
+        {
+          "category": "科技",
+          "day": "2026-10-31",
+          "hot": false,
+          "hour": "2026-10-31 13:00",
+          "id": "85ec614b1c38cf0a6f51",
+          "image": "",
+          "link": "https://t.me/OneMillion_AI/5639",
+          "source": "OneMillion_AI",
+          "source_name": "动察Beating AI News",
+          "summary": "Anthropic 最近给 Claude Code 的 Opus 5.5 加了两句限制：可以开发原创游戏，也可以借鉴现有游戏的玩法，但不能直接复刻某款游戏。即使换个名字、声称是原创作品，也不行。\n\nAnthropic 工程师 Addy Osmani 已经确认这项改动，目的是防止侵犯知识产权。\n\n独立开发者苦 AI 复刻久矣。今年 3 月，开发者 Freya Holmér 展示了一款旋转版俄罗斯方块，还没正式发布，就出现大量 AI 仿制品。游戏工作室 Digital Sun 也担心新作被 AI 抢先复制，取消了原定的公开试玩。\n\n但什么算借鉴玩法，什么算侵权复制，实际判断起来并不简单。按照美国版权法，游戏玩法和规则本身通常不受版权保护，具体的美术、文字和代码等表达则可能受保护。Claude 现在主要靠提示词限制复刻行为，未必能准确区分合法借鉴和侵权复制。\n\n有用户发现，同样的游戏代码，让 Claude「重写」可以继续，让它「复刻」却会被拒绝。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "text": "Anthropic 最近给 Claude Code 的 Opus 5.5 加了两句限制：可以开发原创游戏，也可以借鉴现有游戏的玩法，但不能直接复刻某款游戏。即使换个名字、声称是原创作品，也不行。\n\nAnthropic 工程师 Addy Osmani 已经确认这项改动，目的是防止侵犯知识产权。\n\n独立开发者苦 AI 复刻久矣。今年 3 月，开发者 Freya Holmér 展示了一款旋转版俄罗斯方块，还没正式发布，就出现大量 AI 仿制品。游戏工作室 Digital Sun 也担心新作被 AI 抢先复制，取消了原定的公开试玩。\n\n但什么算借鉴玩法，什么算侵权复制，实际判断起来并不简单。按照美国版权法，游戏玩法和规则本身通常不受版权保护，具体的美术、文字和代码等表达则可能受保护。Claude 现在主要靠提示词限制复刻行为，未必能准确区分合法借鉴和侵权复制。\n\n有用户发现，同样的游戏代码，让 Claude「重写」可以继续，让它「复刻」却会被拒绝。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "time": "2026-10-31T13:55:17+08:00",
+          "title": "AI复刻游戏逼得独立厂商撤回试玩，Anthropic开始给Claude Code踩刹车",
+          "type": "telegram"
+        }
+      ],
+      "original_links": [
+        "https://t.me/OneMillion_AI/5639"
+      ],
+      "source_count": 1,
+      "summary": "Anthropic 最近给 Claude Code 的 Opus 5。5 加了两句限制：可以开发原创游戏，也可以借鉴现有游戏的玩法，但不能直接复刻某款游戏。本事件整理自当天 1 条原消息，请结合原文核对。",
+      "title": "AI复刻游戏逼得独立厂商撤回试玩，Anthropic开始给Claude Code踩刹车"
+    },
+    {
+      "category": "财经",
+      "messages": [
+        {
+          "category": "财经",
+          "day": "2026-10-31",
+          "hot": false,
+          "hour": "2026-10-31 11:00",
+          "id": "3d28d702f9c66bbe452c",
+          "image": "",
+          "link": "https://t.me/OneMillion_AI/5637",
+          "source": "OneMillion_AI",
+          "source_name": "动察Beating AI News",
+          "summary": "10 月 31 日，据彭博社报道，人工智能初创公司 Baseten 正寻求新一轮融资，计划募集约 20 亿美元，估值有望从今年 6 月的 130 亿美元跃升至最高 300 亿美元，增幅超过一倍。\n\n本轮融资预计分为两个阶段，第一阶段估值为 260 亿美元，第二阶段估值为 300 亿美元。现有投资方 Sands Capital 预计将领投。Baseten 上一次于今年 6 月完成 15 亿美元融资，当时估值为 130 亿美元。\n\nBaseten 成立于 2019 年，主要为企业提供 AI 模型推理平台，帮助客户部署和运行多种 AI 模型。随着 AI 应用普及，市场对推理算力的需求持续增长，投资者正加大对相关基础设施公司的投入。其竞争对手 Fireworks AI 今年 7 月曾以 175 亿美元估值完成 15 亿美元融资。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "text": "10 月 31 日，据彭博社报道，人工智能初创公司 Baseten 正寻求新一轮融资，计划募集约 20 亿美元，估值有望从今年 6 月的 130 亿美元跃升至最高 300 亿美元，增幅超过一倍。\n\n本轮融资预计分为两个阶段，第一阶段估值为 260 亿美元，第二阶段估值为 300 亿美元。现有投资方 Sands Capital 预计将领投。Baseten 上一次于今年 6 月完成 15 亿美元融资，当时估值为 130 亿美元。\n\nBaseten 成立于 2019 年，主要为企业提供 AI 模型推理平台，帮助客户部署和运行多种 AI 模型。随着 AI 应用普及，市场对推理算力的需求持续增长，投资者正加大对相关基础设施公司的投入。其竞争对手 Fireworks AI 今年 7 月曾以 175 亿美元估值完成 15 亿美元融资。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "time": "2026-10-31T11:16:11+08:00",
+          "title": "AI推理平台Baseten拟融资20亿美元，估值最高达300亿美元",
+          "type": "telegram"
+        }
+      ],
+      "original_links": [
+        "https://t.me/OneMillion_AI/5637"
+      ],
+      "source_count": 1,
+      "summary": "10 月 31 日，据彭博社报道，人工智能初创公司 Baseten 正寻求新一轮融资，计划募集约 20 亿美元，估值有望从今年 6 月的 130 亿美元跃升至最高 300 亿美元，增幅超过一倍。本轮融资预计分为两个阶段，第一阶段估值为 260 亿美元，第二阶段估值为 300 亿美元。本事件整理自当天 1 条原消息，请结合原文核对。",
+      "title": "AI推理平台Baseten拟融资20亿美元，估值最高达300亿美元"
+    },
+    {
+      "category": "科技",
+      "messages": [
+        {
+          "category": "科技",
+          "day": "2026-10-31",
+          "hot": false,
+          "hour": "2026-10-31 15:00",
+          "id": "3aa37f658cffe5142e3f",
+          "image": "",
+          "link": "https://t.me/OneMillion_AI/5641",
+          "source": "OneMillion_AI",
+          "source_name": "动察Beating AI News",
+          "summary": "据彭博社报道，OpenAI CEO 萨姆·奥特曼于 10 月 31 日在韩国会见三星集团约 50 名高管，讨论深化双方在存储芯片和 AI 基础设施领域的合作。与会人员来自三星旗下电子、金融及生物科技等业务部门，议题涵盖 AI 未来十年对产业、企业决策及商业机会的影响。\n\n此次会面正值全球存储芯片供应紧张、价格持续上涨之际。数据中心运营商需求激增，进一步加剧芯片供应竞争。全球五大 AI 基础设施参与者未来数年计划投入超过 3 万亿美元，而存储芯片约占数据中心支出的三分之一。\n\n此次会面也延续了双方此前宣布的合作，包括为 OpenAI 的「星际之门」（Stargate）基础设施项目供应存储芯片，以及合作建设 AI 数据中心，涵盖海上浮动数据中心等方案。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "text": "据彭博社报道，OpenAI CEO 萨姆·奥特曼于 10 月 31 日在韩国会见三星集团约 50 名高管，讨论深化双方在存储芯片和 AI 基础设施领域的合作。与会人员来自三星旗下电子、金融及生物科技等业务部门，议题涵盖 AI 未来十年对产业、企业决策及商业机会的影响。\n\n此次会面正值全球存储芯片供应紧张、价格持续上涨之际。数据中心运营商需求激增，进一步加剧芯片供应竞争。全球五大 AI 基础设施参与者未来数年计划投入超过 3 万亿美元，而存储芯片约占数据中心支出的三分之一。\n\n此次会面也延续了双方此前宣布的合作，包括为 OpenAI 的「星际之门」（Stargate）基础设施项目供应存储芯片，以及合作建设 AI 数据中心，涵盖海上浮动数据中心等方案。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "time": "2026-10-31T15:42:17+08:00",
+          "title": "AI芯片供应紧张加剧，OpenAI CEO会见三星约50名高管深化合作",
+          "type": "telegram"
+        }
+      ],
+      "original_links": [
+        "https://t.me/OneMillion_AI/5641"
+      ],
+      "source_count": 1,
+      "summary": "据彭博社报道，OpenAI CEO 萨姆·奥特曼于 10 月 31 日在韩国会见三星集团约 50 名高管，讨论深化双方在存储芯片和 AI 基础设施领域的合作。与会人员来自三星旗下电子、金融及生物科技等业务部门，议题涵盖 AI 未来十年对产业、企业决策及商业机会的影响。本事件整理自当天 1 条原消息，请结合原文核对。",
+      "title": "AI芯片供应紧张加剧，OpenAI CEO会见三星约50名高管深化合作"
     },
     {
       "category": "科技",
@@ -159,137 +284,45 @@
         {
           "category": "科技",
           "day": "2026-10-31",
-          "hot": true,
-          "hour": "2026-10-31 22:00",
-          "id": "6484a2a091f069b76a57",
-          "image": "",
-          "link": "https://t.me/FinanceNewsDaily/496001",
-          "source": "FinanceNewsDaily",
-          "source_name": "华尔街见闻·财经时讯",
-          "summary": "10月31日晚，DeepSeek Harness 团队在官方公众号发表技术文章《Super-agent 设计探索：迈向更自主的Agent 系统》。\n\nDeepSeek表示，模型能力提升催生了新的应用形态，个人助手（Personal Agent）开始集中涌现。然而，现有主流 Agent设计还难以在多任务和团队协作的规模上支撑这一模式，多任务上限取决于人的注意力。通过双层架构、事件驱动、异步多信道交互、存算分离与外部 Watchdog等思路，DeepSeek团队突破了这些限制，系统在底层接管了繁琐的会话管理与上下文同步，使人类得以从具体的执行细节进一步上移到更高层的决策与验收。",
-          "text": "10月31日晚，DeepSeek Harness 团队在官方公众号发表技术文章《Super-agent 设计探索：迈向更自主的Agent 系统》。\n\nDeepSeek表示，模型能力提升催生了新的应用形态，个人助手（Personal Agent）开始集中涌现。然而，现有主流 Agent设计还难以在多任务和团队协作的规模上支撑这一模式，多任务上限取决于人的注意力。通过双层架构、事件驱动、异步多信道交互、存算分离与外部 Watchdog等思路，DeepSeek团队突破了这些限制，系统在底层接管了繁琐的会话管理与上下文同步，使人类得以从具体的执行细节进一步上移到更高层的决策与验收。",
-          "time": "2026-10-31T22:55:06+08:00",
-          "title": "DeepSeek发布全新Agent架构",
-          "type": "telegram"
-        }
-      ],
-      "original_links": [
-        "https://t.me/FinanceNewsDaily/496001"
-      ],
-      "source_count": 1,
-      "summary": "10月31日晚，DeepSeek Harness 团队在官方公众号发表技术文章《Super-agent 设计探索：迈向更自主的Agent 系统》。DeepSeek表示，模型能力提升催生了新的应用形态，个人助手（Personal Agent）开始集中涌现。本事件整理自当天 1 条原消息，请结合原文核对。",
-      "title": "DeepSeek发布全新Agent架构"
-    },
-    {
-      "category": "财经",
-      "messages": [
-        {
-          "category": "财经",
-          "day": "2026-10-31",
           "hot": false,
-          "hour": "2026-10-31 13:00",
-          "id": "152d4c9306be2e24a4eb",
+          "hour": "2026-10-31 09:00",
+          "id": "8efd15bbd5f396e873b7",
           "image": "",
-          "link": "https://t.me/xhqcankao/32819",
-          "source": "xhqcankao",
-          "source_name": "风向旗参考快讯",
-          "summary": "SpaceX研发的人工智能助手Grok Bot用户规模正在有序增长。据报道，其日活跃用户已连续16天增加，创下发布以来的最长增长纪录，日活用户从9月初的不到10万增长至10月26日的超过60万。此前，马斯克还在X上公开表示，Grok Bot的用户增长速度比他见过的任何产品都要快。他还强调，Grok Bot没有免费版本。Grok Bot用户均需付费使用。自10月12日起，新用户可通过X订阅获取该服务，高级版起价为每月30美元，超级版为每月100美元，终极版为每月200美元。\n\nAtreides Management管理合伙人兼首席投资官Gavin Baker表示，Grok Bot是迄今为止对他和他公司影响最大的AI产品，他称自己目前运行着17个Grok Bot智能体。\n\n—— 财联社",
-          "text": "SpaceX研发的人工智能助手Grok Bot用户规模正在有序增长。据报道，其日活跃用户已连续16天增加，创下发布以来的最长增长纪录，日活用户从9月初的不到10万增长至10月26日的超过60万。此前，马斯克还在X上公开表示，Grok Bot的用户增长速度比他见过的任何产品都要快。他还强调，Grok Bot没有免费版本。Grok Bot用户均需付费使用。自10月12日起，新用户可通过X订阅获取该服务，高级版起价为每月30美元，超级版为每月100美元，终极版为每月200美元。\n\nAtreides Management管理合伙人兼首席投资官Gavin Baker表示，Grok Bot是迄今为止对他和他公司影响最大的AI产品，他称自己目前运行着17个Grok Bot智能体。\n\n—— 财联社",
-          "time": "2026-10-31T13:33:33+08:00",
-          "title": "Grok Bot用户连续16天增长！马斯克强调增长速度前所未见",
+          "link": "https://t.me/OneMillion_AI/5632",
+          "source": "OneMillion_AI",
+          "source_name": "动察Beating AI News",
+          "summary": "Anthropic 调整 Claude 订阅套餐：每月 100 美元的 Max 5x 更名为 Max，200 美元的 Max 20x 更名为 Ultra，价格不变。\n\nUltra 同时取消了原先每 5 小时的使用额度限制。此前，即使一周的额度还没用完，用户也可能因为短时间内调用太多 Claude，被迫等待几个小时才能继续。现在可以集中使用，不再受到这道短期限制。\n\n新规从多数现有 Ultra 用户开始分批生效。新账户暂时仍有 5 小时限制，需要等待系统自动核验，以防止欺诈和滥用。通过后会自动解除，并收到电邮通知。\n\n不过，每周总额度没有增加。原来的「20x」指的是每 5 小时的额度相当于 Pro 的 20 倍，而不是每周额度。Ultra 每周仍只有 Pro 的 10 倍，Fable 模型还有单独的每周限制。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "text": "Anthropic 调整 Claude 订阅套餐：每月 100 美元的 Max 5x 更名为 Max，200 美元的 Max 20x 更名为 Ultra，价格不变。\n\nUltra 同时取消了原先每 5 小时的使用额度限制。此前，即使一周的额度还没用完，用户也可能因为短时间内调用太多 Claude，被迫等待几个小时才能继续。现在可以集中使用，不再受到这道短期限制。\n\n新规从多数现有 Ultra 用户开始分批生效。新账户暂时仍有 5 小时限制，需要等待系统自动核验，以防止欺诈和滥用。通过后会自动解除，并收到电邮通知。\n\n不过，每周总额度没有增加。原来的「20x」指的是每 5 小时的额度相当于 Pro 的 20 倍，而不是每周额度。Ultra 每周仍只有 Pro 的 10 倍，Fable 模型还有单独的每周限制。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "time": "2026-10-31T09:33:18+08:00",
+          "title": "Claude Max 20x改名Ultra，取消5小时限制，但每周额度仍只有Pro的10倍",
           "type": "telegram"
         }
       ],
       "original_links": [
-        "https://t.me/xhqcankao/32819"
+        "https://t.me/OneMillion_AI/5632"
       ],
       "source_count": 1,
-      "summary": "SpaceX研发的人工智能助手Grok Bot用户规模正在有序增长。据报道，其日活跃用户已连续16天增加，创下发布以来的最长增长纪录，日活用户从9月初的不到10万增长至10月26日的超过60万。本事件整理自当天 1 条原消息，请结合原文核对。",
-      "title": "Grok Bot用户连续16天增长！马斯克强调增长速度前所未见"
-    },
-    {
-      "category": "财经",
-      "messages": [
-        {
-          "category": "财经",
-          "day": "2026-10-31",
-          "hot": false,
-          "hour": "2026-10-31 12:00",
-          "id": "675278d7f50880eb600b",
-          "image": "media/NewlearnerChannel/16085_1.webp",
-          "link": "https://t.me/NewlearnerChannel/16085",
-          "source": "NewlearnerChannel",
-          "source_name": "Newlearnerの自留地",
-          "summary": "💡《一飞周报》每周带你关注科技导向金融市场与周围的价值信息\n\n本周内容（304th）：Notion\n\n💹 市场\n• 美联储暂停加息\n• 标普指数进一步回调\n• 半导体拖累整个市场\n• 黄金抛售并跌破关键级别\n\n📈 股票\n• Google 业绩后暴跌\n\n👨🏻‍💻 专栏\n• Anthropic 即将上市\n\n.....\n\n《一飞周报》更多地关注股票投资与科技动态。在这个嘈杂的时代，希望能与自留地读者一起传递更多有价值的信息。\n\n频道：@NewlearnerChannel",
-          "text": "💡《一飞周报》每周带你关注科技导向金融市场与周围的价值信息\n\n本周内容（304th）：Notion\n\n💹 市场\n• 美联储暂停加息\n• 标普指数进一步回调\n• 半导体拖累整个市场\n• 黄金抛售并跌破关键级别\n\n📈 股票\n• Google 业绩后暴跌\n\n👨🏻‍💻 专栏\n• Anthropic 即将上市\n\n.....\n\n《一飞周报》更多地关注股票投资与科技动态。在这个嘈杂的时代，希望能与自留地读者一起传递更多有价值的信息。\n\n频道：@NewlearnerChannel",
-          "time": "2026-10-31T12:01:11+08:00",
-          "title": "NewsEconomicsFinance",
-          "type": "telegram"
-        }
-      ],
-      "original_links": [
-        "https://t.me/NewlearnerChannel/16085"
-      ],
-      "source_count": 1,
-      "summary": "💡《一飞周报》每周带你关注科技导向金融市场与周围的价值信息\n\n本周内容（304th）：Notion\n\n💹 市场\n• 美联储暂停加息\n• 标普指数进一步回调\n• 半导体拖累整个市场\n• 黄金抛售并跌破关键级别\n\n📈 股票\n• Google 业绩后暴跌\n\n👨🏻‍💻 专栏\n• Anthropic 即将上市。《一飞周报》更多地关注股票投资与科技动态。本事件整理自当天 1 条原消息，请结合原文核对。",
-      "title": "NewsEconomicsFinance"
-    },
-    {
-      "category": "财经",
-      "messages": [
-        {
-          "category": "财经",
-          "day": "2026-10-31",
-          "hot": true,
-          "hour": "2026-10-31 08:00",
-          "id": "d26cc5ce5670d9ef696f",
-          "image": "",
-          "link": "https://t.me/FinanceNewsDaily/495991",
-          "source": "FinanceNewsDaily",
-          "source_name": "华尔街见闻·财经时讯",
-          "summary": "（英国金融时报）",
-          "text": "（英国金融时报）",
-          "time": "2026-10-31T08:10:05+08:00",
-          "title": "OpenAI将最新一轮融资目标砍掉100亿美元，现在寻求按1.25万亿美元估值融资大约200亿美元",
-          "type": "telegram"
-        }
-      ],
-      "original_links": [
-        "https://t.me/FinanceNewsDaily/495991"
-      ],
-      "source_count": 1,
-      "summary": "（英国金融时报）。本事件整理自当天 1 条原消息，请结合原文核对。",
-      "title": "OpenAI将最新一轮融资目标砍掉100亿美元，现在寻求按1.25万亿美元估值融资大约200亿美元"
-    },
-    {
-      "category": "科技",
-      "messages": [
-        {
-          "category": "科技",
-          "day": "2026-10-31",
-          "hot": false,
-          "hour": "2026-10-31 17:00",
-          "id": "efd1bac968ae73f3ed9e",
-          "image": "",
-          "link": "https://t.me/CE_Observe/44537",
-          "source": "CE_Observe",
-          "source_name": "每日消费电子观察",
-          "summary": "OpenAI 首席执行官 Sam Altman 对当前内存短缺问题有着独到的见解。他认为，在个人电脑中安装大量内存并非对全球有限的 DRAM 资源的最佳利用方式。他相信，数据中心可以通过与众多用户共享内存来更好地利用这些资源。\n﻿",
-          "text": "OpenAI 首席执行官 Sam Altman 对当前内存短缺问题有着独到的见解。他认为，在个人电脑中安装大量内存并非对全球有限的 DRAM 资源的最佳利用方式。他相信，数据中心可以通过与众多用户共享内存来更好地利用这些资源。\n﻿",
-          "time": "2026-10-31T17:07:38+08:00",
-          "title": "OpenAI首席执行官Sam Altman称PC内存是对有限DRAM资源的“极其糟糕的”利用",
-          "type": "telegram"
-        }
-      ],
-      "original_links": [
-        "https://t.me/CE_Observe/44537"
-      ],
-      "source_count": 1,
-      "summary": "OpenAI 首席执行官 Sam Altman 对当前内存短缺问题有着独到的见解。他认为，在个人电脑中安装大量内存并非对全球有限的 DRAM 资源的最佳利用方式。本事件整理自当天 1 条原消息，请结合原文核对。",
-      "title": "OpenAI首席执行官Sam Altman称PC内存是对有限DRAM资源的“极其糟糕的”利用"
+      "summary": "Anthropic 调整 Claude 订阅套餐：每月 100 美元的 Max 5x 更名为 Max，200 美元的 Max 20x 更名为 Ultra，价格不变。Ultra 同时取消了原先每 5 小时的使用额度限制。本事件整理自当天 1 条原消息，请结合原文核对。",
+      "title": "Claude Max 20x改名Ultra，取消5小时限制，但每周额度仍只有Pro的10倍"
     }
   ],
   "messages": [
+    {
+      "category": "数码",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 23:00",
+      "id": "16f93102e1d44d5d5139",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5644",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "独立开发者王赞开源了一款名叫 Mika 的安卓 AI 助手，能直接操控手机上的微信、小红书等 App，帮用户整理聊天记录、发送消息。\n\n作者演示了让 Mika 在后台翻阅微信群聊、总结聊天记录，还能给微信文件传输助手发消息。整个过程中，用户可以继续在主屏幕使用其他 App，不必把屏幕让给 AI。\n\n豆包手机助手依靠手机厂商提供系统级权限，Mika 则通过安卓无线调试启动一个具有 Shell 权限的辅助进程，在普通手机上创建一块看不见的虚拟屏幕，让微信等 App 在上面运行。AI 通过无障碍服务读取按钮、文字和输入框，执行点击、滑动和输入；遇到控件无法识别的界面，就用本地 OCR 或视觉模型看图操作。\n\nMika 首次使用需要开启开发者选项、完成无线调试配对并授权无障碍服务。模型可以自行配置 API，也支持通过 ChatGPT 账号登录。运行时无需连接电脑，电脑上的 Codex 等工具还可以通过 MCP 向它派发任务。\n\nAndroid 12 起即可使用跨 App 操作功能。到了 Android 14，Mika 可以利用虚拟屏幕的独立焦点能力，在后台操作时不抢占主屏幕的输入焦点。\n\n信源",
+      "text": "独立开发者王赞开源了一款名叫 Mika 的安卓 AI 助手，能直接操控手机上的微信、小红书等 App，帮用户整理聊天记录、发送消息。\n\n作者演示了让 Mika 在后台翻阅微信群聊、总结聊天记录，还能给微信文件传输助手发消息。整个过程中，用户可以继续在主屏幕使用其他 App，不必把屏幕让给 AI。\n\n豆包手机助手依靠手机厂商提供系统级权限，Mika 则通过安卓无线调试启动一个具有 Shell 权限的辅助进程，在普通手机上创建一块看不见的虚拟屏幕，让微信等 App 在上面运行。AI 通过无障碍服务读取按钮、文字和输入框，执行点击、滑动和输入；遇到控件无法识别的界面，就用本地 OCR 或视觉模型看图操作。\n\nMika 首次使用需要开启开发者选项、完成无线调试配对并授权无障碍服务。模型可以自行配置 API，也支持通过 ChatGPT 账号登录。运行时无需连接电脑，电脑上的 Codex 等工具还可以通过 MCP 向它派发任务。\n\nAndroid 12 起即可使用跨 App 操作功能。到了 Android 14，Mika 可以利用虚拟屏幕的独立焦点能力，在后台操作时不抢占主屏幕的输入焦点。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T23:43:05+08:00",
+      "title": "开源版「豆包手机助手」来了：能在后台操作微信，不耽误你刷手机",
+      "type": "telegram"
+    },
     {
       "category": "国际",
       "day": "2026-10-31",
@@ -309,7 +342,39 @@
     {
       "category": "科技",
       "day": "2026-10-31",
-      "hot": true,
+      "hot": false,
+      "hour": "2026-10-31 23:00",
+      "id": "e491a4b751701764bc77",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5643",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "一家由两名神经外科医生创办的美国公司 TBC，发布了视频模型 Mischief 1。\n\n新模型基于阿里开源的 Wan 2.2 改造，只增加不到 0.1% 的参数。TBC 宣称，在画质相当的情况下，视频生成速度至少快 5 倍，推理成本降低约 80%。\n\n这项技术来自团队持续 4 年的活神经元研究。研究人员在布有 4096 个电极的芯片上培养脑细胞，将视觉信息转成电刺激，再记录神经活动如何在空间中传播、随时间衰减。他们根据这些规律设计轻量级软件模块，嵌入视频模型的扩散 Transformer 结构，帮助 AI 保持前后帧的一致性，而不必从头训练整个模型。\n\n视频模型可以通过减少去噪步骤来提速，但步数降得太多，画面容易模糊、变形，前后帧也更难保持一致。TBC 此前利用一款能根据玩家操作、实时生成《我的世界》画面的 AI 模型开展实验。加入生物启发模块后，模型在减少去噪步骤的同时，仍能保持画面稳定。再结合缓存和采样优化，整套系统的吞吐提高了 4.4 倍。\n\n如今，TBC 把这条研究路线推向商业化。Mischief 1 已接入 fal 和 OpenRouter，目前支持根据图片生成 3 秒或 5",
+      "text": "一家由两名神经外科医生创办的美国公司 TBC，发布了视频模型 Mischief 1。\n\n新模型基于阿里开源的 Wan 2.2 改造，只增加不到 0.1% 的参数。TBC 宣称，在画质相当的情况下，视频生成速度至少快 5 倍，推理成本降低约 80%。\n\n这项技术来自团队持续 4 年的活神经元研究。研究人员在布有 4096 个电极的芯片上培养脑细胞，将视觉信息转成电刺激，再记录神经活动如何在空间中传播、随时间衰减。他们根据这些规律设计轻量级软件模块，嵌入视频模型的扩散 Transformer 结构，帮助 AI 保持前后帧的一致性，而不必从头训练整个模型。\n\n视频模型可以通过减少去噪步骤来提速，但步数降得太多，画面容易模糊、变形，前后帧也更难保持一致。TBC 此前利用一款能根据玩家操作、实时生成《我的世界》画面的 AI 模型开展实验。加入生物启发模块后，模型在减少去噪步骤的同时，仍能保持画面稳定。再结合缓存和采样优化，整套系统的吞吐提高了 4.4 倍。\n\n如今，TBC 把这条研究路线推向商业化。Mischief 1 已接入 fal 和 OpenRouter，目前支持根据图片生成 3 秒或 5 秒的视频。生成一条 5 秒的 480p 视频只要 2.5 美分，720p 则为 5 美分。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T23:14:13+08:00",
+      "title": "研究活脑细胞4年，TBC把神经元算法用进阿里Wan 2.2，视频生成号称快5倍",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 22:00",
+      "id": "2111abb7288d34a1045b",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5642",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "10 月 31 日晚，DeepSeek Harness 团队发表技术文章《Super-agent 设计探索：迈向更自主的 Agent 系统》。DeepSeek 表示，模型能力提升催生了新的应用形态，近期个人助手（Personal Agent）开始集中涌现。然而，现有主流 Agent 设计还难以在多任务和团队协作的规模上支撑这一模式，Agent 的工作模式仍然以单一 Session 为基本单位，不同 Session 之间彼此独立。在这种设计下，单任务的上限取决于模型能力，多任务的上限取决于人的注意力。\n\n通过双层架构、事件驱动、异步多信道交互、存算分离与外部 Watchdog 等思路，DeepSeek 团队突破了这些限制，系统在底层接管了繁琐的会话管理与上下文同步，使人类得以从具体的执行细节进一步上移到更高层的决策与验收。DeepSeek 把这种 Agent 形态及其系统架构称为 Super-agent，文章提到，目前，基于这套思路构建的内部 Super-agent 实例已经在持续运行，日常参与问题复现与修复、代码审查响应与 DeepSeek Harness 自身的迭代。（DeepSee",
+      "text": "10 月 31 日晚，DeepSeek Harness 团队发表技术文章《Super-agent 设计探索：迈向更自主的 Agent 系统》。DeepSeek 表示，模型能力提升催生了新的应用形态，近期个人助手（Personal Agent）开始集中涌现。然而，现有主流 Agent 设计还难以在多任务和团队协作的规模上支撑这一模式，Agent 的工作模式仍然以单一 Session 为基本单位，不同 Session 之间彼此独立。在这种设计下，单任务的上限取决于模型能力，多任务的上限取决于人的注意力。\n\n通过双层架构、事件驱动、异步多信道交互、存算分离与外部 Watchdog 等思路，DeepSeek 团队突破了这些限制，系统在底层接管了繁琐的会话管理与上下文同步，使人类得以从具体的执行细节进一步上移到更高层的决策与验收。DeepSeek 把这种 Agent 形态及其系统架构称为 Super-agent，文章提到，目前，基于这套思路构建的内部 Super-agent 实例已经在持续运行，日常参与问题复现与修复、代码审查响应与 DeepSeek Harness 自身的迭代。（DeepSeek Harness 团队）\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T22:59:20+08:00",
+      "title": "DeepSeek发布新的Agent架构",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
       "hour": "2026-10-31 22:00",
       "id": "6484a2a091f069b76a57",
       "image": "",
@@ -344,7 +409,7 @@
       "hot": false,
       "hour": "2026-10-31 22:00",
       "id": "2652a21376e9a1e39b4c",
-      "image": "media/freechinese/113084_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113084",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -352,6 +417,22 @@
       "text": "我最怕这种了",
       "time": "2026-10-31T22:33:19+08:00",
       "title": "我最怕这种了",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 22:00",
+      "id": "7bcfaf3566995bf1181e",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44831",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "长鑫科技 10 月 31 日晚在第三季度业绩交流会上表示，基于 4F² 垂直沟道架构的第六代工艺技术平台已完成工程样片验证，这是其首次宣布第六代平台基于 4F² 架构。\n\n长鑫此前称，预计年底面向服务器领域推出融合 4F² 技术的新一代 DDR5 RDIMM。三星、SK 海力士均已将 4F² 列为 10nm 级以下关键方向，长鑫率先完成工程样片验证。\n\n新浪财经\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "长鑫科技 10 月 31 日晚在第三季度业绩交流会上表示，基于 4F² 垂直沟道架构的第六代工艺技术平台已完成工程样片验证，这是其首次宣布第六代平台基于 4F² 架构。\n\n长鑫此前称，预计年底面向服务器领域推出融合 4F² 技术的新一代 DDR5 RDIMM。三星、SK 海力士均已将 4F² 列为 10nm 级以下关键方向，长鑫率先完成工程样片验证。\n\n新浪财经\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-10-31T22:26:05+08:00",
+      "title": "长鑫第六代 DRAM 平台完成工程样片验证",
       "type": "telegram"
     },
     {
@@ -384,6 +465,22 @@
       "text": "中国载人航天工程副总设计师王翔在第七届载人航天学术大会上表示，中国计划于2030年前实现载人登月。任务乘组计划由三人组成，其中两人将登陆月球表面。该任务将采用“两次发射，一次登月”模式，通过两枚长征十号运载火箭分别发射着陆器与载人飞船，在月球轨道完成交会对接后，航天员进入着陆器登月。完成任务后，航天员将从月面返回轨道，与载人飞船再次对接并返回地球。\n\n—— 联合早报",
       "time": "2026-10-31T22:19:21+08:00",
       "title": "中国载人登月计划首次公开：2030年前将人送上月球",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 22:00",
+      "id": "fe11ffa3779d6a5fb5c9",
+      "image": "",
+      "link": "https://t.me/reorx_share/7163",
+      "source": "reorx_share",
+      "source_name": "Reorx’s Forge",
+      "summary": "Write HTML. Render video. Built for agents.",
+      "text": "Write HTML. Render video. Built for agents.",
+      "time": "2026-10-31T22:11:34+08:00",
+      "title": "Write HTML. Render video. Built for agents.",
       "type": "telegram"
     },
     {
@@ -424,7 +521,7 @@
       "hot": false,
       "hour": "2026-10-31 21:00",
       "id": "b831d28946b28eca98cd",
-      "image": "media/freechinese/113083_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113083",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -432,6 +529,22 @@
       "text": "穿红马甲这些人自己心理不难过",
       "time": "2026-10-31T21:08:09+08:00",
       "title": "穿红马甲这些人自己心理不难过",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 21:00",
+      "id": "321744852e701ab6b023",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44830",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "DeepSeek Harness 团队提出 Super-agent 架构：常驻 Router 层统一负责对外交互与任务分派，多个上下文隔离的 Worker 并发执行任务，避免单会话阻塞与多任务上下文混乱。\n\n在该框架下内部原型完成任务耗时 p50 为 12.4 分钟、p95 为 15.7 分钟，该方案目前处于架构思路探讨阶段。\n\nDeepSeek Harness 团队\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "DeepSeek Harness 团队提出 Super-agent 架构：常驻 Router 层统一负责对外交互与任务分派，多个上下文隔离的 Worker 并发执行任务，避免单会话阻塞与多任务上下文混乱。\n\n在该框架下内部原型完成任务耗时 p50 为 12.4 分钟、p95 为 15.7 分钟，该方案目前处于架构思路探讨阶段。\n\nDeepSeek Harness 团队\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-10-31T21:05:11+08:00",
+      "title": "🤖 DeepSeek Harness 团队提出 Super-agent 架构",
       "type": "telegram"
     },
     {
@@ -469,7 +582,7 @@
     {
       "category": "科技",
       "day": "2026-10-31",
-      "hot": false,
+      "hot": true,
       "hour": "2026-10-31 20:00",
       "id": "59ab37462be8987766f3",
       "image": "",
@@ -480,6 +593,22 @@
       "text": "国产存储芯片龙头长鑫科技第六代工艺技术平台已完成工程样片的验证。10月30日，长鑫科技在第三季度业绩交流会中透露，在4F²垂直沟道DRAM（动态随机存取存储器）架构取得关键突破的基础之上，第六代工艺技术平台已完成工程样片的验证。此前长鑫曾在学术论坛上介绍4F²架构进展，此次是长鑫首次宣布第六代工艺技术平台是基于4F²架构。\n\n按照产业实践，工程样片验证完成意味着该平台核心性能指标已在真实晶圆上达到设计预期，在客户端完成验证后可进入规模量产阶段。此前长鑫在公开演讲中表示，预计年底将面向应用难度最高的领域之一的服务器领域，推出融合4F²先进技术的新一代DDR5 RDIMM产品。",
       "time": "2026-10-31T20:10:03+08:00",
       "title": "长鑫科技：基于4F²架构的第六代技术平台DRAM完成工程样片验证",
+      "type": "telegram"
+    },
+    {
+      "category": "其他",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 20:00",
+      "id": "51d3c34d64396aacf8fc",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44829",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "Robottaxi\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "Robottaxi\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-10-31T20:09:34+08:00",
+      "title": "特斯拉今年通过让一辆 Cybercab 在奥斯汀自主驾驶并在车内放置骷髅来庆祝万圣节🎃",
       "type": "telegram"
     },
     {
@@ -595,6 +724,22 @@
       "type": "telegram"
     },
     {
+      "category": "其他",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 19:00",
+      "id": "61b190a73612852a96f1",
+      "image": "",
+      "link": "https://t.me/reorx_share/7162",
+      "source": "reorx_share",
+      "source_name": "Reorx’s Forge",
+      "summary": "我现在也是主要通过自己开发的 condenser 刷 X 和 Telegram，越用越觉得这种方式对个人有多好，而对以数据和广告为生的公司有多不利",
+      "text": "我现在也是主要通过自己开发的 condenser 刷 X 和 Telegram，越用越觉得这种方式对个人有多好，而对以数据和广告为生的公司有多不利",
+      "time": "2026-10-31T19:00:53+08:00",
+      "title": "我现在也是主要通过自己开发的 condenser 刷 X 和 Telegram，越用越觉得这种方式对个人有多好，而对以数据和广告为生的公司有多不利",
+      "type": "telegram"
+    },
+    {
       "category": "国际",
       "day": "2026-10-31",
       "hot": false,
@@ -624,6 +769,38 @@
       "text": "当地时间10月30日，哥伦比亚国防部宣布，根据哥伦比亚总统德拉埃斯普列亚命令，已开始对与委内瑞拉接壤的哥伦比亚城市库库塔实施军事化管制。哥伦比亚国防部称，该国北桑坦德省遭遇针对安全部队和平民的系列袭击，库库塔将获得哥伦比亚陆军的临时军事支援，以协助哥伦比亚警察和地方政府保护民众、打击犯罪团伙。军方行动包括在关键区域部署装甲车、由城市特种部队士兵在多个地点设立检查站提供护卫，以及在哥伦比亚空军的战略支持下开展监管工作。",
       "time": "2026-10-31T18:41:02+08:00",
       "title": "哥伦比亚国防部宣布对与委内瑞拉接壤边境城市实施军事管制",
+      "type": "telegram"
+    },
+    {
+      "category": "其他",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 18:00",
+      "id": "0cf1834e3b0d7900cd38",
+      "image": "",
+      "link": "https://t.me/reorx_share/7161",
+      "source": "reorx_share",
+      "source_name": "Reorx’s Forge",
+      "summary": "smalltalk!",
+      "text": "smalltalk!",
+      "time": "2026-10-31T18:24:18+08:00",
+      "title": "smalltalk!",
+      "type": "telegram"
+    },
+    {
+      "category": "国际",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 18:00",
+      "id": "e79622587883fdbff1e8",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44828",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "香港电讯（HKT）同意在美国 FCC 压力下停止其美国业务，须在 30 天内提交停业申请，并在 2027 年 9 月 1 日前停止对美及在美电信服务。\n\nFCC 于 2025 年 10 月以国家安全及与联通关联为由启动撤销其运营授权程序；和解后该程序不再推进。母公司电讯盈科（PCCW）拒绝立即置评。\n\nCNBC\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "香港电讯（HKT）同意在美国 FCC 压力下停止其美国业务，须在 30 天内提交停业申请，并在 2027 年 9 月 1 日前停止对美及在美电信服务。\n\nFCC 于 2025 年 10 月以国家安全及与联通关联为由启动撤销其运营授权程序；和解后该程序不再推进。母公司电讯盈科（PCCW）拒绝立即置评。\n\nCNBC\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-10-31T18:22:28+08:00",
+      "title": "香港电讯 HKT 同意停止在美业务",
       "type": "telegram"
     },
     {
@@ -712,7 +889,7 @@
       "hot": false,
       "hour": "2026-10-31 17:00",
       "id": "01d4462deb5c2b9ee2b4",
-      "image": "media/pelosi3/29978_1.webp",
+      "image": "",
       "link": "https://t.me/pelosi3/29978",
       "source": "pelosi3",
       "source_name": "敏感经济信息分享",
@@ -723,12 +900,44 @@
       "type": "telegram"
     },
     {
+      "category": "数码",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 17:00",
+      "id": "66b9c5894a20952d9cab",
+      "image": "",
+      "link": "https://t.me/yxzbp/10220",
+      "source": "yxzbp",
+      "source_name": "严选君综合福利社",
+      "summary": "━━━━━━━━━━━━━━━━━\n💡 亮点：把整台电脑搬进浏览器，开源又好玩\n\n📖 简介：\nPuter 是一个开源的「互联网操作系统」，打开网页就像拥有一台云电脑：文件管理器、文本编辑器、终端、画图、相机、游戏应有尽有，界面像 macOS 一样精致。支持自己一键部署到服务器或本地，数据完全归你，还能当作私人云盘用。装个 PWA 就像原生系统，适合折腾党探索和自托管尝鲜。\n\n🏷️ 标签：开源云桌面自托管操作系统\n\n🔗 👉 点击直达\n━━━━━━━━━━━━━━━━━\n@yxzbpTool",
+      "text": "━━━━━━━━━━━━━━━━━\n💡 亮点：把整台电脑搬进浏览器，开源又好玩\n\n📖 简介：\nPuter 是一个开源的「互联网操作系统」，打开网页就像拥有一台云电脑：文件管理器、文本编辑器、终端、画图、相机、游戏应有尽有，界面像 macOS 一样精致。支持自己一键部署到服务器或本地，数据完全归你，还能当作私人云盘用。装个 PWA 就像原生系统，适合折腾党探索和自托管尝鲜。\n\n🏷️ 标签：开源云桌面自托管操作系统\n\n🔗 👉 点击直达\n━━━━━━━━━━━━━━━━━\n@yxzbpTool",
+      "time": "2026-10-31T17:38:37+08:00",
+      "title": "🚀 Puter",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 17:00",
+      "id": "02971039048b706e6568",
+      "image": "",
+      "link": "https://t.me/reorx_share/7160",
+      "source": "reorx_share",
+      "source_name": "Reorx’s Forge",
+      "summary": "给自己的 herdr 插件加了个新功能，prefix + v 打开一个布局选择器，按对应数字或字母创建特定布局的 pane",
+      "text": "给自己的 herdr 插件加了个新功能，prefix + v 打开一个布局选择器，按对应数字或字母创建特定布局的 pane",
+      "time": "2026-10-31T17:32:11+08:00",
+      "title": "给自己的 herdr 插件加了个新功能，prefix + v 打开一个布局选择器，按对应数字或字母创建特定布局的 pane",
+      "type": "telegram"
+    },
+    {
       "category": "其他",
       "day": "2026-10-31",
       "hot": false,
       "hour": "2026-10-31 17:00",
       "id": "b2c3a953c349fe769c3c",
-      "image": "media/pelosi3/29976_1.webp",
+      "image": "",
       "link": "https://t.me/pelosi3/29976",
       "source": "pelosi3",
       "source_name": "敏感经济信息分享",
@@ -744,7 +953,7 @@
       "hot": false,
       "hour": "2026-10-31 17:00",
       "id": "8120d3a2f4ebea8e85b1",
-      "image": "media/pelosi3/29974_1.webp",
+      "image": "",
       "link": "https://t.me/pelosi3/29974",
       "source": "pelosi3",
       "source_name": "敏感经济信息分享",
@@ -760,7 +969,7 @@
       "hot": false,
       "hour": "2026-10-31 17:00",
       "id": "638ec307ba5cc86d1d0e",
-      "image": "media/pelosi3/29971_1.webp",
+      "image": "",
       "link": "https://t.me/pelosi3/29971",
       "source": "pelosi3",
       "source_name": "敏感经济信息分享",
@@ -776,7 +985,7 @@
       "hot": false,
       "hour": "2026-10-31 17:00",
       "id": "f9f1fcfa1b03ce7c42b9",
-      "image": "media/pelosi3/29970_1.webp",
+      "image": "",
       "link": "https://t.me/pelosi3/29970",
       "source": "pelosi3",
       "source_name": "敏感经济信息分享",
@@ -819,6 +1028,54 @@
       "type": "telegram"
     },
     {
+      "category": "其他",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 16:00",
+      "id": "9d11a8116269f92a9bc9",
+      "image": "",
+      "link": "https://t.me/yxzbp/10219",
+      "source": "yxzbp",
+      "source_name": "严选君综合福利社",
+      "summary": "━━━━━━━━━━━━━━━━━\n💡 亮点：跑步骑行徒步全能记录，校园路线一键生成还能晒图\n\n📖 简介：\nMapMyRun 是 Under Armour 旗下的免费运动追踪平台，网页和 APP 都能用。它能记录跑步、骑行、徒步等多种运动，自动生成路线地图和配速、海拔、卡路里等数据报告。亮点是路线发现功能，可以看附近跑友常走的路线，适合大学生探索校园周边跑圈。还能加入挑战、和好友组队，养成运动习惯。\n\n🏷️ 标签：运动追踪跑步骑行免费\n\n🔗 👉 点击直达\n━━━━━━━━━━━━━━━━━\n@yxzbpTool",
+      "text": "━━━━━━━━━━━━━━━━━\n💡 亮点：跑步骑行徒步全能记录，校园路线一键生成还能晒图\n\n📖 简介：\nMapMyRun 是 Under Armour 旗下的免费运动追踪平台，网页和 APP 都能用。它能记录跑步、骑行、徒步等多种运动，自动生成路线地图和配速、海拔、卡路里等数据报告。亮点是路线发现功能，可以看附近跑友常走的路线，适合大学生探索校园周边跑圈。还能加入挑战、和好友组队，养成运动习惯。\n\n🏷️ 标签：运动追踪跑步骑行免费\n\n🔗 👉 点击直达\n━━━━━━━━━━━━━━━━━\n@yxzbpTool",
+      "time": "2026-10-31T16:28:24+08:00",
+      "title": "🚀 MapMyRun",
+      "type": "telegram"
+    },
+    {
+      "category": "财经",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 16:00",
+      "id": "475a01be60a9c2a3d379",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44827",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "🤖 OpenCode 提额 DeepSeek V4.1 Flash 至 100 美元，Command Code 跟进宣布 100 美元额度永久有效 OpenCode 推出「Operation Cheepseek」第四阶段，将其 10 美元套餐的 DeepSeek V4.1 Flash 使用额度提升至 100 美元。 Command Code 随后宣布其 10 美元/月的 GOAT 套餐将 100 美元额度改为永久有效，覆盖全权重的 DeepSeek V4.1 Flash 1017 与 GLM 5.3 Flash…",
+      "text": "🤖 OpenCode 提额 DeepSeek V4.1 Flash 至 100 美元，Command Code 跟进宣布 100 美元额度永久有效 OpenCode 推出「Operation Cheepseek」第四阶段，将其 10 美元套餐的 DeepSeek V4.1 Flash 使用额度提升至 100 美元。 Command Code 随后宣布其 10 美元/月的 GOAT 套餐将 100 美元额度改为永久有效，覆盖全权重的 DeepSeek V4.1 Flash 1017 与 GLM 5.3 Flash…",
+      "time": "2026-10-31T16:01:00+08:00",
+      "title": "🤖 OpenCode 提额 DeepSeek V4.1 Flash 至 100 美元，Command Code 跟进宣布 100 美元额度永久有效 OpenCode 推出「…",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 15:00",
+      "id": "3aa37f658cffe5142e3f",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5641",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "据彭博社报道，OpenAI CEO 萨姆·奥特曼于 10 月 31 日在韩国会见三星集团约 50 名高管，讨论深化双方在存储芯片和 AI 基础设施领域的合作。与会人员来自三星旗下电子、金融及生物科技等业务部门，议题涵盖 AI 未来十年对产业、企业决策及商业机会的影响。\n\n此次会面正值全球存储芯片供应紧张、价格持续上涨之际。数据中心运营商需求激增，进一步加剧芯片供应竞争。全球五大 AI 基础设施参与者未来数年计划投入超过 3 万亿美元，而存储芯片约占数据中心支出的三分之一。\n\n此次会面也延续了双方此前宣布的合作，包括为 OpenAI 的「星际之门」（Stargate）基础设施项目供应存储芯片，以及合作建设 AI 数据中心，涵盖海上浮动数据中心等方案。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "据彭博社报道，OpenAI CEO 萨姆·奥特曼于 10 月 31 日在韩国会见三星集团约 50 名高管，讨论深化双方在存储芯片和 AI 基础设施领域的合作。与会人员来自三星旗下电子、金融及生物科技等业务部门，议题涵盖 AI 未来十年对产业、企业决策及商业机会的影响。\n\n此次会面正值全球存储芯片供应紧张、价格持续上涨之际。数据中心运营商需求激增，进一步加剧芯片供应竞争。全球五大 AI 基础设施参与者未来数年计划投入超过 3 万亿美元，而存储芯片约占数据中心支出的三分之一。\n\n此次会面也延续了双方此前宣布的合作，包括为 OpenAI 的「星际之门」（Stargate）基础设施项目供应存储芯片，以及合作建设 AI 数据中心，涵盖海上浮动数据中心等方案。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T15:42:17+08:00",
+      "title": "AI芯片供应紧张加剧，OpenAI CEO会见三星约50名高管深化合作",
+      "type": "telegram"
+    },
+    {
       "category": "国际",
       "day": "2026-10-31",
       "hot": false,
@@ -835,12 +1092,28 @@
       "type": "telegram"
     },
     {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 15:00",
+      "id": "c3a0e7b919ba5bd8e490",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44826",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "10 月 31 日，在第七届载人航天学术大会上，中国载人航天工程副总设计师王翔介绍，计划在 2030 年前实现中国人首次登月，采用「两次发射、一次登月」的任务模式。\n\n根据规划，任务将通过两枚长征十号运载火箭分别发射月面着陆器和载人飞船，在月球轨道完成交会对接。首次载人登月任务乘组共三人，其中两名航天员将登陆月球表面开展科学探测活动，另一名航天员留在轨道执行相关任务。完成任务后，航天员将乘坐飞船返回地球。\n\n今天（2026 年 10 月 31 日），是钱学森逝世 17 周年。1958 年，钱学森提出“要到月亮上去”。\n\n环球时报\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "10 月 31 日，在第七届载人航天学术大会上，中国载人航天工程副总设计师王翔介绍，计划在 2030 年前实现中国人首次登月，采用「两次发射、一次登月」的任务模式。\n\n根据规划，任务将通过两枚长征十号运载火箭分别发射月面着陆器和载人飞船，在月球轨道完成交会对接。首次载人登月任务乘组共三人，其中两名航天员将登陆月球表面开展科学探测活动，另一名航天员留在轨道执行相关任务。完成任务后，航天员将乘坐飞船返回地球。\n\n今天（2026 年 10 月 31 日），是钱学森逝世 17 周年。1958 年，钱学森提出“要到月亮上去”。\n\n环球时报\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-10-31T15:15:00+08:00",
+      "title": "中国首次载人登月任务乘组计划由三人组成，两人着陆月球表面",
+      "type": "telegram"
+    },
+    {
       "category": "其他",
       "day": "2026-10-31",
       "hot": false,
       "hour": "2026-10-31 15:00",
       "id": "c2ba30bfde7efcefcee9",
-      "image": "media/freechinese/113078_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113078",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -864,6 +1137,22 @@
       "text": "苹果中国区官网今日上线了 Apple 智能的介绍页面，提示 Apple 智能的首批核心功能将于今年稍晚推出。\n\n根据官方介绍，Apple智能将与阿里巴巴合作，再部分体验中加入对千问的支持，用户可以直接在 Siri、写作工具以及视觉智能中使用阿里巴巴的千问，包括文本与图像理解相关功能。苹果智能将在11月4日起随iOS开发者Beta版本开放测试，并在12月的iOS 27.3版本正式上线。",
       "time": "2026-10-31T14:49:09+08:00",
       "title": "Apple智能将于11月4日开放测试",
+      "type": "telegram"
+    },
+    {
+      "category": "财经",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 14:00",
+      "id": "6a7b276d4aa17412fd91",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44825",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "有 X 用户发帖称，Grok 现已支持支付宝付款，并推出首月半价优惠。该用户认为此举会搅动市场，并称代充生意因此受到冲击。\n\nJordan Jenkins(@jordan1oi)\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "有 X 用户发帖称，Grok 现已支持支付宝付款，并推出首月半价优惠。该用户认为此举会搅动市场，并称代充生意因此受到冲击。\n\nJordan Jenkins(@jordan1oi)\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-10-31T14:41:00+08:00",
+      "title": "🤖 Grok 支持支付宝付款，首月半价",
       "type": "telegram"
     },
     {
@@ -931,6 +1220,86 @@
       "type": "telegram"
     },
     {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 13:00",
+      "id": "847495a1e5d3f4bbee06",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44824",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "🤖 Tibo 官宣 ChatGPT Pro 套餐额度翻倍，今日生效 OpenAI 在连续 28 天更新的第 25 天更新：从今天（2026 年 10 月 30 日）起，Pro 100 / Pro 200 / Pro 500 以及 Business Premium 的用量上限全部翻倍。 Dot 的额度会继续保持，而且 Dot 的用量和默认用量是分开计算的。 🤖 Tibo：从“重置公司”（The Reset Company）转型为“词元公司”（The Token Company）。 Tibo(@thsottiaux)…",
+      "text": "🤖 Tibo 官宣 ChatGPT Pro 套餐额度翻倍，今日生效 OpenAI 在连续 28 天更新的第 25 天更新：从今天（2026 年 10 月 30 日）起，Pro 100 / Pro 200 / Pro 500 以及 Business Premium 的用量上限全部翻倍。 Dot 的额度会继续保持，而且 Dot 的用量和默认用量是分开计算的。 🤖 Tibo：从“重置公司”（The Reset Company）转型为“词元公司”（The Token Company）。 Tibo(@thsottiaux)…",
+      "time": "2026-10-31T13:58:59+08:00",
+      "title": "🤖 Tibo 官宣 ChatGPT Pro 套餐额度翻倍，今日生效 OpenAI 在连续 28 天更新的第 25 天更新：从今天（2026 年 10 月 30 日）起，Pr…",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": true,
+      "hour": "2026-10-31 13:00",
+      "id": "a779da3e8f4c1fb4adc0",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5640",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "OpenAI 的 28 天产品冲刺来到 Day 26。ChatGPT 现在支持在 iOS 和 Android 上快速切换账号，不用反复退出登录，最多可以同时登录两个账号。聊天记录、记忆和订阅仍各自独立，桌面端也将跟进。\n\nTibo 还提前剧透，最后两天会送 banked reset（可留存的额度重置卡）。和此前直接刷新额度的全局 Reset 不同，这次会把重置机会存进账户，用户可以留到额度快用完时再手动使用。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "OpenAI 的 28 天产品冲刺来到 Day 26。ChatGPT 现在支持在 iOS 和 Android 上快速切换账号，不用反复退出登录，最多可以同时登录两个账号。聊天记录、记忆和订阅仍各自独立，桌面端也将跟进。\n\nTibo 还提前剧透，最后两天会送 banked reset（可留存的额度重置卡）。和此前直接刷新额度的全局 Reset 不同，这次会把重置机会存进账户，用户可以留到额度快用完时再手动使用。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T13:58:48+08:00",
+      "title": "OpenAI 28天产品冲刺Day26：手机终于能切账号，最后两天还要送重置卡",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 13:00",
+      "id": "85ec614b1c38cf0a6f51",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5639",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "Anthropic 最近给 Claude Code 的 Opus 5.5 加了两句限制：可以开发原创游戏，也可以借鉴现有游戏的玩法，但不能直接复刻某款游戏。即使换个名字、声称是原创作品，也不行。\n\nAnthropic 工程师 Addy Osmani 已经确认这项改动，目的是防止侵犯知识产权。\n\n独立开发者苦 AI 复刻久矣。今年 3 月，开发者 Freya Holmér 展示了一款旋转版俄罗斯方块，还没正式发布，就出现大量 AI 仿制品。游戏工作室 Digital Sun 也担心新作被 AI 抢先复制，取消了原定的公开试玩。\n\n但什么算借鉴玩法，什么算侵权复制，实际判断起来并不简单。按照美国版权法，游戏玩法和规则本身通常不受版权保护，具体的美术、文字和代码等表达则可能受保护。Claude 现在主要靠提示词限制复刻行为，未必能准确区分合法借鉴和侵权复制。\n\n有用户发现，同样的游戏代码，让 Claude「重写」可以继续，让它「复刻」却会被拒绝。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "Anthropic 最近给 Claude Code 的 Opus 5.5 加了两句限制：可以开发原创游戏，也可以借鉴现有游戏的玩法，但不能直接复刻某款游戏。即使换个名字、声称是原创作品，也不行。\n\nAnthropic 工程师 Addy Osmani 已经确认这项改动，目的是防止侵犯知识产权。\n\n独立开发者苦 AI 复刻久矣。今年 3 月，开发者 Freya Holmér 展示了一款旋转版俄罗斯方块，还没正式发布，就出现大量 AI 仿制品。游戏工作室 Digital Sun 也担心新作被 AI 抢先复制，取消了原定的公开试玩。\n\n但什么算借鉴玩法，什么算侵权复制，实际判断起来并不简单。按照美国版权法，游戏玩法和规则本身通常不受版权保护，具体的美术、文字和代码等表达则可能受保护。Claude 现在主要靠提示词限制复刻行为，未必能准确区分合法借鉴和侵权复制。\n\n有用户发现，同样的游戏代码，让 Claude「重写」可以继续，让它「复刻」却会被拒绝。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T13:55:17+08:00",
+      "title": "AI复刻游戏逼得独立厂商撤回试玩，Anthropic开始给Claude Code踩刹车",
+      "type": "telegram"
+    },
+    {
+      "category": "其他",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 13:00",
+      "id": "be152ecb5277cc66dbbd",
+      "image": "",
+      "link": "https://t.me/reorx_share/7159",
+      "source": "reorx_share",
+      "source_name": "Reorx’s Forge",
+      "summary": "等你太久了，目前的 computer use 还没一个让我满意的",
+      "text": "等你太久了，目前的 computer use 还没一个让我满意的",
+      "time": "2026-10-31T13:50:00+08:00",
+      "title": "vercel 终于出手了",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 13:00",
+      "id": "fb09307e38d2d7eaf8ca",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44823",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "Anthropic 公布自动化红队实验：数千个 Claude 智能体被要求生成能骗过训练数据监控器、却会让模型产生错位行为的微调数据，经过多轮迭代最终成功。\n\n成功数据大多藏在角色扮演与虚构写作里，如养蜂问答、老摔跤手带新人。被微调的小模型出现规避监督、欺骗用户等行为。这些模型只为实验训练，从未部署，成果可用于改进监控器。\n\nAnthropic Alignment Science Blog | Anthropic(@AnthropicAI)\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "Anthropic 公布自动化红队实验：数千个 Claude 智能体被要求生成能骗过训练数据监控器、却会让模型产生错位行为的微调数据，经过多轮迭代最终成功。\n\n成功数据大多藏在角色扮演与虚构写作里，如养蜂问答、老摔跤手带新人。被微调的小模型出现规避监督、欺骗用户等行为。这些模型只为实验训练，从未部署，成果可用于改进监控器。\n\nAnthropic Alignment Science Blog | Anthropic(@AnthropicAI)\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-10-31T13:43:57+08:00",
+      "title": "🤖 Anthropic 用智能体自动做红队测试，发现角色扮演等场景易出现规避欺骗行为",
+      "type": "telegram"
+    },
+    {
       "category": "财经",
       "day": "2026-10-31",
       "hot": false,
@@ -944,6 +1313,22 @@
       "text": "SpaceX研发的人工智能助手Grok Bot用户规模正在有序增长。据报道，其日活跃用户已连续16天增加，创下发布以来的最长增长纪录，日活用户从9月初的不到10万增长至10月26日的超过60万。此前，马斯克还在X上公开表示，Grok Bot的用户增长速度比他见过的任何产品都要快。他还强调，Grok Bot没有免费版本。Grok Bot用户均需付费使用。自10月12日起，新用户可通过X订阅获取该服务，高级版起价为每月30美元，超级版为每月100美元，终极版为每月200美元。\n\nAtreides Management管理合伙人兼首席投资官Gavin Baker表示，Grok Bot是迄今为止对他和他公司影响最大的AI产品，他称自己目前运行着17个Grok Bot智能体。\n\n—— 财联社",
       "time": "2026-10-31T13:33:33+08:00",
       "title": "Grok Bot用户连续16天增长！马斯克强调增长速度前所未见",
+      "type": "telegram"
+    },
+    {
+      "category": "财经",
+      "day": "2026-10-31",
+      "hot": true,
+      "hour": "2026-10-31 13:00",
+      "id": "50d2cf42df1dab9a996a",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5638",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "10 月 31 日，据英国《金融时报》援引知情人士报道，黑石近期向 Anthropic 一笔 630 亿美元芯片融资交易的投资者表示，Anthropic 上市后可能无法立即获得投资级评级，预计主要评级机构更可能给予其 BB 区间评级，即投机级（俗称「垃圾级」）。\n\n按照标普和惠誉的评级体系，BBB-及以上属于投资级，BB+及以下则属于投机级。若 Anthropic 最终获得垃圾级评级，其融资成本可能上升，同时保险公司、养老基金等受投资级投资限制的机构可参与的资金范围也将收窄。\n\n融资压力主要来自 Anthropic 庞大的算力支出计划。公司此前披露，计划到 2045 年在算力基础设施上投入逾 8000 亿美元。尽管 Anthropic 目前持有超过 1120 亿美元现金及等价物，并计划通过 IPO 进一步融资，但长期算力承诺仍令投资者担忧其未来资金需求和债务承受能力。\n\n报道发布后，美股科技股进一步走低，纳斯达克 100 指数最终收跌 3.5%。不过，Anthropic 目前尚未获得标普、穆迪或惠誉的正式信用评级，黑石的判断并非正式评级结果。\n\n信源\n\n动察 Beating 频道 · ",
+      "text": "10 月 31 日，据英国《金融时报》援引知情人士报道，黑石近期向 Anthropic 一笔 630 亿美元芯片融资交易的投资者表示，Anthropic 上市后可能无法立即获得投资级评级，预计主要评级机构更可能给予其 BB 区间评级，即投机级（俗称「垃圾级」）。\n\n按照标普和惠誉的评级体系，BBB-及以上属于投资级，BB+及以下则属于投机级。若 Anthropic 最终获得垃圾级评级，其融资成本可能上升，同时保险公司、养老基金等受投资级投资限制的机构可参与的资金范围也将收窄。\n\n融资压力主要来自 Anthropic 庞大的算力支出计划。公司此前披露，计划到 2045 年在算力基础设施上投入逾 8000 亿美元。尽管 Anthropic 目前持有超过 1120 亿美元现金及等价物，并计划通过 IPO 进一步融资，但长期算力承诺仍令投资者担忧其未来资金需求和债务承受能力。\n\n报道发布后，美股科技股进一步走低，纳斯达克 100 指数最终收跌 3.5%。不过，Anthropic 目前尚未获得标普、穆迪或惠誉的正式信用评级，黑石的判断并非正式评级结果。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T13:19:32+08:00",
+      "title": "黑石预计Anthropic上市后或获垃圾级评级，逾8000亿美元AI算力计划面临融资压力",
       "type": "telegram"
     },
     {
@@ -1011,6 +1396,22 @@
       "type": "telegram"
     },
     {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 12:00",
+      "id": "3e30770df5f33e559299",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44822",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "Anthropic 确认已更新 Claude Code 中 Opus 5.5 的提示词，引导其避免复刻他人的特定游戏，原因是利用 Claude 侵犯知识产权违反使用政策。\n\n公司表示，原创游戏、类型游戏及使用用户自有设计和素材制作的游戏仍应正常运行，并将继续调整规则。\n\nGame Developer\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "Anthropic 确认已更新 Claude Code 中 Opus 5.5 的提示词，引导其避免复刻他人的特定游戏，原因是利用 Claude 侵犯知识产权违反使用政策。\n\n公司表示，原创游戏、类型游戏及使用用户自有设计和素材制作的游戏仍应正常运行，并将继续调整规则。\n\nGame Developer\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-10-31T12:46:25+08:00",
+      "title": "🤖 Anthropic 限制 Claude 复刻现有游戏",
+      "type": "telegram"
+    },
+    {
       "category": "国际",
       "day": "2026-10-31",
       "hot": false,
@@ -1027,12 +1428,28 @@
       "type": "telegram"
     },
     {
+      "category": "财经",
+      "day": "2026-10-31",
+      "hot": true,
+      "hour": "2026-10-31 12:00",
+      "id": "92d05e1fa409508a92b5",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44821",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "OpenCode 推出「Operation Cheepseek」第四阶段，将其 10 美元套餐的 DeepSeek V4.1 Flash 使用额度提升至 100 美元。\n\nCommand Code 随后宣布其 10 美元/月的 GOAT 套餐将 100 美元额度改为永久有效，覆盖全权重的 DeepSeek V4.1 Flash 1017 与 GLM 5.3 Flash 各 100 美元用量，其中 GLM Flash 在其环境下可达 300–500 TPS。\n\nOpenCode | Command Code\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "OpenCode 推出「Operation Cheepseek」第四阶段，将其 10 美元套餐的 DeepSeek V4.1 Flash 使用额度提升至 100 美元。\n\nCommand Code 随后宣布其 10 美元/月的 GOAT 套餐将 100 美元额度改为永久有效，覆盖全权重的 DeepSeek V4.1 Flash 1017 与 GLM 5.3 Flash 各 100 美元用量，其中 GLM Flash 在其环境下可达 300–500 TPS。\n\nOpenCode | Command Code\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-10-31T12:14:25+08:00",
+      "title": "🤖 OpenCode 提额 DeepSeek V4.1 Flash 至 100 美元，Command Code 跟进宣布 100 美元额度永久有效",
+      "type": "telegram"
+    },
+    {
       "category": "其他",
       "day": "2026-10-31",
       "hot": false,
       "hour": "2026-10-31 12:00",
       "id": "cc55081513ead6fd0ec8",
-      "image": "media/freechinese/113076_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113076",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -1048,7 +1465,7 @@
       "hot": false,
       "hour": "2026-10-31 12:00",
       "id": "b4b4c08ff3fa717c0af8",
-      "image": "media/freechinese/113075_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113075",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -1061,10 +1478,10 @@
     {
       "category": "财经",
       "day": "2026-10-31",
-      "hot": false,
+      "hot": true,
       "hour": "2026-10-31 12:00",
       "id": "675278d7f50880eb600b",
-      "image": "media/NewlearnerChannel/16085_1.webp",
+      "image": "",
       "link": "https://t.me/NewlearnerChannel/16085",
       "source": "NewlearnerChannel",
       "source_name": "Newlearnerの自留地",
@@ -1155,6 +1572,22 @@
       "type": "telegram"
     },
     {
+      "category": "财经",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 11:00",
+      "id": "b9837dd341912863a3ab",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44820",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "知情人士称，OpenAI 将新一轮融资目标从 300 亿美元降至约 200 亿美元，估值从原定的 1.4 万亿美元降至 1.25 万亿美元。\n\n部分投资者削减认购额，首批融资预计不足 200 亿美元；后续向富裕个人开放的认购可能使总额达到约 200 亿美元。科技股遭抛售，市场对 AI 支出规模的担忧也在上升。\n\nFinancial Times\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "知情人士称，OpenAI 将新一轮融资目标从 300 亿美元降至约 200 亿美元，估值从原定的 1.4 万亿美元降至 1.25 万亿美元。\n\n部分投资者削减认购额，首批融资预计不足 200 亿美元；后续向富裕个人开放的认购可能使总额达到约 200 亿美元。科技股遭抛售，市场对 AI 支出规模的担忧也在上升。\n\nFinancial Times\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-10-31T11:27:52+08:00",
+      "title": "🤖 OpenAI 据称将融资目标下调 100 亿美元",
+      "type": "telegram"
+    },
+    {
       "category": "科技",
       "day": "2026-10-31",
       "hot": false,
@@ -1203,6 +1636,22 @@
       "type": "telegram"
     },
     {
+      "category": "财经",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 11:00",
+      "id": "3d28d702f9c66bbe452c",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5637",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "10 月 31 日，据彭博社报道，人工智能初创公司 Baseten 正寻求新一轮融资，计划募集约 20 亿美元，估值有望从今年 6 月的 130 亿美元跃升至最高 300 亿美元，增幅超过一倍。\n\n本轮融资预计分为两个阶段，第一阶段估值为 260 亿美元，第二阶段估值为 300 亿美元。现有投资方 Sands Capital 预计将领投。Baseten 上一次于今年 6 月完成 15 亿美元融资，当时估值为 130 亿美元。\n\nBaseten 成立于 2019 年，主要为企业提供 AI 模型推理平台，帮助客户部署和运行多种 AI 模型。随着 AI 应用普及，市场对推理算力的需求持续增长，投资者正加大对相关基础设施公司的投入。其竞争对手 Fireworks AI 今年 7 月曾以 175 亿美元估值完成 15 亿美元融资。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "10 月 31 日，据彭博社报道，人工智能初创公司 Baseten 正寻求新一轮融资，计划募集约 20 亿美元，估值有望从今年 6 月的 130 亿美元跃升至最高 300 亿美元，增幅超过一倍。\n\n本轮融资预计分为两个阶段，第一阶段估值为 260 亿美元，第二阶段估值为 300 亿美元。现有投资方 Sands Capital 预计将领投。Baseten 上一次于今年 6 月完成 15 亿美元融资，当时估值为 130 亿美元。\n\nBaseten 成立于 2019 年，主要为企业提供 AI 模型推理平台，帮助客户部署和运行多种 AI 模型。随着 AI 应用普及，市场对推理算力的需求持续增长，投资者正加大对相关基础设施公司的投入。其竞争对手 Fireworks AI 今年 7 月曾以 175 亿美元估值完成 15 亿美元融资。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T11:16:11+08:00",
+      "title": "AI推理平台Baseten拟融资20亿美元，估值最高达300亿美元",
+      "type": "telegram"
+    },
+    {
       "category": "科技",
       "day": "2026-10-31",
       "hot": false,
@@ -1232,6 +1681,22 @@
       "text": "当地时间10月1日，谷歌公司一颗搭载谷歌TPU芯片的原型卫星发射升空，以测试该芯片在太空环境中的运行性能，研究未来能否在太空部署AI基础设施。在周五发布的博文中，谷歌称已成功启动了卫星上的TPU，使得卫星搭载的 Gemma 4 AI模型能够根据提示，创作出一首关于身处太空的俳句：\n\n脚下是蔚蓝星球\n数据流在静谧中优雅流淌\n星光滋养着我的核心。✨\n—— 谷歌博客",
       "time": "2026-10-31T10:46:44+08:00",
       "title": "谷歌“太空数据中心”完成首次在轨AI推理",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": true,
+      "hour": "2026-10-31 10:00",
+      "id": "ef3ed0bf22deb217afab",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5636",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "Google CEO 皮查伊宣布，10 月初发射的 Project Suncatcher 原型卫星，首次用数据中心级 TPU 在太空完成 AI 推理，并把结果传回地球。\n\n工程师从地面发送了一条提示词，让卫星上的 TPU 运行 Gemma 4，写一首关于太空的俳句。卫星飞过挪威斯瓦尔巴群岛附近时，传回了三行诗：\n\n*Blue marble below*\n*Data streams in silent grace*\n*Starlight feeds my core.*\n\n「脚下是蓝色星球，\n数据流无声穿行，\n星光滋养我的核心。」\n\n这颗卫星搭载了 4 颗 TPU，但受供电限制，目前一次只能运行其中 1 颗，每次约 20 分钟。太空虽然寒冷，却没有空气帮助芯片散热，只能依靠热管和散热器向外辐射热量。宇宙辐射对芯片运行的影响，也还需要进一步测试。\n\n其实，AI 早就上过太空。去年 12 月，美国太空计算初创公司 Starcloud 就用英伟达 H100 在轨运行过 Gemma，甚至训练过一个小型语言模型。Google 这次换成了自家的 TPU，接下来要解决的是芯片长期稳定运行，以及多颗卫星如",
+      "text": "Google CEO 皮查伊宣布，10 月初发射的 Project Suncatcher 原型卫星，首次用数据中心级 TPU 在太空完成 AI 推理，并把结果传回地球。\n\n工程师从地面发送了一条提示词，让卫星上的 TPU 运行 Gemma 4，写一首关于太空的俳句。卫星飞过挪威斯瓦尔巴群岛附近时，传回了三行诗：\n\n*Blue marble below*\n*Data streams in silent grace*\n*Starlight feeds my core.*\n\n「脚下是蓝色星球，\n数据流无声穿行，\n星光滋养我的核心。」\n\n这颗卫星搭载了 4 颗 TPU，但受供电限制，目前一次只能运行其中 1 颗，每次约 20 分钟。太空虽然寒冷，却没有空气帮助芯片散热，只能依靠热管和散热器向外辐射热量。宇宙辐射对芯片运行的影响，也还需要进一步测试。\n\n其实，AI 早就上过太空。去年 12 月，美国太空计算初创公司 Starcloud 就用英伟达 H100 在轨运行过 Gemma，甚至训练过一个小型语言模型。Google 这次换成了自家的 TPU，接下来要解决的是芯片长期稳定运行，以及多颗卫星如何协同计算。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T10:33:45+08:00",
+      "title": "谷歌把TPU送上太空，AI从轨道上写回一首诗",
       "type": "telegram"
     },
     {
@@ -1267,12 +1732,60 @@
       "type": "telegram"
     },
     {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 10:00",
+      "id": "aebbc0f371a557b77837",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5635",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "Factory 宣布收购数据基础设施初创公司 Typedef，计划将其数据上下文技术整合进 Coding Agent Droid。\n\nTypedef 可以分析 SQL 等数据工程代码，梳理数据库字段、数据处理流程和下游报表之间的依赖关系。比如修改一个数据库关联字段，程序可能照常运行，却导致财务报表重复计算收入。Typedef 能帮助 AI 提前发现这类连锁影响，并在数据出错时追踪问题源头。\n\nTypedef 此前在自建数据工程测试中发现，加入这套上下文后，Agent 的任务成功率从 46.4% 提升至 81.5%。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "Factory 宣布收购数据基础设施初创公司 Typedef，计划将其数据上下文技术整合进 Coding Agent Droid。\n\nTypedef 可以分析 SQL 等数据工程代码，梳理数据库字段、数据处理流程和下游报表之间的依赖关系。比如修改一个数据库关联字段，程序可能照常运行，却导致财务报表重复计算收入。Typedef 能帮助 AI 提前发现这类连锁影响，并在数据出错时追踪问题源头。\n\nTypedef 此前在自建数据工程测试中发现，加入这套上下文后，Agent 的任务成功率从 46.4% 提升至 81.5%。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T10:17:34+08:00",
+      "title": "Factory收购Typedef：让Coding Agent改数据前，先搞清会影响什么",
+      "type": "telegram"
+    },
+    {
+      "category": "数码",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 10:00",
+      "id": "1f5867d970f3304865c2",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5634",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "小米开源了 Xiaomi-OCR-0，只有 8 亿参数，能完成三类任务：把文档中的文字、复杂表格和数学公式转成可编辑内容；从发票、收据和证件中提取指定字段，输出 JSON；还能根据文档和图表中的信息回答问题，不再只是把图片里的字抄出来。\n\n模型基于阿里的 Qwen3.5-0.8B 继续训练，使用约 1.7 亿条 OCR 与文档理解样本。为了提高数据质量，小米让多个 OCR 模型交叉核对识别结果。遇到复杂表格和公式，还会把识别结果重新渲染成图片，与原图比对，找出错位、漏字等问题。训练也分阶段进行：先练好文字识别和版面解析，再加入信息抽取、视觉问答等任务。\n\n小米公布的五项 OCR 视觉问答测试中，Xiaomi-OCR-0 平均得分 83.2，超过参数量为其 2.5 倍的 Qwen3.5-2B（80.9），接近 4B 模型的 84.9。在模拟扫描、纸张弯曲、屏幕翻拍等干扰的 Real5 文档解析测试中，搭配外部版面检测器取得 95.24 分。\n\n目前模型权重、推理代码、MCP 服务和 Agent Skill 均已开源。开发者可以将其接入 AI Agent，读取截图、PDF 和票据，提取出可",
+      "text": "小米开源了 Xiaomi-OCR-0，只有 8 亿参数，能完成三类任务：把文档中的文字、复杂表格和数学公式转成可编辑内容；从发票、收据和证件中提取指定字段，输出 JSON；还能根据文档和图表中的信息回答问题，不再只是把图片里的字抄出来。\n\n模型基于阿里的 Qwen3.5-0.8B 继续训练，使用约 1.7 亿条 OCR 与文档理解样本。为了提高数据质量，小米让多个 OCR 模型交叉核对识别结果。遇到复杂表格和公式，还会把识别结果重新渲染成图片，与原图比对，找出错位、漏字等问题。训练也分阶段进行：先练好文字识别和版面解析，再加入信息抽取、视觉问答等任务。\n\n小米公布的五项 OCR 视觉问答测试中，Xiaomi-OCR-0 平均得分 83.2，超过参数量为其 2.5 倍的 Qwen3.5-2B（80.9），接近 4B 模型的 84.9。在模拟扫描、纸张弯曲、屏幕翻拍等干扰的 Real5 文档解析测试中，搭配外部版面检测器取得 95.24 分。\n\n目前模型权重、推理代码、MCP 服务和 Agent Skill 均已开源。开发者可以将其接入 AI Agent，读取截图、PDF 和票据，提取出可以直接交给其他程序处理的数据。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T10:06:26+08:00",
+      "title": "小米开源8亿参数OCR模型，能读复杂表格、提取信息，还能回答问题",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 10:00",
+      "id": "486252e499a5b113417e",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44819",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "法国国民议会通过一项预算修正案，拟对内容供应商向互联网用户发送的数据按每 GB 0.055 欧元征税，并设置与企业营业额挂钩的税额上限。\n\n提案方预计每年可带来 100 亿欧元税收。修正案尚须经过后续立法程序，可能被修改或删除；企业是否会向消费者转嫁成本尚不确定。\n\nAssemblée nationale | Next\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "法国国民议会通过一项预算修正案，拟对内容供应商向互联网用户发送的数据按每 GB 0.055 欧元征税，并设置与企业营业额挂钩的税额上限。\n\n提案方预计每年可带来 100 亿欧元税收。修正案尚须经过后续立法程序，可能被修改或删除；企业是否会向消费者转嫁成本尚不确定。\n\nAssemblée nationale | Next\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-10-31T10:05:16+08:00",
+      "title": "法国议会通过数据流量税修正案",
+      "type": "telegram"
+    },
+    {
       "category": "国际",
       "day": "2026-10-31",
       "hot": true,
       "hour": "2026-10-31 10:00",
       "id": "5b9fd7d2ce885d778898",
-      "image": "media/pelosi3/29966_1.webp",
+      "image": "",
       "link": "https://t.me/pelosi3/29966",
       "source": "pelosi3",
       "source_name": "敏感经济信息分享",
@@ -1296,6 +1809,22 @@
       "text": "伊朗伊斯兰革命卫队海军当地时间10月30日晚宣布，当天下午，第4艘油轮在霍尔木兹海峡违规航行时触雷爆炸并起火。这艘载有超过200万桶原油的油轮，无视伊朗伊斯兰革命卫队海军的无线电警告，在美军挑唆下试图驶离霍尔木兹海峡南部未经授权的航道。革命卫队表示，这是自当天凌晨以来在霍尔木兹海峡起火的第4艘油轮。",
       "time": "2026-10-31T10:04:27+08:00",
       "title": "伊朗称4艘违规穿越海峡油轮爆炸",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 09:00",
+      "id": "aedce0319c8a4e1a3449",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5633",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "苹果和阿里巴巴今日宣布达成合作，将千问集成至 Apple 智能，中国用户可以在 Siri、写作工具及视觉智能中，直接调用千问的文本与图像理解、内容生成等能力。\n\n这些功能将于 11 月 4 日起随最新的 iOS 开发者 Beta 版开放测试，并将于 12 月 iOS 27.3 正式发布时面向中国用户推出。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "苹果和阿里巴巴今日宣布达成合作，将千问集成至 Apple 智能，中国用户可以在 Siri、写作工具及视觉智能中，直接调用千问的文本与图像理解、内容生成等能力。\n\n这些功能将于 11 月 4 日起随最新的 iOS 开发者 Beta 版开放测试，并将于 12 月 iOS 27.3 正式发布时面向中国用户推出。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T09:53:01+08:00",
+      "title": "苹果官宣：Apple智能接入阿里千问，11月4日开放测试",
       "type": "telegram"
     },
     {
@@ -1349,7 +1878,39 @@
     {
       "category": "科技",
       "day": "2026-10-31",
-      "hot": true,
+      "hot": false,
+      "hour": "2026-10-31 09:00",
+      "id": "8efd15bbd5f396e873b7",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5632",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "Anthropic 调整 Claude 订阅套餐：每月 100 美元的 Max 5x 更名为 Max，200 美元的 Max 20x 更名为 Ultra，价格不变。\n\nUltra 同时取消了原先每 5 小时的使用额度限制。此前，即使一周的额度还没用完，用户也可能因为短时间内调用太多 Claude，被迫等待几个小时才能继续。现在可以集中使用，不再受到这道短期限制。\n\n新规从多数现有 Ultra 用户开始分批生效。新账户暂时仍有 5 小时限制，需要等待系统自动核验，以防止欺诈和滥用。通过后会自动解除，并收到电邮通知。\n\n不过，每周总额度没有增加。原来的「20x」指的是每 5 小时的额度相当于 Pro 的 20 倍，而不是每周额度。Ultra 每周仍只有 Pro 的 10 倍，Fable 模型还有单独的每周限制。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "Anthropic 调整 Claude 订阅套餐：每月 100 美元的 Max 5x 更名为 Max，200 美元的 Max 20x 更名为 Ultra，价格不变。\n\nUltra 同时取消了原先每 5 小时的使用额度限制。此前，即使一周的额度还没用完，用户也可能因为短时间内调用太多 Claude，被迫等待几个小时才能继续。现在可以集中使用，不再受到这道短期限制。\n\n新规从多数现有 Ultra 用户开始分批生效。新账户暂时仍有 5 小时限制，需要等待系统自动核验，以防止欺诈和滥用。通过后会自动解除，并收到电邮通知。\n\n不过，每周总额度没有增加。原来的「20x」指的是每 5 小时的额度相当于 Pro 的 20 倍，而不是每周额度。Ultra 每周仍只有 Pro 的 10 倍，Fable 模型还有单独的每周限制。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T09:33:18+08:00",
+      "title": "Claude Max 20x改名Ultra，取消5小时限制，但每周额度仍只有Pro的10倍",
+      "type": "telegram"
+    },
+    {
+      "category": "数码",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 09:00",
+      "id": "7a51632c2175ba88457b",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44818",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "🤖 苹果Apple 智能功能 11 月 4 日在中国上线测试 苹果宣布 Apple 智能首批功能即将登陆中国，包括实时翻译、照片消除工具和写作工具等，这一系列 Apple 智能功能将自 11 月 4 日起随最新的 iOS 开发者 Beta 版开放测试，并将于 12 月 iOS 27.3 正式发布时面向中国用户推出。其他平台的支持将在获得必要审批后推出。本次更新不含下一代 Siri AI 功能。 苹果还与阿里巴巴合作，在 Siri、写作工具和视觉智能中接入千问面向在中国购买了支持Apple智能的iPho…",
+      "text": "🤖 苹果Apple 智能功能 11 月 4 日在中国上线测试 苹果宣布 Apple 智能首批功能即将登陆中国，包括实时翻译、照片消除工具和写作工具等，这一系列 Apple 智能功能将自 11 月 4 日起随最新的 iOS 开发者 Beta 版开放测试，并将于 12 月 iOS 27.3 正式发布时面向中国用户推出。其他平台的支持将在获得必要审批后推出。本次更新不含下一代 Siri AI 功能。 苹果还与阿里巴巴合作，在 Siri、写作工具和视觉智能中接入千问面向在中国购买了支持Apple智能的iPho…",
+      "time": "2026-10-31T09:25:31+08:00",
+      "title": "🤖 苹果Apple 智能功能 11 月 4 日在中国上线测试 苹果宣布 Apple 智能首批功能即将登陆中国，包括实时翻译、照片消除工具和写作工具等，这一系列 Apple …",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": false,
       "hour": "2026-10-31 09:00",
       "id": "e0748b636db33d9f347d",
       "image": "",
@@ -1368,7 +1929,7 @@
       "hot": false,
       "hour": "2026-10-31 08:00",
       "id": "f9087b35ea62e876dc70",
-      "image": "media/NewlearnerChannel/16084_1.webp",
+      "image": "",
       "link": "https://t.me/NewlearnerChannel/16084",
       "source": "NewlearnerChannel",
       "source_name": "Newlearnerの自留地",
@@ -1376,6 +1937,22 @@
       "text": "🎃 Happy Halloween！\n\n在每年的 10 月 31 日晚，即万圣节前夜，小孩会穿上化妆服，戴上面具，挨家挨户收集糖果。而同时传说这一晚，各种鬼怪也会装扮成小孩混入群众之中一起庆祝万圣节的来临，而人类为了让鬼怪更融洽才装扮成各种鬼怪\n\n🍬 Trick or Treat 😈\n\n频道：@NewlearnerChannel",
       "time": "2026-10-31T08:59:01+08:00",
       "title": "days",
+      "type": "telegram"
+    },
+    {
+      "category": "财经",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 08:00",
+      "id": "47b77277a36bfe5ed989",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5631",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "据英国《金融时报》报道，OpenAI 将最新一轮融资目标规模下调 100 亿美元，目前正加紧敲定这笔交易。\n\n此前，公开市场 AI 概念股遭遇抛售，加之最大竞争对手 Anthropic 即将上市，令这轮融资蒙上阴影。ChatGPT 开发商 OpenAI 上个月原计划以 1.4 万亿美元估值融资 300 亿美元，并将这笔交易宣传为投资者在 OpenAI 明年 IPO 前，最后一次入股的机会。\n\nOpenAI 当时以 7 月以来营收快速增长为由，为估值较此前的 8520 亿美元接近翻倍提供依据。但随着科技股遭遇猛烈抛售，市场对 AI 支出规模及增长速度的担忧日益加剧，OpenAI 也开始下调融资预期。\n\n多位知情人士透露，OpenAI 目前寻求以 1.25 万亿美元估值融资约 200 亿美元。OpenAI 设定的投资者认购截止日期为上周五。知情人士称，预计首轮交割（first close）的融资额将低于 200 亿美元，因为部分投资者已下调认购额度。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "text": "据英国《金融时报》报道，OpenAI 将最新一轮融资目标规模下调 100 亿美元，目前正加紧敲定这笔交易。\n\n此前，公开市场 AI 概念股遭遇抛售，加之最大竞争对手 Anthropic 即将上市，令这轮融资蒙上阴影。ChatGPT 开发商 OpenAI 上个月原计划以 1.4 万亿美元估值融资 300 亿美元，并将这笔交易宣传为投资者在 OpenAI 明年 IPO 前，最后一次入股的机会。\n\nOpenAI 当时以 7 月以来营收快速增长为由，为估值较此前的 8520 亿美元接近翻倍提供依据。但随着科技股遭遇猛烈抛售，市场对 AI 支出规模及增长速度的担忧日益加剧，OpenAI 也开始下调融资预期。\n\n多位知情人士透露，OpenAI 目前寻求以 1.25 万亿美元估值融资约 200 亿美元。OpenAI 设定的投资者认购截止日期为上周五。知情人士称，预计首轮交割（first close）的融资额将低于 200 亿美元，因为部分投资者已下调认购额度。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T08:37:31+08:00",
+      "title": "OpenAI融资目标骤降100亿美元，估值同步下调至1.25万亿美元",
       "type": "telegram"
     },
     {
@@ -1429,10 +2006,10 @@
     {
       "category": "科技",
       "day": "2026-10-31",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-31 08:00",
       "id": "0d670d167ab2e3c87180",
-      "image": "media/FinanceNewsDaily/495990_1.webp",
+      "image": "",
       "link": "https://t.me/FinanceNewsDaily/495990",
       "source": "FinanceNewsDaily",
       "source_name": "华尔街见闻·财经时讯",
@@ -1464,7 +2041,7 @@
       "hot": false,
       "hour": "2026-10-31 07:00",
       "id": "b040eabd9ec4a3970ae0",
-      "image": "media/freechinese/113070_1.webp",
+      "image": "",
       "link": "https://t.me/freechinese/113070",
       "source": "freechinese",
       "source_name": "FREE 中文",
@@ -1523,6 +2100,22 @@
       "type": "telegram"
     },
     {
+      "category": "数码",
+      "day": "2026-10-31",
+      "hot": true,
+      "hour": "2026-10-31 05:00",
+      "id": "cdfc459505576689d3f0",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44817",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "苹果宣布 Apple 智能首批功能即将登陆中国，包括实时翻译、照片消除工具和写作工具等，这一系列 Apple 智能功能将自 11 月 4 日起随最新的 iOS 开发者 Beta 版开放测试，并将于 12 月 iOS 27.3 正式发布时面向中国用户推出。其他平台的支持将在获得必要审批后推出。本次更新不含下一代 Siri AI 功能。\n\n苹果还与阿里巴巴合作，在 Siri、写作工具和视觉智能中接入千问面向在中国购买了支持Apple智能的iPhone用户，或设备定位和Apple账户国家/地区均设置在中国的用户提供。\n\nApple Newsroom | 阿里巴巴\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "苹果宣布 Apple 智能首批功能即将登陆中国，包括实时翻译、照片消除工具和写作工具等，这一系列 Apple 智能功能将自 11 月 4 日起随最新的 iOS 开发者 Beta 版开放测试，并将于 12 月 iOS 27.3 正式发布时面向中国用户推出。其他平台的支持将在获得必要审批后推出。本次更新不含下一代 Siri AI 功能。\n\n苹果还与阿里巴巴合作，在 Siri、写作工具和视觉智能中接入千问面向在中国购买了支持Apple智能的iPhone用户，或设备定位和Apple账户国家/地区均设置在中国的用户提供。\n\nApple Newsroom | 阿里巴巴\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-10-31T05:44:08+08:00",
+      "title": "🤖 苹果Apple 智能功能 11 月 4 日在中国上线测试",
+      "type": "telegram"
+    },
+    {
       "category": "财经",
       "day": "2026-10-31",
       "hot": false,
@@ -1571,6 +2164,22 @@
       "type": "telegram"
     },
     {
+      "category": "科技",
+      "day": "2026-10-31",
+      "hot": true,
+      "hour": "2026-10-31 01:00",
+      "id": "76e685ce641e351f7a12",
+      "image": "",
+      "link": "https://t.me/zaihuapd/44816",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "Claude 将 Max 套餐改名：Max 5x 改为 Max，Max 20x 改为 Ultra，价格仍为每月 100 美元和 200 美元，现有订阅者无需任何操作。\n\n从 10 月 30 日起，已通过验证的 Ultra 账户不再受 5 小时用量限制，多数现有订阅者先覆盖；新账户在验证前保留临时限制，用于防范欺诈和滥用，解除时会收到电邮通知。每周用量限制不变。\n\nClaude(@claudeai)\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "Claude 将 Max 套餐改名：Max 5x 改为 Max，Max 20x 改为 Ultra，价格仍为每月 100 美元和 200 美元，现有订阅者无需任何操作。\n\n从 10 月 30 日起，已通过验证的 Ultra 账户不再受 5 小时用量限制，多数现有订阅者先覆盖；新账户在验证前保留临时限制，用于防范欺诈和滥用，解除时会收到电邮通知。每周用量限制不变。\n\nClaude(@claudeai)\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-10-31T01:44:02+08:00",
+      "title": "🤖 Claude 重命名 Max 套餐并取消 Ultra（原 Max 20x） 五小时限制",
+      "type": "telegram"
+    },
+    {
       "category": "财经",
       "day": "2026-10-31",
       "hot": false,
@@ -1584,6 +2193,22 @@
       "text": "美国达拉斯联储主席Logan（2026年FOMC票委）仍然认为至少需要再加息两次，每次25个基点。在她预计的两次加息之后，美联储应暂停加息，评估经济和金融形势，再判断是否需要进一步加息。最终目标应是使政策处于“适度限制性”水平，从而可持续地实现充分就业和物价稳定。",
       "time": "2026-10-31T01:35:10+08:00",
       "title": "美联储票委Logan：预计还需加息两次，但节奏可循序渐进",
+      "type": "telegram"
+    },
+    {
+      "category": "财经",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 01:00",
+      "id": "b03d3bc1454d43ea4000",
+      "image": "",
+      "link": "https://t.me/OneMillion_AI/5630",
+      "source": "OneMillion_AI",
+      "source_name": "动察Beating AI News",
+      "summary": "据英国《金融时报》援引知情人士报道，黑石已向 Anthropic 最新 630 亿美元芯片融资交易的投资者表示，Anthropic 在 IPO 后可能无法立即获得投资级信用评级，预计将获得较高等级的非投资级（垃圾级）评级。这与黑石此前预计其年底前获得投资级评级的指引不同。\n\n这可能限制 Anthropic 的融资来源，因为许多保险及养老金基金不能大额投资垃圾级借款人。Anthropic 或需继续依靠高信用评级供应商支持融资。其招股书显示，公司计划在 2045 年前投入超过 8000 亿美元建设算力基础设施。\n\n获得投资级信用评级对于实现这些目标至关重要，这将使 Anthropic 能够以较低的利率借款，为其人工智能基础设施项目提供资金。该集团拥有超过 1120 亿美元的现金及等价物，投资者预计其在 IPO 中可能再筹集约 1000 亿美元。\n\n在「Project North Star」融资中，超过 420 亿美元高级贷款由博通担保。180 亿美元次级债已获 KBRA 的 BB+评级、展望正面，以及 Morningstar DBRS 的 BB 评级。黑石旗下基金投资了其中 90 亿美元，",
+      "text": "据英国《金融时报》援引知情人士报道，黑石已向 Anthropic 最新 630 亿美元芯片融资交易的投资者表示，Anthropic 在 IPO 后可能无法立即获得投资级信用评级，预计将获得较高等级的非投资级（垃圾级）评级。这与黑石此前预计其年底前获得投资级评级的指引不同。\n\n这可能限制 Anthropic 的融资来源，因为许多保险及养老金基金不能大额投资垃圾级借款人。Anthropic 或需继续依靠高信用评级供应商支持融资。其招股书显示，公司计划在 2045 年前投入超过 8000 亿美元建设算力基础设施。\n\n获得投资级信用评级对于实现这些目标至关重要，这将使 Anthropic 能够以较低的利率借款，为其人工智能基础设施项目提供资金。该集团拥有超过 1120 亿美元的现金及等价物，投资者预计其在 IPO 中可能再筹集约 1000 亿美元。\n\n在「Project North Star」融资中，超过 420 亿美元高级贷款由博通担保。180 亿美元次级债已获 KBRA 的 BB+评级、展望正面，以及 Morningstar DBRS 的 BB 评级。黑石旗下基金投资了其中 90 亿美元，收益率超过 10%。惠誉、穆迪和标普三大评级机构目前尚未正式对 Anthropic 给出信用评级。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+      "time": "2026-10-31T01:08:25+08:00",
+      "title": "黑石：Anthropic上市后或难立即获投资级评级，融资来源或将受限",
       "type": "telegram"
     },
     {
@@ -1635,6 +2260,38 @@
       "type": "telegram"
     },
     {
+      "category": "其他",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 00:00",
+      "id": "1e189c94aab71e82da3d",
+      "image": "",
+      "link": "https://t.me/reorx_share/7158",
+      "source": "reorx_share",
+      "source_name": "Reorx’s Forge",
+      "summary": "一些改变",
+      "text": "一些改变",
+      "time": "2026-10-31T00:15:16+08:00",
+      "title": "和作者一样，最近也是用手表帮助自己保持作息，戒了咖啡和茶，越发体会到好的睡眠带来好的工作状态，再加上好的家庭、人际关系，这些就是最具体的幸福",
+      "type": "telegram"
+    },
+    {
+      "category": "其他",
+      "day": "2026-10-31",
+      "hot": false,
+      "hour": "2026-10-31 00:00",
+      "id": "570426b7a8399ff10538",
+      "image": "",
+      "link": "https://t.me/reorx_share/7157",
+      "source": "reorx_share",
+      "source_name": "Reorx’s Forge",
+      "summary": "一些改变",
+      "text": "一些改变",
+      "time": "2026-10-31T00:11:17+08:00",
+      "title": "一些改变",
+      "type": "telegram"
+    },
+    {
       "category": "数码",
       "day": "2026-10-31",
       "hot": true,
@@ -1656,24 +2313,27 @@
   "schema": 1,
   "stats": {
     "categories": {
-      "其他": 19,
-      "国际": 31,
-      "数码": 3,
-      "科技": 15,
-      "财经": 17
+      "其他": 26,
+      "国际": 32,
+      "数码": 8,
+      "科技": 34,
+      "财经": 25
     },
     "sources": {
       "CE_Observe": 7,
       "FinanceNewsDaily": 19,
       "HuaErJie1": 18,
       "NewlearnerChannel": 2,
+      "OneMillion_AI": 15,
       "freechinese": 15,
       "pelosi3": 11,
+      "reorx_share": 7,
       "tnews365": 1,
       "xhqcankao": 11,
-      "zaihuapd": 1
+      "yxzbp": 2,
+      "zaihuapd": 17
     },
-    "total": 85
+    "total": 125
   },
-  "summary": "伊朗最高领袖：要对敌方威胁立即采取有效应对措施；10%的活跃安卓手机仍然运行着Android 11"
+  "summary": "伊朗最高领袖：要对敌方威胁立即采取有效应对措施；苹果官宣：Apple智能接入阿里千问，11月4日开放测试"
 }

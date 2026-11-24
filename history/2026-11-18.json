@@ -501,7 +501,7 @@
     {
       "category": "科技",
       "day": "2026-11-18",
-      "hot": false,
+      "hot": true,
       "hour": "2026-11-18 21:00",
       "id": "f9bbdf6fd5c50046aa03",
       "image": "",
@@ -517,7 +517,7 @@
     {
       "category": "科技",
       "day": "2026-11-18",
-      "hot": false,
+      "hot": true,
       "hour": "2026-11-18 21:00",
       "id": "22927982c98872d5eed9",
       "image": "",

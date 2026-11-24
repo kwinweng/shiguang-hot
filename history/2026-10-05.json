@@ -34,7 +34,7 @@
         {
           "category": "国际",
           "day": "2026-10-05",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-05 21:00",
           "id": "824d71ce41ffe7ba00ca",
           "image": "",
@@ -356,7 +356,7 @@
     {
       "category": "国际",
       "day": "2026-10-05",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-05 22:00",
       "id": "a58a99510bb2b0afdfa9",
       "image": "",
@@ -484,7 +484,7 @@
     {
       "category": "国际",
       "day": "2026-10-05",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-05 21:00",
       "id": "824d71ce41ffe7ba00ca",
       "image": "",

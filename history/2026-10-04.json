@@ -250,7 +250,7 @@
         {
           "category": "数码",
           "day": "2026-10-04",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-04 18:00",
           "id": "76dcaeb883cd01714403",
           "image": "",
@@ -276,7 +276,7 @@
     {
       "category": "国际",
       "day": "2026-10-04",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-04 22:00",
       "id": "e9838c5e3487081ecb80",
       "image": "",
@@ -388,7 +388,7 @@
     {
       "category": "数码",
       "day": "2026-10-04",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-04 18:00",
       "id": "76dcaeb883cd01714403",
       "image": "",
