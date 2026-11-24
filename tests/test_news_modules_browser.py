@@ -213,7 +213,7 @@ class NewsModulesBrowserTests(unittest.TestCase):
         self.page.set_viewport_size({'width': 393, 'height': 852})
         self.page.screenshot(path='/tmp/rebang-explore-image-mobile.png')
         self.assertEqual(self.page.url, 'https://offline.test/index.html#explore/play?category=%E5%BD%B1%E8%A7%86')
-        self.assertIn('拾光热榜', self.page.title())
+        self.assertIn('拾光资讯', self.page.title())
         self.assertEqual(console_errors, [])
         self.assertEqual(self.errors, [])
 
@@ -291,6 +291,7 @@ class NewsModulesBrowserTests(unittest.TestCase):
         self.page.wait_for_selector('#news:not([aria-busy])')
         self.assertEqual(self.page.locator('html').get_attribute('data-theme'), 'dark')
         self.open('about')
+        self.assertEqual(self.page.locator('.about h1').inner_text(), '拾光资讯')
         self.assertEqual(self.page.locator('.about img').get_attribute('src'), 'favicon.svg')
         self.assertEqual(self.errors, [])
 

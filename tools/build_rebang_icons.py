@@ -1,4 +1,4 @@
-"""Resize the approved kangaroo artwork into 拾光热榜 v11 favicon, PWA, splash and share images."""
+"""Resize the approved kangaroo artwork into 拾光资讯 v11 favicon, PWA, splash and share images."""
 from __future__ import annotations
 
 import json
@@ -92,8 +92,8 @@ def main() -> None:
         canvas.paste(k, ((sw - side) // 2, (sh - side) // 2))
         _save(canvas, OUT / name)
     manifest = {
-        'name': '拾光热榜',
-        'short_name': '拾光热榜',
+        'name': '拾光资讯',
+        'short_name': '拾光资讯',
         'description': '时事、博主与热搜',
         'start_url': '/',
         'scope': '/',

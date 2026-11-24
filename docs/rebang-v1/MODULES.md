@@ -1,4 +1,4 @@
-# 拾光热榜 v11 模块说明
+# 拾光资讯 v11 模块说明
 
 各模块的入口、输入输出、约束和已知缺口。字段定义以 [`CONTRACT.md`](CONTRACT.md) 为准，发布与服务器见 [`OPERATIONS.md`](OPERATIONS.md)。
 一键全流程是 `sh tools/rebang_refresh.sh`，下面的命令都是它会调用的单步。所有 `var/rebang/`、`site-v11/` 产物都不进 git。

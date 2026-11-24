@@ -146,7 +146,7 @@ class PublishPagesTests(unittest.TestCase):
             path.write_text('fixture')
 
     def test_rebang_site_published_under_subdirectory(self):
-        """v11（拾光热榜）site-v11/ 一并发到 gh-pages 的 rebang/；REBANG_PUBLISH=0 或没构建时不带。"""
+        """v11（拾光资讯）site-v11/ 一并发到 gh-pages 的 rebang/；REBANG_PUBLISH=0 或没构建时不带。"""
         rb = self.root / 'site-v11'
         (rb / 'data').mkdir(parents=True)
         (rb / 'index.html').write_text('rebang')

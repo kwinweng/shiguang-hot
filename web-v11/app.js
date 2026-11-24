@@ -1,4 +1,4 @@
-/* 拾光热榜 v1 新版前端（纯静态、无框架、无第三方依赖）。
+/* 拾光资讯 v1 新版前端（纯静态、无框架、无第三方依赖）。
    交互以 v10 设计稿为准：两种翻法、频道顶部 banner、信息流、时事热搜块、整页正文 + 返回原位、无限加载、刷新/下拉刷新。
    收藏 / 搜索由 web-v11/features/*.js 通过 Rebang.register(name, mount) 挂到 #view-favorites / #search-panel。
    2026-11-15 21:26 阿欢改：底栏「历史」→「热搜」（当前热搜 + 按北京日期回看），时事频道不再嵌热搜；
@@ -1092,7 +1092,7 @@
     }
   }
   async function shareItem(it) {
-    const url = linkOf(it), title = L.display(it).title || it.title || '拾光热榜';
+    const url = linkOf(it), title = L.display(it).title || it.title || '拾光资讯';
     if (navigator.share) { try { await navigator.share({title, url}); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
     toast(await copyText(url) ? '已复制这条的链接，可以粘贴分享。' : '没能复制链接，请长按卡片选「复制链接」再试。');
   }

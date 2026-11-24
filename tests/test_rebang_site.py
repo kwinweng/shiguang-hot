@@ -76,6 +76,8 @@ class SiteBuildTests(unittest.TestCase):
         self.assertIn('favicon-32x32.png', html)
         self.assertIn('apple-touch-icon.png', html)
         self.assertIn('manifest.webmanifest', html)
+        self.assertIn('<title>拾光资讯</title>', html)
+        self.assertIn('<meta property="og:site_name" content="拾光资讯">', html)
         self.assertIn('https://news.kwinweng.com/og-image.png', html)
         self.assertNotIn('class="brand-logo"', html)
         self.assertNotIn('src="logo.png"', html)
@@ -91,7 +93,8 @@ class SiteBuildTests(unittest.TestCase):
         self.assertEqual(Image.open(out / 'icon-512.png').size, (512, 512))
         self.assertEqual(Image.open(out / 'og-image.png').size, (1200, 630))
         manifest = json.loads((out / 'manifest.webmanifest').read_text(encoding='utf-8'))
-        self.assertEqual(manifest['name'], '拾光热榜')
+        self.assertEqual(manifest['name'], '拾光资讯')
+        self.assertEqual(manifest['short_name'], '拾光资讯')
         purposes = {(icon['src'], icon['purpose']) for icon in manifest['icons']}
         self.assertEqual(purposes, {('icon-192.png', 'any'), ('icon-512.png', 'any'),
                                     ('icon-192-maskable.png', 'maskable'), ('icon-512-maskable.png', 'maskable')})

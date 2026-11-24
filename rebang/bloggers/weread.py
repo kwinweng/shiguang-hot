@@ -91,9 +91,9 @@ def http_json(url, session=None, timeout=25):
 
 
 def http_text(url, session=None, timeout=40):
-    """取 HTML（公众号正文页）；Cookie 同样走标准输入，不打印。"""
+    """正文页可达数 MB，请求压缩减少传输超时；Cookie 仍走标准输入，不打印。"""
     config = [f'url = "{url}"', f'user-agent = "{UA}"', 'header = "Accept: text/html,application/xhtml+xml"',
-              f'header = "Referer: {BASE}/"', f'max-time = {int(timeout)}', 'silent', 'location']
+              f'header = "Referer: {BASE}/"', f'max-time = {int(timeout)}', 'silent', 'location', 'compressed']
     if session:
         config.append(f'cookie = "wr_vid={session["vid"]}; wr_skey={session["skey"]}"')
     try:
@@ -309,13 +309,12 @@ def wechat_posts(account, platform, fetched_at, session, get=http_json, get_text
             return [], 'cover'
         via = 'cover'
         text_get = get_text or http_text
-        try:
-            html = text_get(f'{BASE}/web/mp/content?' + urlencode({'reviewId': row['review_id']}), session=session)
-        except WereadError:
-            html = ''
+        # Let the runner retain both old content and last_ok_at when content cannot be read.
+        html = text_get(f'{BASE}/web/mp/content?' + urlencode({'reviewId': row['review_id']}), session=session)
         meta = content_meta(html)
-        if meta.get('published'):
-            row['published'] = meta['published']
+        if not meta.get('published'):
+            raise WereadError('content_time_missing')
+        row['published'] = meta['published']
         rows = [row]
     posts = _to_posts(rows, account, platform, fetched_at)[:limit]
     return posts, via
