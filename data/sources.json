@@ -21642,10 +21642,10 @@
         }
       ],
       "name": "风向旗参考快讯",
-      "seven_day_count": 154,
+      "seven_day_count": 118,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 26,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/xhqcankao"
     },
@@ -23911,17 +23911,49 @@
         }
       ],
       "name": "竹新社",
-      "seven_day_count": 13,
+      "seven_day_count": 12,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 2,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/tnews365"
     },
     {
       "id": "FinanceNewsDaily",
-      "last_update": "2026-11-24T23:35:06+08:00",
+      "last_update": "2026-11-25T00:40:03+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-25",
+          "hot": false,
+          "hour": "2026-11-25 00:00",
+          "id": "c93f8ba5e224d4bd52af",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497086",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "LME期铜跌超5.5%，报11775美元，逼近3月23日底部11700美元。",
+          "text": "LME期铜跌超5.5%，报11775美元，逼近3月23日底部11700美元。",
+          "time": "2026-11-25T00:40:03+08:00",
+          "title": "伦铜创3月以来新低，科技股回撤+特朗普关税风险带来双重打击",
+          "type": "telegram"
+        },
+        {
+          "category": "科技",
+          "day": "2026-11-25",
+          "hot": false,
+          "hour": "2026-11-25 00:00",
+          "id": "08dda96ea8195a43b919",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497085",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "路透查阅的内部备忘录显示，在一次长达24小时的服务中断暴露了微软工程系统及危机响应机制的缺陷后，微软公司已发起一项“红色警报”（Code Red）行动，以彻底改革其预防和应对重大服务故障的方式。\n\n此次“红色警报”标志着微软发出的最严重、最紧急的警示，旨在解决其工程与运维实践中的薄弱环节——此前的中断不仅瘫痪了其云端电邮服务Exchange Online，还波及Outlook、Teams、CopilotAI助手以及其他Microsoft 365产品。",
+          "text": "路透查阅的内部备忘录显示，在一次长达24小时的服务中断暴露了微软工程系统及危机响应机制的缺陷后，微软公司已发起一项“红色警报”（Code Red）行动，以彻底改革其预防和应对重大服务故障的方式。\n\n此次“红色警报”标志着微软发出的最严重、最紧急的警示，旨在解决其工程与运维实践中的薄弱环节——此前的中断不仅瘫痪了其云端电邮服务Exchange Online，还波及Outlook、Teams、CopilotAI助手以及其他Microsoft 365产品。",
+          "time": "2026-11-25T00:15:06+08:00",
+          "title": "报道：微软在历史性服务中断后宣布“红色警报”",
+          "type": "telegram"
+        },
         {
           "category": "财经",
           "day": "2026-11-24",
@@ -58964,10 +58996,10 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 338,
+      "seven_day_count": 291,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 63,
+      "today_count": 2,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
@@ -66929,10 +66961,10 @@
         }
       ],
       "name": "每日消费电子观察",
-      "seven_day_count": 74,
+      "seven_day_count": 60,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 14,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/CE_Observe"
     },
@@ -80686,10 +80718,10 @@
         }
       ],
       "name": "FREE 中文",
-      "seven_day_count": 109,
+      "seven_day_count": 83,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 12,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/freechinese"
     },
@@ -82683,10 +82715,10 @@
         }
       ],
       "name": "Time经济观察",
-      "seven_day_count": 23,
+      "seven_day_count": 20,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 2,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/TimeHorizonX"
     },
@@ -94408,10 +94440,10 @@
         }
       ],
       "name": "敏感经济信息分享",
-      "seven_day_count": 117,
+      "seven_day_count": 101,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 21,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/pelosi3"
     },
@@ -103938,10 +103970,10 @@
         }
       ],
       "name": "看新闻 学英语 双语新闻",
-      "seven_day_count": 32,
+      "seven_day_count": 25,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 7,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/shuangyunews_rss"
     },
@@ -104002,7 +104034,7 @@
       "seven_day_count": 1,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 1,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/myBigCharacterPoster"
     },
@@ -119420,10 +119452,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 147,
+      "seven_day_count": 120,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 25,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -121638,10 +121670,10 @@
         }
       ],
       "name": "Newlearnerの自留地",
-      "seven_day_count": 22,
+      "seven_day_count": 18,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 4,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/NewlearnerChannel"
     },
@@ -123299,10 +123331,10 @@
         }
       ],
       "name": "严选君综合福利社",
-      "seven_day_count": 19,
+      "seven_day_count": 17,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 3,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/yxzbp"
     },
@@ -133344,10 +133376,10 @@
         }
       ],
       "name": "动察Beating AI News",
-      "seven_day_count": 135,
+      "seven_day_count": 105,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 21,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/OneMillion_AI"
     },
@@ -135053,10 +135085,10 @@
         }
       ],
       "name": "Reorx’s Forge",
-      "seven_day_count": 27,
+      "seven_day_count": 20,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 4,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/reorx_share"
     },
@@ -135335,7 +135367,7 @@
       "seven_day_count": 1,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 1,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/AwesomeChatGPT"
     }
