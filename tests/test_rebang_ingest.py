@@ -184,8 +184,11 @@ class IngestTests(unittest.TestCase):
         status = {s['id']: s for s in env['sources']}
         self.assertEqual(status['bbc-world']['status'], 'error')
         self.assertEqual(status['guardian-world']['status'], 'ok')
+        self.assertEqual((status['bbc-world']['count'], status['bbc-world']['run_count']), (1, 0))
+        self.assertEqual((status['guardian-world']['count'], status['guardian-world']['run_count']), (1, 1))
         offline = {s['id']: s for s in self.run_collect()['sources']}
         self.assertEqual(offline['openai-blog']['status'], 'cached')
+        self.assertIsNone(offline['openai-blog']['run_count'])
 
     def test_no_fetch_without_cache_reports_not_fetched(self):
         env = self.run_collect()

@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from rebang.contract import schema
+from rebang.site.health import build_health
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_IN = ROOT / 'var' / 'rebang' / 'in'
@@ -452,6 +453,7 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
     for item in bloggers['items']:
         id_index[item['id']] = 'bloggers.json'
     _write(data / 'id-index.json', id_index)
+    _write(data / 'health.json', build_health(envelopes, items, now))
     _inject_features(tmp)
     input_times = [parse_time(e.get('generated_at')) for _, e in envelopes] + \
                   ([parse_time(hotsearch[1].get('generated_at'))] if hotsearch else [])

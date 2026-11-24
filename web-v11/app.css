@@ -845,3 +845,37 @@ mark{background:none;color:var(--primary)}
 #view-favorites:has([data-favorites-empty]) [data-favorites-note]{display:none}
 /* 下拉/半屏面板藏在屏外会撑出可滚区域；#app 不能被滚动锚定或程序滚动挪位 */
 .app{overflow:clip;overflow-anchor:none}
+
+/* 来源健康 */
+#diagBox{position:fixed;inset:calc(var(--safe-top) + 56px) var(--space-2) auto;z-index:99;padding:var(--space-2);border-radius:var(--radius-sm);background:#000d;color:#0f0;pointer-events:none}
+#diagBox pre{margin:0;font:var(--text-xs)/1.4 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+#diagBox a{display:inline-flex;align-items:center;min-height:40px;padding:0 var(--space-2);margin-bottom:var(--space-1);color:#fff;pointer-events:auto;text-underline-offset:3px}
+.health-view{position:fixed;inset:0;margin:auto;width:100%;max-width:480px;height:100%;max-height:none;padding:0;border:0;background:var(--background);color:var(--foreground);overflow:hidden}
+.health-view[open]{display:flex;flex-direction:column}
+.health-view::backdrop{background:var(--dim)}
+.health-bar{flex:none;display:flex;align-items:center;gap:var(--space-3);padding:calc(var(--safe-top) + var(--space-3)) var(--page-pad) var(--space-3);border-bottom:1px solid var(--border)}
+.health-bar .rb{border-color:var(--border);background:var(--card)}
+.health-bar h1{font-size:var(--text-4xl);line-height:1.2;margin:0;letter-spacing:-.02em}
+.health-bar p{margin:var(--space-1) 0 0;font-size:var(--text-sm);color:var(--foreground-soft)}
+.health-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:var(--space-5) var(--page-pad) calc(var(--space-8) + var(--safe-bot))}
+.health-section+.health-section{margin-top:var(--space-8)}
+.health-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-2);padding-bottom:var(--space-2);border-bottom:1px solid var(--border-strong)}
+.health-section-head h2{margin:0;font-size:var(--text-lg)}
+.health-section-head span,.health-group{font-size:var(--text-sm);color:var(--foreground-soft)}
+.health-rows,.health-accounts ul{margin:0;padding:0;list-style:none}
+.health-row,.health-account{padding:var(--space-3) 0;border-bottom:1px solid var(--border);overflow-wrap:anywhere}
+.health-row-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-3)}
+.health-group{display:block;margin-bottom:var(--space-1)}
+.health-name,.health-account-name{font-size:var(--text-lg);line-height:1.35}
+.health-status{flex:none;display:inline-flex;align-items:center;gap:var(--space-1);padding:var(--space-1) var(--space-2);border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--foreground-soft);font-size:var(--text-sm);line-height:1}
+.health-status::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.health-status[data-status="login_expired"],.health-status[data-status="failed"]{color:var(--destructive);background:var(--accent);border-color:var(--accent-border)}
+.health-status[data-status="stale"]::before{background:var(--warning)}
+.health-reason,.health-age{margin:var(--space-1) 0 0;font-size:var(--text-sm2);color:var(--foreground-soft)}
+.health-age{font-weight:700;color:var(--foreground);font-variant-numeric:tabular-nums}
+.health-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-1) var(--space-3);margin-top:var(--space-2);font-size:var(--text-sm);color:var(--foreground-soft);font-variant-numeric:tabular-nums}
+.health-accounts{margin-top:var(--space-2);font-size:var(--text-sm2)}
+.health-accounts summary{width:fit-content;padding:var(--space-2) 0;cursor:pointer;color:var(--foreground-soft)}
+.health-accounts ul{padding:0 var(--space-3);border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card)}
+.health-account:last-child{border-bottom:0}
+.health-account-name{font-size:var(--text-base)}

@@ -237,8 +237,11 @@ def telegram_items(db_path, media_root, sources, now, floor, tgmeta=None):
                 count += 1
             ok, err, at = last_status.get(handle, (None, None, None))
             status = 'ok' if count else 'empty'
-            statuses.append(_status(cfg, channel, status, count,
-                                    error=(f'上次采集：{err}' if ok == 0 and err else None), fetched_at=at))
+            status_row = _status(cfg, channel, status, count,
+                                 error=(f'上次采集：{err}' if ok == 0 and err else None), fetched_at=at)
+            if ok in (0, 1):
+                status_row['collection_ok'] = bool(ok)
+            statuses.append(status_row)
     finally:
         con.close()
     return items, statuses
@@ -306,6 +309,27 @@ def _write_json(path, data):
     os.replace(tmp, path)
 
 
+def _preserve_tg_success(rows, cache):
+    # The legacy DB keeps a single attempt per channel. Keep the last observed success with the ingest cache.
+    key = 'telegram-health'
+    saved = _read_cache(cache, key)
+    saved = saved if isinstance(saved, dict) else {}
+    updated = {}
+    for row in rows:
+        source_id = row['id']
+        previous = _parse_when(saved.get(source_id))
+        reported = _parse_when(row.get('fetched_at')) if row.get('collection_ok') else None
+        last_ok = max(filter(None, (previous, reported)), default=None)
+        row['last_ok_at'] = _iso(last_ok) if last_ok else None
+        if last_ok:
+            updated[source_id] = row['last_ok_at']
+    if updated != saved:
+        try:
+            _write_json(_cache_path(cache, key), updated)
+        except OSError:  # Diagnostics must not stop news from building if the cache is unwritable.
+            pass
+
+
 def remote_items(sources, now, floor, *, fetch, cache, http_get):
     items, statuses = [], []
     for channel, cfg in sources:
@@ -313,9 +337,10 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
         if fetch:
             try:
                 raw = http_get(cfg['url'], now)
-                entries = parse_trending(raw.decode('utf-8', 'replace'), now) if cfg['type'] == 'page' else parse_feed(raw)
-                fetched_at = _iso(now)
-                _write_json(_cache_path(cache, sid), {'fetched_at': fetched_at, 'url': cfg['url'], 'entries': entries})
+                parsed = parse_trending(raw.decode('utf-8', 'replace'), now) if cfg['type'] == 'page' else parse_feed(raw)
+                stamp = _iso(now)
+                _write_json(_cache_path(cache, sid), {'fetched_at': stamp, 'url': cfg['url'], 'entries': parsed})
+                entries, fetched_at = parsed, stamp
                 state = 'ok' if entries else 'empty'
             except Exception as ex:  # 一家失败不影响其它家；错误只记代码，不带响应体
                 code = getattr(ex, 'code', None) or ('invalid_content' if isinstance(ex, (ET.ParseError, ValueError)) else type(ex).__name__)
@@ -347,9 +372,10 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
                 item['fetched_at'] = fetched_at
             items.append(item)
             count += 1
+        run_count = (0 if state == 'error' else count) if fetch else None
         if state in ('ok', 'cached') and not count:
             state = 'empty'
-        statuses.append(_status(cfg, channel, state, count, error=error, fetched_at=fetched_at))
+        statuses.append(dict(_status(cfg, channel, state, count, error=error, fetched_at=fetched_at), run_count=run_count))
     return items, statuses
 
 
@@ -615,6 +641,7 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
         from rebang.tgmeta import load_store
         tgmeta = load_store(tgmeta).get('messages', {})
     got, st = telegram_items(db or ROOT / 'tg.db', media_root, by_type.get('telegram', []), now, floor, tgmeta)
+    _preserve_tg_success(st, cache)
     items += got; statuses += st
     got, st = remote_items(by_type.get('feed', []) + by_type.get('page', []), now, floor, fetch=fetch, cache=cache,
                            http_get=http_get or default_http_get)

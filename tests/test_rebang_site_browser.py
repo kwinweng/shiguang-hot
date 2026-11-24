@@ -13,7 +13,7 @@ from unittest import mock
 from urllib.parse import unquote, urlsplit
 
 from rebang.site import builder as site
-from tests.rebang_site_testdata import NOW, envelope, hotsearch, site_items
+from tests.rebang_site_testdata import NOW, envelope, health_inputs, hotsearch, site_items
 
 try:
     from playwright.sync_api import sync_playwright
@@ -44,6 +44,13 @@ class SiteBrowserTests(unittest.TestCase):
         cls.out = root / 'site'
         with mock.patch.object(site, '_run_archive', lambda items, out, report: None):
             site.build(cls.out, root / 'in', now=NOW, hot_archive_dir=root / 'hot')
+        sources, platforms = health_inputs()
+        health_in = root / 'health-in'
+        health_in.mkdir()
+        (health_in / 'ingest.json').write_text(json.dumps(dict(envelope([], 'ingest'), sources=sources)), encoding='utf-8')
+        (health_in / 'bloggers.json').write_text(json.dumps(dict(envelope([], 'bloggers'), platforms=platforms)), encoding='utf-8')
+        cls.health_out = root / 'health-site'
+        site.build(cls.health_out, health_in, now=NOW, hot_archive_dir=root / 'hot')
         cls.pw = sync_playwright().start()
         cls.browser = cls.pw.chromium.launch()
 
@@ -71,7 +78,8 @@ class SiteBrowserTests(unittest.TestCase):
                 return route.fulfill(status=200, body=VIDEO, content_type='video/webm')
             if url.netloc != 'rebang.test':
                 return route.abort()
-            path = self.out / (unquote(url.path).lstrip('/') or 'index.html')
+            folder = self.health_out if self._testMethodName.startswith('test_health_') else self.out
+            path = folder / (unquote(url.path).lstrip('/') or 'index.html')
             if getattr(self, 'stub_features', False) and unquote(url.path).startswith('/features/'):
                 return route.fulfill(status=200, body=b'', content_type='application/javascript')  # 只测桩，不让真模块覆盖
             route.fulfill(status=200 if path.is_file() else 404, body=path.read_bytes() if path.is_file() else b'missing',
@@ -122,7 +130,44 @@ class SiteBrowserTests(unittest.TestCase):
         cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
         self.page.wait_for_timeout(350)   # 松手后 250ms 内的补发点击会被吞掉
 
-    def test_top_bar_tabs_and_six_channels(self):
+    def test_health_deep_link_renders_sorted_sources_at_mobile_width(self):
+        with self.page.expect_request('**/data/health.json*'):
+            self.open('#/health')
+        dialog = self.page.get_by_role('dialog', name='来源健康')
+        dialog.get_by_role('heading', name='待检查').wait_for()
+        self.assertEqual(dialog.locator('.health-name').all_text_contents()[:4], ['微博', '竹新社', 'X', '卫报 World'])
+        self.assertIn('2 天 5 小时', dialog.inner_text())
+        self.assertLessEqual(dialog.evaluate('e => e.scrollWidth'), 390)
+        dialog.get_by_text('查看 6 个账号', exact=True).first.click()
+        self.assertTrue(dialog.locator('details[open] .health-account').first.is_visible())
+        dialog.get_by_role('button', name='返回').click()
+        dialog.wait_for(state='hidden')
+        self.assertEqual(self.page.locator('.tabbar button').count(), 4)
+        self.assertEqual(urlsplit(self.page.url).fragment, '')
+        self.page.go_forward()
+        dialog.wait_for()
+        self.page.keyboard.press('Escape')
+        dialog.wait_for(state='hidden')
+
+    def test_health_diagnostics_link_is_lazy_and_handles_fetch_failure(self):
+        requested = []
+        self.page.on('request', lambda request: requested.append(request.url))
+        self.open()
+        self.assertFalse(any('/data/health.json' in url for url in requested))
+        self.page.route('**/data/health.json*', lambda route: route.fulfill(status=404))
+        title = self.page.locator('#chBtn').bounding_box()
+        cdp = self.context.new_cdp_session(self.page)
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [
+            {'x': title['x'] + title['width'] / 2, 'y': title['y'] + title['height'] / 2}]})
+        link = self.page.get_by_role('link', name='来源健康')
+        link.wait_for()
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+        link.click()
+        self.page.get_by_text('健康数据暂时加载不出来。').wait_for()
+        self.assertEqual(urlsplit(self.page.url).fragment, '/health')
+        self.assertEqual(self.page.locator('meta[name="robots"]').get_attribute('content'), 'noindex,nofollow')
+
+
         self.open()
         # v16：顶栏只有「频道名 + 下拉」，没有 logo、没有日期；刷新时间收进下拉
         self.assertEqual(self.page.locator('#chName').inner_text(), '时事')

@@ -1,6 +1,7 @@
 """frontend-v11 测试用的合成条目（契约格式，全部是假内容，只用于单测/浏览器测）。"""
 from datetime import datetime, timedelta
 
+from rebang.contract import load_bloggers, load_channels
 from rebang.site.builder import BEIJING
 
 NOW = datetime(2026, 11, 15, 20, 0, tzinfo=BEIJING)
@@ -68,3 +69,30 @@ def hotsearch():
                    for i in range(2, 13)]},
         {'id': 'zhihu', 'name': '知乎热榜', 'status': 'error', 'fetched_at': NOW.isoformat(), 'error': 'http_403', 'items': []},
         {'id': 'bilibili', 'name': 'B 站热搜', 'status': 'empty', 'fetched_at': None, 'items': []}]}
+
+
+def health_inputs():
+    """Synthetic adapter results for the mobile health page and screenshot."""
+    recent = (NOW - timedelta(hours=1)).isoformat()
+    earlier = (NOW - timedelta(hours=53)).isoformat()
+    news = [{'id': s['id'], 'status': 'ok', 'count': 14, 'fetched_at': recent}
+            for c in load_channels()['channels'] for s in c['sources']]
+    for row in news:
+        if row['id'] == 'tnews365':
+            row.update(collection_ok=False, last_ok_at=(NOW - timedelta(hours=29)).isoformat())
+        if row['id'] == 'guardian-world':
+            row['fetched_at'] = earlier
+    platforms = []
+    for platform in load_bloggers()['platforms']:
+        platform_id = platform['id']
+        accounts = [{'handle': a['handle'], 'status': 'ok', 'count': 4, 'last_ok_at': recent}
+                    for a in platform['accounts']]
+        if platform_id == 'weibo':
+            for account in accounts:
+                account.update(status='login_expired', error='weibo_cookie_expired', last_ok_at=earlier)
+        if platform_id == 'x':
+            dump_at = (NOW - timedelta(hours=56)).isoformat()
+            for account in accounts:
+                account.update(status='error', error='x_dump_stale', dump_at=dump_at, last_ok_at=earlier)
+        platforms.append({'id': platform_id, 'accounts': accounts})
+    return news, platforms

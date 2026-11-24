@@ -59,8 +59,14 @@
   let diagTimer = 0;
   function diagRender() {
     let box = document.getElementById('diagBox');
-    if (!box) { box = document.createElement('pre'); box.id = 'diagBox'; box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:99;margin:0;padding:8px;font:11px/1.4 ui-monospace,monospace;background:#000d;color:#0f0;border-radius:8px;white-space:pre-wrap;word-break:break-all;pointer-events:none'; document.body.appendChild(box); }
-    box.textContent = JSON.stringify(diagData(), null, 1);
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'diagBox';
+      box.innerHTML = '<a href="#/health">来源健康</a><pre></pre>';
+      box.querySelector('a').addEventListener('click', e => { e.preventDefault(); openHealth(); });
+      document.body.appendChild(box);
+    }
+    box.querySelector('pre').textContent = JSON.stringify(diagData(), null, 1);
   }
   function diagSet(on) {
     try { on ? localStorage.setItem(DIAG_KEY, '1') : localStorage.removeItem(DIAG_KEY); } catch (e) { /* 隐私模式 */ }
@@ -959,7 +965,40 @@
     restoreScroll(returnState);
     if (!opts.fromPop && history.state && history.state.article) history.back();
   }
+  const HEALTH_HASH = '#/health';
+  let healthLoad = 0;
+  async function openHealth(fromPop = false) {
+    const dialog = $('#healthView');
+    if (dialog.open) return;
+    if (!fromPop) history.pushState({health: true}, '', HEALTH_HASH);
+    const body = $('#healthBody'), stamp = $('#healthStamp');
+    const load = ++healthLoad;
+    stamp.hidden = true;
+    body.innerHTML = '<p class="muted" role="status">正在加载来源健康…</p>';
+    dialog.showModal();
+    body.scrollTop = 0;
+    try {
+      const data = await getJSON('health.json');
+      if (load !== healthLoad || !dialog.open) return;
+      if (data.schema !== 'rebang.source-health/1' || !Array.isArray(data.sources)) throw new Error('Invalid health snapshot');
+      const generated = Date.parse(data.generated_at);
+      if (Number.isFinite(generated)) {
+        stamp.textContent = `数据更新于 ${L.fmtFull(data.generated_at)}（北京时间）`;
+        stamp.hidden = false;
+      }
+      body.innerHTML = window.RebangHealth.healthHTML(data.sources, Number.isFinite(generated) ? generated : Date.now());
+    } catch (e) {
+      if (load === healthLoad && dialog.open) body.innerHTML = '<p class="muted" role="status">健康数据暂时加载不出来。</p>';
+    }
+  }
+  function leaveHealth() {
+    if (history.state && history.state.health) history.back();
+    else location.hash = '';
+  }
   window.addEventListener('popstate', e => {
+    if (location.hash === HEALTH_HASH) { openHealth(true); return; }
+    const health = $('#healthView');
+    if (health.open) health.close();
     const st = e.state || {};
     const hashId = !e.state ? L.parseItemHash(location.hash) : null;
     if (st.article) openItem(st.article, {fromPop: true});
@@ -1462,9 +1501,16 @@
     $('#btnRefresh').onclick = doRefresh;
     $('#btnBack').onclick = () => closeArticle();
     document.querySelector('.app').addEventListener('click', onClick);
+    $('#healthBack').onclick = leaveHealth;
+    $('#healthView').addEventListener('cancel', e => { e.preventDefault(); leaveHealth(); });
+    const deepHealth = location.hash === HEALTH_HASH;
     const deep = L.parseItemHash(location.hash);
     const deepMore = (location.hash.match(/^#\/more\/(.+)$/) || [])[1];
-    if (!history.state || !history.state.home) history.replaceState({home: true}, '', location.pathname + location.search);
+    if (deepHealth && history.state && history.state.health) openHealth(true);
+    else {
+      if (!history.state || !history.state.home) history.replaceState({home: true}, '', location.pathname + location.search);
+      if (deepHealth) openHealth();
+    }
     try { await loadAll(false); } catch (e) {
       $('#channelRoot').innerHTML = `<p class="muted" style="padding:16px">数据没加载出来（${L.esc(e.message)}）。稍后点右上角刷新再试。</p>`;
       $('#app').removeAttribute('aria-busy'); return;

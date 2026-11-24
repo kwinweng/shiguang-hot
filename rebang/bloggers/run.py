@@ -8,6 +8,7 @@ from pathlib import Path
 
 from rebang.contract.schema import ITEMS_SCHEMA, load_bloggers, validate_items_envelope
 
+from . import X_STALE_HOURS
 from . import jike as jike_mod
 from . import weibo as weibo_mod
 from . import youtube as yt_mod
@@ -19,7 +20,6 @@ from .feed import FeedError, feed_posts
 PRODUCER = 'bloggers'
 ALL_PLATFORMS = ('blog', 'x', 'jike', 'weibo', 'wechat', 'youtube', 'zhihu')
 YOUTUBE_CACHE = Path(__file__).resolve().parents[2] / 'var' / 'rebang' / 'cache' / 'youtube-watch.json'
-X_STALE_HOURS = 36
 
 REASONS = {
     'jike_rsshub_unset': '即刻的公共 RSSHub 地址未配置',
@@ -256,7 +256,11 @@ def _platform_x(platform, http, fetched_at, opts, sleep, now):
         return [_account(platform, a, 'not_configured', error='x_dump_missing')[0] for a in platform['accounts']], []
     made = x_mod.dump_time(dump)
     if made is None or now - made > timedelta(hours=X_STALE_HOURS):
-        return [_account(platform, a, 'error', error='x_dump_stale')[0] for a in platform['accounts']], []
+        rows = [_account(platform, a, 'error', error='x_dump_stale')[0] for a in platform['accounts']]
+        if made:
+            for row in rows:
+                row['dump_at'] = iso(made)
+        return rows, []
     try:
         by_handle = x_mod.x_posts(x_mod.load_dump(dump), platform, fetched_at, opts.limit)
     except (ValueError, OSError, KeyError, TypeError):
@@ -282,6 +286,7 @@ def _platform_x(platform, http, fetched_at, opts, sleep, now):
     for account in platform['accounts']:
         got = by_handle.get(account['handle'], [])
         row, got = _account(platform, account, 'ok' if got else 'empty', got)
+        row['dump_at'] = iso(made)
         rows.append(row)
         items += got
     return rows, items

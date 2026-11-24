@@ -88,6 +88,13 @@
     <button data-view="favorites" type="button"><svg class="lucide lucide-bookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"/></svg><b>收藏</b></button>
   </nav>
   <div class="overlay" id="search-panel" role="dialog" aria-label="搜索"></div>
+  <dialog class="health-view" id="healthView" aria-labelledby="healthTitle">
+    <header class="health-bar">
+      <button type="button" class="rb" id="healthBack" aria-label="返回" autofocus><svg class="lucide lucide-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></button>
+      <div><h1 id="healthTitle">来源健康</h1><p id="healthStamp" hidden></p></div>
+    </header>
+    <div class="health-body" id="healthBody" role="region" aria-label="来源列表" tabindex="0"></div>
+  </dialog>
   <div class="article-view" id="articleView">
     <div class="article-bar" id="artBar">
       <button type="button" class="rb back" id="btnBack" aria-label="返回"><svg class="lucide lucide-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></button>
@@ -117,6 +124,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 <script src="lib.js"></script>
+<script src="health.js"></script>
 <script src="app.js"></script>
 <!--FEATURES-->
 </body>

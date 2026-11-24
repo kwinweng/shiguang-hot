@@ -216,6 +216,8 @@ def test_x_stale_dump_is_error_and_keeps_last_good(tmp_path):
     assert kept and all(i['fetched_at'] == good['generated_at'] for i in kept)
     row = next(a for a in x['accounts'] if a['handle'] == 'lxfater')
     assert row['stale'] is True and row['last_ok_at'] == good['generated_at']
+    first = next(p for p in good['platforms'] if p['id'] == 'x')['accounts'][0]
+    assert row['dump_at'] == first['dump_at'] != row['last_ok_at']
 
 
 # ---------- 编排 / 登录类平台 ----------
