@@ -167,6 +167,11 @@ class MacPublishTests(unittest.TestCase):
         hook.write_text('#!/bin/sh\nset -eu\n' + script + '\n')
         hook.chmod(0o755)
 
+    def wrap_git(self, script):
+        wrapper = self.bin / 'git'
+        wrapper.write_text(f'#!/bin/sh\nset -eu\n{script}\nexec "{GIT}" "$@"\n')
+        wrapper.chmod(0o755)
+
     def assert_success(self, result):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('validation=passed', result.stdout)
@@ -306,21 +311,41 @@ exec '{GIT}' "$@"
         self.assertFalse((self.remote / 'push-attempt').exists())
         self.assertTrue((self.state / 'HALT').exists())
 
-    def test_interrupted_checkout_restores_saved_database(self):
+    def assert_checkout_kill_recovers_database(self, *, after_checkout):
         self.assert_success(self.cycle())
+        main = self.advance_main('pipeline.py', b'\n' + PIPELINE.encode())
         database = self.checkout / 'tg.db'
         with sqlite3.connect(database) as connection:
             connection.execute("insert into messages values ('before-interruption')")
         local = database.read_bytes()
+        before = self.heads()
+        checkout = f'"{GIT}" "$@"' if after_checkout else ':'
+        self.wrap_git(f'''if [ "$1" = checkout ]; then
+    {checkout}
+    kill -KILL "$PPID"
+    exit 1
+fi''')
+
+        interrupted = self.cycle()
+        self.assertNotEqual(interrupted.returncode, 0)
         saved = self.state / 'checkout-tg.db'
-        database.rename(saved)
-        database.write_bytes(self.git('show', 'HEAD:tg.db', binary=True))
+        self.assertEqual(saved.read_bytes(), local)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), main if after_checkout else self.code)
+        self.assertEqual(self.heads(), before)
+        (self.bin / 'git').unlink()
 
         result = self.cycle()
         self.assert_success(result)
         self.assertIn('restored local tg.db', result.stdout)
         self.assertEqual(database.read_bytes(), local)
+        self.assertEqual(self.git('show', self.heads()[0] + ':tg.db', binary=True), local)
         self.assertFalse(saved.exists())
+
+    def test_kill_immediately_before_checkout_recovers_database(self):
+        self.assert_checkout_kill_recovers_database(after_checkout=False)
+
+    def test_kill_immediately_after_checkout_recovers_database(self):
+        self.assert_checkout_kill_recovers_database(after_checkout=True)
 
     def test_initial_checkout_seeds_database_from_fetched_main(self):
         # Move only the fixture remote's main, keeping the publisher's checkout pinned.
@@ -339,6 +364,99 @@ exec '{GIT}' "$@"
         self.assertEqual(self.git('rev-parse', self.heads()[0] + '^'), newer)
         with sqlite3.connect(self.checkout / 'tg.db') as connection:
             self.assertEqual(connection.execute("select count(*) from messages where id='remote-seed'").fetchone(), (1,))
+
+    def test_remote_database_divergence_preserves_both_copies(self):
+        self.assert_success(self.cycle())
+        checkpoint = (self.state / 'refs.json').read_bytes()
+        database = self.checkout / 'tg.db'
+        remote_db = self.root / 'remote.db'
+        shutil.copyfile(database, remote_db)
+        for path, message in ((database, 'local-only'), (remote_db, 'remote-only')):
+            with sqlite3.connect(path) as connection:
+                connection.execute('insert into messages values (?)', (message,))
+        local = database.read_bytes()
+        new_main = self.advance_main('tg.db', remote_db.read_bytes())
+        before = self.heads()
+        self.install_hook('pre-receive', 'touch push-attempt')
+
+        result = self.cycle()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('remote tg.db changed', result.stderr)
+        self.assertEqual(self.heads(), before)
+        self.assertFalse((self.remote / 'push-attempt').exists())
+        self.assertEqual((self.state / 'refs.json').read_bytes(), checkpoint)
+        self.assertEqual(database.read_bytes(), local)
+        self.assertEqual((self.state / f'remote-tg-{new_main}.db').read_bytes(), remote_db.read_bytes())
+        self.assertTrue((self.state / 'HALT').exists())
+
+    def test_rewind_main_after_final_check_rejects_both_updates(self):
+        self.wrap_git(f'''if [ "$1" = push ]; then
+    "{GIT}" --git-dir "{self.remote}" update-ref refs/heads/main {self.main_root} {self.code}
+fi''')
+        result = self.cycle()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('stale info', result.stderr)
+        self.assertEqual(self.heads(), (self.main_root, self.before[1]))
+        self.assertTrue((self.state / 'HALT').exists())
+
+    def test_no_data_update_leases_main_at_push_advertisement(self):
+        self.assert_success(self.cycle())
+        main, pages = self.heads()
+        next_main = self.advance_main('pipeline.py', b'\n' + PIPELINE.encode())
+        self.git('--git-dir', str(self.remote), 'update-ref', 'refs/heads/main', main, next_main)
+        self.wrap_git(f'''if [ "$1" = push ]; then
+    "{GIT}" --git-dir "{self.remote}" update-ref refs/heads/main {next_main} {main}
+fi''')
+
+        result = self.cycle()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('stale info', result.stderr)
+        self.assertEqual(self.heads(), (next_main, pages))
+        self.assertTrue((self.state / 'HALT').exists())
+
+    def test_no_data_update_detects_main_advance_after_push_advertisement(self):
+        self.assert_success(self.cycle())
+        main, pages = self.heads()
+        next_main = self.advance_main('pipeline.py', b'\n' + PIPELINE.encode())
+        self.git('--git-dir', str(self.remote), 'update-ref', 'refs/heads/main', main, next_main)
+        # pre-receive runs after advertisement and after Git decides which refs to send.
+        self.install_hook('pre-receive', f'''
+while read -r old new ref; do printf '%s\\n' "$ref" >> updates; done
+unset GIT_QUARANTINE_PATH GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES
+"{GIT}" update-ref refs/heads/main {next_main} {main}''')
+
+        result = self.cycle()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('remote refs moved after push', result.stderr)
+        self.assertEqual(self.heads()[0], next_main)
+        self.assertNotEqual(self.heads()[1], pages)
+        self.assertEqual((self.remote / 'updates').read_text().splitlines(), ['refs/heads/gh-pages'])
+        self.assertEqual(json.loads((self.state / 'refs.json').read_text())['refs/heads/main'], main)
+        self.assertTrue((self.state / 'HALT').exists())
+
+    def test_bad_publisher_stays_on_old_checkout_until_fixed(self):
+        self.assert_success(self.cycle())
+        head = self.git('rev-parse', 'HEAD')
+        checkpoint = (self.state / 'refs.json').read_bytes()
+        python = (self.checkout / 'tools/mac_publish.py').read_bytes()
+        launcher = (self.checkout / 'tools/mac_publish.sh').read_bytes()
+        for path, broken in (('mac_publish.sh', b'if then\n'),
+                             ('mac_publish.sh', b'#!/bin/sh\nexit 0\n'),
+                             ('mac_publish.py', b'def syntax error\n'),
+                             ('mac_publish.py', b'import mac_publish_missing_dependency\n'),
+                             ('mac_publish.py', python.replace(b'sys.exit(main())', b'raise SystemExit(1)'))):
+            with self.subTest(path=path, broken=broken[:40]):
+                bad = self.advance_main(f'tools/{path}', broken)
+                before = self.heads()
+                result = self.cycle()
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(bad, result.stderr)
+                self.assertEqual(self.git('rev-parse', 'HEAD'), head)
+                self.assertEqual(self.heads(), before)
+                self.assertEqual((self.state / 'refs.json').read_bytes(), checkpoint)
+                self.assertFalse((self.state / 'HALT').exists())
+                self.advance_main(f'tools/{path}', launcher if path.endswith('.sh') else python)
+        self.assert_success(self.cycle())
 
     def test_receiver_rejection_never_pushes(self):
         (self.checkout / '.git/reject-candidate').touch()
@@ -388,6 +506,34 @@ exec '{GIT}' "$@"
         self.assertTrue((self.state / 'HALT').is_file())
         self.assertIn('HALT exists', self.cycle().stderr)
         self.assertEqual((self.remote / 'races').read_text(), 'one attempt\n')
+
+    def test_second_instance_fails_during_shell_to_python_handoff(self):
+        launcher = (self.checkout / 'tools/mac_publish.sh').read_bytes()
+        wait = b'''if [ "${1:-}" = --resume ]; then
+    touch .git/handoff-entered
+    while [ ! -e .git/handoff-release ]; do sleep 0.1; done
+fi
+'''
+        main = self.advance_main('tools/mac_publish.sh', launcher.replace(b'set -eu\n', b'set -eu\n' + wait))
+        before = self.heads()
+        first = subprocess.Popen(self.plist['ProgramArguments'], cwd=self.checkout, env=self.env,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            entered = self.checkout / '.git/handoff-entered'
+            until = time.monotonic() + 15
+            while not entered.exists() and time.monotonic() < until and first.poll() is None:
+                time.sleep(0.02)
+            self.assertTrue(entered.exists(), 'candidate launcher did not enter the handoff')
+            self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
+            second = self.cycle()
+            self.assertNotEqual(second.returncode, 0)
+            self.assertIn('already running', second.stderr)
+            self.assertEqual(self.heads(), before)
+        finally:
+            (self.checkout / '.git/handoff-release').touch()
+            stdout, stderr = first.communicate(timeout=15)
+        self.assert_success(subprocess.CompletedProcess([], first.returncode, stdout, stderr))
+        self.assertEqual(self.git('rev-parse', 'HEAD'), main)
 
     def test_second_instance_fails_while_first_holds_lock_through_push(self):
         self.install_hook('pre-receive', 'touch entered\nwhile [ ! -e release ]; do sleep 0.1; done')

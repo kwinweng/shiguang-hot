@@ -19,16 +19,17 @@ PUBLIC_META = 'https://news.kwinweng.com/data/meta.json'
 META_PATH = 'rebang/data/meta.json'
 
 
-def run_cycle(state, lock, resume_refs=None):
+def run_cycle(root, state, lock, handoff=None):
     # Do not inherit build overrides, Git ref/index overrides or source credentials.
-    env = {key: os.environ[key] for key in ('PATH', 'HOME', 'TMPDIR', 'SSH_AUTH_SOCK') if key in os.environ}
-    env.update(BOX_PYTHON=sys.executable, TZ='Asia/Shanghai', SITE_MODE='public', MAIL_DIGEST='0',
+    startup_env = {key: os.environ[key] for key in ('PATH', 'HOME', 'TMPDIR', 'SSH_AUTH_SOCK') if key in os.environ}
+    startup_env['BOX_PYTHON'] = sys.executable
+    env = dict(startup_env, TZ='Asia/Shanghai', SITE_MODE='public', MAIL_DIGEST='0',
                GIT_TERMINAL_PROMPT='0', GIT_SSH_COMMAND='ssh -o BatchMode=yes', GIT_OPTIONAL_LOCKS='0',
                REBANG_WEIBO_COOKIE=str(state / 'no-source-credentials/weibo'),
                REBANG_WEREAD_SESSION=str(state / 'no-source-credentials/weread'))
 
     def run(*args, capture=False, stdout=None, input=None, extra_env=None):
-        result = subprocess.run(args, cwd=ROOT, env=dict(env, **(extra_env or {})), check=True,
+        result = subprocess.run(args, cwd=root, env=dict(env, **(extra_env or {})), check=True,
                                 pass_fds=(lock,), input=input,
                                 stdout=subprocess.PIPE if capture else stdout)
         return result.stdout
@@ -45,12 +46,12 @@ def run_cycle(state, lock, resume_refs=None):
             stream.write(reason + '\n')
         raise RuntimeError(f'{reason}; stopped: {halt}')
 
-    database = ROOT / 'tg.db'
+    database = root / 'tg.db'
     saved_database = state / 'checkout-tg.db'
 
     def check_database(path=database):
         if path.is_symlink() or not path.is_file() or any(
-                os.path.lexists(ROOT / f'tg.db{suffix}') for suffix in ('-journal', '-wal', '-shm')):
+                os.path.lexists(root / f'tg.db{suffix}') for suffix in ('-journal', '-wal', '-shm')):
             raise RuntimeError(f'{path.name} must be a regular file with no SQLite journal/WAL/SHM; preserve it for inspection')
 
     if os.path.lexists(saved_database):
@@ -86,10 +87,11 @@ def run_cycle(state, lock, resume_refs=None):
         if actual != dict(zip(REFS, expected)):
             halt_now(f'remote refs moved {phase}; expected={expected}, actual={actual}; no push attempted')
 
-    if resume_refs is not None:
-        observed = tuple(resume_refs)
-        if code_sha != observed[0] or json.loads(record.read_text()) != dict(zip(REFS, observed)):
-            raise RuntimeError('checkout or checkpoint does not match the interrupted publisher handoff')
+    if handoff is not None:
+        previous_head, *refs = handoff
+        if code_sha != previous_head:
+            raise RuntimeError('checkout does not match the publisher handoff')
+        observed = tuple(refs)
         check_remote_refs(observed, 'during code switch')
     else:
         # Force only the private fetch refs so rewinds can be compared to the checkpoint.
@@ -114,23 +116,58 @@ def run_cycle(state, lock, resume_refs=None):
                 halt_now(f'main is not a fast-forward: {checkpoint[REFS[0]]} -> {main_parent}')
             raise
 
+    def database_blob(commit):
+        entry = git('ls-tree', commit, '--', 'tg.db').split()
+        if entry[:2] != ['100644', 'blob']:
+            raise RuntimeError(f'{commit} must track tg.db as a regular 100644 blob')
+        return entry[2]
+
+    def copy_blob(blob, path):
+        with path.open('wb') as output:
+            run('git', 'cat-file', 'blob', blob, stdout=output)
+
     with tempfile.TemporaryDirectory(prefix='cycle-', dir=state) as name:
         work = Path(name)
         pending_db = work / 'tg.db'
-        if checkpoint is None or code_sha != main_parent:
-            head_entry = git('ls-tree', code_sha, '--', 'tg.db').split()
-            main_entry = git('ls-tree', main_parent, '--', 'tg.db').split()
-            if not all(entry[:2] == ['100644', 'blob'] for entry in (head_entry, main_entry)):
-                raise RuntimeError('both code commits must track tg.db as a regular 100644 blob')
-            head_blob, main_blob = head_entry[2], main_entry[2]
-        if checkpoint is None:
-            current_blob = git('hash-object', '--no-filters', str(database))
-            if current_blob != main_blob:
-                if current_blob != head_blob:
-                    raise RuntimeError('unrecognized local tg.db at initialization; do not overwrite it')
-                with pending_db.open('wb') as output:
-                    run('git', 'cat-file', 'blob', main_blob, stdout=output)
-                pending_db.replace(database)
+        main_blob = database_blob(main_parent)
+        current_blob = git('hash-object', '--no-filters', str(database))
+        if checkpoint is not None and checkpoint[REFS[0]] != main_parent:
+            previous_blob = database_blob(checkpoint[REFS[0]])
+            if main_blob != previous_blob and current_blob != main_blob:
+                remote_copy = state / f'remote-tg-{main_parent}.db'
+                copy_blob(main_blob, pending_db)
+                pending_db.replace(remote_copy)
+                halt_now(f'remote tg.db changed: checkpoint={previous_blob}, candidate={main_blob}, '
+                         f'local={current_blob}, main={main_parent}; kept {database} and {remote_copy}')
+
+        if code_sha != main_parent and handoff is None:
+            # Boot the new publisher while the known-good entry is still installed.
+            launcher = work / 'mac_publish.sh'
+            candidate = work / 'mac_publish.py'
+            try:
+                for path in (launcher, candidate):
+                    with path.open('wb') as output:
+                        run('git', 'show', f'{main_parent}:tools/{path.name}', stdout=output)
+                run('/bin/sh', '-n', str(launcher))
+                run(sys.executable, '-I', '-m', 'py_compile', str(candidate))
+                run(sys.executable, '-I', '-c', 'import runpy, sys; runpy.run_path(sys.argv[1])', str(candidate))
+            except (OSError, subprocess.CalledProcessError) as error:
+                raise RuntimeError(f'publisher preflight failed for candidate {main_parent}: {error}') from error
+            started = work / 'started'
+            try:
+                subprocess.run(['/bin/sh', str(launcher), '--resume', str(lock), code_sha, *observed],
+                               cwd=root, env=startup_env, pass_fds=(lock,), check=True)
+            finally:
+                if not started.is_file():
+                    raise RuntimeError(f'publisher boot failed for candidate {main_parent} before startup confirmation') from None
+            return
+
+        head_blob = database_blob(code_sha) if code_sha != main_parent else main_blob
+        if checkpoint is None and current_blob != main_blob:
+            if current_blob != head_blob:
+                raise RuntimeError('unrecognized local tg.db at initialization; do not overwrite it')
+            copy_blob(main_blob, pending_db)
+            pending_db.replace(database)
         if checkpoint != dict(zip(REFS, observed)):
             # A failed build can retry this baseline, but a later rewind must halt.
             remember(observed)
@@ -139,8 +176,7 @@ def run_cycle(state, lock, resume_refs=None):
             if head_blob != main_blob:
                 # Give checkout the old tracked version and restore the exact local file.
                 # Keep the saved copy outside the temporary directory for crash recovery.
-                with pending_db.open('wb') as output:
-                    run('git', 'cat-file', 'blob', head_blob, stdout=output)
+                copy_blob(head_blob, pending_db)
                 database.replace(saved_database)
             try:
                 if saved_database.exists():
@@ -149,11 +185,9 @@ def run_cycle(state, lock, resume_refs=None):
             finally:
                 if saved_database.exists():
                     saved_database.replace(database)
-    if code_sha != main_parent:
-        print(f'code switched: {code_sha} -> {main_parent}; restarting before collection', flush=True)
-        os.set_inheritable(lock, True)
-        launcher = str(ROOT / 'tools/mac_publish.sh')
-        os.execv('/bin/sh', ['/bin/sh', launcher, '--resume', str(lock), *observed])
+            print(f'code switched: {code_sha} -> {main_parent}', flush=True)
+            code_sha = main_parent
+            check_remote_refs(observed, 'during code switch')
 
     print(f'building source_commit={code_sha} gh-pages_parent={pages_parent}', flush=True)
 
@@ -167,7 +201,7 @@ def run_cycle(state, lock, resume_refs=None):
             print(f'public_baseline_meta_sha256={hashlib.sha256(actual).hexdigest()}', flush=True)
 
         run(sys.executable, 'pipeline.py')
-        meta = ROOT / 'site-v11/data/meta.json'
+        meta = root / 'site-v11/data/meta.json'
         previous = meta.stat() if meta.is_file() else None
         run('sh', 'tools/rebang_refresh.sh', '--no-publish')
         if previous and os.path.samestat(previous, meta.stat()):
@@ -177,7 +211,7 @@ def run_cycle(state, lock, resume_refs=None):
             raise RuntimeError('v11 output is empty or a fixture')
         check_database()
         run(sys.executable, 'tools/write_build_info.py')
-        info = json.loads((ROOT / 'site/build-info.json').read_text())
+        info = json.loads((root / 'site/build-info.json').read_text())
 
         # A separate index starts at remote main, never at the code checkout.
         data_index = {'GIT_INDEX_FILE': str(work / 'index')}
@@ -229,14 +263,22 @@ def run_cycle(state, lock, resume_refs=None):
             print(f'collection, build or validation failed at source_commit={code_sha}: {error}', file=sys.stderr)
             check_remote_refs(observed, 'during collection or build')
             raise
-        # Normal Git push detects changes after its own advertisement; this also
-        # catches rewinds or unrelated writes already visible before that push.
         check_remote_refs(observed, 'during collection or build')
-        refspecs = [f'{new}:{ref}' for ref, old, new in zip(REFS, observed, upcoming) if new != old]
+        leases = [f'--force-with-lease={ref}:{old}' for ref, old in zip(REFS, observed)]
+        refspecs = [f'{new}:{ref}' for ref, new in zip(REFS, upcoming)]
         # Leave this marker on rejection, ambiguous network result or interruption.
         with halt.open('x') as stream:
             stream.write(f'Push started; reconcile before resuming. Parents: {observed}; candidates: {upcoming}\n')
-        run('git', 'push', '--atomic', '--no-follow-tags', 'origin', *refspecs)
+        try:
+            run('git', 'push', '--atomic', '--no-follow-tags', *leases, 'origin', *refspecs)
+        finally:
+            # Git can omit an up-to-date ref from the remote transaction.
+            actual = remote_refs()
+            if actual != dict(zip(REFS, upcoming)):
+                reason = f'remote refs moved after push or push failed; expected={upcoming}, actual={actual}'
+                with halt.open('a') as stream:
+                    stream.write(reason + '\n')
+                raise RuntimeError(reason) from None
         remember(upcoming)
         halt.unlink()
         print(f'published main={upcoming[0]} gh-pages={upcoming[1]} database_sha256={db_sha}', flush=True)
@@ -245,31 +287,33 @@ def run_cycle(state, lock, resume_refs=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--code-sha', help='accepted for compatibility with existing launchd plists')
-    parser.add_argument('--resume', nargs=3, help=argparse.SUPPRESS)
+    parser.add_argument('--resume', nargs=4, help=argparse.SUPPRESS)
     args = parser.parse_args()
     try:
-        # In a dedicated clone these files outlive temporary archives and worktrees.
-        state = ROOT / '.git/mac-publish'
-        if not (ROOT / '.git').is_dir() or any(key.startswith('GIT_') for key in os.environ):
+        # A staged publisher is launched with the dedicated clone as its cwd.
+        root = ROOT if args.resume is None else Path.cwd()
+        state = root / '.git/mac-publish'
+        if not (root / '.git').is_dir() or any(key.startswith('GIT_') for key in os.environ):
             raise RuntimeError('use a dedicated clone without inherited Git environment variables')
         state.mkdir(mode=0o700, exist_ok=True)
         lock_path = state / 'lock'
-        resume_refs = None
+        handoff = None
         if args.resume is None:
             lock = lock_path.open('a')
         else:
-            fd_text, *resume_refs = args.resume
+            fd_text, *handoff = args.resume
             lock_fd = int(fd_text)
             if not os.path.samestat(os.fstat(lock_fd), lock_path.stat()):
                 raise RuntimeError('publisher handoff did not inherit the cycle lock')
-            os.set_inheritable(lock_fd, False)
             lock = os.fdopen(lock_fd, 'a')
         with lock:
             try:
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
                 raise RuntimeError('Mac publisher is already running') from None
-            run_cycle(state, lock.fileno(), resume_refs)
+            if handoff is not None:
+                Path(__file__).with_name('started').touch(exist_ok=False)
+            run_cycle(root, state, lock.fileno(), handoff)
     except (OSError, RuntimeError, ValueError, KeyError, subprocess.CalledProcessError) as error:
         print(f'Mac publish failed: {error}', file=sys.stderr)
         return 1
