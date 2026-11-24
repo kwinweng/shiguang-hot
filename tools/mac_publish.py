@@ -1,4 +1,4 @@
-"""Follow main in a dedicated checkout and publish a validated, fast-forward pair once."""
+"""Worker v1: publish a validated, fast-forward pair from the selected checkout."""
 import argparse
 import fcntl
 import hashlib
@@ -6,20 +6,19 @@ import json
 import os
 from pathlib import Path
 import re
+import socket
 import subprocess
 import sys
 import tempfile
 from urllib.parse import urlsplit
 
 
-ROOT = Path(__file__).resolve().parents[1]
 REFS = ('refs/heads/main', 'refs/heads/gh-pages')
-SNAPSHOTS = ('refs/mac-publish/main', 'refs/mac-publish/gh-pages')
 PUBLIC_META = 'https://news.kwinweng.com/data/meta.json'
 META_PATH = 'rebang/data/meta.json'
 
 
-def run_cycle(root, state, lock, handoff=None):
+def run_cycle(root, state, lock, observed):
     # Do not inherit build overrides, Git ref/index overrides or source credentials.
     startup_env = {key: os.environ[key] for key in ('PATH', 'HOME', 'TMPDIR', 'SSH_AUTH_SOCK') if key in os.environ}
     startup_env['BOX_PYTHON'] = sys.executable
@@ -38,39 +37,22 @@ def run_cycle(root, state, lock, handoff=None):
         return run('git', *args, capture=True, **kwargs).decode().strip()
 
     halt = state / 'HALT'
-    if halt.exists():
-        raise RuntimeError(f'HALT exists: {halt}; reconcile the local database and both remote refs before resuming')
-
     def halt_now(reason):
         with halt.open('x') as stream:
             stream.write(reason + '\n')
         raise RuntimeError(f'{reason}; stopped: {halt}')
 
     database = root / 'tg.db'
-    saved_database = state / 'checkout-tg.db'
-
     def check_database(path=database):
         if path.is_symlink() or not path.is_file() or any(
                 os.path.lexists(root / f'tg.db{suffix}') for suffix in ('-journal', '-wal', '-shm')):
             raise RuntimeError(f'{path.name} must be a regular file with no SQLite journal/WAL/SHM; preserve it for inspection')
 
-    if os.path.lexists(saved_database):
-        check_database(saved_database)
-        saved_database.replace(database)
-        print('restored local tg.db after an interrupted checkout', flush=True)
-    check_database()
-
+    main_parent, pages_parent = observed
     code_sha = git('rev-parse', 'HEAD')
-    if (git('branch', '--show-current')
-            or git('diff', '--name-only', 'HEAD', '--', '.', ':(exclude)tg.db')
-            or git('diff', '--cached', '--name-only')
-            or git('ls-files', '--others', '--exclude-standard')):
-        raise RuntimeError('use a dedicated clean detached checkout (only unstaged tg.db may differ)')
-    if (state / 'no-source-credentials').exists():
-        raise RuntimeError('the reserved no-source-credentials path must not exist')
+    if code_sha != main_parent:
+        raise RuntimeError('checkout does not match the launcher-selected commit')
     origin = git('remote', 'get-url', 'origin')
-    if git('remote', 'get-url', '--push', '--all', 'origin').splitlines() != [origin]:
-        raise RuntimeError('origin must have exactly one push URL, identical to the fetch URL')
 
     record = state / 'refs.json'
 
@@ -87,107 +69,7 @@ def run_cycle(root, state, lock, handoff=None):
         if actual != dict(zip(REFS, expected)):
             halt_now(f'remote refs moved {phase}; expected={expected}, actual={actual}; no push attempted')
 
-    if handoff is not None:
-        previous_head, *refs = handoff
-        if code_sha != previous_head:
-            raise RuntimeError('checkout does not match the publisher handoff')
-        observed = tuple(refs)
-        check_remote_refs(observed, 'during code switch')
-    else:
-        # Force only the private fetch refs so rewinds can be compared to the checkpoint.
-        try:
-            git('fetch', '--no-tags', '--refmap=', 'origin',
-                *(f'+{source}:{dest}' for source, dest in zip(REFS, SNAPSHOTS)))
-        except subprocess.CalledProcessError:
-            missing = set(REFS) - remote_refs().keys()
-            if missing:
-                halt_now(f'remote refs missing: {sorted(missing)}')
-            raise
-        observed = tuple(git('rev-parse', f'{ref}^{{commit}}') for ref in SNAPSHOTS)
-    main_parent, pages_parent = observed
-    checkpoint = json.loads(record.read_text()) if record.exists() else None
-    if checkpoint is not None:
-        if checkpoint[REFS[1]] != pages_parent:
-            halt_now(f'gh-pages changed since the last local checkpoint: {checkpoint[REFS[1]]} -> {pages_parent}')
-        try:
-            git('merge-base', '--is-ancestor', checkpoint[REFS[0]], main_parent)
-        except subprocess.CalledProcessError as error:
-            if error.returncode == 1:
-                halt_now(f'main is not a fast-forward: {checkpoint[REFS[0]]} -> {main_parent}')
-            raise
-
-    def database_blob(commit):
-        entry = git('ls-tree', commit, '--', 'tg.db').split()
-        if entry[:2] != ['100644', 'blob']:
-            raise RuntimeError(f'{commit} must track tg.db as a regular 100644 blob')
-        return entry[2]
-
-    def copy_blob(blob, path):
-        with path.open('wb') as output:
-            run('git', 'cat-file', 'blob', blob, stdout=output)
-
-    with tempfile.TemporaryDirectory(prefix='cycle-', dir=state) as name:
-        work = Path(name)
-        pending_db = work / 'tg.db'
-        main_blob = database_blob(main_parent)
-        current_blob = git('hash-object', '--no-filters', str(database))
-        if checkpoint is not None and checkpoint[REFS[0]] != main_parent:
-            previous_blob = database_blob(checkpoint[REFS[0]])
-            if main_blob != previous_blob and current_blob != main_blob:
-                remote_copy = state / f'remote-tg-{main_parent}.db'
-                copy_blob(main_blob, pending_db)
-                pending_db.replace(remote_copy)
-                halt_now(f'remote tg.db changed: checkpoint={previous_blob}, candidate={main_blob}, '
-                         f'local={current_blob}, main={main_parent}; kept {database} and {remote_copy}')
-
-        if code_sha != main_parent and handoff is None:
-            # Boot the new publisher while the known-good entry is still installed.
-            launcher = work / 'mac_publish.sh'
-            candidate = work / 'mac_publish.py'
-            try:
-                for path in (launcher, candidate):
-                    with path.open('wb') as output:
-                        run('git', 'show', f'{main_parent}:tools/{path.name}', stdout=output)
-                run('/bin/sh', '-n', str(launcher))
-                run(sys.executable, '-I', '-m', 'py_compile', str(candidate))
-                run(sys.executable, '-I', '-c', 'import runpy, sys; runpy.run_path(sys.argv[1])', str(candidate))
-            except (OSError, subprocess.CalledProcessError) as error:
-                raise RuntimeError(f'publisher preflight failed for candidate {main_parent}: {error}') from error
-            started = work / 'started'
-            try:
-                subprocess.run(['/bin/sh', str(launcher), '--resume', str(lock), code_sha, *observed],
-                               cwd=root, env=startup_env, pass_fds=(lock,), check=True)
-            finally:
-                if not started.is_file():
-                    raise RuntimeError(f'publisher boot failed for candidate {main_parent} before startup confirmation') from None
-            return
-
-        head_blob = database_blob(code_sha) if code_sha != main_parent else main_blob
-        if checkpoint is None and current_blob != main_blob:
-            if current_blob != head_blob:
-                raise RuntimeError('unrecognized local tg.db at initialization; do not overwrite it')
-            copy_blob(main_blob, pending_db)
-            pending_db.replace(database)
-        if checkpoint != dict(zip(REFS, observed)):
-            # A failed build can retry this baseline, but a later rewind must halt.
-            remember(observed)
-
-        if code_sha != main_parent:
-            if head_blob != main_blob:
-                # Give checkout the old tracked version and restore the exact local file.
-                # Keep the saved copy outside the temporary directory for crash recovery.
-                copy_blob(head_blob, pending_db)
-                database.replace(saved_database)
-            try:
-                if saved_database.exists():
-                    pending_db.replace(database)
-                run('git', 'checkout', '--detach', '--no-overwrite-ignore', main_parent)
-            finally:
-                if saved_database.exists():
-                    saved_database.replace(database)
-            print(f'code switched: {code_sha} -> {main_parent}', flush=True)
-            code_sha = main_parent
-            check_remote_refs(observed, 'during code switch')
+    check_remote_refs(observed, 'during code switch')
 
     print(f'building source_commit={code_sha} gh-pages_parent={pages_parent}', flush=True)
 
@@ -229,7 +111,9 @@ def run_cycle(root, state, lock, handoff=None):
         changes = git('diff-tree', '--no-commit-id', '--name-only', '-r', main_parent, data_tree)
         if changes not in ('', 'tg.db'):
             raise RuntimeError('data tree changes files other than tg.db')
-        main_next = git('commit-tree', data_tree, '-p', main_parent, '-m', 'Refresh public collection data') if changes else main_parent
+        # Git omits unchanged refs from the server transaction, even with leases.
+        message = 'Refresh public collection data' if changes else 'Refresh public collection data (no db change)'
+        main_next = git('commit-tree', data_tree, '-p', main_parent, '-m', message)
 
         output = run('sh', 'tools/publish_pages.sh', '--dry-run', '--already-built', capture=True).decode()
         print(output, end='', flush=True)
@@ -272,7 +156,7 @@ def run_cycle(root, state, lock, handoff=None):
         try:
             run('git', 'push', '--atomic', '--no-follow-tags', *leases, 'origin', *refspecs)
         finally:
-            # Git can omit an up-to-date ref from the remote transaction.
+            # Keep HALT unless the push succeeded and both exact targets are visible.
             actual = remote_refs()
             if actual != dict(zip(REFS, upcoming)):
                 reason = f'remote refs moved after push or push failed; expected={upcoming}, actual={actual}'
@@ -286,34 +170,25 @@ def run_cycle(root, state, lock, handoff=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--code-sha', help='accepted for compatibility with existing launchd plists')
-    parser.add_argument('--resume', nargs=4, help=argparse.SUPPRESS)
+    parser.add_argument('--worker-v1', nargs=4, required=True, metavar=('LOCK_FD', 'SOCKET_FD', 'MAIN', 'PAGES'))
     args = parser.parse_args()
     try:
-        # A staged publisher is launched with the dedicated clone as its cwd.
-        root = ROOT if args.resume is None else Path.cwd()
+        lock_fd, socket_fd, main, pages = args.worker_v1
+        lock_fd, socket_fd = int(lock_fd), int(socket_fd)
+        root = Path.cwd().resolve()
         state = root / '.git/mac-publish'
-        if not (root / '.git').is_dir() or any(key.startswith('GIT_') for key in os.environ):
-            raise RuntimeError('use a dedicated clone without inherited Git environment variables')
-        state.mkdir(mode=0o700, exist_ok=True)
-        lock_path = state / 'lock'
-        handoff = None
-        if args.resume is None:
-            lock = lock_path.open('a')
-        else:
-            fd_text, *handoff = args.resume
-            lock_fd = int(fd_text)
-            if not os.path.samestat(os.fstat(lock_fd), lock_path.stat()):
-                raise RuntimeError('publisher handoff did not inherit the cycle lock')
-            lock = os.fdopen(lock_fd, 'a')
-        with lock:
+        if not os.path.samestat(os.fstat(lock_fd), (state / 'lock').stat()):
+            raise RuntimeError('worker did not inherit the cycle lock')
+        with os.fdopen(lock_fd, 'a') as lock, socket.socket(fileno=socket_fd) as gate:
             try:
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
-                raise RuntimeError('Mac publisher is already running') from None
-            if handoff is not None:
-                Path(__file__).with_name('started').touch(exist_ok=False)
-            run_cycle(root, state, lock.fileno(), handoff)
+                raise RuntimeError('worker did not inherit the held cycle lock') from None
+            gate.sendall(b'1')
+            if gate.recv(1) != b'G':
+                raise RuntimeError('publisher startup cancelled by the fixed launcher')
+            gate.close()
+            run_cycle(root, state, lock.fileno(), (main, pages))
     except (OSError, RuntimeError, ValueError, KeyError, subprocess.CalledProcessError) as error:
         print(f'Mac publish failed: {error}', file=sys.stderr)
         return 1

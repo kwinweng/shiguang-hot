@@ -28,6 +28,7 @@ site = Path('site')
 shutil.copytree('packed-fixture', site, dirs_exist_ok=True)
 now = datetime.now(timezone.utc)
 day = now.astimezone(timezone(timedelta(hours=8))).date().isoformat()
+(site / 'data').mkdir(exist_ok=True)
 (site / 'data/live.json').write_text(json.dumps(dict(updated=now.isoformat(),
     sample=Path('.git/reject-candidate').exists(), messages=[dict(id='fixture')])))
 '''
@@ -62,20 +63,27 @@ class MacPublishTests(unittest.TestCase):
         self.remote = self.root / 'remote.git'
         self.state = self.checkout / '.git/mac-publish'
         self.checkout.mkdir()
-        self.bin = self.root / 'bin'
-        self.bin.mkdir()
+        self.bin = self.root / 'venv/bin'
+        self.bin.mkdir(parents=True)
+        (self.root / 'bin').mkdir()
         (self.bin / 'flock').symlink_to(FLOCK)
         (self.bin / 'python3').symlink_to(sys.executable)
         self.plist = plistlib.loads((ROOT / 'tools/mac_publish.launchd.plist.example').read_bytes())
         self.assertEqual(self.plist['StartCalendarInterval'], {'Minute': 5})
         self.assertNotIn('RunAtLoad', self.plist)
+        self.assertNotIn('KeepAlive', self.plist)
         self.assertTrue(all(Path(p).is_absolute() for p in self.plist['EnvironmentVariables']['PATH'].split(':')))
         self.assertTrue(Path(self.plist['EnvironmentVariables']['BOX_PYTHON']).is_absolute())
-        # Fill the template with this dedicated checkout's absolute paths. No GUI session env.
-        self.plist['EnvironmentVariables'].update(PATH=f'{self.bin}:/usr/bin:/bin',
-                                                   BOX_PYTHON=sys.executable, HOME=str(self.root))
-        self.plist['WorkingDirectory'] = str(self.checkout)
-        self.env = self.plist['EnvironmentVariables']
+        # Render the real template, with fixture-local paths rather than a GUI session env.
+        example = '/Users/kwin/projects/shiguang-news-publish'
+
+        def local_path(value):
+            return value.replace(example, str(self.root)).replace('/opt/homebrew/bin', str(self.root / 'brew/bin'))
+
+        self.env = {key: local_path(value) for key, value in self.plist['EnvironmentVariables'].items()}
+        self.env['HOME'] = str(self.root)
+        self.plist['WorkingDirectory'] = local_path(self.plist['WorkingDirectory'])
+        self.plist['ProgramArguments'] = [local_path(arg) for arg in self.plist['ProgramArguments']]
         self.git('init', '--bare', str(self.remote))
         self.git('init', '-b', 'main')
         self.git('config', 'user.name', 'Fixture')
@@ -90,7 +98,7 @@ class MacPublishTests(unittest.TestCase):
         self.git('commit', '-m', 'Main baseline')
         self.main_root = self.git('rev-parse', 'HEAD')
         for directory, names in (('tools', ('mac_publish.py', 'mac_publish.sh', 'publish_pages.sh',
-                                           'rebang_refresh.sh', 'write_build_info.py')),
+                                           'rebang_refresh.sh', 'write_build_info.py', 'mac_publish_launcher.py')),
                                  ('deploy', ('news-sync.sh',))):
             (self.checkout / directory).mkdir()
             for name in names:
@@ -107,8 +115,9 @@ class MacPublishTests(unittest.TestCase):
         self.git('push', 'origin', 'main')
         self.git('checkout', '--detach')
         self.code = self.git('rev-parse', 'HEAD')
-        self.plist['ProgramArguments'][1] = str(self.checkout / 'tools/mac_publish.sh')
-        self.plist['ProgramArguments'][3] = self.code
+        self.legacy = ['/bin/sh', str(self.checkout / 'tools/mac_publish.sh'), '--code-sha', self.code]
+        launcher = ROOT / 'tools/mac_publish_launcher.py'
+        shutil.copyfile(launcher, self.root / 'bin' / launcher.name)
         baseline = self.root / 'baseline'
         self.make_site(baseline)
         self.git('-C', str(baseline), 'init', '-b', 'gh-pages')
@@ -143,10 +152,14 @@ class MacPublishTests(unittest.TestCase):
     def heads(self):
         return tuple(self.git('--git-dir', str(self.remote), 'rev-parse', branch) for branch in ('main', 'gh-pages'))
 
-    def cycle(self, env=None, *, legacy_args=True):
-        arguments = self.plist['ProgramArguments']
-        return subprocess.run(arguments if legacy_args else arguments[:2], cwd=self.plist['WorkingDirectory'],
-                              env=self.env if env is None else env, timeout=30, capture_output=True, text=True)
+    def command(self, env=None, *, legacy_args=False, options=()):
+        env = self.env if env is None else env
+        arguments = self.legacy if legacy_args else self.plist['ProgramArguments']
+        return ['/usr/bin/env', '-i', *(f'{k}={v}' for k, v in env.items()), *arguments, *options]
+
+    def cycle(self, env=None, *, legacy_args=False, options=()):
+        return subprocess.run(self.command(env, legacy_args=legacy_args, options=options),
+                              cwd=self.plist['WorkingDirectory'], timeout=30, capture_output=True, text=True)
 
     def advance_main(self, path, contents):
         parent = self.heads()[0]
@@ -201,7 +214,10 @@ class MacPublishTests(unittest.TestCase):
             self.assertEqual(connection.execute('select id from messages order by id').fetchall(),
                              [('after-rebang-ingest',), ('old-pipeline',)])
         self.assert_success(self.cycle())
-        self.assertEqual(self.heads()[0], main, 'no DB change must not produce a data commit')
+        self.assertEqual(self.git('rev-parse', self.heads()[0] + '^'), main)
+        self.assertEqual(self.git('rev-parse', self.heads()[0] + '^{tree}'), self.git('rev-parse', main + '^{tree}'))
+        self.assertEqual(self.git('log', '-1', '--format=%s', self.heads()[0]),
+                         'Refresh public collection data (no db change)')
         self.assertEqual(self.git('rev-parse', self.heads()[1] + '^'), pages)
         self.assertEqual(self.git('rev-parse', 'HEAD'), main)
         self.assertEqual(self.git('diff', '--cached', '--name-only'), '')
@@ -226,7 +242,7 @@ class MacPublishTests(unittest.TestCase):
         self.assertEqual(json.loads(self.git('show', f'{pages}:build-info.json'))['source_commit'], new_main)
         with sqlite3.connect(self.checkout / 'tg.db') as connection:
             self.assertEqual(connection.execute("select count(*) from messages where id='new-pipeline'").fetchone(), (1,))
-        self.assert_success(self.cycle())  # The original plist SHA still works after switching.
+        self.assert_success(self.cycle(legacy_args=True))  # The original plist SHA still works after switching.
 
     def test_non_fast_forward_main_halts(self):
         self.assert_success(self.cycle())
@@ -238,6 +254,67 @@ class MacPublishTests(unittest.TestCase):
         self.assertEqual(self.heads(), before)
         self.assertTrue((self.state / 'HALT').exists())
         self.assertIn('HALT exists', self.cycle().stderr)
+
+    def test_first_start_rejects_unrelated_main_before_checkpoint_or_collection(self):
+        bare = ('--git-dir', str(self.remote), '-c', 'user.name=Fixture', '-c', 'user.email=fixture@localhost')
+        unrelated = self.git(*bare, 'commit-tree', self.code + '^{tree}', '-m', 'Unrelated main root')
+        self.git(*bare, 'update-ref', 'refs/heads/main', unrelated, self.code)
+        database = (self.checkout / 'tg.db').read_bytes()
+        result = self.cycle()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('main is not a fast-forward', result.stderr)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
+        self.assertEqual((self.checkout / 'tg.db').read_bytes(), database)
+        self.assertNotIn('building source_commit=', result.stdout)
+        self.assertFalse((self.state / 'refs.json').exists())
+        self.assertTrue((self.state / 'HALT').exists())
+
+    def shallow_checkout(self):
+        bare = ('--git-dir', str(self.remote), '-c', 'user.name=Fixture', '-c', 'user.email=fixture@localhost')
+        old_main, old_pages = self.before
+        main, pages = self.before
+        for i in range(115):
+            main = self.git(*bare, 'commit-tree', old_main + '^{tree}', '-p', main, '-m', f'Update {i}')
+            if i < 60:
+                pages = self.git(*bare, 'commit-tree', old_pages + '^{tree}', '-p', pages, '-m', f'Publish {i}')
+        self.git(*bare, 'update-ref', 'refs/heads/main', main, old_main)
+        self.git(*bare, 'update-ref', 'refs/heads/gh-pages', pages, old_pages)
+        self.checkout.rename(self.root / 'original-checkout')
+        self.checkout.mkdir()
+        self.git('clone', '--depth=50', '--single-branch', '--branch', 'main', '--no-tags', self.remote.as_uri(), '.')
+        self.git('fetch', '--depth=50', '--no-tags', '--refmap=', 'origin',
+                 'refs/heads/gh-pages:refs/mac-publish/gh-pages')
+        self.git('checkout', '--detach', main)
+        self.git('config', 'user.name', 'Fixture')
+        self.git('config', 'user.email', 'fixture@localhost')
+        self.assertEqual(self.git('rev-parse', '--is-shallow-repository'), 'true')
+        for missing in (old_main, old_pages):
+            with self.assertRaises(subprocess.CalledProcessError):
+                self.git('cat-file', '-e', missing)
+        return main, pages
+
+    def test_shallow_fast_forward_pushes_both_parents_without_needing_old_history(self):
+        _, pages = self.shallow_checkout()
+        candidate = self.advance_main('pipeline.py', PIPELINE.replace('old-pipeline', 'shallow-pipeline').encode())
+        self.assert_success(self.cycle())
+        self.assertEqual(self.git('rev-parse', '--is-shallow-repository'), 'true')
+        self.assertEqual(self.git('rev-parse', 'HEAD'), candidate)
+        self.assertEqual(self.git('rev-parse', self.heads()[0] + '^'), candidate)
+        self.assertEqual(self.git('rev-parse', self.heads()[1] + '^'), pages)
+        self.assertEqual(self.git('diff-tree', '--no-commit-id', '--name-only', '-r', candidate, self.heads()[0]), 'tg.db')
+        self.assert_success(self.cycle())
+
+    def test_shallow_migration_deepens_to_prove_checkpoint(self):
+        _, pages = self.shallow_checkout()
+        old_main = self.before[0]
+        self.state.mkdir()
+        (self.state / 'refs.json').write_text(json.dumps({'refs/heads/main': old_main,
+                                                         'refs/heads/gh-pages': pages}))
+        candidate = self.advance_main('pipeline.py', b'\n' + PIPELINE.encode())
+        self.assert_success(self.cycle())
+        self.git('merge-base', '--is-ancestor', old_main, candidate)
+        self.assertEqual(self.git('rev-parse', self.heads()[0] + '^'), candidate)
+        self.assertEqual(self.git('rev-parse', self.heads()[1] + '^'), pages)
 
     def test_unexpected_pages_fast_forward_halts(self):
         self.assert_success(self.cycle())
@@ -414,7 +491,7 @@ fi''')
         self.assertEqual(self.heads(), (next_main, pages))
         self.assertTrue((self.state / 'HALT').exists())
 
-    def test_no_data_update_detects_main_advance_after_push_advertisement(self):
+    def test_no_data_update_rejects_both_refs_on_main_advance_after_push_advertisement(self):
         self.assert_success(self.cycle())
         main, pages = self.heads()
         next_main = self.advance_main('pipeline.py', b'\n' + PIPELINE.encode())
@@ -429,8 +506,10 @@ unset GIT_QUARANTINE_PATH GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('remote refs moved after push', result.stderr)
         self.assertEqual(self.heads()[0], next_main)
-        self.assertNotEqual(self.heads()[1], pages)
-        self.assertEqual((self.remote / 'updates').read_text().splitlines(), ['refs/heads/gh-pages'])
+        self.assertEqual(self.heads()[1], pages)
+        self.assertIn('atomic transaction failed', result.stderr)
+        self.assertCountEqual((self.remote / 'updates').read_text().splitlines(),
+                              ['refs/heads/main', 'refs/heads/gh-pages'])
         self.assertEqual(json.loads((self.state / 'refs.json').read_text())['refs/heads/main'], main)
         self.assertTrue((self.state / 'HALT').exists())
 
@@ -457,6 +536,113 @@ unset GIT_QUARANTINE_PATH GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES
                 self.assertFalse((self.state / 'HALT').exists())
                 self.advance_main(f'tools/{path}', launcher if path.endswith('.sh') else python)
         self.assert_success(self.cycle())
+
+    def test_fixed_launcher_rejects_missing_v1_then_skips_it_and_recovers(self):
+        self.assert_success(self.cycle())
+        good = self.git('rev-parse', 'HEAD')
+        worker = (self.checkout / 'tools/mac_publish.py').read_bytes()
+        broken = worker.replace(b'--worker-v1', b'--worker-v2')
+        self.assertNotEqual(broken, worker, 'worker must register the stable CLI')
+        bad = self.advance_main('tools/mac_publish.py', broken)
+        heads = self.heads()
+        checkpoint = (self.state / 'refs.json').read_bytes()
+        result = self.cycle()
+        self.assertIn(f'publisher boot failed for candidate {bad}', result.stderr)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), good)
+        self.assertEqual(self.heads(), heads)
+        self.assertEqual((self.state / 'refs.json').read_bytes(), checkpoint)
+        again = self.cycle()
+        self.assertIn(f'skipping rejected candidate {bad}', again.stderr)
+        self.assertNotIn('unrecognized arguments', again.stderr)
+        self.assertFalse((self.state / 'HALT').exists())
+        fixed = self.advance_main('tools/mac_publish.py', worker)
+        self.assert_success(self.cycle())
+        self.assertEqual(self.git('rev-parse', 'HEAD'), fixed)
+
+    def test_fixed_launcher_rolls_back_rejected_head_and_ignores_in_tree_launcher(self):
+        self.assert_success(self.cycle())
+        self.assert_success(self.cycle())  # The checkout now tracks the saved database.
+        good = self.git('rev-parse', 'HEAD')
+        worker = (self.checkout / 'tools/mac_publish.py').read_bytes()
+        self.advance_main('tools/mac_publish_launcher.py', b'raise SystemExit("not the installed launcher")\n')
+        bad = self.advance_main('tools/mac_publish.py', worker.replace(b'--worker-v1', b'--worker-v2'))
+        self.git('fetch', '--no-tags', 'origin', 'main')
+        self.git('checkout', '--detach', bad)
+        result = self.cycle()
+        self.assertIn(f'publisher boot failed for candidate {bad}', result.stderr)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), good)
+        self.assertIn(f'skipping rejected candidate {bad}', self.cycle().stderr)
+        fixed = self.advance_main('tools/mac_publish.py', worker)
+        self.assert_success(self.cycle())
+        self.assertEqual(self.git('rev-parse', 'HEAD'), fixed)
+        self.assert_success(self.cycle())
+
+    def test_legacy_plist_does_not_replace_its_own_entry_with_incompatible_code(self):
+        self.assert_success(self.cycle(legacy_args=True))
+        head = self.git('rev-parse', 'HEAD')
+        candidate = self.advance_main('tools/mac_publish_launcher.py', b'raise SystemExit("no legacy CLI")\n')
+        result = self.cycle(legacy_args=True)
+        self.assertIn('install the fixed launcher', result.stderr)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), head)
+        self.assertFalse((self.state / 'HALT').exists())
+        self.assert_success(self.cycle())
+        self.assertEqual(self.git('rev-parse', 'HEAD'), candidate)
+
+    def test_candidate_timeouts_kill_process_group_and_release_lock(self):
+        self.assert_success(self.cycle())
+        good = self.git('rev-parse', 'HEAD')
+        worker = (self.checkout / 'tools/mac_publish.py').read_bytes()
+        delay = b"""\
+from pathlib import Path
+import subprocess, time
+with Path('.git/delay-pid').open('w') as pidfile:
+    child = subprocess.Popen(['/bin/sh', '-c', 'sleep 3; touch .git/delay-survived'])
+    pidfile.write(str(child.pid))
+time.sleep(60)
+"""
+        injected = ((delay + worker, 'preflight', '--preflight-timeout'),
+                    (worker.replace(b'    sys.exit(main())',
+                                    b'\n'.join(b'    ' + line for line in delay.splitlines()) + b'\n    sys.exit(main())'),
+                     'boot', '--startup-timeout'))
+        for broken, stage, timeout in injected:
+            with self.subTest(stage=stage):
+                pidfile = self.checkout / '.git/delay-pid'
+                pidfile.unlink(missing_ok=True)
+                bad = self.advance_main('tools/mac_publish.py', broken)
+                result = self.cycle(options=(timeout, '1.5'))
+                self.assertIn(f'publisher {stage} failed for candidate {bad}', result.stderr)
+                self.assertIn('timed out', result.stderr)
+                self.assertTrue(pidfile.is_file(), result.stdout + result.stderr)
+                self.assertEqual(self.git('rev-parse', 'HEAD'), good)
+                self.assertIn(f'skipping rejected candidate {bad}', self.cycle().stderr)
+        self.assertFalse((self.checkout / '.git/delay-survived').exists())
+        fixed = self.advance_main('tools/mac_publish.py', worker)
+        self.assert_success(self.cycle())
+        self.assertFalse((self.checkout / '.git/delay-survived').exists())
+        self.assertEqual(self.git('rev-parse', 'HEAD'), fixed)
+
+    def test_half_updated_checkout_keeps_index_lock_edits_and_database_evidence(self):
+        self.assert_success(self.cycle())
+        self.advance_main('pipeline.py', b'raise SystemExit("should not collect")\n')
+        database = self.checkout / 'tg.db'
+        original = database.read_bytes()
+        saved = self.state / 'checkout-tg.db'
+        database.rename(saved)
+        database.write_bytes(self.git('show', 'HEAD:tg.db', binary=True))
+        lock = self.checkout / '.git/index.lock'
+        lock.write_text('possibly owned by Git')
+        result = self.cycle()
+        self.assertIn('index.lock', result.stderr)
+        self.assertEqual(saved.read_bytes(), original)
+        self.assertEqual(lock.read_text(), 'possibly owned by Git')
+        lock.unlink()  # Operator confirmed no Git process. Edited files still require inspection.
+        pending = self.checkout / 'pipeline.py'
+        pending.write_text('# partially replaced by interrupted checkout\n')
+        result = self.cycle()
+        self.assertIn('clean detached checkout', result.stderr)
+        self.assertEqual(saved.read_bytes(), original)
+        self.assertEqual(pending.read_text(), '# partially replaced by interrupted checkout\n')
+        self.assertNotIn('building source_commit=', result.stdout)
 
     def test_receiver_rejection_never_pushes(self):
         (self.checkout / '.git/reject-candidate').touch()
@@ -509,14 +695,14 @@ exec '{GIT}' "$@"
 
     def test_second_instance_fails_during_shell_to_python_handoff(self):
         launcher = (self.checkout / 'tools/mac_publish.sh').read_bytes()
-        wait = b'''if [ "${1:-}" = --resume ]; then
+        wait = b'''if [ "${1:-}" = --worker-v1 ]; then
     touch .git/handoff-entered
     while [ ! -e .git/handoff-release ]; do sleep 0.1; done
 fi
 '''
         main = self.advance_main('tools/mac_publish.sh', launcher.replace(b'set -eu\n', b'set -eu\n' + wait))
         before = self.heads()
-        first = subprocess.Popen(self.plist['ProgramArguments'], cwd=self.checkout, env=self.env,
+        first = subprocess.Popen(self.command(), cwd=self.checkout,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         try:
             entered = self.checkout / '.git/handoff-entered'
@@ -537,7 +723,7 @@ fi
 
     def test_second_instance_fails_while_first_holds_lock_through_push(self):
         self.install_hook('pre-receive', 'touch entered\nwhile [ ! -e release ]; do sleep 0.1; done')
-        first = subprocess.Popen(self.plist['ProgramArguments'], cwd=self.checkout, env=self.env,
+        first = subprocess.Popen(self.command(), cwd=self.checkout,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         try:
             until = time.monotonic() + 15
@@ -555,7 +741,7 @@ fi
 
     def test_no_flock_in_path_fails_at_start(self):
         (self.bin / 'flock').unlink()
-        result = self.cycle()
+        result = self.cycle(legacy_args=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('flock is required', result.stderr)
         self.assertFalse(self.state.exists())

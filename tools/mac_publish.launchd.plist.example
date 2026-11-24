@@ -5,24 +5,23 @@
     <key>Label</key>
     <string>local.shiguang.news-publish</string>
     <key>UserName</key>
-    <string>shiguang-news</string>
+    <string>kwin</string>
     <key>WorkingDirectory</key>
-    <string>/opt/shiguang-news/checkout</string>
+    <string>/Users/kwin/projects/shiguang-news-publish/checkout</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/bin/sh</string>
-        <string>/opt/shiguang-news/checkout/tools/mac_publish.sh</string>
-        <string>--code-sha</string>
-        <string>REPLACE_WITH_APPROVED_FULL_SHA</string>
+        <string>/Users/kwin/projects/shiguang-news-publish/venv/bin/python3</string>
+        <string>-I</string>
+        <string>/Users/kwin/projects/shiguang-news-publish/bin/mac_publish_launcher.py</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>/opt/shiguang-news/venv/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+        <string>/Users/kwin/projects/shiguang-news-publish/venv/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
         <key>BOX_PYTHON</key>
-        <string>/opt/shiguang-news/venv/bin/python3</string>
+        <string>/Users/kwin/projects/shiguang-news-publish/venv/bin/python3</string>
         <key>HOME</key>
-        <string>/Users/shiguang-news</string>
+        <string>/Users/kwin</string>
     </dict>
     <key>StartCalendarInterval</key>
     <dict>
@@ -30,8 +29,8 @@
         <integer>5</integer>
     </dict>
     <key>StandardOutPath</key>
-    <string>/opt/shiguang-news/log/publish.log</string>
+    <string>/Users/kwin/projects/shiguang-news-publish/log/publish.log</string>
     <key>StandardErrorPath</key>
-    <string>/opt/shiguang-news/log/publish.err.log</string>
+    <string>/Users/kwin/projects/shiguang-news-publish/log/publish.err.log</string>
 </dict>
 </plist>
