@@ -44,4 +44,4 @@ NO_FETCH=1 python3 pipeline.py             # 旧站离线构建到 site/
 python3 -m pytest -q && node --test tests/*.test.js
 ```
 
-已知基线：`tests/test_news_modules_browser.py` 的 dark 主题子用例在未改动的 main 上也失败。
+测试失败先在改动前的同一提交上复现，再判断是不是旧问题（dark 主题子用例已由 `dd782494` 修复）。
