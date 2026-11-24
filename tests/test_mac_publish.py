@@ -363,7 +363,7 @@ class MacPublishTests(unittest.TestCase):
         self.assertEqual(cache.read_text(), 'local cache')
         self.assertEqual(self.git('diff', '--cached', '--name-only'), '')
 
-    def test_fast_forward_during_code_switch_halts_before_collection(self):
+    def test_fast_forward_during_code_switch_defers_before_collection(self):
         self.assert_success(self.cycle())
         first = self.advance_main('pipeline.py', b'raise SystemExit("should not collect")\n')
         second = self.advance_main('pipeline.py', b'\n' + PIPELINE.encode())
@@ -372,7 +372,7 @@ class MacPublishTests(unittest.TestCase):
         wrapper = self.bin / 'git'
         wrapper.write_text(f'''#!/bin/sh
 set -eu
-if [ "$1" = checkout ]; then
+if [ "$1" = checkout ] && [ "$#" -eq 4 ] && [ "$4" = '{first}' ]; then
     '{GIT}' --git-dir '{self.remote}' update-ref refs/heads/main '{second}' '{first}'
 fi
 exec '{GIT}' "$@"
@@ -381,12 +381,15 @@ exec '{GIT}' "$@"
         self.install_hook('pre-receive', 'touch push-attempt')
 
         result = self.cycle()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn('remote refs moved during code switch', result.stderr)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('publish deferred: main fast-forward', result.stdout)
         self.assertNotIn('building source_commit=', result.stdout)
         self.assertEqual(self.heads(), (second, pages))
         self.assertFalse((self.remote / 'push-attempt').exists())
-        self.assertTrue((self.state / 'HALT').exists())
+        self.assertFalse((self.state / 'HALT').exists())
+        wrapper.unlink()
+        self.assert_success(self.cycle())
+        self.assertEqual(self.git('rev-parse', self.heads()[0] + '^'), second)
 
     def assert_checkout_kill_recovers_database(self, *, after_checkout):
         self.assert_success(self.cycle())
@@ -472,7 +475,7 @@ fi''')
 fi''')
         result = self.cycle()
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('stale info', result.stderr)
+        self.assertIn('stale info', result.stdout + result.stderr)
         self.assertEqual(self.heads(), (self.main_root, self.before[1]))
         self.assertTrue((self.state / 'HALT').exists())
 
@@ -486,10 +489,13 @@ fi''')
 fi''')
 
         result = self.cycle()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn('stale info', result.stderr)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('stale info', result.stdout + result.stderr)
+        self.assertIn('publish deferred: main fast-forward', result.stdout)
         self.assertEqual(self.heads(), (next_main, pages))
-        self.assertTrue((self.state / 'HALT').exists())
+        self.assertFalse((self.state / 'HALT').exists())
+        (self.bin / 'git').unlink()
+        self.assert_success(self.cycle())
 
     def test_no_data_update_rejects_both_refs_on_main_advance_after_push_advertisement(self):
         self.assert_success(self.cycle())
@@ -503,15 +509,17 @@ unset GIT_QUARANTINE_PATH GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES
 "{GIT}" update-ref refs/heads/main {next_main} {main}''')
 
         result = self.cycle()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn('remote refs moved after push', result.stderr)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('publish deferred: main fast-forward', result.stdout)
         self.assertEqual(self.heads()[0], next_main)
         self.assertEqual(self.heads()[1], pages)
-        self.assertIn('atomic transaction failed', result.stderr)
+        self.assertIn('atomic transaction failed', result.stdout + result.stderr)
         self.assertCountEqual((self.remote / 'updates').read_text().splitlines(),
                               ['refs/heads/main', 'refs/heads/gh-pages'])
         self.assertEqual(json.loads((self.state / 'refs.json').read_text())['refs/heads/main'], main)
-        self.assertTrue((self.state / 'HALT').exists())
+        self.assertFalse((self.state / 'HALT').exists())
+        (self.remote / 'hooks/pre-receive').unlink()
+        self.assert_success(self.cycle())
 
     def test_bad_publisher_stays_on_old_checkout_until_fixed(self):
         self.assert_success(self.cycle())
@@ -662,7 +670,7 @@ time.sleep(60)
         result = self.cycle()
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('validation=passed', result.stdout)
-        self.assertIn('atomic push failure', result.stderr)
+        self.assertIn('atomic push failure', result.stdout + result.stderr)
         self.assertEqual(self.heads(), self.before)
         self.assertTrue((self.state / 'HALT').exists())
         self.assertNotEqual((self.checkout / 'tg.db').read_bytes(), self.git('show', 'HEAD:tg.db', binary=True))
@@ -754,3 +762,207 @@ fi
         self.assertNotIn('Pages prepared:', result.stdout)
         self.assertEqual(self.heads(), self.before)
         self.assertTrue((self.checkout / 'tg.db-journal').exists())
+
+    def assert_rejected_startup(self, injected, *, options=(), setup=None):
+        self.assert_success(self.cycle())
+        good = self.git('rev-parse', 'HEAD')
+        checkpoint = (self.state / 'refs.json').read_bytes()
+        database = self.checkout / 'tg.db'
+        with sqlite3.connect(database) as connection:
+            connection.execute("insert or ignore into messages values ('keep-local')")
+        original_db = database.read_bytes()
+        worker = (self.checkout / 'tools/mac_publish.py').read_bytes()
+        bad_worker = injected(worker)
+        self.assertNotEqual(bad_worker, worker)
+        bad = self.advance_main('tools/mac_publish.py', bad_worker)
+        before = self.heads()
+        if setup is not None:
+            setup()
+        result = self.cycle(options=options)
+        self.assertIn(f'publisher boot failed for candidate {bad}', result.stderr)
+        self.assertNotIn('building source_commit=', result.stdout)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), good)
+        self.assertEqual(self.heads(), before)
+        self.assertEqual((self.state / 'refs.json').read_bytes(), checkpoint)
+        self.assertEqual(json.loads((self.state / 'boot.json').read_text()), dict(good=good, bad=bad))
+        self.assertEqual(database.read_bytes(), original_db)
+        self.assertFalse((self.state / 'HALT').exists())
+        self.assertIn(f'skipping rejected candidate {bad}', self.cycle().stderr)
+        self.advance_main('tools/mac_publish.py', worker)
+        self.assert_success(self.cycle())
+        return result
+
+    def test_worker_exit_after_ready_rejects_candidate(self):
+        self.assert_rejected_startup(lambda worker: worker.replace(
+            b"            if gate.recv(1) != b'G':", b'            return 0\n' +
+            b"            if gate.recv(1) != b'G':"))
+
+    def test_go_write_failure_after_checkout_rolls_back(self):
+        def wait_for_checkout_then_exit(worker):
+            return worker.replace(b"            if gate.recv(1) != b'G':", b"""\
+            while not (root / '.git/checkout-switched').exists():
+                __import__('time').sleep(0.01)
+            gate.close()
+            (root / '.git/worker-closed-gate').touch()
+            __import__('time').sleep(10)
+            if gate.recv(1) != b'G':""")
+
+        def close_gate_during_checkout():
+            self.wrap_git(f'''if [ "$1" = checkout ] && [ ! -e .git/checkout-switched ]; then
+    "{GIT}" "$@"
+    touch .git/checkout-switched
+    for attempt in $(seq 100); do
+        [ ! -e .git/worker-closed-gate ] || exit 0
+        sleep 0.02
+    done
+    exit 1
+fi''')
+
+        result = self.assert_rejected_startup(wait_for_checkout_then_exit, setup=close_gate_during_checkout)
+        self.assertIn('Broken pipe', result.stderr)
+
+    def test_startup_deadline_covers_ready_wait_and_ack(self):
+        def stall(worker, statement):
+            return worker.replace(statement, b"""\
+            child = subprocess.Popen(['/bin/sh', '-c', 'sleep 3; touch .git/startup-descendant-survived'])
+            (root / '.git/startup-stalled').touch()
+            __import__('time').sleep(10)
+""" + statement)
+
+        for stage, statement in (('before-go', b"            if gate.recv(1) != b'G':"),
+                                  ('before-ack', b"            gate.sendall(b'A')")):
+            with self.subTest(stage=stage):
+                marker = self.checkout / '.git/startup-stalled'
+                marker.unlink(missing_ok=True)
+                result = self.assert_rejected_startup(lambda worker: stall(worker, statement if statement in worker else b'            gate.close()'),
+                                                      options=('--startup-timeout', '1.5'))
+                self.assertTrue(marker.exists())
+                self.assertIn('timed out', result.stderr)
+                self.assertFalse((self.checkout / '.git/startup-descendant-survived').exists())
+
+    def test_killing_launcher_before_go_releases_orphan_worker_lock(self):
+        worker = (self.checkout / 'tools/mac_publish.py').read_bytes()
+        stalled = worker.replace(b"            if gate.recv(1) != b'G':", b"""\
+            (root / '.git/stalled-worker-pid').write_text(str(os.getpid()))
+            __import__('time').sleep(10)
+            if gate.recv(1) != b'G':""")
+        self.advance_main('tools/mac_publish.py', stalled)
+        self.wrap_git(f'''if [ "$1" = checkout ]; then
+    for attempt in $(seq 100); do
+        [ ! -e .git/stalled-worker-pid ] || break
+        sleep 0.02
+    done
+    kill -KILL "$PPID"
+    exit 1
+fi''')
+        first = subprocess.Popen(self.command(), cwd=self.checkout,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        marker = self.checkout / '.git/stalled-worker-pid'
+        try:
+            self.assertEqual(first.wait(timeout=5), -9)
+            self.assertTrue(marker.is_file())
+            stdout, stderr = first.communicate(timeout=3)
+            self.assertNotIn('building source_commit=', stdout + stderr)
+            (self.bin / 'git').unlink()
+            self.advance_main('tools/mac_publish.py', worker)
+            self.assert_success(self.cycle())
+        finally:
+            if first.poll() is None:
+                first.kill()
+            if marker.exists():
+                try:
+                    os.kill(int(marker.read_text()), 9)
+                except ProcessLookupError:
+                    pass
+            first.communicate(timeout=5)
+
+    def move_refs_during_build(self, main, pages):
+        path = 'rebang/site/__main__.py'
+        program = SITE + '''\
+import subprocess
+marker = Path('.git/move-refs-during-build.json')
+if marker.exists():
+    for remote, ref, new, old in json.loads(marker.read_text()):
+        subprocess.run(['git', '--git-dir', remote, 'update-ref', ref, new, old], check=True)
+    marker.unlink()
+'''
+        observed = self.advance_main(path, program.encode())
+        moves = []
+        bare = ('--git-dir', str(self.remote), '-c', 'user.name=Fixture', '-c', 'user.email=fixture@localhost')
+        if main == 'rewind':
+            moves.append(('main', self.code, observed))
+        elif main == 'database':
+            database = self.root / 'diverged.db'
+            shutil.copyfile(self.checkout / 'tg.db', database)
+            with sqlite3.connect(database) as connection:
+                connection.execute("insert into messages values ('remote-only')")
+            candidate = self.advance_main('tg.db', database.read_bytes())
+            self.git(*bare, 'update-ref', 'refs/heads/main', observed, candidate)
+            moves.append(('main', candidate, observed))
+        elif main == 'fast-forward':
+            candidate = self.advance_main('pipeline.py', b'\n' + PIPELINE.encode())
+            self.git(*bare, 'update-ref', 'refs/heads/main', observed, candidate)
+            moves.append(('main', candidate, observed))
+        if pages:
+            parent = self.heads()[1]
+            updated = self.git(*bare, 'commit-tree', f'{parent}^{{tree}}', '-p', parent, '-m', 'Other publisher')
+            moves.append(('gh-pages', updated, parent))
+        (self.checkout / '.git/move-refs-during-build.json').write_text(json.dumps(
+            [(str(self.remote), f'refs/heads/{ref}', new, old) for ref, new, old in moves]))
+        self.install_hook('pre-receive', 'touch push-attempt')
+        return observed, dict((ref, new) for ref, new, _ in moves)
+
+    def test_fast_forward_during_build_skips_push_then_publishes_next_cycle(self):
+        observed, moved = self.move_refs_during_build('fast-forward', False)
+        result = self.cycle()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('fast-forward', result.stdout)
+        self.assertFalse((self.state / 'HALT').exists())
+        self.assertFalse((self.remote / 'push-attempt').exists())
+        self.assertEqual(self.heads(), (moved['main'], self.before[1]))
+        self.assertEqual(json.loads((self.state / 'refs.json').read_text())['refs/heads/main'], observed)
+        self.assert_success(self.cycle())
+        self.assertEqual(self.git('rev-parse', self.heads()[0] + '^'), moved['main'])
+
+    def test_unsafe_ref_changes_during_build_halt_before_push(self):
+        for main, pages in (('rewind', False), ('database', False), ('fast-forward', True)):
+            with self.subTest(main=main, pages=pages):
+                if (self.state / 'HALT').exists():
+                    (self.state / 'HALT').unlink()
+                observed, moved = self.move_refs_during_build(main, pages)
+                parent_pages = self.heads()[1]
+                result = self.cycle()
+                self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn('during collection or build', result.stderr)
+                self.assertTrue((self.state / 'HALT').exists())
+                self.assertFalse((self.remote / 'push-attempt').exists())
+                self.assertEqual(self.heads(), (moved.get('main', observed), moved.get('gh-pages', parent_pages)))
+                bare = ('--git-dir', str(self.remote))
+                for ref, old in (('main', observed), ('gh-pages', parent_pages)):
+                    if ref in moved:
+                        self.git(*bare, 'update-ref', f'refs/heads/{ref}', old, moved[ref])
+
+    def test_lease_rejected_but_remote_lookup_fails_keeps_halt(self):
+        next_main = self.advance_main('pipeline.py', b'\n' + PIPELINE.encode())
+        main, pages = self.before
+        self.git('--git-dir', str(self.remote), 'update-ref', 'refs/heads/main', main, next_main)
+        self.wrap_git(f'''if [ "$1" = push ]; then
+    "{GIT}" --git-dir "{self.remote}" update-ref refs/heads/main {next_main} {main}
+    touch .git/failed-push
+fi
+if [ "$1" = ls-remote ] && [ -e .git/failed-push ]; then
+    exit 1
+fi''')
+        result = self.cycle()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('push result unknown', result.stderr)
+        self.assertEqual(self.heads(), (next_main, pages))
+        self.assertTrue((self.state / 'HALT').exists())
+
+    def test_publisher_respects_configured_ssh_command(self):
+        self.git('config', '--local', 'core.sshCommand', 'ssh -o BatchMode=yes -o ConnectTimeout=5')
+        self.wrap_git('''case "$1" in
+    fetch|ls-remote|push)
+        test -z "${GIT_SSH_COMMAND:-}" || { echo 'overrode configured SSH command' >&2; exit 1; } ;;
+esac''')
+        self.assert_success(self.cycle())

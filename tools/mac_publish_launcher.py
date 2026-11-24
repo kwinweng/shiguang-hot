@@ -1,8 +1,8 @@
 """Installed Mac publisher entry point. Keep this file outside the changing clone.
 
 Worker v1: /bin/sh mac_publish.sh --worker-v1 LOCK_FD SOCKET_FD MAIN PAGES
-in the dedicated clone. The worker sends b'1' when ready, then waits for b'G'
-before touching the checkout, state or remote. EOF cancels the startup.
+in the dedicated clone. The worker sends b'1+' when ready, acknowledges b'G'
+with b'A', and waits for b'C' (checkpoints saved). EOF cancels startup.
 """
 import argparse
 import fcntl
@@ -38,6 +38,21 @@ def stop_group(process):
     process.wait()
 
 
+def supervise_worker(control, lock, socket_fd, launcher, main, pages):
+    # This process is the group leader and holds the read end of a launcher-only
+    # pipe. Even SIGKILL of the launcher closes the pipe and kills stalled code.
+    control, lock, socket_fd = map(int, (control, lock, socket_fd))
+    process = subprocess.Popen(('/bin/sh', launcher, '--worker-v1', str(lock), str(socket_fd), main, pages),
+                               pass_fds=(lock, socket_fd))
+    os.close(socket_fd)
+    os.close(lock)
+    if os.read(control, 1) != b'C':
+        os.killpg(os.getpgrp(), signal.SIGKILL)
+    os.close(control)
+    status = process.wait()
+    return 128 - status if status < 0 else status
+
+
 def positive_seconds(text):
     seconds = float(text)
     if not math.isfinite(seconds) or seconds <= 0:
@@ -48,7 +63,8 @@ def positive_seconds(text):
 def launch(root, state, lock, preflight_timeout, startup_timeout, legacy_entry):
     startup_env = {key: os.environ[key] for key in ('PATH', 'HOME', 'TMPDIR', 'SSH_AUTH_SOCK') if key in os.environ}
     startup_env['BOX_PYTHON'] = sys.executable
-    git_env = dict(startup_env, GIT_TERMINAL_PROMPT='0', GIT_SSH_COMMAND='ssh -o BatchMode=yes', GIT_OPTIONAL_LOCKS='0')
+    git_env = dict(startup_env, GIT_TERMINAL_PROMPT='0', GIT_OPTIONAL_LOCKS='0')
+    startup_deadline = None
     halt = state / 'HALT'
     if os.path.lexists(halt):
         raise RuntimeError(f'HALT exists: {halt}; reconcile the local database and both remote refs before resuming')
@@ -58,17 +74,40 @@ def launch(root, state, lock, preflight_timeout, startup_timeout, legacy_entry):
             stream.write(reason + '\n')
         raise RuntimeError(f'{reason}; stopped: {halt}')
 
-    def git(*args, **kwargs):
-        return subprocess.run(('git', *args), cwd=root, env=git_env, pass_fds=(lock,),
-                              check=True, stdout=subprocess.PIPE, **kwargs).stdout.decode().strip()
+    def time_left():
+        remaining = startup_deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError('publisher startup timed out')
+        return remaining
+
+    def run_git(*args, stdout=subprocess.PIPE):
+        command = ('git', *args)
+        options = dict(cwd=root, env=git_env, pass_fds=(lock,), stdout=stdout)
+        if startup_deadline is None:
+            return subprocess.run(command, check=True, **options).stdout
+        time_left()
+        process = subprocess.Popen(command, start_new_session=True, **options)
+        try:
+            output, _ = process.communicate(timeout=time_left())
+        except BaseException:
+            stop_group(process)
+            raise
+        if process.returncode:
+            raise subprocess.CalledProcessError(process.returncode, command)
+        return output
+
+    def git(*args):
+        return run_git(*args).decode().strip()
+
+    try:
+        git('config', '--get', 'core.sshCommand')
+    except subprocess.CalledProcessError as error:
+        if error.returncode != 1:
+            raise
+        git_env['GIT_SSH_COMMAND'] = 'ssh -o BatchMode=yes'
 
     def remote_refs():
         return dict(line.split('\t')[::-1] for line in git('ls-remote', '--refs', 'origin', *REFS).splitlines())
-
-    def check_remote(expected):
-        actual = remote_refs()
-        if actual != expected:
-            halt_now(f'remote refs moved during code switch; expected={expected}, actual={actual}; no push attempted')
 
     def fetch(*specs, deepen=None):
         args = () if deepen is None else (f'--deepen={deepen}',)
@@ -113,12 +152,16 @@ def launch(root, state, lock, preflight_timeout, startup_timeout, legacy_entry):
                 os.path.lexists(root / f'tg.db{suffix}') for suffix in ('-journal', '-wal', '-shm')):
             raise RuntimeError(f'{path.name} must be a regular file with no SQLite journal/WAL/SHM; preserve it for inspection')
 
-    check_checkout()
-    if os.path.lexists(saved_database):
-        check_database(saved_database)
-        saved_database.replace(database)
-        print('restored local tg.db after an interrupted checkout', flush=True)
-    check_database(database)
+    def recover_database(*, interrupted=True):
+        check_checkout()
+        if os.path.lexists(saved_database):
+            check_database(saved_database)
+            saved_database.replace(database)
+            if interrupted:
+                print('restored local tg.db after an interrupted checkout', flush=True)
+        check_database(database)
+
+    recover_database()
     if os.path.lexists(state / 'no-source-credentials'):
         raise RuntimeError('the reserved no-source-credentials path must not exist')
     origin = git('remote', 'get-url', 'origin')
@@ -167,32 +210,48 @@ def launch(root, state, lock, preflight_timeout, startup_timeout, legacy_entry):
             raise RuntimeError(f'{commit} must track tg.db as a regular 100644 blob')
         return entry[2]
 
+    def check_remote():
+        actual = remote_refs()
+        if actual == observed:
+            return True
+        candidate = actual.get(REFS[0])
+        if candidate and candidate != main and actual.get(REFS[1]) == pages:
+            try:
+                git('fetch', '--no-tags', '--refmap=', '--no-write-fetch-head', 'origin', REFS[0])
+                git('merge-base', '--is-ancestor', main, candidate)
+                same_database = database_blob(main) == database_blob(candidate)
+                if same_database and remote_refs() == actual:
+                    print(f'publish deferred: main fast-forward {main} -> {candidate}; retry next cycle', flush=True)
+                    return False
+            except (RuntimeError, subprocess.CalledProcessError):
+                pass  # A fast-forward with the same database was not proven.
+        halt_now(f'remote refs moved during code switch; expected={observed}, actual={actual}; no push attempted')
+
     with tempfile.TemporaryDirectory(prefix='boot-', dir=state) as name:
         work = Path(name)
         pending_db = work / 'tg.db'
 
         def copy_blob(blob):
             with pending_db.open('wb') as output:
-                subprocess.run(('git', 'cat-file', 'blob', blob), cwd=root, env=git_env, check=True,
-                               pass_fds=(lock,), stdout=output)
+                run_git('cat-file', 'blob', blob, stdout=output)
 
         def switch_checkout(target):
-            if head == target:
+            current = git('rev-parse', 'HEAD')
+            if current == target:
                 return
-            if database_blob(head) != database_blob(target):
+            if database_blob(current) != database_blob(target):
                 # Checkout needs the old tracked version. The original file is
                 # stored outside the temp dir and survives uncatchable signals.
-                copy_blob(database_blob(head))
+                copy_blob(database_blob(current))
                 database.replace(saved_database)
             try:
                 if saved_database.exists():
                     pending_db.replace(database)
                 git('checkout', '--detach', '--no-overwrite-ignore', target)
             finally:
-                if saved_database.exists():
-                    check_checkout()
-                    saved_database.replace(database)
-            print(f'code switched: {head} -> {target}', flush=True)
+                if saved_database.exists() and (startup_deadline is None or time.monotonic() < startup_deadline):
+                    recover_database(interrupted=False)
+            print(f'code switched: {current} -> {target}', flush=True)
 
         main_blob = database_blob(main)
         current_blob = git('hash-object', '--no-filters', str(database))
@@ -208,10 +267,17 @@ def launch(root, state, lock, preflight_timeout, startup_timeout, legacy_entry):
             raise RuntimeError('unrecognized local tg.db at initialization; do not overwrite it')
 
         def reject(stage, error):
+            nonlocal startup_deadline
+            startup_deadline = None
             # Persist rejection before a possible rollback. Do not run old code
             # to publish against a remote whose newest code failed to start.
             save_state('boot.json', dict(good=good, bad=main))
-            switch_checkout(good)
+            try:
+                recover_database()
+                switch_checkout(good)
+            except (OSError, RuntimeError, subprocess.SubprocessError) as rollback_error:
+                raise RuntimeError(f'publisher {stage} failed for candidate {main}: {error}; '
+                                   f'rollback blocked: {rollback_error}') from rollback_error
             raise RuntimeError(f'publisher {stage} failed for candidate {main}: {error}; retained known-good {good}')
 
         if main == bad:
@@ -242,40 +308,75 @@ def launch(root, state, lock, preflight_timeout, startup_timeout, legacy_entry):
         except (OSError, subprocess.SubprocessError) as error:
             reject('preflight', error)
 
-        # The worker cannot publish before GO. The fixed launcher retains the
-        # lock until exit; the inherited copy also protects an in-flight publish
-        # if the launcher is killed before it can clean up.
+        # The worker cannot publish before C. The supervisor owns its group
+        # until then, so a dead launcher cannot leave an unapproved lock holder.
         parent, child = socket.socketpair()
-        with parent, child:
+        control_read, control_write = os.pipe()
+        seed_backup = work / 'initial-tg.db'
+        saved_checkpoint = False
+
+        class StartupError(RuntimeError):
+            pass
+
+        def receive(expected, message):
+            parent.settimeout(time_left())
+            if parent.recv(1) != expected:
+                raise StartupError(message)
+
+        with parent, child, os.fdopen(control_read, 'rb') as control_in, os.fdopen(control_write, 'wb', buffering=0) as control:
+            startup_deadline = time.monotonic() + startup_timeout
+            worker_env = dict(startup_env, MAC_PUBLISH_ACK='1')
             try:
-                process = subprocess.Popen(('/bin/sh', str(launcher), '--worker-v1', str(lock), str(child.fileno()),
-                                            main, pages), cwd=root, env=startup_env, start_new_session=True,
-                                           pass_fds=(lock, child.fileno()))
+                process = subprocess.Popen((sys.executable, '-I', str(Path(__file__).resolve()),
+                                            '--supervise-worker', str(control_in.fileno()), str(lock), str(child.fileno()),
+                                            str(launcher), main, pages), cwd=root, env=worker_env, start_new_session=True,
+                                           pass_fds=(control_in.fileno(), lock, child.fileno()))
             except OSError as error:
                 reject('boot', error)
             try:
                 child.close()
-                parent.settimeout(startup_timeout)
+                control_in.close()
                 try:
-                    if parent.recv(1) != b'1' or process.poll() is not None:
-                        raise RuntimeError('worker did not acknowledge the v1 protocol')
-                except (OSError, RuntimeError) as error:
-                    stop_group(process)
-                    reject('boot', error)
+                    receive(b'1', 'worker did not become ready')
+                    receive(b'+', 'worker does not support the startup acknowledgement')
 
-                check_remote(observed)
-                # Persist the rollback anchor before changing the checkout.
-                if boot is None:
-                    save_state('boot.json', dict(good=good, bad=None))
-                if checkpoint is None and current_blob != main_blob:
-                    copy_blob(main_blob)
-                    pending_db.replace(database)
-                switch_checkout(main)
-                check_remote(observed)
-                if checkpoint != observed:
-                    save_state('refs.json', observed)
-                save_state('boot.json', dict(good=main, bad=None))
-                parent.sendall(b'G')
+                    if not check_remote():
+                        return 0
+                    # Persist the rollback anchor before changing the checkout.
+                    if boot is None:
+                        save_state('boot.json', dict(good=good, bad=None))
+                    switch_checkout(main)
+                    if not check_remote():
+                        stop_group(process)
+                        startup_deadline = None
+                        switch_checkout(head)
+                        return 0
+                    parent.settimeout(time_left())
+                    parent.sendall(b'G')
+                    receive(b'A', 'worker did not acknowledge GO')
+
+                    if checkpoint is None and current_blob != main_blob:
+                        copy_blob(main_blob)
+                        os.link(database, seed_backup)
+                        pending_db.replace(database)
+                    if checkpoint != observed:
+                        save_state('refs.json', observed)
+                        saved_checkpoint = True
+                    save_state('boot.json', dict(good=main, bad=None))
+                    parent.settimeout(time_left())
+                    parent.sendall(b'C')
+                except (OSError, StartupError, subprocess.TimeoutExpired) as error:
+                    stop_group(process)
+                    if seed_backup.exists():
+                        seed_backup.replace(database)
+                    if saved_checkpoint:
+                        if checkpoint is None:
+                            (state / 'refs.json').unlink()
+                        else:
+                            save_state('refs.json', checkpoint)
+                    reject('boot', error)
+                control.write(b'C')
+                control.close()
                 return process.wait()
             finally:
                 if process.returncode is None:
@@ -283,6 +384,8 @@ def launch(root, state, lock, preflight_timeout, startup_timeout, legacy_entry):
 
 
 def main():
+    if sys.argv[1:2] == ['--supervise-worker']:
+        return supervise_worker(*sys.argv[2:])
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--legacy-entry', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--code-sha', help='accepted for compatibility with existing launchd plists')

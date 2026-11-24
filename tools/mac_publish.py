@@ -23,7 +23,7 @@ def run_cycle(root, state, lock, observed):
     startup_env = {key: os.environ[key] for key in ('PATH', 'HOME', 'TMPDIR', 'SSH_AUTH_SOCK') if key in os.environ}
     startup_env['BOX_PYTHON'] = sys.executable
     env = dict(startup_env, TZ='Asia/Shanghai', SITE_MODE='public', MAIL_DIGEST='0',
-               GIT_TERMINAL_PROMPT='0', GIT_SSH_COMMAND='ssh -o BatchMode=yes', GIT_OPTIONAL_LOCKS='0',
+               GIT_TERMINAL_PROMPT='0', GIT_OPTIONAL_LOCKS='0',
                REBANG_WEIBO_COOKIE=str(state / 'no-source-credentials/weibo'),
                REBANG_WEREAD_SESSION=str(state / 'no-source-credentials/weread'))
 
@@ -35,6 +35,13 @@ def run_cycle(root, state, lock, observed):
 
     def git(*args, **kwargs):
         return run('git', *args, capture=True, **kwargs).decode().strip()
+
+    try:
+        git('config', '--get', 'core.sshCommand')
+    except subprocess.CalledProcessError as error:
+        if error.returncode != 1:
+            raise
+        env['GIT_SSH_COMMAND'] = 'ssh -o BatchMode=yes'
 
     halt = state / 'HALT'
     def halt_now(reason):
@@ -64,12 +71,40 @@ def run_cycle(root, state, lock, observed):
     def remote_refs():
         return dict(line.split('\t')[::-1] for line in git('ls-remote', '--refs', 'origin', *REFS).splitlines())
 
-    def check_remote_refs(expected, phase):
-        actual = remote_refs()
-        if actual != dict(zip(REFS, expected)):
-            halt_now(f'remote refs moved {phase}; expected={expected}, actual={actual}; no push attempted')
+    def harmless_advance(actual):
+        candidate = actual.get(REFS[0])
+        if not candidate or candidate == main_parent or actual.get(REFS[1]) != pages_parent:
+            return False
+        # Compare the remote tree with the accepted checkpoint, not with the
+        # working database that collection may already have changed.
+        checkpoint_blob = git('ls-tree', main_parent, '--', 'tg.db')
+        git('fetch', '--no-tags', '--refmap=', '--no-write-fetch-head', 'origin', REFS[0])
+        try:
+            git('merge-base', '--is-ancestor', main_parent, candidate)
+        except subprocess.CalledProcessError as error:
+            if error.returncode != 1:
+                raise
+            return False
+        return (bool(checkpoint_blob) and git('ls-tree', candidate, '--', 'tg.db') == checkpoint_blob
+                and remote_refs() == actual)
 
-    check_remote_refs(observed, 'during code switch')
+    def log_deferred(actual):
+        print(f'publish deferred: main fast-forward {main_parent} -> {actual[REFS[0]]}; retry next cycle', flush=True)
+
+    def check_remote_refs(phase):
+        try:
+            actual = remote_refs()
+            if actual == dict(zip(REFS, observed)):
+                return True
+            if harmless_advance(actual):
+                log_deferred(actual)
+                return False
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            halt_now(f'could not verify remote refs {phase}: {error}; no push attempted')
+        halt_now(f'remote refs moved {phase}; expected={observed}, actual={actual}; no push attempted')
+
+    if not check_remote_refs('during code switch'):
+        return
 
     print(f'building source_commit={code_sha} gh-pages_parent={pages_parent}', flush=True)
 
@@ -145,24 +180,55 @@ def run_cycle(root, state, lock, observed):
             upcoming, db_sha = prepare(Path(name))
         except (OSError, RuntimeError, ValueError, KeyError, subprocess.CalledProcessError) as error:
             print(f'collection, build or validation failed at source_commit={code_sha}: {error}', file=sys.stderr)
-            check_remote_refs(observed, 'during collection or build')
-            raise
-        check_remote_refs(observed, 'during collection or build')
+            if check_remote_refs('during collection or build'):
+                raise
+            return
+        if not check_remote_refs('during collection or build'):
+            return
         leases = [f'--force-with-lease={ref}:{old}' for ref, old in zip(REFS, observed)]
         refspecs = [f'{new}:{ref}' for ref, new in zip(REFS, upcoming)]
         # Leave this marker on rejection, ambiguous network result or interruption.
         with halt.open('x') as stream:
             stream.write(f'Push started; reconcile before resuming. Parents: {observed}; candidates: {upcoming}\n')
+        def push_failed(reason):
+            with halt.open('a') as stream:
+                stream.write(reason + '\n')
+            raise RuntimeError(reason) from None
+
         try:
-            run('git', 'push', '--atomic', '--no-follow-tags', *leases, 'origin', *refspecs)
-        finally:
-            # Keep HALT unless the push succeeded and both exact targets are visible.
+            output = run('git', 'push', '--porcelain', '--atomic', '--no-follow-tags', *leases, 'origin', *refspecs,
+                         capture=True, extra_env={'LC_ALL': 'C'})
+        except subprocess.CalledProcessError as error:
+            output = error.stdout.decode(errors='replace')
+            print(output, end='', flush=True)
+            rejected = {}
+            for line in output.splitlines():
+                fields = line.split('\t', 2)
+                if len(fields) == 3 and fields[0] == '!':
+                    rejected[fields[1].rsplit(':', 1)[-1]] = fields[2]
+            try:
+                actual = remote_refs()
+                # Only explicit rejection of both updates can clear the marker.
+                # In particular, a transport failure can leave no push status.
+                main_status = rejected.get(REFS[0], '')
+                if (set(rejected) == set(REFS)
+                        and main_status.endswith(('(stale info)', '(atomic transaction failed)'))
+                        and harmless_advance(actual)):
+                    log_deferred(actual)
+                    halt.unlink()
+                    return
+            except (OSError, ValueError, subprocess.SubprocessError) as verification_error:
+                push_failed(f'push result unknown: {verification_error}')
+            if set(rejected) != set(REFS):
+                push_failed(f'push result unknown: incomplete rejection status; expected={upcoming}, actual={actual}')
+            push_failed(f'remote refs moved after push or push failed; expected={upcoming}, actual={actual}')
+        print(output.decode(errors='replace'), end='', flush=True)
+        try:
             actual = remote_refs()
-            if actual != dict(zip(REFS, upcoming)):
-                reason = f'remote refs moved after push or push failed; expected={upcoming}, actual={actual}'
-                with halt.open('a') as stream:
-                    stream.write(reason + '\n')
-                raise RuntimeError(reason) from None
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            push_failed(f'push result unknown: {error}')
+        if actual != dict(zip(REFS, upcoming)):
+            push_failed(f'remote refs moved after push; expected={upcoming}, actual={actual}')
         remember(upcoming)
         halt.unlink()
         print(f'published main={upcoming[0]} gh-pages={upcoming[1]} database_sha256={db_sha}', flush=True)
@@ -184,9 +250,14 @@ def main():
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
                 raise RuntimeError('worker did not inherit the held cycle lock') from None
-            gate.sendall(b'1')
+            if os.environ.get('MAC_PUBLISH_ACK') != '1':
+                raise RuntimeError('install the fixed launcher with startup acknowledgement support')
+            gate.sendall(b'1+')
             if gate.recv(1) != b'G':
                 raise RuntimeError('publisher startup cancelled by the fixed launcher')
+            gate.sendall(b'A')
+            if gate.recv(1) != b'C':
+                raise RuntimeError('publisher startup cancelled before checkpoint confirmation')
             gate.close()
             run_cycle(root, state, lock.fileno(), (main, pages))
     except (OSError, RuntimeError, ValueError, KeyError, subprocess.CalledProcessError) as error:

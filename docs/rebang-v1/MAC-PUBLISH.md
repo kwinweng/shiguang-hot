@@ -6,12 +6,12 @@
 
 - `tools/mac_publish_launcher.py` 是固定入口的**源文件**。人工把获批版本安装到发布根目录的 `bin/mac_publish_launcher.py`。部署模板用同一个 Python 3.11+ 环境、绝对路径和固定的 `checkout/` 工作目录；自动 checkout **不会更新** `bin/`。升级固定入口也须在旧轮次退出后手动替换。`tools/mac_publish.sh --code-sha FULL_SHA` 仍兼容旧 plist（SHA 参数不再用于固定版本）；它不会自动切到会替换这条旧入口链的候选。旧版线上固定 SHA 的程序不会自更新，须一次性迁移。
 - 固定入口独占 `checkout/.git/mac-publish/lock`。每轮只抓取 `main`、`gh-pages`；首次没有 `refs.json` 时也必须证明远端 `main` 是人工确认的 detached HEAD 或其后代。有检查点后还要证明它是已接受 `main` 的快进，且 `gh-pages` 与上次检查点一致。缺 ref、历史倒退或远端库分叉时写 `HALT`。远端库变化且与本地库字节不同时，保留本地 `tg.db`，另存 `remote-tg-<候选 SHA>.db`，记录三个 blob 和候选提交。
-- 从候选提交提取 shell 和 Python，做 `sh -n`、`py_compile`、隔离导入，合计默认最多 30 秒。启动 shell 后另等 30 秒确认。稳定约定为 `mac_publish.sh --worker-v1 LOCK_FD SOCKET_FD MAIN PAGES`，在专用 clone 中运行：继承同一把锁，worker 通过继承的 socket 发 `1` 表示就绪，再等固定入口发 `G` 才能采集/发布；EOF 取消启动。固定入口收到确认后才切 checkout、再次核对远端并写检查点。超时杀整个子进程组；预检或启动失败保留或切回 `boot.json` 的 `good`，记录 `bad`，不采集/推送、不推进 `refs.json`。下一轮仍 fetch，同一个 `bad` 不重试，`main` 正常向前到新 SHA 才再试。启动确认不是建站验收；启动后普通采集/校验失败不回退，下轮可重试。若要改调用约定，先升级固定入口并保留兼容版本。
+- 从候选提交提取 shell 和 Python，做 `sh -n`、`py_compile`、隔离导入，合计默认最多 30 秒。启动到确认另有一个总时限，默认 30 秒，包含 checkout 和两次远端核对。`mac_publish.sh --worker-v1 LOCK_FD SOCKET_FD MAIN PAGES` 中，worker 发 `1+` 表示就绪并支持回执。固定入口切换 checkout、核对远端后发 `G`，收到 `A` 才更新 `refs.json` 和 `boot.json.good`，写完发 `C` 允许采集。候选进程组在启动期由固定入口的子进程监护，超时或固定入口意外退出都会结束未放行的进程组。预检或启动失败记录候选为 `bad`、保留检查点，沿用数据库保护逻辑回退到 `good`。下一轮仍 fetch，同一坏 SHA 跳过，等 `main` 到新 SHA 再试。启动确认后的普通采集或校验失败可在下一轮重试。安装时固定入口和 worker 要用同一获批版本，两端都必须支持本回执约定。
 - checkout 只允许未暂存的 `tg.db` 与 HEAD 不同。首次仅在本地库仍等于启动 HEAD 的库时，用不同的远端种子替换；有检查点后保留本地库和忽略的缓存，不覆盖与新跟踪路径冲突的缓存。拒绝 SQLite journal/WAL/SHM。中断后若 HEAD、index 和跟踪文件一致，且无 `index.lock`，可自动取回 `checkout-tg.db`；否则保留现场，见下节。采集不继承来源 Cookie、会话或翻译密钥。
 - 持锁依次跑旧流水线、`rebang_refresh.sh --no-publish` 和 `write_build_info.py`。临时 Git index 从本轮抓到的 `main` 构造数据提交，只允许 `tg.db` 改变。**库没变也生成一条同 tree 提交** `Refresh public collection data (no db change)`，否则 Git 会把相同 SHA 的 ref 排除在服务端事务之外。`build-info.json` 的 `source_commit` 是本轮启动和建站所用提交，`database_sha256` 与实际入库 blob 对比。
 - `publish_pages.sh --dry-run --already-built` 只打包。新 Pages 提交以观察到的 `gh-pages` 为唯一父提交，保持打包 tree 不变。把父包和待推包分别 `git archive` 到干净树，交原版 `deploy/news-sync.sh --dry-run` 验证。公网 `data/meta.json` 与父包 `rebang/data/meta.json` 必须字节一致；该标记不证明 DO 已安装的每个文件都相同。`file://` 演练不访问公网。
 - 校验后再次核对远端两个 ref，只调用一次 `git push --atomic`。两条 ref 都更新，都用精确旧 SHA 的 `--force-with-lease`，无 `+`，新提交各以观察到的提交为父。若远端在通告后改变其中一条，服务端原子事务拒绝两条更新，库没有变化时也一样。切换前仍必须排除其他写入口；Git 不能检测观察间隔内移走又回到原 SHA 的写入。
-- 在 push 前写 `HALT`。只有 push 成功且 `git ls-remote` 核对两条实际 ref 都精确匹配，才更新检查点、清除标记。拒绝、失配、结果不明、中断都保留它，后续手动和定时轮次都停止。发生普通采集、建站或接收校验失败但远端没动时，保留本地库和已接受的检查点，不推送，旧站继续服务。
+- 在 push 前写 `HALT`。普通快进使本轮基线过期时，如果能证明 `main` 是本轮观察值的后代、其 `tg.db` 与检查点一致，且 `gh-pages` 未变，本轮记录 `publish deferred` 并正常结束，下一轮用最新代码重建；最终核对和明确的原子 lease 拒绝都走这条规则。历史改写、远端库变化、`gh-pages` 异动或无法确认推送结果会保留 `HALT`。推送成功后仍须用 `git ls-remote` 核对两个目标 SHA，才更新检查点并清除标记。普通采集、建站或接收校验失败且远端稳定时，保留本地库和已接受的检查点，旧站继续服务。
 
 ## 启动或 checkout 中断后的人工恢复
 
@@ -43,6 +43,30 @@
      refs/heads/gh-pages:refs/mac-publish/gh-pages
    git -C "$ROOT/checkout" checkout --detach "$APPROVED_MAIN_SHA"
    ```
+
+   在挪旧目录之前，用 Mini 已配置的发布 Git 身份设置新 clone 的本地提交信息，并确认命令输出取到正确身份：
+
+   ```sh
+   git -C "$ROOT/checkout" config --local user.name "$PUBLISH_GIT_NAME"
+   git -C "$ROOT/checkout" config --local user.email "$PUBLISH_GIT_EMAIL"
+   git -C "$ROOT/checkout" var GIT_AUTHOR_IDENT
+   git -C "$ROOT/checkout" var GIT_COMMITTER_IDENT
+   ```
+
+   还要用 plist 里实际的运行账号、`HOME`、`PATH` 和该认证方式需要的环境（如 `SSH_AUTH_SOCK`）在新 clone 验证。启动器和 worker 都保留 Git 已配置的 `core.sshCommand`；只有未配置时才用 `ssh -o BatchMode=yes`。如果 Mini 用了旧 clone 的局部设置，按既有配置为新 clone 设置，并确认 SSH 使用非交互模式。下面在该最小环境中运行，使用与启动器相同的认证设置：
+
+   ```sh
+   cd "$ROOT/checkout"
+   export GIT_TERMINAL_PROMPT=0
+   if ! git config --get core.sshCommand >/dev/null; then
+     export GIT_SSH_COMMAND='ssh -o BatchMode=yes'
+   fi
+   git ls-remote --exit-code --refs origin refs/heads/main refs/heads/gh-pages
+   git push --dry-run --atomic --no-follow-tags origin \
+     refs/remotes/origin/main:refs/heads/main refs/mac-publish/gh-pages:refs/heads/gh-pages
+   ```
+
+   确认两条 ref 都返回，dry-run 能非交互连接接收端，且没有真实更新。如果 clone 期间远端已前进，先刷新这两条本地 ref 再检查。dry-run 不验证所有实际写入规则。Mini 现装认证方式和权限待获批迁移时实测。
 
    `APPROVED_MAIN_SHA` 是已验证包含获批修复的 `main` 提交，必须接在旧检查点和旧 HEAD 后。若本地浅克隆没有所需提交，先手动 deepen 并验证；不要只比较 SHA 字符串、跳过检查点或假定历史相关。用同一 Python 3.11 在新根目录重建 `venv/`，安装 `beautifulsoup4`、`pillow`、`lxml` 等既有发布依赖，验证 `python3`、`realpath`、`git`（须支持原子推送）和用于维护的 `flock`。从获批的工作区安装固定入口：
 
