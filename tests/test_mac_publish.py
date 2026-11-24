@@ -88,8 +88,7 @@ class MacPublishTests(unittest.TestCase):
             db.execute('create table messages (id text primary key)')
         self.git('add', '.')
         self.git('commit', '-m', 'Main baseline')
-        self.git('push', 'origin', 'main')
-        self.git('checkout', '-b', 'code')
+        self.main_root = self.git('rev-parse', 'HEAD')
         for directory, names in (('tools', ('mac_publish.py', 'mac_publish.sh', 'publish_pages.sh',
                                            'rebang_refresh.sh', 'write_build_info.py')),
                                  ('deploy', ('news-sync.sh',))):
@@ -104,7 +103,8 @@ class MacPublishTests(unittest.TestCase):
         self.site_fixture = self.checkout / 'packed-fixture'
         self.make_site(self.site_fixture)
         self.git('add', '.')
-        self.git('commit', '-m', 'Pinned publisher')
+        self.git('commit', '-m', 'Publisher code')
+        self.git('push', 'origin', 'main')
         self.git('checkout', '--detach')
         self.code = self.git('rev-parse', 'HEAD')
         self.plist['ProgramArguments'][1] = str(self.checkout / 'tools/mac_publish.sh')
@@ -143,9 +143,24 @@ class MacPublishTests(unittest.TestCase):
     def heads(self):
         return tuple(self.git('--git-dir', str(self.remote), 'rev-parse', branch) for branch in ('main', 'gh-pages'))
 
-    def cycle(self, env=None):
-        return subprocess.run(self.plist['ProgramArguments'], cwd=self.plist['WorkingDirectory'],
+    def cycle(self, env=None, *, legacy_args=True):
+        arguments = self.plist['ProgramArguments']
+        return subprocess.run(arguments if legacy_args else arguments[:2], cwd=self.plist['WorkingDirectory'],
                               env=self.env if env is None else env, timeout=30, capture_output=True, text=True)
+
+    def advance_main(self, path, contents):
+        parent = self.heads()[0]
+        replacement = self.root / 'replacement'
+        replacement.write_bytes(contents)
+        bare = ('--git-dir', str(self.remote))
+        blob = self.git(*bare, 'hash-object', '-w', str(replacement))
+        self.git(*bare, 'read-tree', parent)
+        self.git(*bare, 'update-index', '--cacheinfo', f'100644,{blob},{path}')
+        tree = self.git(*bare, 'write-tree')
+        commit = self.git(*bare, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@localhost',
+                          'commit-tree', tree, '-p', parent, '-m', f'Update {path}')
+        self.git(*bare, 'update-ref', 'refs/heads/main', commit, parent)
+        return commit
 
     def install_hook(self, name, script):
         hook = self.remote / 'hooks' / name
@@ -159,7 +174,7 @@ class MacPublishTests(unittest.TestCase):
         self.assertIn('published main=', result.stdout)
         self.assertFalse((self.state / 'HALT').exists())
 
-    def test_two_cycles_in_plist_environment_with_pinned_code_and_exact_parent_trees(self):
+    def test_two_cycles_in_plist_environment_with_exact_parent_trees(self):
         index = self.checkout / '.git/index'
         original_index = index.read_bytes()
         result = self.cycle()
@@ -176,14 +191,136 @@ class MacPublishTests(unittest.TestCase):
         self.assertEqual(info['database_sha256'], hashlib.sha256(db).hexdigest())
         self.assertEqual(info['source_commit'], self.code)
         self.assertEqual(db, (self.checkout / 'tg.db').read_bytes())
+        self.assertEqual(index.read_bytes(), original_index)
         with sqlite3.connect(self.checkout / 'tg.db') as connection:
             self.assertEqual(connection.execute('select id from messages order by id').fetchall(),
                              [('after-rebang-ingest',), ('old-pipeline',)])
         self.assert_success(self.cycle())
         self.assertEqual(self.heads()[0], main, 'no DB change must not produce a data commit')
         self.assertEqual(self.git('rev-parse', self.heads()[1] + '^'), pages)
-        self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
-        self.assertEqual(index.read_bytes(), original_index)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), main)
+        self.assertEqual(self.git('diff', '--cached', '--name-only'), '')
+
+    def test_fast_forward_runs_new_publisher_and_builds_from_new_main(self):
+        self.assert_success(self.cycle())
+        old_pages = self.heads()[1]
+        publisher = (self.checkout / 'tools/mac_publish.py').read_bytes()
+        publisher = publisher.replace(b'    sys.exit(main())',
+                                      b'    print("new publisher", flush=True)\n    sys.exit(main())')
+        self.advance_main('tools/mac_publish.py', publisher)
+        new_main = self.advance_main('pipeline.py', PIPELINE.replace('old-pipeline', 'new-pipeline').encode())
+
+        result = self.cycle(legacy_args=False)
+        self.assert_success(result)
+        self.assertIn('new publisher', result.stdout)
+        main, pages = self.heads()
+        self.assertEqual(self.git('rev-parse', 'HEAD'), new_main)
+        self.assertEqual(self.git('rev-parse', f'{main}^'), new_main)
+        self.assertEqual(self.git('rev-parse', f'{pages}^'), old_pages)
+        self.assertEqual(self.git('diff-tree', '--no-commit-id', '--name-only', '-r', new_main, main), 'tg.db')
+        self.assertEqual(json.loads(self.git('show', f'{pages}:build-info.json'))['source_commit'], new_main)
+        with sqlite3.connect(self.checkout / 'tg.db') as connection:
+            self.assertEqual(connection.execute("select count(*) from messages where id='new-pipeline'").fetchone(), (1,))
+        self.assert_success(self.cycle())  # The original plist SHA still works after switching.
+
+    def test_non_fast_forward_main_halts(self):
+        self.assert_success(self.cycle())
+        self.git('--git-dir', str(self.remote), 'update-ref', 'refs/heads/main', self.main_root)
+        before = self.heads()
+        result = self.cycle()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('main is not a fast-forward', result.stderr)
+        self.assertEqual(self.heads(), before)
+        self.assertTrue((self.state / 'HALT').exists())
+        self.assertIn('HALT exists', self.cycle().stderr)
+
+    def test_unexpected_pages_fast_forward_halts(self):
+        self.assert_success(self.cycle())
+        _, parent = self.heads()
+        bare = ('--git-dir', str(self.remote))
+        pages = self.git(*bare, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@localhost',
+                         'commit-tree', f'{parent}^{{tree}}', '-p', parent, '-m', 'Other publisher')
+        self.git(*bare, 'update-ref', 'refs/heads/gh-pages', pages, parent)
+        before = self.heads()
+        result = self.cycle()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('gh-pages changed since the last local checkpoint', result.stderr)
+        self.assertEqual(self.heads(), before)
+        self.assertTrue((self.state / 'HALT').exists())
+
+    def test_failed_build_from_new_main_preserves_old_site_and_retries_new_code(self):
+        self.assert_success(self.cycle())
+        program = b'raise SystemExit("new code build failed")\n'
+        self.advance_main('rebang/site/__main__.py', program)
+        before = self.heads()
+        self.install_hook('pre-receive', 'touch push-attempt')
+        for _ in range(2):
+            result = self.cycle()
+            self.assertNotEqual(result.returncode, 0)
+            refresh_log = Path(json.loads((self.checkout / 'var/rebang/logs/last-refresh.json').read_text())['log'])
+            self.assertIn('new code build failed', (self.checkout / refresh_log).read_text())
+            self.assertIn(f'failed at source_commit={before[0]}', result.stderr)
+            self.assertEqual(self.heads(), before)
+            self.assertFalse((self.remote / 'push-attempt').exists())
+            self.assertFalse((self.state / 'HALT').exists())
+        self.assertEqual(self.git('rev-parse', 'HEAD'), before[0])
+
+    def test_checkout_preserves_unstaged_database_and_ignored_cache(self):
+        self.assert_success(self.cycle())
+        database = self.checkout / 'tg.db'
+        with sqlite3.connect(database) as connection:
+            connection.execute("insert into messages values ('unpublished-local')")
+        local = database.read_bytes()
+        cache = self.checkout / 'site/cache-only.txt'
+        cache.write_text('local cache')
+        self.advance_main('pipeline.py', b'\n' + PIPELINE.encode())
+
+        self.assert_success(self.cycle())
+        self.assertEqual(database.read_bytes(), local)
+        self.assertEqual(self.git('show', self.heads()[0] + ':tg.db', binary=True), local)
+        self.assertEqual(cache.read_text(), 'local cache')
+        self.assertEqual(self.git('diff', '--cached', '--name-only'), '')
+
+    def test_fast_forward_during_code_switch_halts_before_collection(self):
+        self.assert_success(self.cycle())
+        first = self.advance_main('pipeline.py', b'raise SystemExit("should not collect")\n')
+        second = self.advance_main('pipeline.py', b'\n' + PIPELINE.encode())
+        _, pages = self.heads()
+        self.git('--git-dir', str(self.remote), 'update-ref', 'refs/heads/main', first, second)
+        wrapper = self.bin / 'git'
+        wrapper.write_text(f'''#!/bin/sh
+set -eu
+if [ "$1" = checkout ]; then
+    '{GIT}' --git-dir '{self.remote}' update-ref refs/heads/main '{second}' '{first}'
+fi
+exec '{GIT}' "$@"
+''')
+        wrapper.chmod(0o755)
+        self.install_hook('pre-receive', 'touch push-attempt')
+
+        result = self.cycle()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('remote refs moved during code switch', result.stderr)
+        self.assertNotIn('building source_commit=', result.stdout)
+        self.assertEqual(self.heads(), (second, pages))
+        self.assertFalse((self.remote / 'push-attempt').exists())
+        self.assertTrue((self.state / 'HALT').exists())
+
+    def test_interrupted_checkout_restores_saved_database(self):
+        self.assert_success(self.cycle())
+        database = self.checkout / 'tg.db'
+        with sqlite3.connect(database) as connection:
+            connection.execute("insert into messages values ('before-interruption')")
+        local = database.read_bytes()
+        saved = self.state / 'checkout-tg.db'
+        database.rename(saved)
+        database.write_bytes(self.git('show', 'HEAD:tg.db', binary=True))
+
+        result = self.cycle()
+        self.assert_success(result)
+        self.assertIn('restored local tg.db', result.stdout)
+        self.assertEqual(database.read_bytes(), local)
+        self.assertFalse(saved.exists())
 
     def test_initial_checkout_seeds_database_from_fetched_main(self):
         # Move only the fixture remote's main, keeping the publisher's checkout pinned.

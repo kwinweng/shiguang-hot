@@ -4,14 +4,31 @@
 
 ## 入口与防护
 
-- `tools/mac_publish.sh --code-sha FULL_SHA` 只用于专用 clone。由同一个标准账号从手动和系统 `launchd` 运行。`PATH` 和 `BOX_PYTHON` 使用绝对路径；需要 Python 3.11+、`beautifulsoup4`、`pillow`、`lxml`、`flock`、`realpath` 和支持原子推送的 Git。`PATH` 将该 Python 环境的 `bin` 放在系统目录之前，以便接收脚本调用同一环境的 `python3`。
-- 代码固定在 detached HEAD，不自动拉入生产代码；每轮只 `fetch` 两个数据来源 ref，不 reset/clean。首轮以远端 `main:tg.db` 为起点，最多只替换仍与固定提交一致的 `tg.db`；后续保留本地采集数据和运行缓存。专用工作区不要运行任何其他会写 DB、采集缓存或发布的入口。首期不读取来源 Cookie、会话文件或翻译密钥。
-- 持锁依次跑旧流水线、`rebang_refresh.sh --no-publish`、`write_build_info.py`。有 SQLite journal/WAL/SHM 就拒绝。在临时 Git index 上从 `main` 父提交构造纯 `tg.db` 数据提交；若库没变则不写 `main`。`build-info.json` 的 `source_commit` 是固定运行代码，不是数据提交；`database_sha256` 对比实际入库的 blob。
+- `tools/mac_publish.sh` 只用于专用 clone。由同一个标准账号从手动和系统 `launchd` 运行。现有 plist 可保留 `--code-sha FULL_SHA`，新版本接受该参数以兼容现有调度，启动后以远端检查点决定运行版本。`PATH` 和 `BOX_PYTHON` 使用绝对路径；需要 Python 3.11+、`beautifulsoup4`、`pillow`、`lxml`、`flock`、`realpath` 和支持原子推送的 Git。`PATH` 将该 Python 环境的 `bin` 放在系统目录之前，以便接收脚本调用同一环境的 `python3`。
+- 每轮只抓取远端 `main` 和 `gh-pages`。`gh-pages` 需与上次 `.git/mac-publish/refs.json` 一致，`main` 可相同或正常快进。核对后记录这一对 ref。若 detached HEAD 需要前进，先切到本轮取到的 `main`，再带着同一把锁重启发布入口。新版本确认远端两条 ref 仍一致才采集，发布器本身的更新也在本轮生效。
+- 专用工作区只有未暂存的 `tg.db` 可与 HEAD 不同。初次运行若无检查点，以远端 `main:tg.db` 起步，只允许替换仍与启动时 HEAD 相同的库。后续切换保留本地数据库和忽略的缓存文件，遇到缓存与新跟踪文件冲突就退出。若切换中断后留下 `.git/mac-publish/checkout-tg.db`，下一轮取回原始库。有 SQLite journal/WAL/SHM 就拒绝操作。专用工作区只运行本入口，采集不读取来源 Cookie、会话文件或翻译密钥。
+- 持锁依次跑旧流水线、`rebang_refresh.sh --no-publish`、`write_build_info.py`。在临时 Git index 上从本轮抓取的 `main` 构造只更新 `tg.db` 的数据提交；库没变时无需写 `main`。`build-info.json` 的 `source_commit` 记录本轮启动和建站所用的提交，`database_sha256` 对比实际入库的 blob。
 - `publish_pages.sh --dry-run --already-built` 只打包。新入口以观察到的 `gh-pages` 为唯一父提交，保持打包 tree 不变。把父包和待推包分别 `git archive` 到干净树，给原版 `deploy/news-sync.sh --dry-run` 检查。公网 `data/meta.json` 须与父包 `rebang/data/meta.json` 字节一致，才把父包作为本地基线。它只是公开版本标记，不证明 DO 已安装的每个文件都相同；`file://` 演练不访问公网。
 - 校验后再核对远端两个 ref，只调用一次普通 `git push --atomic`，不强推、不降级、不重试。两个 ref 都需更新时要么一起更新，要么都不更新。普通快进不是独占写入权，切换前必须排除其他写入口。
-- `.git/mac-publish/HALT` 在发起推送前创建，成功记录两条远端 ref 后才清除。推送被拒、结果不明、或发现未经预期的 ref 变化，都停止后续手动和定时轮次。保留 `tg.db`、`refs.json`、`HALT` 和日志，核对两个真实远端 SHA、候选 SHA、数据库和公网，再另行批准恢复。不要自动删标记、覆盖库、重置分支或强推旧包。接收校验失败未推送，保留本地库；常规下一轮可在同一远端基线上重试。
+- `main` 非快进、`gh-pages` 与检查点不一致、必要的远端 ref 消失，或切换和采集建站期间发现远端 ref 又移动，都会写 `.git/mac-publish/HALT`。发起推送前也会创建 HALT，成功记录两条远端 ref 后才清除。推送被拒、结果不明或推送中断时，保留标记，后续手动和定时轮次都停止。人工恢复前保留 `tg.db`、`refs.json`、`HALT` 和日志，核对两个真实远端 SHA、候选 SHA、数据库和公网。
+- 采集、建站或接收校验失败时，日志记录用到的 `source_commit`，不推送，旧站继续服务。本地数据库和已接受的检查点保留。远端 ref 未发生异常时，下一轮可以用同一版本或更新的正常快进版本重试。
 
-## 贴给 Mini 本机 T3 的切换指令（获批后才执行）
+## 从固定 SHA 切换到自动跟进（合并后在 Mini 手动做一次）
+
+1. 等最近一次 `:05` 任务退出，在下一次触发前完成准备。以专用账号进入现有部署 clone，确认没有在途采集或发布，也没有其他写入口。先独立备份 `tg.db`、`.git/mac-publish/refs.json`、现有 `HALT` 和日志。确认没有 SQLite journal/WAL/SHM，工作区只有未暂存的 `tg.db` 可能有改动。
+2. 获取真实远端 `main`、`gh-pages` 的 SHA（`git ls-remote --refs origin refs/heads/main refs/heads/gh-pages`），并 `git fetch --no-tags origin main gh-pages`。确认 `main` 包含获批的这次改动，是此前 `main` 检查点的快进。核对 `gh-pages` 的检查点、已有推送回执和公网 meta；如果 HALT 提到推送结果不明，先核清两个 ref 和数据库再继续。把核对过的 `main` 和 `gh-pages` 完整 SHA 分别记为 `MAIN_SHA`、`PAGES_SHA`。
+3. 用 `git checkout --detach --no-overwrite-ignore "$MAIN_SHA"` 切换。若唯一阻碍是 `tg.db` 与新提交冲突，先在停止写入的前提下确认备份可读，再暂时用 `git show HEAD:tg.db` 恢复工作区的跟踪版本，重新 checkout。切换无论成功或失败都立即原样放回备份的 `tg.db`。核对 `HEAD`、暂存区和本地库哈希后再继续。缓存与新跟踪文件冲突时停下来查明。
+4. 再核对远端两个 SHA 没变。原子更新 `.git/mac-publish/refs.json`，键沿用 `refs/heads/main`、`refs/heads/gh-pages`。在确认备份、代码、库和两个 ref 都对得上后，把现有 `HALT` 移到备份目录。既有 plist 仍可用，无需重装或改 SHA。
+
+   ```sh
+   printf '{"refs/heads/main":"%s","refs/heads/gh-pages":"%s"}\n' \
+     "$MAIN_SHA" "$PAGES_SHA" > .git/mac-publish/refs.next &&
+     mv .git/mac-publish/refs.next .git/mac-publish/refs.json
+   ```
+
+5. 在现有 plist 的账号和最小环境下手动跑一轮 `tools/mac_publish.sh`。核对日志里的 `source_commit`、`validation=passed`、推送回执和两个远端 SHA，等现有线上接收流程完成，再核对公网 `data/meta.json` 与本轮 Pages 包字节一致、线上 `build-info.json` 的 `source_commit` 包含本次改动、新条目可以打开。下一次 `:05` 自然触发后核对定时日志和公网版本。
+
+## 首次部署到新 Mini 的切换指令（获批后才执行）
 
 1. 在 Mini 本机使用专用标准账号，核对阿欢批准的提交 SHA。新建专用 clone（不使用 Air 工作树、试跑目录或已有开发目录），从 `origin/fix/zixun-collection-recovery` 取该提交，`git checkout --detach "$APPROVED_SHA"` 后确认 `git rev-parse HEAD` 完全一致。准备稳定的日志目录和 Python 环境；用最小权限、可吊销的仓库专用身份及非交互认证，不读凭据文件、不改分支保护。确认盒子与其他采集发布入口无在途写入、不会自动重启。先保留最后可信数据库及所需公开归档/媒体的独立备份；只用可核实的公开缓存，不用 177 文件试跑包替代生产数据。父包检查仍要求 `max(100, ceil(公开基线文件数 × 0.5))`，如果规模或内容不合格就停，不降低门槛或伪造新鲜度。
 2. 复制 `tools/mac_publish.launchd.plist.example` 到未安装的本地文件，将账号、路径、HOME 和完整 SHA 改为实际绝对值，`plutil -lint`，确认没有 `RunAtLoad` 或 `KeepAlive`。在相同账号和最小环境中用 `file://` 裸仓库跑 `tests/test_mac_publish.py`；核对 Python/`flock`/`realpath` 路径、GitHub 和公开来源网络。记录现网公网 meta 指纹。没有单轮生产写入批准，不运行指向真实 `origin` 的入口。
