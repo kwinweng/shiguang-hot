@@ -13,7 +13,7 @@ import argparse
 import json
 import os
 import re
-import select
+import selectors
 import subprocess
 import sys
 import time
@@ -378,18 +378,19 @@ def read_pbpaste(popen=None, timeout=10):
                 fd = None
             if fd is not None:
                 chunks, size = [], 0
-                while size < limit:
-                    remaining = deadline - time.monotonic()
-                    if remaining <= 0:
-                        raise subprocess.TimeoutExpired('pbpaste', timeout)
-                    ready, _, _ = select.select([fd], [], [], remaining)
-                    if not ready:
-                        raise subprocess.TimeoutExpired('pbpaste', timeout)
-                    chunk = os.read(fd, limit - size)
-                    if not chunk:
-                        break
-                    chunks.append(chunk)
-                    size += len(chunk)
+                with selectors.DefaultSelector() as sel:
+                    sel.register(fd, selectors.EVENT_READ)
+                    while size < limit:
+                        remaining = deadline - time.monotonic()
+                        if remaining <= 0:
+                            raise subprocess.TimeoutExpired('pbpaste', timeout)
+                        if not sel.select(remaining):
+                            raise subprocess.TimeoutExpired('pbpaste', timeout)
+                        chunk = os.read(fd, limit - size)
+                        if not chunk:
+                            break
+                        chunks.append(chunk)
+                        size += len(chunk)
                 raw = b''.join(chunks)
             else:
                 raw = stream.read(limit)

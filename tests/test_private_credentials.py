@@ -760,6 +760,46 @@ def test_save_cookie_pbpaste_stalled_stdout_times_out_and_preserves_old_cookie(h
     assert (cookie.stat().st_ino, cookie.read_text()) == before
 
 
+def test_read_pbpaste_handles_high_fd():
+    r_fd, w_fd = os.pipe()
+    high_fd = None
+    try:
+        for cand in range(1100, 1120):
+            try:
+                os.fstat(cand)
+            except OSError:
+                high_fd = cand
+                break
+        if high_fd is None:
+            pytest.skip('no free fd in 1100..1119')
+        os.dup2(r_fd, high_fd)
+        os.close(r_fd)
+        r_fd = None
+        os.write(w_fd, (SECRET + '\n').encode('utf-8'))
+        os.close(w_fd)
+        w_fd = None
+
+        class HighFdProc:
+            def __init__(self, *args, **kwargs):
+                self.stdout = os.fdopen(high_fd, 'rb', buffering=0)
+
+            def wait(self, timeout=None):
+                return 0
+
+            def kill(self):
+                pass
+
+        assert weibo.read_pbpaste(popen=HighFdProc, timeout=2).strip() == SECRET
+        high_fd = None   # closed by read_pbpaste finally
+    finally:
+        for fd in (r_fd, w_fd, high_fd):
+            if fd is not None:
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+
+
 # ---------- Blocker 4: weread status handles non-UTF-8 and deeply nested JSON without traceback ----------
 
 def test_weread_status_handles_non_utf8_response_even_under_latin1_locale(folder, monkeypatch, capsys):
