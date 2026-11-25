@@ -7,6 +7,7 @@
   data/meta.json、data/channel/<slug>/page-<n>.json（每页 30）、data/hotsearch.json（当前热搜）、
   data/hotsearch/index.json + data/hotsearch/<北京日期>.json（底栏「热搜」页按日期回看，每天最后一次成功抓取）、
   data/bloggers.json（平台/名单 + 每平台、每人最新几条）、data/blogger/<平台>/<all|h-xxxx>/page-<n>.json（「查看更多」全量分页）、
+  data/channel/<slug>/merged.json（频道内跨来源合并后被折叠的条目，深链/搜索仍能打开，见 rebang/site/dedup.py）、
   data/id-index.json，以及 rebang.archive.build(items, out_dir) 产出的 search-index。
 """
 import argparse
@@ -19,6 +20,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from rebang.contract import schema
+from rebang.site.dedup import fold
 from rebang.site.health import build_health
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -417,7 +419,12 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
     channels_meta = []
     id_index = {}  # 条目 id → 所在数据文件；给 #/item/<id> 深链（8:30 私聊稿）直接打开详情用
     for channel in sorted(schema.load_channels()['channels'], key=lambda c: c['order']):
-        mine = [i for i in news if i['channel'] == channel['slug']]
+        mine, folded = fold([i for i in news if i['channel'] == channel['slug']])
+        if folded:
+            rel = f'channel/{channel["slug"]}/merged.json'
+            _write(data / rel, {'schema': 'rebang.merged/1', 'channel': channel['slug'], 'items': folded})
+            for item in folded:
+                id_index[item['id']] = rel
         banner = select_banners(mine)
         banner_ids = {i['id'] for i in banner}
         feed = [i for i in mine if i['id'] not in banner_ids]
@@ -434,7 +441,8 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
             'desc': CHANNEL_DESC.get(channel['slug'], ''),
             'sources': [s['name'] for s in channel['sources']],
             'unavailable': bad_sources.get(channel['slug'], []),
-            'total': len(mine), 'feed_total': len(feed), 'pages': len(pages), 'banner': banner,
+            'total': len(mine), 'feed_total': len(feed), 'merged_total': len(folded), 'pages': len(pages),
+            'banner': banner,
         })
     current_hot = build_hotsearch(hotsearch, report)
     _write(data / 'hotsearch.json', current_hot)
@@ -481,7 +489,8 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
         shutil.rmtree(out)
     tmp.rename(out)
     report.update({'out': str(out), 'news': len(news), 'posts': len(posts),
-                   'channels': {c['slug']: {'total': c['total'], 'banner': len(c['banner']), 'pages': c['pages']}
+                   'channels': {c['slug']: {'total': c['total'], 'banner': len(c['banner']), 'pages': c['pages'],
+                                            'merged': c['merged_total']}
                                 for c in channels_meta}})
     return report
 

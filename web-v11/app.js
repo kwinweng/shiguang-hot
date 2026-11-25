@@ -1521,6 +1521,10 @@
     const hotA = t.closest('.hot-list a'); if (hotA) { const li = hotA.closest('li'); if (li && li.dataset.hid) setRead(li.dataset.hid); return; }
     const orig = t.closest('[data-orig]');
     if (orig) { e.stopPropagation(); const box = $(`[data-orig-box="${CSS.escape(orig.dataset.orig)}"]`); if (box) { const on = box.classList.toggle('on'); orig.textContent = on ? '收起原文' : '看原文'; } return; }
+    const dupT = t.closest('[data-dup-toggle]');
+    if (dupT) { e.stopPropagation(); const box = dupT.closest('[data-dup]'); const listEl = box && box.querySelector('.dup-list'); if (listEl) { listEl.hidden = !listEl.hidden; dupT.setAttribute('aria-expanded', String(!listEl.hidden)); box.classList.toggle('on', !listEl.hidden); } return; }
+    const dupR = t.closest('[data-dup-id]');
+    if (dupR) { e.stopPropagation(); openItem(dupR.dataset.dupId); return; }
     const cmore = t.closest('[data-cmt-more]');
     if (cmore) { const sec = cmore.closest('[data-tg-comments]'); if (sec) sec.classList.remove('folded'); cmore.remove(); return; }
     const artOrig = t.closest('[data-art-orig]');

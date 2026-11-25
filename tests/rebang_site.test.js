@@ -256,3 +256,18 @@ test('v16：相对时间只用在 24 小时内；日期头「今天/昨天/周X�
   assert.match(L.dayLabel('2026-11-12', '2026-11-16'), /^11\.12 周四$/);
   assert.deepEqual(['百度热搜', '知乎热榜', 'B 站热搜'].map(L.hotShort), ['百度', '知乎', 'B站']);
 });
+
+test('同类事件合并：主条下折叠「另有 N 个来源」，没有 merged 就不出；旧数据不受影响', () => {
+  assert.doesNotMatch(L.feedRowHTML({...base}), /data-dup/);
+  assert.doesNotMatch(L.feedRowHTML({...base, merged: []}), /data-dup/);
+  const it = {...base, merged: [
+    {id: 'zaihuapd:2', source_id: 'zaihuapd', source_name: '在花科技圈', title: 'Hello <b>', url: 'https://t.me/zaihuapd/2', published_at: base.published_at},
+    {id: 'xhqcankao:3', source_id: 'xhqcankao', source_name: '风向旗参考快讯', title: 'Orig', title_zh: '译文标题', url: '', published_at: base.published_at},
+  ]};
+  const html = L.feedRowHTML(it);
+  assert.match(html, /<button type="button" class="dup-btn" data-dup-toggle aria-expanded="false">另有 2 个来源<\/button><div class="dup-list" hidden>/);
+  assert.match(html, /data-dup-id="zaihuapd:2"><span class="src">在花科技圈<\/span><span class="t">Hello &lt;b&gt;<\/span>/);
+  assert.match(html, /data-dup-id="xhqcankao:3"><span class="src">风向旗参考快讯<\/span><span class="t">译文标题<\/span>/);
+  // 同来源同链接（只是参数不同）的折叠：不说「来源」
+  assert.match(L.feedRowHTML({...base, merged: [{id: 'tnews365:9', source_id: 'tnews365', source_name: '竹新社', title: 'x'}]}), /另有 1 条相同链接/);
+});

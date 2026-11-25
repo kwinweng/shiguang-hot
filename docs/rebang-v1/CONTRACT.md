@@ -61,7 +61,7 @@
 | TG 附加信息 tgmeta | `rebang/tgmeta/`、`tests/test_rebang_tgmeta*.py` |
 | 热搜 hotsearch | `rebang/hotsearch/`、`tests/test_rebang_hotsearch*.py`、`tests/fixtures/rebang/hotsearch/` |
 | 博主与翻译 | `rebang/bloggers/`、`rebang/translate/`、`tests/test_rebang_bloggers*.py`、`tests/fixtures/rebang/bloggers/` |
-| 建站与前端 | `rebang/site/`、`web-v11/`、`tests/test_rebang_site*.py`、`tests/rebang_site*.test.js` |
+| 建站与前端 | `rebang/site/`、`web-v11/`、`tests/test_rebang_site*.py`、`tests/test_rebang_dedup.py`（频道内合并）、`tests/rebang_site*.test.js` |
 | 归档、收藏、搜索 | `rebang/archive/`、`web-v11/features/`、`tests/test_rebang_archive*.py`、`tests/rebang_features*.test.js` |
 | 8:30 私聊稿 | `rebang/push/`、`tests/test_rebang_push*.py` |
 
@@ -75,8 +75,9 @@
 - `var/rebang/translate/{cache,pending}.json`：译文缓存与待翻队列。
 - `var/rebang/cache/`（tgmeta、ingest 订阅缓存）、`var/rebang/x-dump/`（X 原始响应）、`var/rebang/media/`（公众号图片）、`var/rebang/logs/`（`tools/rebang_refresh.sh` 日志）。
 - `site-v11/`：新版静态站构建输出（`python3 -m rebang.site --out <dir> [--hot-archive DIR]`）。`<site>/data/` 下：
-  - `meta.json`（`rebang.site-meta/1`）：`built_at`、`data_at`、`today`、`page_size`、`note`、`public_base`（8:30 私聊稿链接 = `public_base#/item/<id>`）、`counts`、`channels[{slug,name,order,desc,sources,unavailable,total,feed_total,pages,banner[≤5]}]`。
+  - `meta.json`（`rebang.site-meta/1`）：`built_at`、`data_at`、`today`、`page_size`、`note`、`public_base`（8:30 私聊稿链接 = `public_base#/item/<id>`）、`counts`、`channels[{slug,name,order,desc,sources,unavailable,total,feed_total,merged_total,pages,banner[≤5]}]`。
   - `channel/<slug>/page-<n>.json`（`rebang.page/1`）：每页 30 条，`has_more` 到最后一页为 false；「查看更多」整页按页往下加载到「没有更多了」。
+  - 频道内跨来源合并（第 5 步，`rebang/site/dedup.py`）：**只在同一频道内合并，不跨频道**（一个来源只进一个频道，频道归属不变）。同链接（规范化后：http→https、去 `www.`、去 `#` 片段、去 `utm_*`/`at_*` 等追踪参数、参数排序、去尾 `/`）或近似标题（不同来源、相差 ≤24 小时、词重合度达标，且两边没有各自独有的数字/英文名、开头的词至少一边出现在对方标题里；英文条目同时用机器翻译标题比）判为同一事件。主条 = 组里有今日重点标的，否则最早发的；每个来源在一组里最多一条。主条在分页和 `banner` 里多一个可选字段 `merged[{id, source_id, source_name, title, title_zh?, url, published_at}]`（按时间正序），前端显示「另有 N 个来源」折叠列表；被折叠的完整条目写进 `channel/<slug>/merged.json`（`rebang.merged/1`：`{schema, channel, items}`），`id-index.json` 指向它，收藏/深链/搜索仍能打开。频道的 `total`/`feed_total` 只数主条，另加 `merged_total`；`counts.news` 仍是全部条数。旧前端忽略 `merged` 字段，只是频道里不再出现被折叠的条目。
   - `hotsearch.json`（当前）、`hotsearch/index.json`（`rebang.hotsearch-index/1`：`today`、`current_at`、`dates[{date,generated_at}]`）+ `hotsearch/<date>.json`（往日最后一份）。
   - `bloggers.json`（`rebang.site-bloggers/1`）：`platforms[{id,name,login,curated,icon,connected,count,status,reason,last_ok_at,accounts[{handle,name,key,total}]}]` + `items`（每平台、每人各取最新 10 条做预览）；`blogger/<platform>/<all|key>/page-<n>.json` 是每平台、每人的全部帖子分页（`key = "h-" + sha1(handle)[:10]`）。
   - `meta.json` 的 `health_summary` 含 `total`（来源数）和 `issues`（健康以外的来源数），均按 `health.json` 的顶层来源计数。入口按 `built_at`、看板按自己的 `generated_at` 与当前时间比较，超过 3 小时提示快照已过期。

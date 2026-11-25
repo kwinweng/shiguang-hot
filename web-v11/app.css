@@ -894,3 +894,13 @@ html.app-fullscreen .health-view{bottom:auto;height:var(--app-h)}
 .health-accounts{font-size:var(--text-sm)}
 .health-accounts summary{width:fit-content;padding:var(--space-2) 0 var(--space-1);cursor:pointer;color:var(--foreground-soft)}
 .health-accounts ul{margin-top:var(--space-1);padding:0 var(--space-2);border-left:1px solid var(--border-strong)}
+/* 第 5 步：同类事件合并，主条下折叠「另有 N 个来源」 */
+.feed-row .dup{margin-top:6px;min-width:0}
+.feed-row .dup-btn{appearance:none;border:0;background:none;padding:2px 0;font:inherit;font-size:12.5px;color:var(--muted-foreground);cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.feed-row .dup-btn::after{content:"›";display:inline-block;transition:transform var(--duration-fast) var(--ease-out)}
+.feed-row .dup.on .dup-btn::after{transform:rotate(90deg)}
+.feed-row .dup-list{margin-top:4px;padding-left:8px;border-left:1px solid var(--border-strong);display:flex;flex-direction:column;gap:2px}
+.feed-row .dup-list[hidden]{display:none}
+.feed-row .dup-row{appearance:none;border:0;background:none;padding:4px 0;font:inherit;text-align:left;cursor:pointer;display:flex;gap:6px;min-width:0;font-size:13px;color:var(--foreground-soft)}
+.feed-row .dup-row .src{flex:none;color:var(--muted-foreground)}
+.feed-row .dup-row .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
