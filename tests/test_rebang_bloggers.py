@@ -250,6 +250,52 @@ def test_x_missing_dump_is_not_configured_and_keeps_last_good(tmp_path):
     assert x['last_ok_at'] == good['generated_at']
 
 
+def run_x_export(tmp_path, text, *, suffix='.json', direct_dir=False, previous=None):
+    dump = tmp_path / 'export'
+    dump.mkdir()
+    file = dump / f'posts{suffix}'
+    file.write_text(text)
+    os.utime(file, (NOW.timestamp(), NOW.timestamp()))
+    path = dump if direct_dir else file
+    env = runmod.run(('x',), now=NOW, previous=previous, opts=opts(tmp_path, x_dump=str(path)))
+    return {a['handle']: a for a in env['platforms'][0]['accounts']}
+
+
+@pytest.mark.parametrize(('suffix', 'text'), [
+    ('.json', '{"meta":{"result_count":0}}\n{ "data": ['),
+    ('.txt', 'output: {"meta":{"result_count":0}}\n{ "da'),
+    ('.json', '{"data":[{"id":"1"}],"meta":{"result_count":1}}'),
+    ('.json', '{"data":[{"id":"1","author_id":"2","text":"ok","created_at":"2026-11-15T10:00:00Z"}]}'),
+])
+def test_x_damaged_export_never_advances_success(tmp_path, suffix, text):
+    previous = runmod.run(('x',), now=NOW - timedelta(minutes=5), opts=opts(tmp_path))
+    rows = run_x_export(tmp_path, text, suffix=suffix, previous=previous)
+    assert all(a['status'] == 'error' and a['error'] == 'parse' for a in rows.values())
+    assert all(a['last_ok_at'] == previous['generated_at'] for a in rows.values())
+
+
+@pytest.mark.parametrize('broken', [False, True])
+def test_x_keeps_account_errors_with_damaged_auxiliary_rows(tmp_path, broken):
+    text = json.dumps([
+        {'errors': [{'username': 'karpathy'}], 'includes': {'users': [None, {'id': [], 'username': 'bad'}, {'id': '2', 'username': {}}],
+         'media': [None], 'posts': [None]}},
+        {'meta': {'result_count': 0}},
+    ])
+    if broken:
+        text += '\n{"data": ['
+    rows = run_x_export(tmp_path, text, suffix='.txt' if broken else '.json')
+    assert rows['karpathy']['error'] == 'x_dump_error'
+    assert rows['karpathy']['last_ok_at'] is None
+    others = [row for handle, row in rows.items() if handle != 'karpathy']
+    assert all(row['status'] == ('error' if broken else 'empty') for row in others)
+    assert all(row['last_ok_at'] == (None if broken else NOW.isoformat()) for row in others)
+
+
+def test_x_accepts_txt_only_export_directory(tmp_path):
+    rows = run_x_export(tmp_path, 'output: {"meta": {"result_count": 0}}', suffix='.txt', direct_dir=True)
+    assert all(a['status'] == 'empty' and a['last_ok_at'] == NOW.isoformat() for a in rows.values())
+
+
 def test_x_stale_dump_is_error_and_keeps_last_good(tmp_path):
     good = run_all(tmp_path)
     later = datetime.fromisoformat('2026-11-18T09:00:00+08:00')

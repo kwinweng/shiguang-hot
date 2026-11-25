@@ -254,7 +254,7 @@ def _platform_x(platform, http, fetched_at, opts, sleep, now):
     dump = None
     if opts.x_dump:
         path = Path(opts.x_dump)
-        dump = path if path.is_file() or (path.is_dir() and any(path.glob('*.json'))) else x_mod.latest_dump(path)
+        dump = path if path.is_file() or (path.is_dir() and x_mod.dump_files(path)) else x_mod.latest_dump(path)
     if dump is None:
         return [_account(platform, a, 'not_configured', error='x_dump_missing')[0] for a in platform['accounts']], []
     made = observation_time(x_mod.dump_time(dump), now)
@@ -267,11 +267,13 @@ def _platform_x(platform, http, fetched_at, opts, sleep, now):
             row['dump_at'] = iso(made)
         return rows, []
     handles = [a['handle'] for a in accounts]
+    failures = {}
     try:
         data, failures = x_mod.read_export(dump, handles)
         by_handle = x_mod.x_posts(data, platform, fetched_at, opts.limit)
     except (ValueError, OSError, KeyError, TypeError, AttributeError, OverflowError):
-        return [_account(platform, a, 'error', error='parse')[0] for a in accounts], []
+        failures = {handle: failures.get(handle, 'parse') for handle in handles}
+        by_handle = {}
     # 同目录下其它已写完、未过期的旧 dump 也读进来补：例程每 2 小时只搜最近 24 小时，旧 dump 里还有一天前的帖
     root = dump.parent if opts.x_dump and Path(opts.x_dump).is_dir() and dump != Path(opts.x_dump) else None
     for older in sorted(root.iterdir()) if root else []:

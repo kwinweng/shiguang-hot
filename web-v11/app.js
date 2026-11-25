@@ -94,7 +94,6 @@
     // 松手后补发的 click 归这次手势，下一次按下或键盘激活照常处理。
     el.addEventListener('click', e => {
       if (!longPressed || e.detail === 0) return;
-      longPressed = false;
       e.preventDefault();
       e.stopImmediatePropagation();
     }, true);
@@ -238,7 +237,7 @@
   }
   async function loadAll(fresh) {
     meta = await getJSON('meta.json', fresh);
-    updateHealthEntry();
+    updateHealthFreshness();
     channels().forEach(c => {
       remember(c.banner);
       ch[c.slug] = {list: [], page: 0, pages: c.pages || 1, total: c.feed_total || 0, loading: false, error: null};
@@ -979,21 +978,42 @@
     if (!opts.fromPop && history.state && history.state.article) history.back();
   }
   const HEALTH_HASH = '#/health';
-  let healthLoad = 0;
-  function updateHealthEntry() {
-    if (!meta) return;
-    const entry = $('#healthEntry');
-    const count = entry.querySelector('.health-entry-count');
-    const {total, issues} = meta.health_summary || {};
-    const stale = window.RebangHealth.isSnapshotStale(meta.built_at, Date.now());
-    const known = Number.isInteger(total) && Number.isInteger(issues) && total > 0 && issues >= 0 && issues <= total;
-    const needsAttention = stale || (known && issues > 0);
-    entry.classList.toggle('has-issues', needsAttention);
-    count.textContent = stale ? '数据已过期' : needsAttention ? issues : '';
-    count.hidden = !needsAttention;
-    if (stale) entry.setAttribute('aria-label', '来源状态，数据已过期');
-    else if (known) entry.setAttribute('aria-label', needsAttention ? `来源状态，${issues} 个来源需处理` : '来源状态，全部健康');
-    else entry.removeAttribute('aria-label');
+  let healthLoad = 0, healthSnapshot = null;
+  function updateHealthFreshness() {
+    const now = Date.now();
+    const freshness = window.RebangHealth.snapshotFreshness;
+    const warningFor = state => state === 'unknown' ? '数据时间未知' : state === 'stale' ? '数据已过期' : '';
+    const openSnapshot = healthSnapshot && $('#healthView').open;
+    const snapshotState = openSnapshot ? freshness(healthSnapshot.generated_at, now) : null;
+    if (meta) {
+      const entry = $('#healthEntry');
+      const count = entry.querySelector('.health-entry-count');
+      const {total, issues} = meta.health_summary || {};
+      const known = Number.isInteger(total) && Number.isInteger(issues) && total > 0 && issues >= 0 && issues <= total;
+      const state = freshness(meta.built_at, now);
+      const warning = warningFor(state) || warningFor(snapshotState);
+      const needsAttention = Boolean(warning) || (known && issues > 0);
+      entry.classList.toggle('has-issues', needsAttention);
+      count.textContent = warning || (needsAttention ? issues : '');
+      count.hidden = !needsAttention;
+      if (warning) entry.setAttribute('aria-label', `来源状态，${warning}`);
+      else if (known) entry.setAttribute('aria-label', needsAttention ? `来源状态，${issues} 个来源需处理` : '来源状态，全部健康');
+      else entry.removeAttribute('aria-label');
+    }
+    if (openSnapshot) {
+      const timestamp = healthSnapshot.generated_at;
+      const state = snapshotState;
+      const stamp = $('#healthStamp');
+      stamp.textContent = state === 'unknown' ? '数据时间未知' :
+        `${state === 'stale' ? '数据已过期 · ' : ''}数据更新于 ${L.fmtFull(timestamp)}（北京时间）`;
+      stamp.hidden = false;
+      const overview = $('#healthBody .health-overview[data-healthy-count]');
+      if (overview) {
+        const warning = state !== 'fresh' || Boolean($('#healthBody .health-data-warning'));
+        overview.dataset.overview = warning ? 'warning' : 'ok';
+        overview.firstElementChild.textContent = `${overview.dataset.healthyCount} 个${warning ? '可用来源记录为正常' : '来源全部正常'}`;
+      }
+    }
   }
   function filterHealth(event) {
     event.target.closest('.health-age')?.focus();
@@ -1017,6 +1037,7 @@
     if (!fromPop) history.pushState({health: true}, '', HEALTH_HASH);
     const body = $('#healthBody'), stamp = $('#healthStamp');
     const load = ++healthLoad;
+    healthSnapshot = null;
     stamp.hidden = true;
     body.innerHTML = '<p class="muted" role="status">正在加载来源健康…</p>';
     dialog.showModal();
@@ -1026,12 +1047,10 @@
       if (load !== healthLoad || !dialog.open) return;
       if (data.schema !== 'rebang.source-health/1' || !Array.isArray(data.sources)) throw new Error('Invalid health snapshot');
       const now = Date.now();
-      const stale = window.RebangHealth.isSnapshotStale(data.generated_at, now);
-      if (Number.isFinite(Date.parse(data.generated_at))) {
-        stamp.textContent = `${stale ? '数据已过期 · ' : ''}数据更新于 ${L.fmtFull(data.generated_at)}（北京时间）`;
-        stamp.hidden = false;
-      }
-      body.innerHTML = window.RebangHealth.healthHTML(data.sources, now, stale);
+      body.innerHTML = window.RebangHealth.healthHTML(data.sources, now,
+        window.RebangHealth.snapshotFreshness(data.generated_at, now) !== 'fresh');
+      healthSnapshot = data;
+      updateHealthFreshness();
     } catch (e) {
       if (load === healthLoad && dialog.open) body.innerHTML = '<p class="muted" role="status">健康数据暂时加载不出来。</p>';
     }
@@ -1043,7 +1062,7 @@
   window.addEventListener('popstate', e => {
     if (location.hash === HEALTH_HASH) { openHealth(true); return; }
     const health = $('#healthView');
-    if (health.open) health.close();
+    if (health.open) { health.close(); updateHealthFreshness(); }
     const st = e.state || {};
     const hashId = !e.state ? L.parseItemHash(location.hash) : null;
     if (st.article) openItem(st.article, {fromPop: true});
@@ -1069,7 +1088,7 @@
     const NOTE = '刷新拿到的是最近一次发布的数据。';
     const old = meta && meta.built_at;
     let fresh;
-    try { fresh = await getJSON('meta.json', true); } catch (e) { toast('刷新失败，网络或站点暂时连不上。'); hidePtr(); return; }
+    try { fresh = await getJSON('meta.json', true); } catch (e) { updateHealthFreshness(); toast('刷新失败，网络或站点暂时连不上。'); hidePtr(); return; }
     stampRefresh(new Date());
     if (fresh.built_at !== old) {
       const idx = curCh, blAt = Number($('#bloggerList').dataset.cur || 0);
@@ -1080,7 +1099,11 @@
       if (idx > 0) jumpChannel(Math.min(idx, channels().length - 1));
       if (currentView() === 'blogger') { await ensureBloggers(); if (blAt > 0 && blSegs[blAt]) jumpSeg(Math.min(blAt, blSegs.length - 1)); }
       toast('有新内容，已更新。' + NOTE);
-    } else toast('没有新内容，已是最新。' + NOTE);
+    } else {
+      meta = fresh;
+      updateHealthFreshness();
+      toast('没有新内容，已是最新。' + NOTE);
+    }
     hidePtr();
   }
   function hidePtr() { const p = $('#ptr'); p.classList.remove('spin', 'show'); p.hidden = true; }
@@ -1551,9 +1574,10 @@
       e.preventDefault();
       openHealth();
     });
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) updateHealthEntry(); });
     $('#healthBody').addEventListener('click', filterHealth);
     $('#healthBack').onclick = leaveHealth;
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) updateHealthFreshness(); });
+    setInterval(updateHealthFreshness, 60_000);
     $('#healthView').addEventListener('cancel', e => { e.preventDefault(); leaveHealth(); });
     const deepHealth = location.hash === HEALTH_HASH;
     const deep = L.parseItemHash(location.hash);

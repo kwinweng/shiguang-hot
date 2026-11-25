@@ -23,9 +23,17 @@
   const byAge = value => Number.isFinite(date(value)) ? date(value) : Infinity;
   const isCount = value => Number.isInteger(value) && value >= 0;
   const statusKey = status => ORDER.includes(status) ? status : 'unknown';
-  const isSnapshotStale = (value, now) => now - date(value) > STALE_SNAPSHOT_MS;
-  const validRow = row => row && typeof row.name === 'string' && row.name.trim()
-    && typeof row.status === 'string' && row.status.trim();
+  const scalar = value => typeof value === 'string' || typeof value === 'number';
+  const DISPLAY_FIELDS = ['group', 'reason', 'last_ok_at', 'issue_since', 'count', 'run_count'];
+  const validRow = row => row && scalar(row.name) && String(row.name).trim()
+    && scalar(row.status) && String(row.status).trim()
+    && DISPLAY_FIELDS.every(key => row[key] == null || scalar(row[key]));
+
+  function snapshotFreshness(value, now) {
+    const age = now - date(value);
+    if (!Number.isFinite(age) || age < 0) return 'unknown';
+    return age > STALE_SNAPSHOT_MS ? 'stale' : 'fresh';
+  }
 
   function healthSections(rows) {
     const groups = Object.fromEntries(ORDER.map(status => [status, []]));
@@ -67,29 +75,33 @@
       ${meta.length ? `<p class="health-meta">${meta.join(' · ')}</p>` : ''}`;
   }
 
-  function section(status, rows, now, initial) {
+  function section(status, rows, initial) {
     const advice = ADVICE[status];
     return `<details class="health-section" data-health-group="${status}"${status !== 'ok' || initial === status ? ' open' : ''}>
       <summary class="health-section-head"${initial === status ? ' hidden' : ''}><span>${LABELS[status]} <span class="health-group-count">${rows.length}</span></span></summary>
       ${advice ? `<p class="health-advice">${advice}</p>` : ''}
-      <ul class="health-rows">${rows.map(row => {
-        const accounts = row.accounts || [];
-        const details = accounts.length ? `<details class="health-accounts"><summary>查看 ${accounts.length} 个账号</summary>
-          <ul>${Object.values(healthSections(accounts)).flat().map(a => `<li class="health-account">${rowBody(a, now, true)}</li>`).join('')}</ul></details>` : '';
-        return `<li class="health-row">${rowBody(row, now)}${details}</li>`;
-      }).join('')}</ul></details>`;
+      <ul class="health-rows">${rows.map(row => row.html).join('')}</ul></details>`;
   }
 
   function healthHTML(sources, now, stale = false) {
     let damaged = false;
-    const rows = sources.filter(validRow).map(row => {
-      if (row.accounts === undefined) return row;
-      const accounts = Array.isArray(row.accounts) ? row.accounts.filter(validRow) : [];
-      if (!Array.isArray(row.accounts) || accounts.length !== row.accounts.length) damaged = true;
-      return {...row, accounts};
-    });
-    const warning = damaged || rows.length !== sources.length
-      ? '<p class="health-data-warning" role="status">部分数据缺损。</p>' : '';
+    function render(row, account) {
+      try {
+        if (validRow(row)) {
+          const body = rowBody(row, now, account);
+          if (account) return {...row, html: `<li class="health-account">${body}</li>`};
+          if (row.accounts !== undefined && !Array.isArray(row.accounts)) damaged = true;
+          const accounts = Array.isArray(row.accounts) ? row.accounts.map(a => render(a, true)).filter(Boolean) : [];
+          const details = accounts.length ? `<details class="health-accounts"><summary>查看 ${accounts.length} 个账号</summary>
+            <ul>${Object.values(healthSections(accounts)).flat().map(a => a.html).join('')}</ul></details>` : '';
+          return {...row, html: `<li class="health-row">${body}${details}</li>`};
+        }
+      } catch { /* 不让单条展示数据阻断整个看板。 */ }
+      damaged = true;
+      return null;
+    }
+    const rows = sources.map(row => render(row, false)).filter(Boolean);
+    const warning = damaged ? '<p class="health-data-warning" role="status">部分数据缺损。</p>' : '';
     if (!rows.length) return `${warning}<p class="muted">暂无来源健康数据。</p>`;
     const groups = healthSections(rows);
     const good = groups.ok?.length || 0;
@@ -100,15 +112,15 @@
       : stale || warning ? `<b>${good} 个可用来源记录为正常</b>` : `<b>${good} 个来源全部正常</b>`;
     return `<div class="health-controls">
       ${warning}
-      <p class="health-overview" data-overview="${stale || warning ? 'warning' : initial}">${summary}</p>
+      <p class="health-overview" data-overview="${stale || warning ? 'warning' : initial}"${issues ? '' : ` data-healthy-count="${good}"`}>${summary}</p>
       <div class="health-filters" role="group" aria-label="按来源状态筛选">${Object.entries(groups).map(([status, sources]) =>
         `<button type="button" data-health-filter="${status}" aria-pressed="${status === initial}">${LABELS[status]} <span>${sources.length}</span></button>`
       ).join('')}</div>
     </div>
-    ${Object.entries(groups).map(([status, sources]) => section(status, sources, now, initial)).join('')}`;
+    ${Object.entries(groups).map(([status, sources]) => section(status, sources, initial)).join('')}`;
   }
 
-  const api = {healthSections, elapsed, isSnapshotStale, healthHTML};
+  const api = {healthSections, elapsed, snapshotFreshness, healthHTML};
   if (node) module.exports = api;
   else root.RebangHealth = api;
 })(typeof window !== 'undefined' ? window : globalThis);

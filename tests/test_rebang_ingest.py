@@ -218,6 +218,28 @@ class IngestTests(unittest.TestCase):
                 self.assertEqual((row['status'], row['run_count'], row['reason']), ('ok', 1, '本轮数据已采集，缓存写入失败'))
                 self.assertNotIn('/private/', json.dumps(snapshot))
 
+    def test_read_only_cache_preserves_fresh_collection(self):
+        self.cache.mkdir(mode=0o555)
+        def get(url, now):
+            if url in FEEDS:
+                return fake_http()(url, now)
+            return ('<article><p>' + 'A full article sentence with enough detail. ' * 80 + '</p></article>').encode()
+
+        def save_translator():
+            (self.cache / 'pending.json').write_text('{}')
+
+        try:
+            env = self.run_collect(fetch=True, http_get=get, translator=(
+                lambda texts, src: ['译文'] * len(texts), 'fixture', save_translator))
+        finally:
+            self.cache.chmod(0o755)
+        bbc = self.by_source(env)['bbc-world'][0]
+        self.assertEqual(bbc['title'], 'Fresh headline')
+        self.assertTrue(bbc['translated'])
+        self.assertGreater(env['extraction']['applied'], 0)
+        self.assertEqual(next(s for s in env['sources'] if s['id'] == 'bbc-world')['status'], 'ok')
+        self.assertEqual(list(self.cache.iterdir()), [])
+
     def test_no_fetch_without_cache_reports_not_fetched(self):
         env = self.run_collect()
         status = {s['id']: s for s in env['sources']}

@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from rebang.cache import save_cache
 from rebang.contract import ITEMS_SCHEMA, load_channels
 from rebang.health_time import observation_time
 
@@ -325,10 +326,7 @@ def _preserve_tg_success(rows, cache, now):
         if last_ok:
             updated[source_id] = row['last_ok_at']
     if updated != saved:
-        try:
-            _write_json(_cache_path(cache, key), updated)
-        except OSError:  # Diagnostics must not stop news from building if the cache is unwritable.
-            pass
+        save_cache(_write_json, _cache_path(cache, key), updated)
 
 
 def remote_items(sources, now, floor, *, fetch, cache, http_get):
@@ -346,9 +344,8 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
             else:
                 entries, fetched_at = parsed, _iso(now)
                 state = 'ok' if entries else 'empty'
-                try:
-                    _write_json(_cache_path(cache, sid), {'fetched_at': fetched_at, 'url': cfg['url'], 'entries': entries})
-                except OSError:
+                if not save_cache(_write_json, _cache_path(cache, sid),
+                                  {'fetched_at': fetched_at, 'url': cfg['url'], 'entries': entries}):
                     cache_warning = 'write_failed'
         if entries is None:
             cached = _read_cache(cache, sid)
@@ -626,9 +623,9 @@ def apply_translation(items, translator, cache=None):
         item['translation'] = trans
         done += 1
     if changed and store_path:
-        _write_json(store_path, store)
+        save_cache(_write_json, store_path, store)
     if len(translator) > 2 and callable(translator[2]):
-        translator[2]()
+        save_cache(translator[2])
     return done
 
 

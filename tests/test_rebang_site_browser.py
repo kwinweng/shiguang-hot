@@ -289,6 +289,77 @@ class SiteBrowserTests(unittest.TestCase):
         }""")
         self.assertEqual(dialog.evaluate('el => el.getBoundingClientRect().height'), 900)
 
+    def test_health_open_dashboard_and_entry_age_past_three_hours(self):
+        self.page.clock.install(time=NOW)
+        def serve_meta(route):
+            meta = json.loads((self.health_out / 'data/meta.json').read_text())
+            meta['health_summary']['issues'] = 0
+            route.fulfill(json=meta)
+
+        snapshot = json.loads((self.health_out / 'data/health.json').read_text())
+        snapshot['sources'] = [row for row in snapshot['sources'] if row['status'] == 'ok']
+        self.page.route('**/data/meta.json*', serve_meta)
+        self.page.route('**/data/health.json*', lambda route: route.fulfill(json=snapshot))
+        self.open()
+        entry = self.page.locator('#healthEntry')
+        entry.click()
+        stamp = self.page.locator('#healthStamp')
+        stamp.wait_for(timeout=2500)
+        self.assertIn('数据更新于', stamp.inner_text())
+        overview = self.page.locator('.health-overview')
+        self.assertIn('全部正常', overview.inner_text())
+        self.assertNotIn('已过期', entry.inner_text())
+        self.page.clock.fast_forward(3 * 3600 * 1000 + 1000)
+        self.page.wait_for_function("document.querySelector('#healthEntry').textContent.includes('已过期')", timeout=2500)
+        self.assertIn('已过期', stamp.inner_text())
+        self.assertNotIn('全部正常', overview.inner_text())
+
+    def test_health_same_build_refresh_and_visibility_recompute_freshness(self):
+        self.open()
+        entry = self.page.locator('#healthEntry')
+        self.assertNotIn('已过期', entry.inner_text())
+        self.page.clock.set_fixed_time(NOW + timedelta(hours=4))
+        self.page.locator('#btnRefresh').click()
+        entry.get_by_text('已过期').wait_for(timeout=2500)
+        self.page.clock.set_fixed_time(NOW)
+        self.page.evaluate("document.dispatchEvent(new Event('visibilitychange'))")
+        self.assertNotIn('已过期', entry.inner_text())
+
+    def test_health_invalid_timestamp_never_claims_everything_is_healthy(self):
+        def serve_meta(route):
+            meta = json.loads((self.health_out / 'data/meta.json').read_text())
+            meta['built_at'] = 'invalid'
+            meta['health_summary'] = {'total': 1, 'issues': 0}
+            route.fulfill(json=meta)
+
+        snapshot = json.loads((self.health_out / 'data/health.json').read_text())
+        snapshot['generated_at'] = {'toString': None}
+        snapshot['sources'] = [row for row in snapshot['sources'] if row['status'] == 'ok']
+        self.page.route('**/data/meta.json*', serve_meta)
+        self.page.route('**/data/health.json*', lambda route: route.fulfill(json=snapshot))
+        self.open()
+        entry = self.page.locator('#healthEntry')
+        self.assertIn('时间未知', entry.inner_text())
+        self.assertNotIn('全部健康', entry.get_attribute('aria-label'))
+        entry.click()
+        self.page.locator('#healthStamp').get_by_text('数据时间未知').wait_for(timeout=2500)
+        self.assertNotIn('全部正常', self.page.locator('#healthView').inner_text())
+
+    def test_health_keeps_valid_rows_when_source_and_account_fields_are_damaged(self):
+        snapshot = json.loads((self.health_out / 'data/health.json').read_text())
+        platform = next(row for row in snapshot['sources'] if row.get('accounts'))
+        platform['accounts'].append({'name': '损坏账号', 'status': 'ok', 'reason': {'toString': None}})
+        snapshot['sources'].append({'name': '损坏来源', 'status': 'ok', 'group': 1, 'reason': {'toString': None}})
+        self.page.route('**/data/health.json*', lambda route: route.fulfill(json=snapshot))
+        self.open('#/health')
+        dialog = self.page.locator('#healthView')
+        dialog.get_by_text('部分数据缺损。', exact=True).wait_for(timeout=2500)
+        self.assertEqual(dialog.get_by_text('部分数据缺损。', exact=True).count(), 1)
+        self.assertIn(platform['name'], dialog.locator('.health-name').all_text_contents())
+        self.assertIn(platform['accounts'][0]['name'], dialog.locator('.health-account-name').all_text_contents())
+        self.assertNotIn('损坏来源', dialog.locator('.health-name').all_text_contents())
+        self.assertNotIn('损坏账号', dialog.locator('.health-account-name').all_text_contents())
+
     def test_health_diagnostics_link_is_lazy_and_handles_fetch_failure(self):
         requested = []
         self.page.on('request', lambda request: requested.append(request.url))
@@ -305,9 +376,10 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.wait_for_timeout(2000)
         link.wait_for()
         cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
-        self.page.wait_for_timeout(250)
         button = self.page.locator('#chBtn')
+        button.dispatch_event('click', {'detail': 1})
         self.assertEqual(button.get_attribute('aria-expanded'), 'false')
+        self.page.wait_for_timeout(250)
         button.tap()
         self.assertEqual(button.get_attribute('aria-expanded'), 'true')
         self.page.keyboard.press('Escape')

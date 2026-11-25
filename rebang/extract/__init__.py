@@ -16,6 +16,7 @@ from urllib.parse import urljoin, urlsplit
 from bs4 import BeautifulSoup, Comment, NavigableString
 
 from rebang.bloggers.common import blocks_text, html_blocks
+from rebang.cache import save_cache
 
 # 需要登录或明显不是公开文章页的站点：不抓，沿用已有摘要。
 SKIP_HOSTS = frozenset({
@@ -268,5 +269,5 @@ def apply_extraction(items, cache_dir, *, fetch=False, http_get=None, now=None, 
         else:
             cache.put(url, {'url': url, 'ok': False, 'error': err or 'extract_failed', 'fetched_at': iso})
             report['failed'] += 1
-    cache.save()
+    save_cache(cache.save)
     return report
