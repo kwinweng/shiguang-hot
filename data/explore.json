@@ -1,6 +1,62 @@
 {
   "messages": [
     {
+      "category": "游戏",
+      "day": "2026-11-25",
+      "id": "trial-8fbdc930f82b5f3ecbd9",
+      "image": "https://image.gcores.com/23f39edc8f2b00684434fdd539266ed5-1600-900.jpg?x-oss-process=image/resize,limit_1,m_fill,w_626,h_292/quality,q_90",
+      "link": "https://www.gcores.com/radios/222596",
+      "section": "play",
+      "source": "gcores",
+      "source_name": "机核",
+      "summary": "本期时间轴制作：天行 本期节目本来是一期录音笔，但是随着时间的推移我们干脆决定补录一点内容，变成一期完整的茶话会。《魔兽世界：无限》开服已经两个礼拜，大部队已经差不多体验完了升级过程，即将开始终局游戏，或开启下一个角色。实话实说，这个又旧又新的魔兽世界里既包含很多相当走心的调整和改动以及新添加的内容，同时让人难受，痛苦，挣扎的东西不但没变少，还增加了。所以只推荐给又有时间，又善于主动社交的朋友们。 有组织的话请带带我们，联盟部落都行，谢谢。",
+      "text": "本期时间轴制作：天行 本期节目本来是一期录音笔，但是随着时间的推移我们干脆决定补录一点内容，变成一期完整的茶话会。《魔兽世界：无限》开服已经两个礼拜，大部队已经差不多体验完了升级过程，即将开始终局游戏，或开启下一个角色。实话实说，这个又旧又新的魔兽世界里既包含很多相当走心的调整和改动以及新添加的内容，同时让人难受，痛苦，挣扎的东西不但没变少，还增加了。所以只推荐给又有时间，又善于主动社交的朋友们。 有组织的话请带带我们，联盟部落都行，谢谢。",
+      "time": "2026-11-25T15:00:00+00:00",
+      "title": "游戏茶话会 V.135 《魔兽世界：无限》新老玩家一起重新踏上艾泽拉斯"
+    },
+    {
+      "category": "苹果数码",
+      "day": "2026-11-25",
+      "id": "trial-c081dcfa37272877f852",
+      "image": "https://9to5mac.com/wp-content/uploads/sites/6/2025/11/apple-tv-intro-vibrant.jpg?quality=82&strip=all&w=1600",
+      "link": "https://9to5mac.com/2026/11/25/apple-tv-just-added-new-movie-to-expanding-lineup-more-coming-soon/",
+      "section": "buy",
+      "source": "9to5mac",
+      "source_name": "9to5Mac",
+      "summary": "Apple TV ( now $6.99/month for Black Friday ) just added a new original movie: Way of the Warrior Kid starring Chris Pratt. The streamer also has a new batch of beloved classic films coming next week. more…",
+      "text": "Apple TV ( now $6.99/month for Black Friday ) just added a new original movie: Way of the Warrior Kid starring Chris Pratt. The streamer also has a new batch of beloved classic films coming next week. more…",
+      "time": "2026-11-25T14:48:43+00:00",
+      "title": "Apple TV just added new movie to expanding lineup, more coming soon"
+    },
+    {
+      "category": "影视",
+      "day": "2026-11-25",
+      "id": "trial-68e63f8866f739c8fd45",
+      "image": "https://www.whats-on-netflix.com/wp-content/uploads/2026/11/the-mosquito-bowl-movie-review.jpg",
+      "link": "https://www.whats-on-netflix.com/what-to-watch/the-mosquito-bowl-netflix-movie-review-peter-berg/",
+      "section": "play",
+      "source": "whats-on-netflix",
+      "source_name": "What's on Netflix",
+      "summary": "A gripping first hour and a standout cast can't quite carry a screenplay that never digs deeper than \"war is hell.\"",
+      "text": "A gripping first hour and a standout cast can't quite carry a screenplay that never digs deeper than \"war is hell.\"",
+      "time": "2026-11-25T14:12:03+00:00",
+      "title": "‘The Mosquito Bowl’ Review: Ray Nicholson Steals Peter Berg’s Brutal WWII Football Drama That Runs Out of Things to Say"
+    },
+    {
+      "category": "影视",
+      "day": "2026-11-25",
+      "id": "trial-945cb5a0aad464bda4e4",
+      "image": "https://www.whats-on-netflix.com/wp-content/uploads/2026/11/the-northman-leaving-netflix.jpg",
+      "link": "https://www.whats-on-netflix.com/leaving-soon/8-great-movies-leaving-netflix-in-december-2026/",
+      "section": "play",
+      "source": "whats-on-netflix",
+      "source_name": "What's on Netflix",
+      "summary": "From a pair of sci-fi all-timers to a Viking revenge epic and last year's biggest dragon, it's last call on these movies before they depart Netflix in the US.",
+      "text": "From a pair of sci-fi all-timers to a Viking revenge epic and last year's biggest dragon, it's last call on these movies before they depart Netflix in the US.",
+      "time": "2026-11-25T14:00:39+00:00",
+      "title": "8 Great Movies Leaving Netflix In December 2026"
+    },
+    {
       "category": "苹果数码",
       "day": "2026-11-25",
       "id": "trial-de1356c6b8b13c50ac14",
@@ -13,6 +69,20 @@
       "text": "With iPads running the same chips as Macs , many have wished Apple would give us the option of running macOS on them instead of the somewhat clunky iPadOS windowing system. Apple’s previous arguments against converging devices have been somewhat weakened by the launch of the touchscreen MacBook Pro . A new report says that Apple already has iPads running macOS internally, and that work on a giant iPad continues, but don’t hold your breath for a public launch of either … more…",
       "time": "2026-11-25T13:40:50+00:00",
       "title": "Apple has iPads running macOS already, but don’t get too excited"
+    },
+    {
+      "category": "影视",
+      "day": "2026-11-25",
+      "id": "trial-164b4833a3c946a63bb7",
+      "image": "https://www.whats-on-netflix.com/wp-content/uploads/2026/11/cbeebies-deal-analysis.jpg",
+      "link": "https://www.whats-on-netflix.com/news/why-cbeebies-on-netflix-could-end-kids-streamings-obsession-with-exclusivity/",
+      "section": "play",
+      "source": "whats-on-netflix",
+      "source_name": "What's on Netflix",
+      "summary": "Kids follow characters, not platforms, and the BBC's Netflix trial is the first real test of whether sharing shows grows the audience for everyone.",
+      "text": "Kids follow characters, not platforms, and the BBC's Netflix trial is the first real test of whether sharing shows grows the audience for everyone.",
+      "time": "2026-11-25T13:37:04+00:00",
+      "title": "Why CBeebies on Netflix Could End Kids Streaming’s Obsession With Exclusivity"
     },
     {
       "category": "苹果数码",
