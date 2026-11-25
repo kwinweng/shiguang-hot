@@ -4,33 +4,33 @@
 	<title><![CDATA[ selfh.st ]]></title>
 	<description><![CDATA[ Self-hosted news, content, updates, launches, events, and more ]]></description>
 	<link>https://selfh.st</link>
-	
+
     <lastBuildDate>Wed, 25 Nov 2026 05:27:29 -0500</lastBuildDate>
     <atom:link href="https://selfh.st/rss" rel="self" type="application/xml"/>
 	<ttl>60</ttl>
 
 		<item>
-		  <title><![CDATA[ Self-Host Weekly (20 November 2026) ]]></title>
-		  <description><![CDATA[Another Brick in the Paywall]]></description>
-		  <link>https://selfh.st/weekly/2026-11-20/</link>
-		  <guid isPermaLink="false">6af6e5d29cc8650001cc6fd1</guid>
-		  <category><![CDATA[ Self-Host Weekly ]]></category>
-		  <dc:creator><![CDATA[ Ethan Sholly ]]></dc:creator>
-		  <pubDate>Fri, 20 Nov 2026 08:13:47 -0500</pubDate>
-		  <media:content url="https://selfh.st/content/images/2026/11/2026-11-20-featured-image.png" medium="image"/>
-		  
+          <title><![CDATA[ Self-Host Weekly (20 November 2026) ]]></title>
+          <description><![CDATA[Another Brick in the Paywall]]></description>
+          <link>https://selfh.st/weekly/2026-11-20/</link>
+          <guid isPermaLink="false">6af6e5d29cc8650001cc6fd1</guid>
+          <category><![CDATA[ Self-Host Weekly ]]></category>
+          <dc:creator><![CDATA[ Ethan Sholly ]]></dc:creator>
+          <pubDate>Fri, 20 Nov 2026 08:13:47 -0500</pubDate>
+          <media:content url="https://selfh.st/content/images/2026/11/2026-11-20-featured-image.png" medium="image"/>
+
 		</item>
 <item>
-		  <title><![CDATA[ Self-Host Weekly (13 November 2026) ]]></title>
-		  <description><![CDATA[Numbers don&#39;t lie (usually)]]></description>
-		  <link>https://selfh.st/weekly/2026-11-13/</link>
-		  <guid isPermaLink="false">6aedd17028f15f0001050353</guid>
-		  <category><![CDATA[ Self-Host Weekly ]]></category>
-		  <dc:creator><![CDATA[ Ethan Sholly ]]></dc:creator>
-		  <pubDate>Fri, 13 Nov 2026 08:12:20 -0500</pubDate>
-		  <media:content url="https://selfh.st/content/images/2026/11/2026-11-13-featured-image.png" medium="image"/>
-		  
+          <title><![CDATA[ Self-Host Weekly (13 November 2026) ]]></title>
+          <description><![CDATA[Numbers don&#39;t lie (usually)]]></description>
+          <link>https://selfh.st/weekly/2026-11-13/</link>
+          <guid isPermaLink="false">6aedd17028f15f0001050353</guid>
+          <category><![CDATA[ Self-Host Weekly ]]></category>
+          <dc:creator><![CDATA[ Ethan Sholly ]]></dc:creator>
+          <pubDate>Fri, 13 Nov 2026 08:12:20 -0500</pubDate>
+          <media:content url="https://selfh.st/content/images/2026/11/2026-11-13-featured-image.png" medium="image"/>
+
 		</item>
-	
+
   </channel>
 </rss>

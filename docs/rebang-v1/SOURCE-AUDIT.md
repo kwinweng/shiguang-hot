@@ -26,7 +26,7 @@
 上线后要留意的事：
 
 - 环球从 2 个源变成 6 个，线上 11/25 17:39 那版环球只有 35 条，工具与项目 57 条、数码 148 条；这三个频道都会明显变厚。
-- 新源全是英文，会进翻译队列（`var/rebang/translate/pending.json`），DeepSeek Flash 的用量会上升；全文抽取每轮仍最多 40 篇（`rebang/extract` 的 `MAX_FETCH_PER_RUN`），不会因为加源变成无上限。
+- 新源几乎都是英文：Mini 发布入口只读翻译缓存、把缺的译文登记进待翻队列（`var/rebang/translate/pending.json`），本身不调翻译；DeepSeek Flash 的用量是翻译任务（`tools/translate_deepseek.py`）消费这个队列后预期上升。订阅里偶尔混进的中文为主条目标 zh、不进队列；全文抽取每轮仍最多 40 篇（`rebang/extract` 的 `MAX_FETCH_PER_RUN`），不会因为加源变成无上限。
 - It's FOSS 的条目链接是 FeedPress 跳转地址（`feed.itsfoss.com/link/...`），点开会跳到原文，但跨来源按链接去重时认不出是同一篇。第 5 步做去重时再考虑要不要解跳转。
 - France 24 的总订阅偶尔有空摘要的直播条，属于原文如此，前端显示「无正文」。
 - 健康看板会多出 8 行；首轮抓取前它们显示「未配置 / 尚无采集记录」，抓过一轮就正常。
@@ -109,7 +109,7 @@
 | `tools/translate_deepseek.py` | 在用 | 清翻译队列 |
 | `tools/box_scrape.py`、`box_scrape.sh`、`box_cron.example` | 待确认 | 旧机器「热榜抓取发布」例程的入口；发布已迁到 Mac mini，旧例程是否已停须阿欢确认，停之前不动 |
 | `validate_feed.py`（根目录）、`tools/validate_feed.py` | 待确认 | 注释写「投递 bot 仍按旧路径调用」，可能是今日重点生产方在用；确认前保留 |
-| `feeds.py`（根目录） | 归档候选 | 给盒子上 `publish_public.py` 的兼容入口；`public-feeds` 10/23 起已不再推送 |
+| `feeds.py`（根目录） | 待确认 | 给盒子上 `publish_public.py` 的兼容入口；`public-feeds` 10/23 起已不再推送。归档前要先核对盒子上 `publish_public.py --no-push` 是否还调用它，确认不用了再归档 |
 | `mailbuild.py` | 删除候选 | 内网版 inbox 重建入口，内网版已停用 |
 | `tools/login_gate.py` | 删除候选 | 内网登录，已停用（`docs/legacy/PRIVATE_LOGIN.md`） |
 | `tools/dispatch_hourly.py` | 删除候选 | GitHub Actions 外部触发，已被本机采集取代、未接任何例程；注意改名分支动过它，删前先对齐第 6 步 |
@@ -134,7 +134,7 @@
 
 ## 4. 「今日重点」在新版里的依赖链
 
-结论：**仍然依赖旧站代码，而且线上现在实际没有今日重点标记。**
+结论：**仍然依赖旧站代码；11/25 抽样的线上页面（6 个频道第一页共 180 条，见下文）里一条今日重点标记都没有。** 抽样之外的条目和生产机上的 ingest 状态没看，不能据此断言全站都没有。
 
 依赖链：
 

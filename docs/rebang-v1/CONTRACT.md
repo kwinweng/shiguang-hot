@@ -31,7 +31,7 @@
 | `image_local` | 否 | ingest 存到本地的图：`{path, rel, width, height}`；`rel` 必须是相对路径且不含 `..`，宽高为正整数，否则整条不合格。站点构建把它复制到 `<site>/media/<rel>`，前端用相对地址 `media/<rel>` |
 | `published_at` | 是 | 带时区 ISO 8601（历史按北京时间日期分组） |
 | `fetched_at` | 否 | 带时区 |
-| `lang` | 是 | `zh` / `en` / … ；判断不了写 `und`（不翻译）。ingest 规则：含中日韩字符为 zh，否则 en |
+| `lang` | 是 | `zh` / `en` / … ；判断不了写 `und`（不翻译）。ingest 规则：TG 含汉字为 zh，否则 en；官方订阅按条判断，标题+摘要里汉字数超过「汉字 + 英文单词数」的一半（一个汉字、一个英文单词各记 1）才标 zh、不进翻译队列，英文正文夹少量中文仍是 en；GitHub Trending 含汉字为 zh。订阅条目入库时校验链接和图片（与本契约同口径：http(s) 且有主机名）：图片坏了只丢图、条目保留，链接坏了只丢这一条，不影响同源其他条和其他来源 |
 | `translated` + `translation` | 否 | 非中文才翻；`translation={title, summary, body?, blocks?, body_pending?, engine, label:"机器翻译"}`。标题和摘要一旦有译文就写入，不必等正文或 blocks；正文稍后补上时详情页再换全文。正文还在排队时 `body_pending:true`，详情用已有的中文摘要并标明全文还在翻译，不把英文长文铺上去。入库时就译好，打开页面不现翻。流程：缓存 `var/rebang/translate/cache.json` 命中直接用 → 没命中进 `pending.json` → 由 Grok 翻好后 `python3 -m rebang.translate fill FILE --engine grok-bot` 回填，下次构建生效；只翻新增条目（增量）。公开新闻页会先抽全文（`rebang.extract`，按 URL 缓存，单轮有上限），抽失败则沿用原摘要 |
 | `highlight` / `highlight_date` | 否 | 今日重点标记（站上不单开栏） |
 | `blogger` | post 必填 | `{platform, handle, display_name, avatar?, verified?, metrics{reply,repost,like,quote,bookmark,view}?, media[{type:image|video|gif|youtube,url,preview_url?,duration_ms?}]（`youtube` 的 url 是 `https://www.youtube-nocookie.com/embed/<视频号>`，preview_url 是封面，站内查看器用嵌入播放器）, quote{handle,text,display_name?,published_at?,url?,...}|null, comments[{handle,text,display_name?,avatar?,published_at?,url?,like?,text_zh?}]?}`；评论最多 10 条，按点赞排序。`like` 是非负整数，拿不到不写。英文回复译文在 `text_zh`，原文留在 `text`。拿不到的字段不写，不编数字。Grok bot 的 4 类整理内容是 `platform:"grok"`、`handle` = 来源 id（hot-daily/x/world/github）、`channel:null` |

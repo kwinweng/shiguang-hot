@@ -9,6 +9,7 @@ import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from pathlib import Path
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 from rebang.cache import save_cache
@@ -62,6 +63,17 @@ def _http_url(url):
     return url if re.match(r'https?://[^\s/]+', str(url or '')) else ''
 
 
+def _valid_http(url, schemes=('http', 'https')):
+    """与契约 schema._is_url 同一口径（scheme + 主机名），另外挡住 urlsplit 自己会抛错的地址（如坏 IPv6）。"""
+    if not isinstance(url, str) or not url.strip():
+        return False
+    try:
+        parts = urlsplit(url.strip())
+        return parts.scheme in schemes and bool(parts.netloc) and bool(parts.hostname)
+    except ValueError:
+        return False
+
+
 def _image_size(path):
     try:
         from PIL import Image
@@ -104,6 +116,18 @@ def strip_leading_urls(text):
 
 def guess_lang(*texts):
     return 'zh' if _CJK.search(' '.join(t or '' for t in texts)) else 'en'
+
+
+_LATIN_WORD = re.compile(r'[A-Za-z]+')
+
+
+def mostly_chinese(*texts):
+    """英文订阅按条判断：汉字数超过「汉字 + 英文单词」的一半才算中文为主。
+    一个汉字记 1、一个英文单词记 1（不按字母数），英文正文夹几个中文人名/引语仍判 en。"""
+    text = ' '.join(t or '' for t in texts)
+    cjk = len(_CJK.findall(text))
+    words = len(_LATIN_WORD.findall(text))
+    return cjk > 0 and cjk * 2 > cjk + words
 
 
 def _news(source, channel, native_id, title, summary, url, published, now, lang='zh', body=None, image=None,
@@ -264,7 +288,7 @@ def parse_feed(xml):
     for e in web.parse(xml):
         out.append({'id': e['id'] or _sha(e['url'] or e['title']), 'ts': _iso(e['ts']), 'title': e['title'] or '',
                     'summary': e['body'] or '', 'url': e['url'] or '',
-                    'image': next((u for u in e.get('images') or [] if str(u).startswith('https://')), None)})
+                    'image': next((u for u in e.get('images') or [] if _valid_http(u, ('https',))), None)})
     return out
 
 
@@ -363,10 +387,18 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
             title = _plain(e.get('title'))
             if not title:
                 continue
+            link = str(e.get('url') or '').strip()
+            if link and not _valid_http(link):
+                continue   # \u94fe\u63a5\u672c\u8eab\u574f\u4e86\u53ea\u4e22\u8fd9\u4e00\u6761\uff0c\u540c\u6e90\u5176\u4ed6\u6761\u548c\u5176\u4ed6\u6765\u6e90\u7167\u5e38
             full = _plain(e.get('summary'))
             body = full + ('\n' + e['meta'] if e.get('meta') else '') if (full or e.get('meta')) else None
-            lang = 'zh' if re.search(r'[\u4e00-\u9fff]', title + full) and cfg['type'] == 'page' else FEED_LANG
-            image = {'url': e['image']} if e.get('image') and published >= now - timedelta(days=MEDIA_DAYS) else None
+            if cfg['type'] == 'page':
+                lang = 'zh' if re.search(r'[\u4e00-\u9fff]', title + full) else FEED_LANG
+            else:   # \u82f1\u6587\u8ba2\u9605\u91cc\u5076\u5c14\u6df7\u8fdb\u7eaf\u4e2d\u6587\u6761\u76ee\uff1a\u4e2d\u6587\u4e3a\u4e3b\u7684\u6807 zh\uff0c\u4e0d\u9001\u7ffb\u8bd1
+                lang = 'zh' if mostly_chinese(title, full) else FEED_LANG
+            # \u56fe\u7247\u5730\u5740\u574f\u4e86\uff08\u7f3a\u4e3b\u673a\u540d\u7b49\uff09\u53ea\u4e22\u56fe\u3001\u6761\u76ee\u4fdd\u7559\uff1b\u65e7\u7f13\u5b58\u91cc\u7684\u574f\u56fe\u540c\u6837\u5728\u8fd9\u91cc\u6321\u6389
+            fresh = published >= now - timedelta(days=MEDIA_DAYS)
+            image = {'url': e['image']} if fresh and _valid_http(e.get('image')) else None
             native = e['id'] if cfg['type'] == 'page' else str(e.get('id') or _sha(e.get('url') or title))
             item = _news(cfg, channel, native, title, _plain(full, SUMMARY_CHARS), e.get('url'), published, now,
                          lang=lang, body=body, image=image)
