@@ -56,7 +56,7 @@ if [[ -z "$source_dir" ]]; then
     curl -q --fail --location --silent --show-error --proto '=https' --proto-redir '=https' \
         --connect-timeout 15 --max-time 180 --retry 2 \
         --output "$work/download/site.tar.gz" \
-        https://codeload.github.com/kwinweng/shiguang-hot/tar.gz/refs/heads/gh-pages
+        https://codeload.github.com/kwinweng/shiguang-news/tar.gz/refs/heads/gh-pages
 fi
 python3 -I - "$work/site" "$target" "$dry_run" "$source_dir" "$work/download/site.tar.gz" <<'PY'
 import ctypes

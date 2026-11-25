@@ -3,7 +3,7 @@
 唯一生产输入为公开 `gh-pages`：
 
 ```text
-https://codeload.github.com/kwinweng/shiguang-hot/tar.gz/refs/heads/gh-pages
+https://codeload.github.com/kwinweng/shiguang-news/tar.gz/refs/heads/gh-pages
 ```
 
 `news-sync.sh` 默认无凭据下载此压缩包，每 20 分钟校验后替换静态根。无需 Git、GitHub token、SSH 构建主机或私有 feeds。本目录不修改 nginx 配置。
