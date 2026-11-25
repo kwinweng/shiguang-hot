@@ -572,6 +572,69 @@ exec '{GIT}' "$@"
                 self.assert_halted(result)
                 self.assertEqual(self.heads(), (docs, self.before[1]))
 
+    # --- review round 3: a failed initial fetch, and receipts with stray lines ----------
+    #  8. fetch reports gh-pages missing, branch restored before any re-check -> HALT
+    #  9. fetch reports a missing ref, then the remote disconnects -> HALT (no network excuse)
+    # 10. fetch fails like a network error, ls-remote then shows gh-pages rewound -> HALT
+    # 11. fetch fails like a network error, ls-remote shows nothing odd -> HALT (cause unknown)
+    # 12. fetch and ls-remote both fail on the network -> exit 1, no HALT, then publishes normally
+    #     (test_unreachable_remote_fails_without_halt)
+    # 13. receipt matches but carries one extra, incomplete status line -> HALT
+
+    NETWORK_ERROR = "echo 'fatal: unable to access remote: Could not resolve host' >&2\n    exit 128"
+
+    def test_fetch_reports_missing_pages_then_restored_halts(self):
+        self.assert_success(self.cycle())
+        main1, pages1 = self.heads()
+        rgit = f"'{GIT}' --git-dir '{self.remote}' update-ref"
+        self.on_first('fetch', f'{rgit} -d refs/heads/gh-pages\n    '
+                      + self.run_then(f'{rgit} refs/heads/gh-pages {pages1}'))
+        result = self.cycle()
+        self.assertIn("couldn't find remote ref", result.stderr)
+        self.assertIn('lacks', result.stderr)
+        self.assert_halted(result)
+        self.assertEqual(self.heads(), (main1, pages1))
+
+    def test_fetch_reports_missing_ref_then_remote_disconnects_halts(self):
+        self.assert_success(self.cycle())
+        gone = self.root / 'gone.git'
+        self.on_first('fetch', f"'{GIT}' --git-dir '{self.remote}' update-ref -d refs/heads/gh-pages\n    "
+                      + self.run_then(f"mv '{self.remote}' '{gone}'"))
+        result = self.cycle()
+        self.assertIn("couldn't find remote ref", result.stderr)
+        self.assert_halted(result)
+        self.assertFalse(self.remote.exists())
+
+    def test_fetch_failure_then_pages_rewound_at_ls_remote_halts(self):
+        self.assert_success(self.cycle())
+        main1, _ = self.heads()
+        self.on_first('fetch', f"'{GIT}' --git-dir '{self.remote}' update-ref refs/heads/gh-pages {self.before[1]}\n"
+                               f'    {self.NETWORK_ERROR}')
+        result = self.cycle()
+        self.assertIn('differs from the checkpoint', result.stderr)
+        self.assert_halted(result)
+        self.assertEqual(self.heads(), (main1, self.before[1]))
+
+    def test_fetch_failure_with_reachable_consistent_remote_halts(self):
+        self.assert_success(self.cycle())
+        heads = self.heads()
+        self.on_first('fetch', self.NETWORK_ERROR)
+        result = self.cycle()
+        self.assertIn('cause unknown', result.stderr)
+        self.assert_halted(result)
+        self.assertEqual(self.heads(), heads)
+
+    def test_receipt_with_extra_incomplete_status_line_halts(self):
+        rgit = f"'{GIT}' --git-dir '{self.remote}' update-ref"
+        docs = self.docs_merge(self.before[0], update=False)
+        extra = "awk 'NR==1{print; print \"!\\trefs/heads/main\"; next} {print}'"
+        self.on_first('push', f'{rgit} refs/heads/main {docs}\n    ' + self.run_then(':', extra))
+        result = self.cycle()
+        self.assertIn('[rejected] (stale info)', result.stdout)
+        self.assertIn('!\trefs/heads/main\n', result.stdout)
+        self.assert_halted(result)
+        self.assertEqual(self.heads(), (docs, self.before[1]))
+
     def test_push_timeout_keeps_halt(self):
         self.on_first('push', 'exec sleep 30')
         driver = ("import sys; sys.path.insert(0, 'tools'); import mac_publish; mac_publish.PUSH_TIMEOUT = 2; "

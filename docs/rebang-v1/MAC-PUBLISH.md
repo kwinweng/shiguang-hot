@@ -11,7 +11,11 @@
 - 校验后再 `ls-remote` 核对远端两个 ref，然后只调用一次 `LC_ALL=C git push --atomic --porcelain`：`main` 和 `gh-pages` 都是**真正的更新**（各自是父提交的新子提交，推送前核对是快进且不等于原值），都进同一个原子事务，每个都带 `--force-with-lease=<ref>:<建包时的 SHA>`。客户端发现任何一边已变就整次拒绝；服务端在同一个事务里核对两边的旧值，推送途中有人改动任何一边（包括 `gh-pages` 回退到祖先、别人改了 `main` 的 `tg.db`），也整次拒绝，不会发布旧库页面、不会清 HALT。不降级、不重试。普通快进不是独占写入权，切换前必须排除其他写入口。
 - `.git/mac-publish/HALT` 在发起推送前创建，成功记录两条远端 ref 后才清除。推送被拒、结果不明、或发现未经预期的 ref 变化，都停止后续手动和定时轮次。保留 `tg.db`、`refs.json`、`HALT` 和日志，核对两个真实远端 SHA、候选 SHA、数据库和公网，再另行批准恢复。不要自动删标记、覆盖库、重置分支或强推旧包。接收校验失败未推送，保留本地库；常规下一轮可在同一远端基线上重试。
 - `refs.json` 用同目录临时文件 + `fsync` + rename 原子替换。它读不出、不是两条 ref 的完整 SHA 记录、或记录的 SHA 在本地不是可用的 commit（对象不存在、是 tree/blob）时，写 HALT 停发，原文件、库都不动，等人工核对。
-- 一开始 `fetch` 失败时用 `ls-remote --refs` 分辨：远端能连上但缺 `main` 或 `gh-pages` → 写 HALT（远端状态异常）；`ls-remote` 本身也失败（断网、认证）→ 报错退出 1，不写 HALT，下一轮自然重试。
+- 一开始 `fetch` 失败时从严判断，拿不准就写 HALT（`refs.json` 在 `fetch` 之前就先校验）：
+  - `fetch` 的 stderr（`LC_ALL=C`）里有 `couldn't find remote ref` → 立刻写 HALT，不再看后续复查（复查时分支恢复了也一样，远端断开了也一样）。
+  - 否则跑 `ls-remote --refs`。它**成功**时一律写 HALT：缺 `main` 或 `gh-pages`、`gh-pages` 不等于 `refs.json` 里的值、输出有看不懂的行，各有对应原因；都没有也写 HALT（`fetch` 失败而远端能连上，原因不明）。
+  - 只有 `ls-remote` 本身也失败（断网、认证）、且前面没看到任何明确异常 → 报 `remote unreachable` 退出 1，不写 HALT，下一轮自然重试。
+- 推送回执逐行核对：只认 Git 的 `To …` 抬头、恰好两条状态行、`Done`，多出任何行（含残缺状态行、空行）都按回执不明处理，HALT 保留。
 
 ## main 正常合并后继续发布（11/25 起）
 
@@ -33,69 +37,105 @@
 
 ## 手动换代码版本
 
-换版本要同时换「检出的代码」和 plist 的 `--code-sha`（入口要求 HEAD 等于它），新 SHA 必须已在远端 `main` 里。整个过程**先停定时任务再动检出**，逐条手动执行、每条看结果，不用 `sh -e` 一口气跑（中途失败时恢复步骤会被跳过）。任何一步失败：任务保持停用，按本节最后的「失败恢复」处理，不要重新装载。
+换版本要同时换「检出的代码」和 plist 的 `--code-sha`（入口要求 HEAD 等于它），新 SHA 必须已在远端 `main` 里。由获批操作者在**一个**终端里完成全部步骤。
 
-以下 `$` 命令由专用账号在发布 clone 里执行，`sudo` 命令由获批操作者执行。先定好变量（两种身份的 shell 里都设一遍）：
+**为什么必须全程在同一个持锁子 shell 里做**：发布器每轮开头对 `.git/mac-publish/lock` 拿独占锁，拿不到就报 `already running` 退出 1、什么都不写。第 0 步用 `flock` 拿住这把锁再开一个子 shell，锁一直归这个 shell，直到最后 `exit` 才释放。所以：拿到锁本身就证明没有在途发布；停任务、备份、处理 HALT、换检出、改 plist、装回的整个过程中，`:05` 定时轮次、手动运行都进不来，看不到「新代码 + 旧 plist」之类的半成品。**锁外不做任何一步**（包括 `bootout`、备份、清 HALT、检出、改 plist、`bootstrap`）：一旦先 `exit` 再补做，中间任何时刻都可能有一轮插进来，写 HALT 或用半换好的状态发布。装回后、`exit` 前如果正好到 `:05`，那一轮会撞锁退出 1，不写任何东西，下一小时再正常跑。
 
-```sh
-cd /opt/shiguang-news/checkout                      # 按实际路径
-LABEL=system/local.shiguang.news-publish
-PLIST=/Library/LaunchDaemons/local.shiguang.news-publish.plist
-OLD_SHA=$(git rev-parse HEAD)                       # 应等于 plist 现在的 --code-sha
-NEW_SHA=<要换到的完整 SHA>                           # 必须是远端 main 上的提交
-```
+规矩：逐条手动执行、每条看结果，不用 `sh -e` 一口气跑（中途失败时恢复步骤会被跳过）。每步写了失败后做什么；失败了任务保持停用，按「失败恢复」处理，不要临时发挥。终端意外断开会释放锁：任务此时应是停用的，重新做第 0 步拿锁，`launchctl print "$LABEL"` 确认仍停用（还在就先 `launchctl bootout "$LABEL"`），按 `$backup/start.txt` 重设变量，再按「失败恢复」处理，不要从中间继续往前走。
 
-1. **确认空闲**（避开 `:00–:10`）：`flock -n .git/mac-publish/lock true && echo idle`。没打印 `idle` 说明正在发布，等它结束再来。再核对 `sudo plutil -p "$PLIST" | grep -A4 ProgramArguments` 里的 `--code-sha` 等于 `$OLD_SHA`；不等就停下，先查清楚。
-2. **停任务并确认已停**（操作者）：`sudo launchctl bootout "$LABEL"`，然后 `sudo launchctl print "$LABEL"` 应报找不到服务（非 0 退出）。再跑一次 `flock -n .git/mac-publish/lock true && echo idle` 确认没有在途进程。之后到第 7 步前不会有定时轮次。
+0. **拿锁进子 shell**（避开 `:00–:10`）：
+   ```sh
+   cd /opt/shiguang-news/checkout                       # 按实际路径
+   sudo flock -n -E 75 .git/mac-publish/lock zsh -f; echo "locked-shell-exit=$?"
+   ```
+   立刻打印 `locked-shell-exit=75` = 没拿到锁（正在发布或别人在操作）：停止，过后再来，什么都没动。拿到锁会进入 root 的子 shell，下面所有命令都在这个 shell 里输：
+   ```sh
+   ACCOUNT=shiguang-news                                # plist 的 UserName
+   a() { sudo -u "$ACCOUNT" -H "$@"; }                 # Git 命令一律用专用账号跑，免得留下 root 的文件
+   cd /opt/shiguang-news/checkout
+   LABEL=system/local.shiguang.news-publish
+   PLIST=/Library/LaunchDaemons/local.shiguang.news-publish.plist
+   OLD_SHA=$(a git rev-parse HEAD)
+   NEW_SHA=<要换到的完整 SHA>                           # 必须是远端 main 上的提交
+   ```
+1. **记下原状**（还没改任何东西）：
+   ```sh
+   plutil -p "$PLIST" | grep -A4 ProgramArguments       # 第 3 项（--code-sha）应等于 $OLD_SHA
+   backup="/Users/$ACCOUNT/mac-publish-backup-$(date +%Y%m%d%H%M%S)"; mkdir -m 700 "$backup"
+   PLIST_SHA0=$(shasum -a 256 < "$PLIST"); DB_SHA0=$(shasum -a 256 < tg.db)
+   printf 'backup=%s\nOLD_SHA=%s\nNEW_SHA=%s\nPLIST_SHA0=%s\nDB_SHA0=%s\n' \
+     "$backup" "$OLD_SHA" "$NEW_SHA" "$PLIST_SHA0" "$DB_SHA0" > "$backup/start.txt"
+   ls -l .git/mac-publish/ >> "$backup/start.txt"; cat "$backup/start.txt"
+   ```
+   `--code-sha` 不等于 `$OLD_SHA`，或任一条失败：任务没停、什么都没改，直接 `exit` 释放锁，先查清楚。
+2. **停任务并确认已停**：`launchctl bootout "$LABEL"`，然后 `launchctl print "$LABEL"; echo "print=$?"` 应报找不到服务、`print=` 非 0。仍能看到服务：再 `bootout` 一次；还在就 `exit`（plist、库、检出都没动，任务原样装着），报告。
 3. **备份**：
    ```sh
-   backup="$HOME/mac-publish-backup-$(date +%Y%m%d%H%M%S)"; mkdir "$backup"
    cp -p tg.db "$backup/tg.db"
-   shasum -a 256 tg.db > "$backup/tg.db.sha256"
-   cp -Rp .git/mac-publish "$backup/mac-publish"
-   echo "$OLD_SHA" > "$backup/HEAD"
-   sudo cp -p "$PLIST" "$backup/news-publish.plist"   # 操作者执行，路径同上
-   ls -l "$backup"; (cd "$backup" && shasum -a 256 -c tg.db.sha256)
+   shasum -a 256 tg.db > "$backup/tg.db.sha256"         # 记的是相对名 tg.db：在哪个目录 -c 就核对哪份
+   cp -Rp .git/mac-publish "$backup/mac-publish"        # refs.json、HALT（若有）
+   if [ -e .git/mac-publish/HALT ]; then cp -p .git/mac-publish/HALT "$backup/HALT.orig"; fi
+   cp -p "$PLIST" "$backup/news-publish.plist"
+   (cd "$backup" && shasum -a 256 -c tg.db.sha256)       # 必须 OK
+   [ "$(shasum -a 256 < "$backup/news-publish.plist")" = "$PLIST_SHA0" ] && echo plist-backup-ok
+   [ ! -e .git/mac-publish/HALT ] || cmp .git/mac-publish/HALT "$backup/HALT.orig" && echo halt-backup-ok
+   touch "$backup/COMPLETE"                             # 只有上面全部通过才执行这一条
    ```
-   任一条失败：还没改任何东西，查清原因后重做本步；不能完成备份就按「失败恢复」第 4 条重新装载旧任务。
-4. **核对 HALT**：`ls .git/mac-publish/HALT`。不存在才继续。存在时先读内容，按下文「上线本改动」或 HALT 规则人工核对；核对通过前任务保持停用。
-5. **挪库、检出、放回**：
+   任一条失败：不要 `touch COMPLETE`，按「失败恢复」**情况 A**（备份不全、plist 没改）。
+4. **核对 HALT**：`ls -l .git/mac-publish/HALT`。不存在就继续。存在时读内容，只有「上线本改动」里那一种可以在这里清（`mv .git/mac-publish/HALT "$backup/HALT.cleared"`，原件已在 `HALT.orig`）；其他 HALT 一律不清，按「失败恢复」**情况 B**（会原样放回）中止。
+5. **换检出**：
    ```sh
-   git fetch --no-tags origin main
-   git merge-base --is-ancestor "$NEW_SHA" FETCH_HEAD && echo on-main   # 必须打印 on-main
-   mv tg.db "$backup/tg.db.live"            # 不让检出用提交里的副本替换本地库
-   git checkout --quiet --detach "$NEW_SHA"
-   mv "$backup/tg.db.live" tg.db
+   a git fetch --no-tags origin main
+   a git merge-base --is-ancestor "$NEW_SHA" FETCH_HEAD && echo on-main   # 必须打印 on-main
+   a git status --short --untracked-files=no                             # 只应是 " M tg.db" 或为空
+   a git checkout --quiet --force --detach "$NEW_SHA"                    # --force 只会覆盖 tg.db（已备份）
+   cp -p "$backup/tg.db" tg.db                                           # 放回本地库
+   shasum -a 256 -c "$backup/tg.db.sha256"                                # 必须 OK
    ```
-   - `fetch`/`merge-base` 失败或没打印 `on-main`：什么都没改，任务保持停用，换对 SHA 再来，或按「失败恢复」装回旧任务。
-   - `git checkout` 失败：HEAD 仍是旧的，立刻 `mv "$backup/tg.db.live" tg.db` 放回库，`git rev-parse HEAD` 应等于 `$OLD_SHA`，然后按「失败恢复」。
-6. **核对**：`git rev-parse HEAD` 等于 `$NEW_SHA`；`shasum -a 256 -c "$backup/tg.db.sha256"` 通过（库字节没变）；`git status --short` 只有 ` M tg.db`（或为空）；没有 `tg.db-journal`/`-wal`/`-shm`；`cmp "$backup/mac-publish/refs.json" .git/mac-publish/refs.json` 无输出。任何一项不符 → 「失败恢复」。
-7. **改 plist 并装回**（操作者）：
+   - `fetch`/`merge-base` 失败或没打印 `on-main`、`status` 里有 tg.db 以外的行：还没动检出，按「失败恢复」情况 B 中止（不要带着别的改动用 `--force`）。
+   - `checkout` 失败，或放回库后核对不 OK：按「失败恢复」情况 B。
+6. **核对**：`a git rev-parse HEAD` 等于 `$NEW_SHA`；`shasum -a 256 -c "$backup/tg.db.sha256"` OK；`a git status --short` 只有 ` M tg.db`（或为空）；`ls tg.db-journal tg.db-wal tg.db-shm` 全都不存在；`cmp "$backup/mac-publish/refs.json" .git/mac-publish/refs.json` 无输出。任何一项不符 → 情况 B。
+7. **改 plist、装回、核对，然后才释放锁**：
    ```sh
-   sudo /usr/libexec/PlistBuddy -c "Set :ProgramArguments:3 $NEW_SHA" "$PLIST"
-   sudo plutil -lint "$PLIST"
-   sudo plutil -p "$PLIST" | grep -A4 ProgramArguments      # 第 3 项应是 $NEW_SHA
-   sudo launchctl bootstrap system "$PLIST"
-   sudo launchctl print "$LABEL" | grep -A6 arguments       # 核对 --code-sha 是 $NEW_SHA
+   /usr/libexec/PlistBuddy -c "Set :ProgramArguments:3 $NEW_SHA" "$PLIST"
+   plutil -lint "$PLIST"
+   plutil -p "$PLIST" | grep -A4 ProgramArguments      # 第 3 项应是 $NEW_SHA
+   launchctl bootstrap system "$PLIST"
+   launchctl print "$LABEL" | grep -A6 arguments       # 核对 --code-sha 是 $NEW_SHA
+   exit                                                # 到这里才释放锁
    ```
-   `plutil -lint` 不通过或参数不对：`sudo cp -p "$backup/news-publish.plist" "$PLIST"` 恢复旧文件，不 `bootstrap`，按「失败恢复」。`bootstrap` 后参数不对：`sudo launchctl bootout "$LABEL"` 再按「失败恢复」。
+   `PlistBuddy`/`plutil -lint` 失败或参数不对：不 `bootstrap`，按情况 B（会从备份放回 plist）。`bootstrap` 失败，或 `print` 里参数不对：先 `launchctl bootout "$LABEL"` 并确认已停，再按情况 B。
 
 `refs.json` 全程不动。等下一个 `:05` 自然运行，看到 `published main=…`，`gh-pages` 上 `build-info.json` 的 `source_commit` 等于新 SHA 才算换好。
 
-**失败恢复**（任务保持停用，逐条执行、逐条看结果）：
+**失败恢复**（仍在同一个持锁 shell 里；任务保持停用；逐条执行、逐条看结果）：
 
-1. 代码回旧 HEAD：`mv tg.db "$backup/tg.db.failed"`（库已不在原处可跳过），`git checkout --quiet --detach "$OLD_SHA"`，`git rev-parse HEAD` 等于 `$OLD_SHA`。checkout 仍失败就停在这里，保留现场找人。
-2. 库放回备份：`cp -p "$backup/tg.db" tg.db`，`shasum -a 256 -c "$backup/tg.db.sha256"` 通过。
-3. 状态目录：`cmp "$backup/mac-publish/refs.json" .git/mac-publish/refs.json`；不同就先别动，保留两份找人核对，不要直接覆盖。
-4. plist（操作者）：`sudo cp -p "$backup/news-publish.plist" "$PLIST"`，`sudo plutil -lint "$PLIST"`，`sudo plutil -p "$PLIST"` 的 `--code-sha` 等于 `$OLD_SHA`。
-5. 只有 1–4 都通过、`HEAD` 等于 plist 的 `--code-sha`、没有 HALT 时，才 `sudo launchctl bootstrap system "$PLIST"` 并 `launchctl print` 核对；否则保持停用，报告卡在哪一步。
+先看 `ls "$backup/COMPLETE"` 选情况。
 
-**上线本改动（第一次换到含本逻辑的版本）**：11/25 Mini 实际 plist 的 `--code-sha` 是 `e0070253c5d8da63e8497945d763d7dc50601ac6`。旧代码在本 PR 合并后的下一个 `:05` 会因为 `main` 被别人推动而写 HALT（内容以 `remote refs changed since the last local checkpoint` 开头，这种 HALT 表示没有发起推送）。最好在合并前先做第 1–2 步停掉任务，合并后从第 3 步继续换到合并后的 `main` SHA。没来得及、已经有 HALT 时：在第 4 步核对 HALT 正是这句开头、远端 `gh-pages` 等于 `refs.json` 里的值、`main` 是记录值的后代且 `tg.db` 没被改，再把 HALT 移进 `$backup`（`mv .git/mac-publish/HALT "$backup/HALT.cleared"`），然后继续；新代码下一轮会自己再按上面的规则复查。HALT 若是 `Push started…` 开头，说明推送结果不明，先人工核对两个远端 ref 和候选 SHA，不能直接清。
+**情况 A：备份没完成（没有 `COMPLETE`），plist 还没改。** 不用任何依赖备份的步骤，只核对原样，原样装回：
+```sh
+[ "$(shasum -a 256 < "$PLIST")" = "$PLIST_SHA0" ] && echo plist-untouched
+[ "$(shasum -a 256 < tg.db)" = "$DB_SHA0" ] && echo db-untouched
+[ "$(a git rev-parse HEAD)" = "$OLD_SHA" ] && echo head-untouched
+ls -l .git/mac-publish/                                 # 与 start.txt 里的清单比：HALT 有无一致
+```
+四项都对：`launchctl bootstrap system "$PLIST"`，`launchctl print "$LABEL" | grep -A6 arguments` 核对是 `$OLD_SHA`，`exit`。任一项不对：不装回，`exit`，报告哪项不对（这时不要拿不完整的备份去覆盖）。
+
+**情况 B：备份已完成（有 `COMPLETE`）。** 按顺序做，前一条失败也继续做后面能做的「放回」，但最后不装回：
+
+1. **库先放回（与 Git 无关，第一步就做）**：`cp -p "$backup/tg.db" tg.db`，`shasum -a 256 -c "$backup/tg.db.sha256"` 必须 OK。不 OK：再做一次；还不 OK 就记下，继续 2–4，最后不装回。
+2. **代码回旧版**：`a git rev-parse HEAD` 已等于 `$OLD_SHA` 就跳过。否则 `a git status --short --untracked-files=no` 只能有 tg.db 一行，再 `a git checkout --quiet --force --detach "$OLD_SHA"`，然后**再放一次库**：`cp -p "$backup/tg.db" tg.db`，`shasum -a 256 -c "$backup/tg.db.sha256"`（检出会用提交里的副本覆盖它）。
+   - `status` 有 tg.db 以外的行，或 `checkout` 失败：不要再试别的 Git 命令。单独执行 `cp -p "$backup/tg.db" tg.db` 和 `shasum -a 256 -c "$backup/tg.db.sha256"`，确保库已在原位；`a git status --short > "$backup/git-status.failed"`、`a git rev-parse HEAD >> "$backup/git-status.failed"` 留现场；继续 3–4，最后不装回。
+3. **HALT 放回原样**：有 `$backup/HALT.orig` 就 `cp -p "$backup/HALT.orig" .git/mac-publish/HALT` 并 `cmp` 无输出；没有 `HALT.orig` 而现在有 HALT（不该出现）就别动它，记下。再 `cmp "$backup/mac-publish/refs.json" .git/mac-publish/refs.json`：不同就别覆盖，保留两份，最后不装回。
+4. **plist 放回**：`cp -p "$backup/news-publish.plist" "$PLIST"`，`[ "$(shasum -a 256 < "$PLIST")" = "$PLIST_SHA0" ] && echo plist-restored`，`plutil -lint "$PLIST"`。
+5. **装回**：只有 1–4 全部通过、`a git rev-parse HEAD` 等于 `$OLD_SHA` 时，才 `launchctl bootstrap system "$PLIST"`，`launchctl print "$LABEL" | grep -A6 arguments` 核对是 `$OLD_SHA`，然后 `exit`。否则不装回，直接 `exit`，报告卡在哪一步；任务保持停用（有 HALT 时装回也只会每轮报 `HALT exists`，这是原状）。
+
+**上线本改动（第一次换到含本逻辑的版本）**：11/25 Mini 实际 plist 的 `--code-sha` 是 `e0070253c5d8da63e8497945d763d7dc50601ac6`。旧代码在本 PR 合并后的下一个 `:05` 会因为 `main` 被别人推动而写 HALT（内容以 `remote refs changed since the last local checkpoint` 开头，这种 HALT 表示没有发起推送）。最好在合并前就做第 0–3 步（拿锁、记原状、停任务、备份），**保持这个持锁 shell 不退出**，合并后在同一个 shell 里设好 `NEW_SHA` 为合并后的 `main` SHA（`printf 'NEW_SHA=%s\n' "$NEW_SHA" >> "$backup/start.txt"`）继续第 4 步。没来得及、已经有 HALT 时：第 4 步核对 HALT 正是这句开头、远端 `gh-pages` 等于 `refs.json` 里的值、`main` 是记录值的后代且 `tg.db` 没被改，再 `mv .git/mac-publish/HALT "$backup/HALT.cleared"` 继续；中止时情况 B 第 3 步会从 `HALT.orig` 放回。新代码下一轮会自己再按上面的规则复查。HALT 若是 `Push started…` 开头，说明推送结果不明，先人工核对两个远端 ref 和候选 SHA，不能清。
 
 ## 回退
 
-- 回到旧版本（例如 `e0070253…`）走上面同一套步骤，`NEW_SHA` 设成旧 SHA：先确认空闲、停任务、备份、核对 HALT，再挪库检出，plist 的 `--code-sha` 同步改回，失败同样按「失败恢复」。旧入口同样要求 HEAD 精确等于 `--code-sha`。
-- 旧入口要求远端两条 ref 与 `refs.json` **完全一致**：新代码跟进过别人的合并后，`refs.json` 记录的是最新值，只要回退后再有人推 `main`，旧代码就会在下一轮写 HALT（这就是原来的行为）。回退前核对 `refs.json` 与 `git ls-remote origin refs/heads/main refs/heads/gh-pages` 一致；不一致就先不回退。
+- 回到旧版本（例如 `e0070253…`）走上面同一套步骤，`NEW_SHA` 设成旧 SHA：同样从第 0 步拿锁开始，全程在持锁 shell 里停任务、备份、核对 HALT、换检出、改 plist、装回，最后才 `exit`；失败同样按「失败恢复」。旧入口同样要求 HEAD 精确等于 `--code-sha`。
+- 旧入口要求远端两条 ref 与 `refs.json` **完全一致**：新代码跟进过别人的合并后，`refs.json` 记录的是最新值，只要回退后再有人推 `main`，旧代码就会在下一轮写 HALT（这就是原来的行为）。回退前（在持锁 shell 里、第 5 步之前）核对 `refs.json` 与 `a git ls-remote origin refs/heads/main refs/heads/gh-pages` 一致；不一致就按情况 B 中止，先不回退。
 - 回退不改 `refs.json`、不动 `tg.db`、不强推任何 ref。
 
 ## 贴给 Mini 本机 T3 的切换指令（获批后才执行）

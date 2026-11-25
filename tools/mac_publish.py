@@ -53,20 +53,22 @@ def write_atomic(path, text):
 
 
 def main_only_rejection(output, candidates):
-    """True only for the one retryable receipt: main refused client-side by its lease, gh-pages
-    refused only as a consequence of --atomic, each line naming our exact candidate, ending in Done.
-    Anything else (gh-pages stale, a server-side refusal, a missing, extra or truncated line) is False."""
+    """True only for the one retryable receipt, line for line: Git's `To <url>` header, exactly two
+    status lines (main refused client-side by its lease, gh-pages refused only as a consequence of
+    --atomic, each naming our exact candidate), then `Done`. Anything else (gh-pages stale, a
+    server-side refusal, a missing, extra, blank or truncated line) is False."""
     lines = output.splitlines()
-    if not lines or lines[-1] != 'Done':
+    if len(lines) != 4 or not lines[0].startswith('To ') or lines[-1] != 'Done':
         return False
     status = {}
-    for line in lines:
+    for line in lines[1:3]:
         fields = line.split('\t')
-        if len(fields) == 3 and ':' in fields[1]:
-            source, destination = fields[1].rsplit(':', 1)
-            if destination in status:
-                return False
-            status[destination] = (fields[0], source, fields[2])
+        if len(fields) != 3 or ':' not in fields[1]:
+            return False
+        source, destination = fields[1].rsplit(':', 1)
+        if destination in status:
+            return False
+        status[destination] = (fields[0], source, fields[2])
     expected = {REFS[0]: ('!', candidates[0], LEASE_REJECTED), REFS[1]: ('!', candidates[1], ATOMIC_REJECTED)}
     return status == expected
 
@@ -123,8 +125,15 @@ def run_cycle(code_sha, state, lock):
 
     def fetch():
         # Snapshots are private scratch refs; force them so a rewritten main reaches the checks below.
-        git('fetch', '--no-tags', '--refmap=', 'origin',
-            *(f'+{source}:{dest}' for source, dest in zip(REFS, SNAPSHOTS)))
+        # stderr is kept (in the C locale) so a missing remote branch can be told from a network error.
+        fetched = subprocess.run(['git', 'fetch', '--no-tags', '--refmap=', 'origin',
+                                  *(f'+{source}:{dest}' for source, dest in zip(REFS, SNAPSHOTS))],
+                                 cwd=ROOT, env=dict(env, LC_ALL='C'), pass_fds=(lock,),
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        sys.stderr.write(fetched.stderr.decode(errors='replace'))
+        sys.stderr.flush()
+        if fetched.returncode:
+            raise subprocess.CalledProcessError(fetched.returncode, fetched.args, fetched.stdout, fetched.stderr)
         return tuple(git('rev-parse', f'{ref}^{{commit}}') for ref in SNAPSHOTS)
 
     def ls_remote():
@@ -154,20 +163,6 @@ def run_cycle(code_sha, state, lock):
         except (OSError, RuntimeError, subprocess.SubprocessError):
             return False
 
-    try:
-        observed = fetch()
-    except subprocess.CalledProcessError:
-        # Tell a missing branch (state problem: stop) from an unreachable remote (retry next round).
-        listed = subprocess.run(['git', 'ls-remote', '--refs', 'origin', *REFS], cwd=ROOT,
-                                env=dict(env, LC_ALL='C'), pass_fds=(lock,), stdout=subprocess.PIPE)
-        if listed.returncode:
-            raise
-        present = {line.split('\t')[-1] for line in listed.stdout.decode(errors='replace').splitlines()}
-        missing = [ref for ref in REFS if ref not in present]
-        if missing:
-            halt_now(f'remote is reachable but lacks {missing}; reconcile the remote branches before resuming')
-        raise
-    main_parent, pages_parent = observed
     record = state / 'refs.json'
 
     def remember(refs):
@@ -178,6 +173,8 @@ def run_cycle(code_sha, state, lock):
                                env=env, pass_fds=(lock,), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         return found.returncode == 0 and found.stdout.decode().strip() == sha
 
+    # Validate the checkpoint before talking to the remote: a failed fetch is judged against it.
+    recorded = None
     if os.path.lexists(record):
         try:
             recorded = json.loads(record.read_text())
@@ -189,6 +186,38 @@ def run_cycle(code_sha, state, lock):
                 raise ValueError(f'not a usable local commit: {invalid}')
         except (OSError, ValueError, subprocess.SubprocessError) as error:
             halt_now(f'local checkpoint {record} is unreadable ({error}); preserved for inspection')
+
+    try:
+        observed = fetch()
+    except subprocess.CalledProcessError as error:
+        # Conservative: only "the remote cannot be reached at all, and nothing odd was seen" retries
+        # without HALT. A missing branch reported by fetch stops at once; a later re-read never
+        # overrides it. A reachable remote after a failed fetch also stops, whatever it shows.
+        if "couldn't find remote ref" in (error.stderr or b'').decode(errors='replace'):
+            halt_now("remote lacks a branch (fetch: couldn't find remote ref); "
+                     'reconcile the remote branches before resuming')
+        listed = subprocess.run(['git', 'ls-remote', '--refs', 'origin', *REFS], cwd=ROOT,
+                                env=dict(env, LC_ALL='C'), pass_fds=(lock,), stdout=subprocess.PIPE)
+        if listed.returncode:
+            raise RuntimeError(f'remote unreachable (fetch exit {error.returncode}, ls-remote exit '
+                               f'{listed.returncode}); no HALT, the next round retries') from None
+        advertised = {}
+        for line in listed.stdout.decode(errors='replace').splitlines():
+            fields = line.split('\t')
+            if len(fields) != 2 or not SHA.fullmatch(fields[0]) or fields[1] not in REFS or fields[1] in advertised:
+                halt_now(f'unexpected ls-remote line {line!r} after a failed fetch')
+            advertised[fields[1]] = fields[0]
+        missing = [ref for ref in REFS if ref not in advertised]
+        if missing:
+            halt_now(f'remote is reachable but lacks {missing}; reconcile the remote branches before resuming')
+        if recorded is not None and advertised[REFS[1]] != recorded[REFS[1]]:
+            halt_now(f'gh-pages on the remote ({advertised[REFS[1]]}) differs from the checkpoint '
+                     f'({recorded[REFS[1]]}) after a failed fetch')
+        halt_now(f'fetch failed (exit {error.returncode}) although the remote is reachable '
+                 f'(advertised={advertised}); cause unknown, reconcile before resuming')
+    main_parent, pages_parent = observed
+
+    if recorded is not None:
         if recorded != dict(zip(REFS, observed)):
             if recorded[REFS[1]] == pages_parent and normal_advance(recorded[REFS[0]], main_parent):
                 print(f'main advanced normally {recorded[REFS[0]]}..{main_parent}; '
