@@ -8,7 +8,7 @@
 |---|---|
 | `rebang/contract/channels.json` | 6 个频道（current 时事 / world 环球 / finance 财经 / tech-ai 科技与 AI / digital 数码 / tools 工具与项目）与来源映射；18 个 TG（不含 reorx_share）；今日重点只给频道里同链接条目打标（2026-11-15 21:26 起不再进频道） |
 | `rebang/contract/hotsearch.json` | 热搜提供方 baidu、zhihu、bilibili（11/15 20:41 阿欢确认；不要微博），可替换；每家最多 51 条（百度 = 置顶 1 + 普通 50）；展示在底栏「热搜」页（`view:hot`），按北京日期归档（`archive.dir/keep`） |
-| `rebang/contract/bloggers.json` | 博主平台与名单：X 16、博客 7、即刻 9、微博 6、公众号 6、YouTube 13、知乎 0 |
+| `rebang/contract/bloggers.json` | 博主平台与名单：X 16、博客 7、即刻 9、微博 6、公众号 6、YouTube 13（知乎空占位 2026-11-25 撤掉） |
 | `rebang/contract/schema.py` | 纯标准库校验：`validate_item` / `validate_items_envelope` / `validate_hotsearch` |
 
 旧 `sources.json` 和 `shiguang/` 继续驱动 TG 采集（写 `tg.db`）和旧站（现状见 `docs/legacy/README.md`），新版**复用**而不改它们的行为。
@@ -31,7 +31,7 @@
 | `image_local` | 否 | ingest 存到本地的图：`{path, rel, width, height}`；`rel` 必须是相对路径且不含 `..`，宽高为正整数，否则整条不合格。站点构建把它复制到 `<site>/media/<rel>`，前端用相对地址 `media/<rel>` |
 | `published_at` | 是 | 带时区 ISO 8601（历史按北京时间日期分组） |
 | `fetched_at` | 否 | 带时区 |
-| `lang` | 是 | `zh` / `en` / … ；判断不了写 `und`（不翻译）。ingest 规则：含中日韩字符为 zh，否则 en |
+| `lang` | 是 | `zh` / `en` / … ；判断不了写 `und`（不翻译）。ingest 规则：TG 含汉字为 zh，否则 en；官方订阅按条判断、只看标题（摘要不参与）：先去掉裸链接，再去掉书名号《》、「」、“” 里的内容，剩下的只要有汉字就标 zh、不进翻译队列，否则 en（如 `Review of 《黑神话：悟空》` 是 en，`MacBook Pro M4 Max 评测` 是 zh）；GitHub Trending 含汉字为 zh。订阅条目入库时校验链接和图片，在本契约 http(s) 口径上额外检查主机名并拦截解析异常：不带协议的相对链接先用 xml:base / 订阅自身地址补全，补不出合格地址（或旧缓存没有基准地址）就把链接置空、条目保留，绝不因链接丢条；图片坏了只丢图、条目保留 |
 | `translated` + `translation` | 否 | 非中文才翻；`translation={title, summary, body?, blocks?, body_pending?, engine, label:"机器翻译"}`。标题和摘要一旦有译文就写入，不必等正文或 blocks；正文稍后补上时详情页再换全文。正文还在排队时 `body_pending:true`，详情用已有的中文摘要并标明全文还在翻译，不把英文长文铺上去。入库时就译好，打开页面不现翻。流程：缓存 `var/rebang/translate/cache.json` 命中直接用 → 没命中进 `pending.json` → 由 Grok 翻好后 `python3 -m rebang.translate fill FILE --engine grok-bot` 回填，下次构建生效；只翻新增条目（增量）。公开新闻页会先抽全文（`rebang.extract`，按 URL 缓存，单轮有上限），抽失败则沿用原摘要 |
 | `highlight` / `highlight_date` | 否 | 今日重点标记（站上不单开栏） |
 | `blogger` | post 必填 | `{platform, handle, display_name, avatar?, verified?, metrics{reply,repost,like,quote,bookmark,view}?, media[{type:image|video|gif|youtube,url,preview_url?,duration_ms?}]（`youtube` 的 url 是 `https://www.youtube-nocookie.com/embed/<视频号>`，preview_url 是封面，站内查看器用嵌入播放器）, quote{handle,text,display_name?,published_at?,url?,...}|null, comments[{handle,text,display_name?,avatar?,published_at?,url?,like?,text_zh?}]?}`；评论最多 10 条，按点赞排序。`like` 是非负整数，拿不到不写。英文回复译文在 `text_zh`，原文留在 `text`。拿不到的字段不写，不编数字。Grok bot 的 4 类整理内容是 `platform:"grok"`、`handle` = 来源 id（hot-daily/x/world/github）、`channel:null` |

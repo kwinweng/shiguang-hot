@@ -182,7 +182,7 @@ class SiteBrowserTests(unittest.TestCase):
         self.assertTrue(dialog.get_by_text('检查原始转储', exact=False).is_visible())
         self.assertEqual(dialog.locator('.health-section-head:visible').count(), 0)
         filters.get_by_role('button', name='未配置 1').tap()
-        self.assertEqual(dialog.locator('.health-name:visible').all_text_contents(), ['知乎'])
+        self.assertEqual(dialog.locator('.health-name:visible').all_text_contents(), ['selfh.st'])
         self.assertTrue(dialog.get_by_text('需要时再接入', exact=False).is_visible())
         filters.get_by_role('button', name=f'正常 {total - 5}').tap()
         self.assertEqual(dialog.locator('.health-name:visible').count(), total - 5)
@@ -658,8 +658,7 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.wait_for_timeout(300)
         self.assertIn('还没有成功抓取过', self.page.locator('#bloggerList .bl-seg[data-plat=weibo]').inner_text())
         self.assertEqual(self.page.locator('#platChips .on').get_attribute('data-plat'), 'weibo')
-        self.page.locator('#platChips [data-plat=zhihu]').click()
-        self.assertIn('知乎', self.page.locator('#bloggerList .bl-seg[data-plat=zhihu]').inner_text())
+        self.assertEqual(self.page.locator('#platChips [data-plat=zhihu]').count(), 0)
 
     def test_blogger_one_feed_chains_platforms_to_end(self):
         self.open()

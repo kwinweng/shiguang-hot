@@ -9,6 +9,7 @@ import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from pathlib import Path
+from urllib.parse import urljoin, urlsplit
 from zoneinfo import ZoneInfo
 
 from rebang.cache import save_cache
@@ -21,7 +22,7 @@ DEFAULT_CACHE = ROOT / 'var' / 'rebang' / 'cache' / 'ingest'
 MEDIA_DAYS = 14          # 与 shiguang/ingest/telegram.py MEDIA_DAYS 一致：图片按条目时间保留 14 天
 SUMMARY_CHARS = 300
 PRODUCER = 'ingest'
-FEED_LANG = 'en'         # 6 个官方订阅都是英文
+FEED_LANG = 'en'         # 官方订阅都是英文
 MT = '机器翻译'
 
 
@@ -60,6 +61,17 @@ def _norm_url(url):
 
 def _http_url(url):
     return url if re.match(r'https?://[^\s/]+', str(url or '')) else ''
+
+
+def _valid_http(url, schemes=('http', 'https')):
+    """与契约 schema._is_url 同一口径（scheme + 主机名），另外挡住 urlsplit 自己会抛错的地址（如坏 IPv6）。"""
+    if not isinstance(url, str) or not url.strip():
+        return False
+    try:
+        parts = urlsplit(url.strip())
+        return parts.scheme in schemes and bool(parts.netloc) and bool(parts.hostname)
+    except ValueError:
+        return False
 
 
 def _image_size(path):
@@ -104,6 +116,17 @@ def strip_leading_urls(text):
 
 def guess_lang(*texts):
     return 'zh' if _CJK.search(' '.join(t or '' for t in texts)) else 'en'
+
+
+_BARE_URL = re.compile(r'https?://[^\s《》「」“”‘’，。、；：！？（）【】<>]+')
+_QUOTED = re.compile(r'《[^》]*》|「[^」]*」|“[^”]*”')
+
+
+def mostly_chinese(title):
+    """英文订阅按条判断，只看标题：先去掉《》「」“”里的内容（引用的中文作品名/原话），
+    再去掉裸链接（遇中文标点或括号停止），剩下的只要有汉字就是 zh，否则 en。摘要不参与。"""
+    rest = _BARE_URL.sub('', _QUOTED.sub('', str(title or '')))
+    return bool(_CJK.search(rest))
 
 
 def _news(source, channel, native_id, title, summary, url, published, now, lang='zh', body=None, image=None,
@@ -258,13 +281,63 @@ def default_http_get(url, now):
     return response.body
 
 
-def parse_feed(xml):
+_XML_BASE = '{http://www.w3.org/XML/1998/namespace}base'
+_ATOM = '{http://www.w3.org/2005/Atom}'
+
+
+def _join(base, ref):
+    try:
+        return urljoin(base, ref) if base else ref
+    except ValueError:
+        return ref
+
+
+def _atom_link_bases(xml, feed_url):
+    """Atom 条目的链接基准地址（xml:base 逐层叠加：feed 地址 → <feed> → <entry> → <link>），
+    按文档顺序返回 {(id 或 链接原文, 链接原文): 基准地址}。不是 Atom 或解析不了就返回空。"""
+    try:
+        root = ET.fromstring(xml)
+    except (ET.ParseError, ValueError):
+        return {}
+    if root.tag != _ATOM + 'feed':
+        return {}
+    feed_base = _join(feed_url, root.get(_XML_BASE)) if root.get(_XML_BASE) else feed_url
+    out = {}
+    for entry in root.findall(_ATOM + 'entry'):
+        entry_base = _join(feed_base, entry.get(_XML_BASE)) if entry.get(_XML_BASE) else feed_base
+        link = next((l for l in entry.findall(_ATOM + 'link') if l.get('rel', 'alternate') == 'alternate'), None)
+        if link is None:
+            continue
+        href = link.get('href') or ''
+        base = _join(entry_base, link.get(_XML_BASE)) if link.get(_XML_BASE) else entry_base
+        out.setdefault((entry.findtext(_ATOM + 'id') or href, href), base)
+    return out
+
+
+def _resolve_link(url, base):
+    """条目链接：绝对 http(s) 原样用；不带协议的相对地址用基准地址补全；带协议却不合格（https:///x、
+    javascript: 等）、补全后仍不合格或没有基准就置空。链接坏了只让这条没有原文链接，条目本身保留。"""
+    url = str(url or '').strip()
+    if not url or _valid_http(url):
+        return url
+    try:
+        relative = not urlsplit(url).scheme
+    except ValueError:
+        relative = False
+    joined = _join(base, url) if base and relative else ''
+    return joined if _valid_http(joined) else ''
+
+
+def parse_feed(xml, feed_url=None):
     from shiguang.ingest import web
+    bases = _atom_link_bases(xml, feed_url)
     out = []
     for e in web.parse(xml):
-        out.append({'id': e['id'] or _sha(e['url'] or e['title']), 'ts': _iso(e['ts']), 'title': e['title'] or '',
-                    'summary': e['body'] or '', 'url': e['url'] or '',
-                    'image': next((u for u in e.get('images') or [] if str(u).startswith('https://')), None)})
+        raw = e['url'] or ''
+        base = bases.get((e['id'] or raw, raw), feed_url)
+        out.append({'id': e['id'] or _sha(raw or e['title']), 'ts': _iso(e['ts']), 'title': e['title'] or '',
+                    'summary': e['body'] or '', 'url': _resolve_link(raw, base),
+                    'image': next((u for u in e.get('images') or [] if _valid_http(u, ('https',))), None)})
     return out
 
 
@@ -337,7 +410,7 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
         if fetch:
             try:
                 raw = http_get(cfg['url'], now)
-                parsed = parse_trending(raw.decode('utf-8', 'replace'), now) if cfg['type'] == 'page' else parse_feed(raw)
+                parsed = parse_trending(raw.decode('utf-8', 'replace'), now) if cfg['type'] == 'page' else parse_feed(raw, cfg['url'])
             except Exception as ex:  # 一家失败不影响其它家；错误只记代码，不带响应体
                 code = getattr(ex, 'code', None) or ('invalid_content' if isinstance(ex, (ET.ParseError, ValueError)) else type(ex).__name__)
                 state, error = 'error', str(code)
@@ -363,12 +436,19 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
             title = _plain(e.get('title'))
             if not title:
                 continue
+            # 缓存里的链接不再补全（旧缓存没存基准地址）：不合格就置空，条目保留
+            link = _resolve_link(e.get('url'), None)
             full = _plain(e.get('summary'))
             body = full + ('\n' + e['meta'] if e.get('meta') else '') if (full or e.get('meta')) else None
-            lang = 'zh' if re.search(r'[\u4e00-\u9fff]', title + full) and cfg['type'] == 'page' else FEED_LANG
-            image = {'url': e['image']} if e.get('image') and published >= now - timedelta(days=MEDIA_DAYS) else None
+            if cfg['type'] == 'page':
+                lang = 'zh' if re.search(r'[\u4e00-\u9fff]', title + full) else FEED_LANG
+            else:   # 英文订阅里偶尔混进中文条目：只看标题，标题有汉字（引号/书名号里的不算）标 zh，不送翻译
+                lang = 'zh' if mostly_chinese(title) else FEED_LANG
+            # 图片地址坏了（缺主机名等）只丢图、条目保留；旧缓存里的坏图同样在这里挡掉
+            fresh = published >= now - timedelta(days=MEDIA_DAYS)
+            image = {'url': e['image']} if fresh and _valid_http(e.get('image')) else None
             native = e['id'] if cfg['type'] == 'page' else str(e.get('id') or _sha(e.get('url') or title))
-            item = _news(cfg, channel, native, title, _plain(full, SUMMARY_CHARS), e.get('url'), published, now,
+            item = _news(cfg, channel, native, title, _plain(full, SUMMARY_CHARS), link, published, now,
                          lang=lang, body=body, image=image)
             if fetched_at:
                 item['fetched_at'] = fetched_at
