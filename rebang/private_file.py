@@ -277,6 +277,13 @@ def write_private(path, text):
     Missing directories are created 0700 one by one under verified parents; the holding directory is
     tightened to 0700 through its descriptor. A symlinked or shared component makes it fail instead.
     """
+    # Size first (UTF-8 bytes, newline included): an oversized value never touches directories or the old file.
+    try:
+        data = text.encode('utf-8')
+    except (AttributeError, UnicodeError):
+        raise PrivateFileError('not_utf8') from None
+    if len(data) > MAX_BYTES:
+        raise PrivateFileError('too_large')
     parents, name = _split(path)
     if not parents:
         raise PrivateFileError('bad_path')
@@ -296,7 +303,6 @@ def write_private(path, text):
             raise PrivateFileError('cannot_create')
         try:
             os.fchmod(fd, 0o600)
-            data = text.encode('utf-8')
             view = memoryview(data)
             while view:
                 view = view[os.write(fd, view):]

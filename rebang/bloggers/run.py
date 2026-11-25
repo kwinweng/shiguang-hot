@@ -129,10 +129,10 @@ def _platform_wechat(platform, http, fetched_at, opts, sleep):
     rows, items = _fetch_feeds(platform, public, http, fetched_at, opts, lambda a: a['feed'], sleep)
     session_path = getattr(opts, 'weread_session', None)
     session = None
-    if session_path and weread_mod.session_exists(session_path):
+    if session_path:
         try:
             session = weread_mod.load_session(session_path)
-        except Exception:   # 不安全或内容不对（含 `[]`/`null`）：当未配置，不能让整轮停掉
+        except Exception:   # 不在、目录不可进入、不安全或内容不对（含 `[]`/`null`）：当未配置，不能让整轮停掉
             session = None
     books = weread_mod.load_books(getattr(opts, 'weread_books', None) or weread_mod.BOOKS_CACHE) if session else {}
     get = getattr(opts, 'weread_get', None) or weread_mod.http_json

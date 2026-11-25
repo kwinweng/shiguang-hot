@@ -10,9 +10,20 @@ Edge cases:
   a symlinked directory is refused, an existing shared directory is tightened;
 - Weibo redirects: cross-origin (another port) sends nothing there; https→http and cross-host are not
   followed; same https origin is followed with the Cookie; a cross-origin login redirect = expired;
-- WeRead redirects: curl never auto-follows; same https origin followed with the Cookie; cross-origin
-  and https→http not followed;
-- `weibo save-cookie`: 0600 atomic write, no contents printed, refuses root and symlinked folders.
+- WeRead redirects: curl never follows anything; every 3xx (same origin, relative, cross-origin,
+  https→http) is a failed request after exactly one call; a login-page redirect = login_expired;
+- WeRead curl config: only safe https://weread.qq.com/ URLs (quote, space, newline, backslash, `@`,
+  other host, http → bad_url, curl never runs); `globoff` always on;
+- WeRead session folder that cannot be entered: the round does not crash, accounts are not configured,
+  and `status` reports no session;
+- WeRead HTTP 401/403 with an ordinary JSON body → login_expired; 500 with JSON → http_500; a non-zero
+  errCode → failure; cover with nothing → failure. In the round: status is not ok, last_ok_at stays at
+  the previous value, old items are kept (stale) and the health board shows a problem;
+- `weread status`: valid only when the user API confirms this account's userVid; API errors, 401,
+  a redirect, an empty or a different user are all invalid;
+- `weibo save-cookie`: 0600 atomic write, no contents printed, refuses root and symlinked folders;
+  over 64 KiB (UTF-8 bytes incl. newline) is refused before any folder or the old file is touched;
+  `save-cookie`/`check` ignore REBANG_WEIBO_COOKIE and use only the account-home fixed path.
 """
 from datetime import datetime, timezone
 import http.server
@@ -31,6 +42,14 @@ from rebang.bloggers import run as runmod
 from rebang.bloggers import weibo, weread
 
 NOW = datetime(2026, 11, 25, 12, 0, tzinfo=timezone.utc)
+
+
+@pytest.fixture(autouse=True)
+def no_real_curl(monkeypatch):
+    """Offline guard: any WeRead call that would run the real curl fails the test instead."""
+    def refuse(*args, **kwargs):
+        raise AssertionError(f'offline test tried to run a subprocess: {args[:1]}')
+    monkeypatch.setattr(weread.subprocess, 'run', refuse)
 
 
 def offline(*args, **kwargs):
@@ -305,53 +324,293 @@ class FakeCurl:
 SESSION = {'vid': '1', 'skey': 'k'}
 
 
-def test_weread_follows_same_origin_redirect_with_cookie():
-    curl = FakeCurl({'https://weread.qq.com/a': ('302', 'https://weread.qq.com/b', ''),
-                     'https://weread.qq.com/b': ('200', '', '{"ok": 1}')})
-    assert weread.http_json('https://weread.qq.com/a', SESSION, run=curl) == {'ok': 1}
-    assert curl.calls == [('https://weread.qq.com/a', True), ('https://weread.qq.com/b', True)]
-
-
-@pytest.mark.parametrize('location', ['https://evil.example/b', 'http://weread.qq.com/b', 'https://weread.qq.com:444/b'])
-def test_weread_does_not_follow_cross_origin_or_downgrade(location):
-    curl = FakeCurl({'https://weread.qq.com/a': ('302', location, ''),
-                     location: ('200', '', '{"stolen": true}')})
+@pytest.mark.parametrize('location', ['https://weread.qq.com/b', '/b', 'https://evil.example/b',
+                                      'http://weread.qq.com/b', 'https://weread.qq.com:444/b', ''])
+@pytest.mark.parametrize('code', ['301', '302', '303', '307', '308'])
+def test_weread_never_follows_any_redirect(location, code):
+    curl = FakeCurl({'https://weread.qq.com/a': (code, location, '{"ok": 1}')})
     for call in (weread.http_json, weread.http_text):
         with pytest.raises(weread.WereadError) as exc:
             call('https://weread.qq.com/a', SESSION, run=curl)
         assert exc.value.code == 'redirect_blocked'
-    assert {url for url, _ in curl.calls} == {'https://weread.qq.com/a'}
+    assert curl.calls == [('https://weread.qq.com/a', True)] * 2
 
 
-def test_weread_redirect_loop_stops():
-    curl = FakeCurl({'https://weread.qq.com/a': ('302', '/a', '')})
+@pytest.mark.parametrize('location', ['https://weread.qq.com/#login', 'https://weread.qq.com/web/login?x=1',
+                                      'https://open.weixin.qq.com/connect/qrconnect?redirect=LOGIN'])
+def test_weread_login_redirect_is_login_expired_and_not_followed(location):
+    curl = FakeCurl({'https://weread.qq.com/a': ('302', location, '')})
     with pytest.raises(weread.WereadError) as exc:
         weread.http_json('https://weread.qq.com/a', SESSION, run=curl)
-    assert exc.value.code == 'too_many_redirects'
+    assert exc.value.code == 'login_expired'
+    assert len(curl.calls) == 1
+
+
+@pytest.mark.parametrize('url', ['https://weread.qq.com/a"\noutput = "/tmp/x', 'https://weread.qq.com/a b',
+                                 'https://weread.qq.com/a\nb', 'https://weread.qq.com/a\\b',
+                                 'https://user@weread.qq.com/a', 'https://weread.qq.com@evil.example/a',
+                                 'https://evil.example/a', 'http://weread.qq.com/a', 'https://weread.qq.com.evil/a',
+                                 'https://weread.qq.com/a#frag', "https://weread.qq.com/a'b", 'https://weread.qq.com/a\x7f',
+                                 'https://weread.qq.com/a{1,2}', 'https://weread.qq.com/a[1-2]'])
+def test_weread_unsafe_url_never_reaches_curl(url):
+    def curl(*args, **kwargs):
+        pytest.fail('curl must not run for an unsafe URL')
+    for call in (weread.http_json, weread.http_text):
+        with pytest.raises(weread.WereadError) as exc:
+            call(url, SESSION, run=curl)
+        assert exc.value.code == 'bad_url'
+
+
+def test_weread_curl_config_has_globoff_and_no_location():
+    seen = []
+
+    def curl(args, input, **kwargs):
+        seen.append(input.splitlines())
+        return subprocess.CompletedProcess(args, 0, stdout='{"ok": 1}\n200 ', stderr='')
+    url = 'https://weread.qq.com/web/mp/content?' + weread.urlencode({'reviewId': 'MP_WXS_1_a"b c'})
+    assert weread.http_text(url, SESSION, run=curl) == '{"ok": 1}'
+    lines = seen[0]
+    assert 'globoff' in lines and 'location' not in lines
+    assert lines[0] == f'url = "{url}"' and '"' not in url
+
+
+@pytest.mark.parametrize('code,body,error', [('401', '{"errMsg": "unauthorized"}', 'login_expired'),
+                                             ('403', '{"data": {}}', 'login_expired'),
+                                             ('401', '', 'login_expired'),
+                                             ('500', '{"reviewId": "MP_WXS_1_T", "title": "x"}', 'http_500'),
+                                             ('404', '{}', 'http_404'),
+                                             ('000', '', 'http_000'),
+                                             ('200', '{"errCode": -2013, "errMsg": "x"}', 'api_-2013'),
+                                             ('200', '{"errcode": "bad"}', 'api_error')])
+def test_weread_non_2xx_or_api_error_is_a_failure(code, body, error):
+    curl = FakeCurl({'https://weread.qq.com/a': (code, '', body)})
+    with pytest.raises(weread.WereadError) as exc:
+        weread.http_json('https://weread.qq.com/a', SESSION, run=curl)
+    assert exc.value.code == error
+    if code != '200':
+        with pytest.raises(weread.WereadError):
+            weread.http_text('https://weread.qq.com/a', SESSION, run=curl)
+
+
+def test_weread_2xx_json_is_returned():
+    curl = FakeCurl({'https://weread.qq.com/a': ('200', '', '{"ok": 1, "errCode": 0}')})
+    assert weread.http_json('https://weread.qq.com/a', SESSION, run=curl) == {'ok': 1, 'errCode': 0}
+
+
+def wechat_round(tmp_path, folder, curl, previous=None):
+    session = folder / 'weread-session.json'
+    if not session.exists():
+        weread.save_session('1', 'k', session)
+    o = runmod.Options(pause=0)
+    o.weread_session = str(session)
+    o.weread_books = tmp_path / 'books.json'
+    o.weread_get = lambda url, session=None, timeout=25: weread.http_json(url, session, timeout, run=curl)
+    o.weread_get_text = lambda url, session=None, timeout=40: weread.http_text(url, session, timeout, run=curl)
+    return runmod.run(('wechat',), http=offline, now=NOW, previous=previous, opts=o, sleep=lambda s: None)
+
+
+def wechat_previous_round(tmp_path, folder):
+    first = wechat_round(tmp_path / 'first', folder, AnyCurl('500', '{}'))
+    previous = dict(first, items=first['items'] + [wechat_previous()])
+    for row in previous['platforms'][0]['accounts']:
+        if row['handle'] == 'MacTalk':
+            row.update(status='ok', last_ok_at='2026-11-24T00:00:00+00:00')
+            row.pop('error', None)
+            row.pop('reason', None)
+    return previous
+
+
+class AnyCurl:
+    """Every WeRead URL gets the same reply."""
+
+    def __init__(self, code, body):
+        self.code, self.body, self.calls = code, body, 0
+
+    def __call__(self, args, input, **kwargs):
+        self.calls += 1
+        return subprocess.CompletedProcess(args, 0, stdout=f'{self.body}\n{self.code} ', stderr='')
+
+
+@pytest.mark.parametrize('code,body,status', [('401', '{"errMsg": "unauthorized"}', 'login_expired'),
+                                              ('403', '{"reviewId": "MP_WXS_1_T", "title": "x"}', 'login_expired'),
+                                              ('500', '{"reviewId": "MP_WXS_1_T", "title": "x"}', 'error'),
+                                              ('200', '{}', 'error'),
+                                              ('200', '{"errCode": -2041}', 'error')])
+def test_weread_failure_keeps_old_items_but_is_not_ok(tmp_path, folder, code, body, status):
+    from rebang.site.health import build_health
+    previous = wechat_previous_round(tmp_path, folder)
+    folder.chmod(0o700)
+    curl = AnyCurl(code, body)
+    env = wechat_round(tmp_path, folder, curl, previous=previous)
+    assert curl.calls
+    platform = env['platforms'][0]
+    mac = next(a for a in platform['accounts'] if a['handle'] == 'MacTalk')
+    assert mac['status'] == status and mac['status'] != 'ok'
+    assert mac['last_ok_at'] == '2026-11-24T00:00:00+00:00'
+    assert mac['stale'] is True
+    assert [i['title'] for i in env['items'] if i['source_id'] == 'wechat-MacTalk'] == ['上次的文章']
+    snapshot = build_health([('bloggers.json', env)], env['items'], NOW)
+    wechat = next(r for r in snapshot['sources'] if r['id'] == 'wechat')
+    row = next(a for a in wechat['accounts'] if a['id'] == 'wechat-MacTalk')
+    assert row['status'] in ('failed', 'login_expired') and row['last_ok_at'] == '2026-11-24T00:00:00+00:00'
+
+
+# ---------- WeRead session folder that cannot be entered ----------
+
+@pytest.fixture
+def locked(folder):
+    weread.save_session('1', 'k', folder / 'weread-session.json')
+    folder.chmod(0)
+    yield folder
+    folder.chmod(0o700)
+
+
+@pytest.mark.skipif(os.getuid() == 0, reason='root can enter any folder')
+def test_session_folder_not_enterable_does_not_crash_the_round(locked, tmp_path):
+    o = runmod.Options(pause=0)
+    o.weread_session = str(locked / 'weread-session.json')
+    o.weread_books = tmp_path / 'books.json'
+    o.weread_get = lambda *a, **k: pytest.fail('must not request without a readable session')
+    env = runmod.run(('wechat',), http=offline, now=NOW, opts=o, sleep=lambda s: None)
+    mac = next(a for a in env['platforms'][0]['accounts'] if a['handle'] == 'MacTalk')
+    assert (mac['status'], mac['error']) == ('not_configured', 'wechat_weread_qr')
+
+
+@pytest.mark.skipif(os.getuid() == 0, reason='root can enter any folder')
+def test_status_with_unenterable_folder_reports_no_session(locked, capsys):
+    assert weread.main(['status', '--session', str(locked / 'weread-session.json')]) == 1
+    out = json.loads(capsys.readouterr().out)
+    assert out['session'] is False
+
+
+# ---------- weread status ----------
+
+def status_with(folder, monkeypatch, capsys, curl):
+    session = folder / 'weread-session.json'
+    weread.save_session('1', 'k', session)
+    real = weread.http_json
+    monkeypatch.setattr(weread, 'http_json', lambda url, session=None, timeout=25: real(url, session, timeout, run=curl))
+    code = weread.main(['status', '--session', str(session)])
+    return code, json.loads(capsys.readouterr().out)
+
+
+@pytest.mark.parametrize('code,location,body', [('200', '', '{"errCode": -2013, "errMsg": "x"}'),
+                                                ('200', '', '{"errcode": -1}'),
+                                                ('200', '', '{}'),
+                                                ('200', '', '{"userVid": 2, "name": "someone else"}'),
+                                                ('200', '', '{"data": {"errcode": -2041}}'),
+                                                ('401', '', '{"userVid": 1}'),
+                                                ('500', '', '{"userVid": 1}'),
+                                                ('302', 'https://weread.qq.com/b', '{"userVid": 1}')])
+def test_status_reports_invalid_for_api_errors(folder, monkeypatch, capsys, code, location, body):
+    url = 'https://weread.qq.com/api/userInfo?userVid=1'
+    rc, out = status_with(folder, monkeypatch, capsys, FakeCurl({url: (code, location, body)}))
+    assert rc == 1 and out['session'] is True and out['valid'] is False
+
+
+def test_status_valid_only_when_user_confirmed(folder, monkeypatch, capsys):
+    url = 'https://weread.qq.com/api/userInfo?userVid=1'
+    rc, out = status_with(folder, monkeypatch, capsys, FakeCurl({url: ('200', '', '{"userVid": 1, "name": "me"}')}))
+    assert rc == 0 and out['valid'] is True
 
 
 # ---------- weibo save-cookie ----------
 
-def test_save_cookie_writes_owner_only_and_prints_no_contents(folder, monkeypatch, capsys):
+@pytest.fixture
+def home(tmp_path, monkeypatch):
+    """A fake account home (as pwd would report it); the fixed cookie path lives under it."""
+    path = tmp_path.resolve() / 'home'
+    (path / '.config' / 'rebang').mkdir(parents=True, mode=0o700)
+    for p in (path, path / '.config', path / '.config' / 'rebang'):
+        p.chmod(0o700)
+    monkeypatch.setattr(private_file, 'account_home', lambda: str(path))
     monkeypatch.setattr(private_file, 'account_problem', lambda: None)
-    cookie = folder / 'weibo-cookie.txt'
+    return path
+
+
+def test_save_cookie_writes_owner_only_and_prints_no_contents(home, capsys):
+    cookie = home / '.config' / 'rebang' / 'weibo-cookie.txt'
     put(cookie, 'OLD', 0o644)                         # an existing loose file is replaced, not truncated in place
     old_inode = cookie.stat().st_ino
-    assert weibo.main(['save-cookie', '--cookie-file', str(cookie)], stdin=io.StringIO('Cookie: ' + SECRET + '\n')) == 0
+    assert weibo.main(['save-cookie'], stdin=io.StringIO('Cookie: ' + SECRET + '\n')) == 0
     out = capsys.readouterr().out
-    assert SECRET not in out and json.loads(out)['saved'] is True
+    assert SECRET not in out and json.loads(out) == {'saved': True, 'cookie_file': str(cookie)}
     assert oct(cookie.stat().st_mode & 0o777) == '0o600' and cookie.stat().st_ino != old_inode
     assert weibo.read_cookie(cookie) == SECRET
-    assert weibo.main(['check', '--cookie-file', str(cookie)]) == 0
+    assert weibo.main(['check']) == 0
+    assert json.loads(capsys.readouterr().out) == {'cookie_file': str(cookie), 'usable': True}
 
 
-def test_save_cookie_refuses_symlinked_folder_root_and_empty_input(folder, tmp_path, monkeypatch, capsys):
-    monkeypatch.setattr(private_file, 'account_problem', lambda: None)
-    link = tmp_path.resolve() / 'link'
-    link.symlink_to(folder)
-    assert weibo.main(['save-cookie', '--cookie-file', str(link / 'weibo-cookie.txt')], stdin=io.StringIO(SECRET)) == 1
-    assert weibo.main(['save-cookie', '--cookie-file', str(folder / 'c.txt')], stdin=io.StringIO('\n')) == 1
-    assert not list(folder.iterdir())
+def test_save_cookie_and_check_ignore_the_environment_override(home, tmp_path, monkeypatch, capsys):
+    elsewhere = tmp_path.resolve() / 'elsewhere'
+    elsewhere.mkdir(mode=0o700)
+    elsewhere.chmod(0o700)
+    other = elsewhere / 'weibo-cookie.txt'
+    monkeypatch.setenv('REBANG_WEIBO_COOKIE', str(other))
+    monkeypatch.setenv('HOME', str(elsewhere))
+    monkeypatch.setattr(weibo, 'DEFAULT_COOKIE', other)   # as if imported with the variable set
+    assert weibo.main(['save-cookie'], stdin=io.StringIO(SECRET)) == 0
+    fixed = home / '.config' / 'rebang' / 'weibo-cookie.txt'
+    assert json.loads(capsys.readouterr().out)['cookie_file'] == str(fixed)
+    assert weibo.read_cookie(fixed) == SECRET and not other.exists()
+    put(other, SECRET)                                  # a usable file at the override does not count
+    fixed.unlink()
+    assert weibo.main(['check']) == 1
+    assert json.loads(capsys.readouterr().out) == {'cookie_file': str(fixed), 'usable': False}
+    with pytest.raises(SystemExit):                     # no way to point it elsewhere
+        weibo.main(['save-cookie', '--cookie-file', str(other)], stdin=io.StringIO(SECRET))
+
+
+@pytest.mark.parametrize('size', [private_file.MAX_BYTES, private_file.MAX_BYTES + 1, private_file.MAX_BYTES * 3])
+def test_oversized_cookie_does_not_touch_the_old_file(home, capsys, size):
+    cookie = home / '.config' / 'rebang' / 'weibo-cookie.txt'
+    put(cookie, SECRET)
+    before = (cookie.stat().st_ino, cookie.read_text())
+    assert weibo.main(['save-cookie'], stdin=io.StringIO('a' * size)) == 1   # MAX_BYTES + newline is too big too
+    assert json.loads(capsys.readouterr().out)['error'] == 'too_large'
+    assert (cookie.stat().st_ino, cookie.read_text()) == before
+    assert sorted(p.name for p in cookie.parent.iterdir()) == ['weibo-cookie.txt']
+
+
+def test_oversized_multibyte_cookie_is_counted_in_utf8_bytes(home, capsys):
+    cookie = home / '.config' / 'rebang' / 'weibo-cookie.txt'
+    put(cookie, SECRET)
+    value = '饼' * (private_file.MAX_BYTES // 3 + 1)          # fewer characters than MAX_BYTES, more bytes
+    assert len(value) < private_file.MAX_BYTES
+    assert weibo.main(['save-cookie'], stdin=io.StringIO(value)) == 1
+    assert json.loads(capsys.readouterr().out)['error'] == 'too_large'
+    assert cookie.read_text() == SECRET
+
+
+def test_cookie_just_under_the_limit_is_saved(home, capsys):
+    value = 'a' * (private_file.MAX_BYTES - 1)                # plus the newline = exactly MAX_BYTES
+    assert weibo.main(['save-cookie'], stdin=io.StringIO(value)) == 0
+    assert weibo.read_cookie(home / '.config' / 'rebang' / 'weibo-cookie.txt') == value
+
+
+def test_write_private_refuses_oversized_before_creating_folders(tmp_path):
+    target = tmp_path.resolve() / 'new' / 'deeper' / 'c.txt'
+    with pytest.raises(private_file.PrivateFileError) as exc:
+        private_file.write_private(target, 'x' * (private_file.MAX_BYTES + 1))
+    assert exc.value.code == 'too_large' and not (tmp_path / 'new').exists()
+
+
+def test_save_cookie_reads_bytes_from_a_binary_stdin(home, capsys):
+    class Stdin:
+        buffer = io.BytesIO(b'a' * (private_file.MAX_BYTES * 4))
+    assert weibo.main(['save-cookie'], stdin=Stdin()) == 1
+    assert Stdin.buffer.tell() == private_file.MAX_BYTES + 1   # never reads more than the limit + 1
+
+
+def test_save_cookie_refuses_symlinked_folder_root_and_empty_input(home, folder, tmp_path, monkeypatch, capsys):
+    rebang_dir = home / '.config' / 'rebang'
+    rebang_dir.rmdir()
+    rebang_dir.symlink_to(folder)
+    assert weibo.main(['save-cookie'], stdin=io.StringIO(SECRET)) == 1
+    rebang_dir.unlink()
+    rebang_dir.mkdir(mode=0o700)
+    assert weibo.main(['save-cookie'], stdin=io.StringIO('\n')) == 1
+    assert not list(folder.iterdir()) and not list(rebang_dir.iterdir())
     monkeypatch.undo()
     monkeypatch.setattr(private_file.os, 'getuid', lambda: 0)
     assert private_file.account_problem() == 'run_as_root'

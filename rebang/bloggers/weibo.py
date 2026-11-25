@@ -1,6 +1,6 @@
 """微博：用副号 Cookie 直接读 weibo.com 桌面版 ajax 接口（不走 m.weibo.cn，不装 weibo-crawler）。
 
-- Cookie：``~/.config/rebang/weibo-cookie.txt``（``REBANG_WEIBO_COOKIE`` / ``--weibo-cookie-file`` 可改），仓库外、0600，
+- Cookie：``~/.config/rebang/weibo-cookie.txt``（采集时 ``REBANG_WEIBO_COOKIE`` / ``--weibo-cookie-file`` 可改；``save-cookie``/``check`` 只用账号家目录下这个固定路径），仓库外、0600，
   一行浏览器 Cookie 值（从 weibo.com 请求头复制，不带 ``Cookie:`` 前缀）。代码只在发请求时读进内存，
   不打印、不写日志、不放进异常信息或输出文件。
 - 接口：``/ajax/statuses/mymblog?uid=…&page=1`` 取主页第一页；``isLongText`` 的帖再调 ``/ajax/statuses/longtext?id=<mblogid>``
@@ -337,34 +337,61 @@ def save_cache(path, cache):
     save_json(path, keep)
 
 
+def fixed_cookie_path():
+    """save-cookie / check 用的唯一位置：系统账号库（pwd）里的家目录下固定路径，和发布器一致。
+    不看 HOME，也不看 REBANG_WEIBO_COOKIE，避免写到别处却提示成功。"""
+    return Path(private_file.account_home()) / '.config' / 'rebang' / 'weibo-cookie.txt'
+
+
+def read_stdin_limited(stream):
+    """最多读 MAX_BYTES+1 字节；超了直接报 too_large，什么都不写。返回文本。"""
+    raw = getattr(stream, 'buffer', stream).read(private_file.MAX_BYTES + 1)
+    if isinstance(raw, str):
+        raw = raw.encode('utf-8', 'surrogateescape')
+    if len(raw) > private_file.MAX_BYTES:
+        raise WeiboError('too_large')
+    try:
+        return raw.decode('utf-8')
+    except UnicodeDecodeError:
+        raise WeiboError('cookie_unreadable') from None
+
+
 def main(argv=None, stdin=None):
     """python3 -m rebang.bloggers.weibo save-cookie：从标准输入读 Cookie 值（如 ``pbpaste |``），安全落盘。
-    只能由拥有本 checkout 的非 root 账号运行；写入同目录独占创建的 0600 临时文件后原子改名，输出不含内容。"""
+    只写账号家目录（pwd）下的固定路径 ~/.config/rebang/weibo-cookie.txt，忽略 HOME 和 REBANG_WEIBO_COOKIE。
+    只能由拥有本 checkout 的非 root 账号运行；超过 64 KiB 的输入在碰目录和旧文件之前就拒绝；
+    写入同目录独占创建的 0600 临时文件后原子改名，输出不含内容。"""
     ap = argparse.ArgumentParser(prog='python3 -m rebang.bloggers.weibo')
     sub = ap.add_subparsers(dest='cmd', required=True)
-    sv = sub.add_parser('save-cookie', help='从标准输入读一行 Cookie 值，写到仓库外 0600 文件（不打印内容）')
-    sv.add_argument('--cookie-file', default=str(DEFAULT_COOKIE))
-    sub.add_parser('check', help='只检查 Cookie 文件能否被采集器安全读取（不打印内容）').add_argument(
-        '--cookie-file', default=str(DEFAULT_COOKIE))
+    sub.add_parser('save-cookie', help='从标准输入读一行 Cookie 值，写到账号家目录下固定的 0600 文件（不打印内容）')
+    sub.add_parser('check', help='只检查固定位置的 Cookie 文件能否被采集器安全读取（不打印内容）')
     args = ap.parse_args(argv)
+    try:
+        cookie_file = str(fixed_cookie_path())
+    except (KeyError, OSError):
+        print(json.dumps({'saved' if args.cmd == 'save-cookie' else 'usable': False, 'error': 'no_account_home'}))
+        return 1
     if args.cmd == 'check':
-        ok = private_file.check_private(args.cookie_file)
-        print(json.dumps({'cookie_file': args.cookie_file, 'usable': ok}))
+        ok = private_file.check_private(cookie_file)
+        print(json.dumps({'cookie_file': cookie_file, 'usable': ok}))
         return 0 if ok else 1
     problem = private_file.account_problem()
     if problem:
         print(json.dumps({'saved': False, 'error': problem}))
         return 1
     try:
-        value = clean_cookie((stdin or sys.stdin).read())
-        private_file.write_private(args.cookie_file, value + '\n')
+        value = clean_cookie(read_stdin_limited(stdin or sys.stdin))
+        line = value + '\n'
+        if len(line.encode('utf-8')) > private_file.MAX_BYTES:
+            raise WeiboError('too_large')
+        private_file.write_private(cookie_file, line)
     except WeiboError as exc:
         print(json.dumps({'saved': False, 'error': exc.code}))
         return 1
     except private_file.PrivateFileError as exc:
-        print(json.dumps({'saved': False, 'error': exc.code, 'cookie_file': args.cookie_file}))
+        print(json.dumps({'saved': False, 'error': exc.code, 'cookie_file': cookie_file}))
         return 1
-    print(json.dumps({'saved': True, 'cookie_file': args.cookie_file}))
+    print(json.dumps({'saved': True, 'cookie_file': cookie_file}))
     return 0
 
 

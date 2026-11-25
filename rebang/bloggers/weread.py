@@ -11,7 +11,9 @@
 读取：优先 GET /web/mp/articles?bookId=MP_WXS_…&offset=0（列表）。2026-11-16 实测新鲜会话上这个接口仍回 -2041（不是登录失效，/api/userInfo 与 /api/mp/cover 都正常），所以失败时改走 /api/mp/cover（最新一篇：标题、封面、reviewId）再读 /web/mp/content 补发布时间和原文链接。
 bookId 优先用 bloggers.json 的 `book_id`（由公众号公开 __biz Base64 解码得到 MP_WXS_<数字>，并用 cover 返回的名字核对过）。没写才登录后用站内搜索；网页搜索经常搜不到公众号本身。
 Cookie 只通过 curl 的标准输入配置传给 curl（不进命令行参数、不进日志），任何输出都不打印会话内容。
-curl 不自动跟跳转；只在同一个 HTTPS 源里带 Cookie 跟随，跨域或降级到 http 直接报 redirect_blocked。
+curl 不跟任何跳转：任何 3xx 都当这次请求失败（跳去登录页记 login_expired，其它记 redirect_blocked）。
+写进 curl 配置的 URL 只能是 https://weread.qq.com/ 下由代码拼出的地址（只含安全字符，否则 bad_url，不发请求），并加 globoff。
+任何非 2xx（含 401/403）都当失败，401/403 记 login_expired；回包里非 0 的 errCode 也当失败。
 会话文件用 rebang/private_file.py 安全打开和原子写入（不跟软链接、只本人可用、无 ACL、单一硬链接）。
 错误码：-2010 没登录 / -2012 登录超时 → login_expired，站上保留旧内容。-2041 在列表接口上当「这次列表不可用」处理，改走 cover，不把整次登录判死。
 """
@@ -25,7 +27,7 @@ import tempfile
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import quote, urlencode, urljoin, urlsplit
+from urllib.parse import quote, urlencode
 
 from .. import private_file
 from .common import detect_lang, iso, normalize_text, source_id, summary_of
@@ -36,9 +38,11 @@ DEFAULT_SESSION = Path(os.environ.get('REBANG_WEREAD_SESSION')
                        or Path(private_file.default_home()) / '.config' / 'rebang' / 'weread-session.json')
 BOOKS_CACHE = Path(__file__).resolve().parents[2] / 'var' / 'rebang' / 'cache' / 'weread-books.json'
 LOGIN_ERRORS = {-2010, -2012}  # -2041 在列表接口上常见，不一定是登录失效
-MAX_REDIRECTS = 5
 # vid/skey 会写进 curl 配置的引号里：只收不会改变配置语义的字符。
 _TOKEN = re.compile(r'[A-Za-z0-9_.+/=:-]{1,512}')
+# 能写进 curl 配置的 URL：固定站点 + 路径/查询里只有 urlencode/quote 会产出的字符（没有引号、空白、反斜杠、@、#）。
+_SAFE_URL = re.compile(r'https://weread\.qq\.com/[A-Za-z0-9/_.~%?=&+-]*')
+AUTH_FAILED = ('401', '403')
 
 
 class WereadError(Exception):
@@ -48,10 +52,6 @@ class WereadError(Exception):
 
 
 # ---------- 会话 ----------
-
-def session_exists(path=DEFAULT_SESSION):
-    return Path(path).is_file()
-
 
 def load_session(path=DEFAULT_SESSION):
     """安全打开（见 rebang/private_file.py）并校验：必须是 JSON 对象，vid/skey 是非空的安全字符串。
@@ -82,21 +82,16 @@ def save_session(vid, skey, path=DEFAULT_SESSION):
 
 # ---------- HTTP（curl；Cookie 走标准输入） ----------
 
-def _origin(url):
-    parts = urlsplit(url)
-    try:
-        port = parts.port
-    except ValueError:
-        return None
-    return parts.scheme.lower(), (parts.hostname or '').lower(), port or (443 if parts.scheme.lower() == 'https' else 80)
+def _looks_like_login(location):
+    return 'login' in location.lower()
 
 
 def _curl(url, session, timeout, accept, extra=(), run=None):
-    """一次请求，不让 curl 自己跟跳转（不开 location）。返回 (body, http_code, 跳转目标)。
-
-    跳转由调用方按同源规则处理：只在原来的 HTTPS 源（scheme+host+port 相同）里带 Cookie 跟随，
-    跨域或降级到 http 一律不跟，Cookie 不会被带到别处。"""
-    config = [f'url = "{url}"', f'user-agent = "{UA}"', f'header = "Accept: {accept}"',
+    """一次请求，curl 不跟跳转（不开 location，加 globoff 关掉 URL 展开）。返回 (body, http_code, 跳转目标)。
+    URL 不是固定站点下的安全地址就不发请求。"""
+    if not isinstance(url, str) or not _SAFE_URL.fullmatch(url):
+        raise WereadError('bad_url')
+    config = [f'url = "{url}"', 'globoff', f'user-agent = "{UA}"', f'header = "Accept: {accept}"',
               f'header = "Referer: {BASE}/"', f'max-time = {int(timeout)}', 'silent', 'proto = "=https"', *extra]
     if session:
         config.append(f'cookie = "wr_vid={session["vid"]}; wr_skey={session["skey"]}"')
@@ -113,16 +108,15 @@ def _curl(url, session, timeout, accept, extra=(), run=None):
 
 
 def _fetch(url, session, timeout, accept, extra=(), run=None):
-    origin = _origin(url)
-    for _ in range(MAX_REDIRECTS + 1):
-        body, code, location = _curl(url, session, timeout, accept, extra, run=run)
-        if not (code.startswith('3') and location):
-            return body, code
-        target = urljoin(url, location)
-        if origin is None or origin[0] != 'https' or _origin(target) != origin:
-            raise WereadError('redirect_blocked')
-        url = target
-    raise WereadError('too_many_redirects')
+    """只认 2xx。任何 3xx 都不跟（登录页跳转 = 会话失效），401/403 = 会话失效，其它非 2xx = http_<码>。"""
+    body, code, location = _curl(url, session, timeout, accept, extra, run=run)
+    if code.startswith('3'):
+        raise WereadError('login_expired' if _looks_like_login(location) else 'redirect_blocked')
+    if code in AUTH_FAILED:
+        raise WereadError('login_expired')
+    if not (len(code) == 3 and code.startswith('2') and code.isdigit()):
+        raise WereadError(f'http_{code}' if code.isdigit() else 'http_unknown')
+    return body, code
 
 
 def http_json(url, session=None, timeout=25, run=None):
@@ -136,16 +130,14 @@ def http_json(url, session=None, timeout=25, run=None):
     err = data.get('errCode', data.get('errcode', (data.get('data') or {}).get('errcode') if isinstance(data.get('data'), dict) else None))
     if isinstance(err, int) and err in LOGIN_ERRORS:
         raise WereadError('login_expired')
-    if code.startswith(('4', '5')) and not data:
-        raise WereadError(f'http_{code}')
+    if err not in (None, 0):
+        raise WereadError(f'api_{err}' if isinstance(err, int) else 'api_error')
     return data
 
 
 def http_text(url, session=None, timeout=40, run=None):
     """正文页可达数 MB，请求压缩减少传输超时；Cookie 仍走标准输入，不打印。"""
-    body, code = _fetch(url, session, timeout, 'text/html,application/xhtml+xml', extra=('compressed',), run=run)
-    if code.startswith(('3', '4', '5')):
-        raise WereadError(f'http_{code}')
+    body, _ = _fetch(url, session, timeout, 'text/html,application/xhtml+xml', extra=('compressed',), run=run)
     return body
 
 
@@ -339,14 +331,19 @@ def _to_posts(rows, account, platform, fetched_at):
 
 def wechat_posts(account, platform, fetched_at, session, get=http_json, get_text=None, limit=10, cache=None):
     book = resolve_book_id(account, session, get=get, cache=cache)
-    data = get(f'{BASE}/web/mp/articles?' + urlencode({'bookId': book, 'offset': 0}), session=session)
+    try:
+        data = get(f'{BASE}/web/mp/articles?' + urlencode({'bookId': book, 'offset': 0}), session=session)
+    except WereadError as exc:
+        if exc.code == 'login_expired':
+            raise
+        data = {}     # 列表接口常回 -2041（不是登录失效）：改走 cover
     rows = article_rows(data if isinstance(data, dict) else {})
     via = 'articles'
     if not rows:
         cover = get(f'{BASE}/api/mp/cover?' + urlencode({'bookId': book}), session=session)
         row = cover_row(cover if isinstance(cover, dict) else {})
         if not row:
-            return [], 'cover'
+            raise WereadError('cover_missing')   # 列表和 cover 都没读到：当失败，保留旧文但不算 ok
         via = 'cover'
         text_get = get_text or http_text
         # Let the runner retain both old content and last_ok_at when content cannot be read.
@@ -396,12 +393,16 @@ def main(argv=None):
         except WereadError as exc:
             print(json.dumps({'step': 'failed', 'error': exc.code}, ensure_ascii=False))
             return 1
-    if not session_exists(args.session):
-        print(json.dumps({'session': False, 'path': str(args.session)}))
-        return 1
     try:
         session = load_session(args.session)
-        http_json(f'{BASE}/api/userInfo?' + urlencode({'userVid': session['vid']}), session=session)
+    except Exception as exc:   # 不在、不可进入、不安全、内容不对：一律当没有会话
+        print(json.dumps({'session': False, 'error': getattr(exc, 'code', 'session_unreadable'), 'path': str(args.session)}))
+        return 1
+    try:
+        info = http_json(f'{BASE}/api/userInfo?' + urlencode({'userVid': session['vid']}), session=session)
+        # 只有用户接口明确回了本人的 userVid 才算有效；其它任何回包都当无效。
+        if str(info.get('userVid', '')) != session['vid']:
+            raise WereadError('user_unconfirmed')
         print(json.dumps({'session': True, 'valid': True, 'path': str(args.session)}))
         return 0
     except WereadError as exc:

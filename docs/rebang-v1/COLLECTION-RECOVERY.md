@@ -58,22 +58,22 @@
 
 ### 请阿欢在 Mac mini 上操作（AI 不碰 Cookie、不扫码）
 
-两条命令都要在**发布账号**（拥有 `~/projects/shiguang-news-publish/checkout` 的那个账号，不用 `sudo`）的终端里跑。命令放在 `( set -eu; … )` 里：任何一步失败就整段停下，不会接着写文件，也不会关掉终端。写入由程序完成：先确认当前账号就是这个 checkout 的属主、不是 root；目录逐级不跟软链接、不能被别人改，`rebang` 目录收紧为 0700；Cookie/会话先写进同目录里新建的 0600 随机名临时文件，写完再原子替换正式文件（不会沿软链接写，也不会保留旧文件的权限）。输出只有路径和是否成功，不含内容。
+两条命令都要在**发布账号**（拥有 `~/projects/shiguang-news-publish/checkout` 的那个账号，不用 `sudo`）的终端里跑。命令放在 `( set -euo pipefail; … )` 里：任何一步失败（包括管道里 `pbpaste` 失败）就整段停下，不会接着写文件，也不会关掉终端。写入由程序完成：先确认当前账号就是这个 checkout 的属主、不是 root；目录逐级不跟软链接、不能被别人改，`rebang` 目录收紧为 0700；Cookie/会话先写进同目录里新建的 0600 随机名临时文件，写完再原子替换正式文件（不会沿软链接写，也不会保留旧文件的权限）。输出只有路径和是否成功，不含内容。
 
 1. **微博 Cookie**：在电脑浏览器登录微博副号，打开 weibo.com 任意页 → 开发者工具 → 网络 → 选一个 `weibo.com/ajax/...` 请求 → 请求头里 `Cookie` 的值，只复制值（带不带 `Cookie:` 前缀都行）。然后在 Mini 终端：
 
    ```sh
-   ( set -eu
+   ( set -euo pipefail
      cd ~/projects/shiguang-news-publish/checkout
      pbpaste | ../venv/bin/python -m rebang.bloggers.weibo save-cookie
      ../venv/bin/python -m rebang.bloggers.weibo check )
    ```
 
-   最后一行应输出 `"usable": true`。不要把 Cookie 发到聊天里；复制完可以随便再复制点别的，把剪贴板覆盖掉。
+   `save-cookie` 和 `check` 只用系统账号库（不看 `HOME`）里家目录下的固定路径 `.config/rebang/weibo-cookie.txt`，和发布器读的是同一个；**不理会** `REBANG_WEIBO_COOKIE` 环境变量，也没有改路径的参数。超过 64 KiB 的输入直接报错，旧文件不动。两条输出里的 `cookie_file` 应是同一个路径，最后一行应输出 `"usable": true`。不要把 Cookie 发到聊天里；复制完可以随便再复制点别的，把剪贴板覆盖掉。
 2. **微信读书扫码**（约 10 分钟内完成）：
 
    ```sh
-   ( set -eu
+   ( set -euo pipefail
      cd ~/projects/shiguang-news-publish/checkout
      sess="$(../venv/bin/python -c 'import os, pwd; print(pwd.getpwuid(os.getuid()).pw_dir)')/.config/rebang/weread-session.json"
      qr="$(mktemp -d)/weread-login-qr.png"
@@ -82,6 +82,6 @@
      ../venv/bin/python -m rebang.bloggers.weread status --session "$sess" )
    ```
 
-   会话路径按系统账号库里的家目录算（和发布器用的同一个，不看 `HOME`），`login` 和 `status` 显式用同一个路径。二维码放在 `mktemp -d` 新建的私有临时目录（只有自己能进），不放公共 `/tmp` 固定路径；看到打印的「二维码：…」后，另开一个终端 `open <那个路径>`，用微信扫码并在手机上点确认。中途约每 56 秒出现一次 `LOGIN_TIMEOUT` 是正常的，码仍有效，继续等；如果打印要验证码，按它给的带 `--otp` 的命令重跑（同样带上 `--session "$sess"`）。最后 `status` 输出 `"valid": true` 才算好。
+   会话路径按系统账号库里的家目录算（和发布器用的同一个，不看 `HOME`），`login` 和 `status` 都用 `--session "$sess"` 显式传同一个路径，不依赖 `REBANG_WEREAD_SESSION`。二维码放在 `mktemp -d` 新建的私有临时目录（只有自己能进），不放公共 `/tmp` 固定路径；看到打印的「二维码：…」后，另开一个终端 `open <那个路径>`，用微信扫码并在手机上点确认。中途约每 56 秒出现一次 `LOGIN_TIMEOUT` 是正常的，码仍有效，继续等；如果打印要验证码，按它给的带 `--otp` 的命令重跑（同样带上 `--session "$sess"`）。最后 `status` 输出 `"valid": true` 才算好（只有用户接口明确回了本人账号才算有效；接口报错、跳转或 401/403 都是 `false`）。
 3. 两项都只在含本次修复的代码换上 Mini 之后才会生效。生效后下一轮 :05 的 `log/publish.log` 会出现 `source_credentials=weibo,weread`：它**只表示发布器本地预检通过**（文件在、权限对），不代表登录有效；采集器读取时还会再查一遍，Cookie 是否真能用要看博主页微博、公众号有没有新内容。发布器停发（有 `HALT`）的轮次不会打印这一行。
 4. **X 需要阿欢定**：原供稿方是盒子上的 Grok Bot 例程。要恢复「原来的转储供稿」，先要确认这个例程现在还在不在跑、最后一次写转储是什么时候；再决定由谁、用什么方式把转储送到 Mini 的 `checkout/var/rebang/x-dump/`（比如盒子定时用只读同步推过来，或 Mini 定时从盒子拉）。这涉及例程和机器之间的访问权限，按红灯等阿欢批准，不用付费 X API、不新开账号。
