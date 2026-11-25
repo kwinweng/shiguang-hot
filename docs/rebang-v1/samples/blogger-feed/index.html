@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>博主信息流样页</title>
+<link rel="stylesheet" href="sample.css">
+</head>
+<body class="index">
+<main>
+  <h1>博主页改版样页（第 4 步，只是样页）</h1>
+  <p>对标推特 / 微博手机版：单列信息流 + 点博主进个人主页。全部是<b>示例数据</b>（虚构博主、渐变占位图），不对应真实账号；线上 web-v11 没改。手机打开看效果最准，跟随系统深浅色。</p>
+  <div class="cards">
+    <a class="card" href="feed.html?v=a"><b>A 紧凑版</b><span>推特式：头像在左、正文缩进，九宫格小图，一屏能看 2–3 条</span></a>
+    <a class="card" href="feed.html?v=b"><b>B 大图版</b><span>微博式：头像和名字在上、正文通栏、大图，帖子之间灰色分隔带</span></a>
+    <a class="card" href="feed.html?v=a#u=a1"><b>个人主页（A）</b><span>头部资料 + 这个博主的信息流，可切「帖子 / 图片和视频」</span></a>
+    <a class="card" href="feed.html?v=b#u=a1"><b>个人主页（B）</b><span>同上，帖子用大图版样式</span></a>
+  </div>
+  <h2>两版共用</h2>
+  <ul>
+    <li>顶部：「博主」+ 按平台筛选（全部 / X / 微博 / 即刻 / 公众号 / 博客 / YouTube），往下滑时吸顶；下面一排常看博主头像，红点 = 有新帖，点头像进个人主页。</li>
+    <li>帖子：头像、名字、平台标、账号、时间；正文超过 6 行（B 版 8 行）折叠，点「全文」原地展开；英文帖先显示译文，标「机器翻译」，可「看原文」。</li>
+    <li>图片按条数排：1 张放大、2/4 张两列、3 张及以上九宫格；视频显示封面、播放键、时长；X 的引用是细边框小卡片，微博的转发是灰底框。</li>
+    <li>交互沿用线上：博主页左右滑不切任何东西（左右滑只在频道页换频道）；长按帖子出「收藏 / 分享 / 看博主主页 / 打开原文」；点帖子进现有正文页；底栏 频道 / 博主 / 热搜 / 收藏 不变。</li>
+  </ul>
+  <h2>截图（390×844 手机尺寸）</h2>
+  <div class="shots">
+    <figure><img src="shot-a-feed-light.png" alt=""><figcaption>A 紧凑版 · 首屏</figcaption></figure>
+    <figure><img src="shot-a-feed-scrolled-light.png" alt=""><figcaption>A · 转发框 + 长文折叠</figcaption></figure>
+    <figure><img src="shot-a-profile-light.png" alt=""><figcaption>A · 个人主页</figcaption></figure>
+    <figure><img src="shot-a-longpress-light.png" alt=""><figcaption>A · 长按菜单</figcaption></figure>
+    <figure><img src="shot-b-feed-light.png" alt=""><figcaption>B 大图版 · 首屏</figcaption></figure>
+    <figure><img src="shot-b-feed-scrolled-light.png" alt=""><figcaption>B · 转发框 + 长文</figcaption></figure>
+    <figure><img src="shot-b-profile-light.png" alt=""><figcaption>B · 个人主页</figcaption></figure>
+    <figure><img src="shot-a-feed-dark.png" alt=""><figcaption>A · 深色</figcaption></figure>
+    <figure><img src="shot-b-feed-dark.png" alt=""><figcaption>B · 深色</figcaption></figure>
+  </div>
+  <p style="font-size:13px;color:var(--muted-foreground)">重新截图：<code>uv run --python 3.11 --with playwright python -I docs/rebang-v1/samples/blogger-feed/capture.py docs/rebang-v1/samples/blogger-feed</code></p>
+</main>
+</body>
+</html>
