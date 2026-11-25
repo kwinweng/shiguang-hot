@@ -131,7 +131,10 @@ def load_inputs(in_dir, use_fixture=False):
 
 
 def merge_items(envelopes, report):
-    """校验 + 合并去重。同 id 取 fetched_at 较新的；同频道同 url 只留一条（保留 highlight 标）。"""
+    """校验 + 合并去重。同 id 取 fetched_at 较新的。
+    新闻：同链接的不同 id 全部保留（交给 rebang/site/dedup.fold 在频道内折叠，id-index、搜索都能找到每个 id）；
+    只有「今日重点」条目按同频道同 url 并进已有条目（只打 highlight 标），找不到才单独成条。
+    帖子（博主）：同 url 只留一条，规则不变。"""
     by_id = {}
     for name, envelope in envelopes:
         entry = {'file': name, 'producer': envelope.get('producer'), 'generated_at': envelope.get('generated_at'),
@@ -155,14 +158,15 @@ def merge_items(envelopes, report):
     # 先放非「今日重点」条目，再让重点条目按 url 并进已有条目（只打标），找不到才单独成条。
     for item in [i for i in items if i['source_id'] != highlight_src] + [i for i in items if i['source_id'] == highlight_src]:
         key = (item['kind'], item.get('channel'), item.get('url'))
-        if item.get('url') and key in by_url:
+        folds_by_url = item['kind'] != 'news' or item['source_id'] == highlight_src
+        if item.get('url') and key in by_url and folds_by_url:
             kept = by_url[key]
             if item.get('highlight'):
                 kept['highlight'] = True
                 kept.setdefault('highlight_date', item.get('highlight_date'))
             continue
         if item.get('url'):
-            by_url[key] = item
+            by_url.setdefault(key, item)
         out.append(item)
     return sorted(out, key=_sort_key, reverse=True)
 

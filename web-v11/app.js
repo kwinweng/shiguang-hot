@@ -948,7 +948,9 @@
   async function openItem(ref, opts = {}) {
     const id = typeof ref === 'string' ? ref : ref && ref.id;
     if (!id) return;
-    let it = items.get(id) || (typeof ref === 'object' && ref.kind ? ref : null) || await findItem(id) || (typeof ref === 'object' ? ref : null);
+    // 先按 id 经 id-index 读本次发布的完整条目（被折叠的条目在 merged.json 里，带正文和「今日重点」标）；
+    // 读不到再用收藏/搜索传进来的快照兜底
+    let it = await findItem(id) || (typeof ref === 'object' ? ref : null);
     if (!it) {
       const fav = window.RebangFavorites && window.RebangFavorites.load ? window.RebangFavorites.load().find(x => x.id === id) : null;
       if (fav) it = fav; else { toast('这条已经不在最近一次发布的数据里了。'); return; }
@@ -1252,7 +1254,8 @@
     if (e.touches.length !== 1) { g = null; return; }
     const t = e.touches[0], target = e.target;
     const inArticle = !!target.closest('#articleView');
-    const card = !inArticle ? target.closest(CARD_SEL) : null;
+    // 「另有 N 个来源」折叠控件不算卡片：按住它不弹卡片菜单
+    const card = !inArticle && !target.closest('[data-dup]') ? target.closest(CARD_SEL) : null;
     g = {x0: t.clientX, y0: t.clientY, x: t.clientX, y: t.clientY, t0: performance.now(), axis: null, target, card,
       inArticle, edge: inArticle && t.clientX <= EDGE, hscroll: !!target.closest(HSCROLL_SEL),
       lrChannels: !!target.closest('.feed-root.lr'), scroller: target.closest(SCROLLER_SEL), kind: null, long: null};

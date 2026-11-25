@@ -271,3 +271,17 @@ test('同类事件合并：主条下折叠「另有 N 个来源」，没有 merg
   // 同来源同链接（只是参数不同）的折叠：不说「来源」
   assert.match(L.feedRowHTML({...base, merged: [{id: 'tnews365:9', source_id: 'tnews365', source_name: '竹新社', title: 'x'}]}), /另有 1 条相同链接/);
 });
+
+test('同类事件合并：「另有 N 个来源」按 source_id 数，大图卡也有折叠入口', () => {
+  // 两个来源显示名相同、source_id 不同：算 2 个来源
+  const it = {...base, merged: [
+    {id: 'a:1', source_id: 'a', source_name: '同名来源', title: 'x'},
+    {id: 'b:1', source_id: 'b', source_name: '同名来源', title: 'y'},
+  ]};
+  assert.match(L.dupHTML(it), /另有 2 个来源/);
+  // 和主条同 source_id、不同显示名：仍是同来源同链接
+  assert.match(L.dupHTML({...base, merged: [{id: `${base.source_id}:9`, source_id: base.source_id, source_name: '别名', title: 'z'}]}), /另有 1 条相同链接/);
+  const hero = L.heroHTML({...it, image: {url: 'https://img.test/h.png', width: 1200, height: 675}});
+  assert.match(hero, /<article class="hero"[^>]*>.*<div class="dup" data-dup><button type="button" class="dup-btn" data-dup-toggle aria-expanded="false">另有 2 个来源<\/button>/);
+  assert.doesNotMatch(L.heroHTML({...base, image: {url: 'https://img.test/h.png'}}), /data-dup/);
+});

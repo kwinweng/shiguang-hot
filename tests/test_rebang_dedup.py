@@ -35,6 +35,32 @@ class NormUrlTests(unittest.TestCase):
         self.assertNotEqual(dedup.norm_url('https://a.test/p?id=1'), dedup.norm_url('https://a.test/p?id=2'))
         self.assertEqual(dedup.norm_url('https://a.test/p?b=2&a=1'), dedup.norm_url('https://a.test/p?a=1&b=2&utm_x=9'))
 
+    def test_generic_params_are_not_tracking(self):
+        n = dedup.norm_url
+        self.assertNotEqual(n('https://a.test/p?ref=101'), n('https://a.test/p?ref=202'))
+        self.assertNotEqual(n('https://a.test/p?from=a'), n('https://a.test/p?from=b'))
+        self.assertNotEqual(n('https://a.test/p?si=1'), n('https://a.test/p?si=2'))     # si 只在 YouTube 去
+        self.assertEqual(n('https://youtu.be/abc?si=XYZ'), n('https://youtu.be/abc'))
+        self.assertEqual(n('https://x.com/u/status/1?s=20&t=abc'), n('https://x.com/u/status/1'))
+        self.assertNotEqual(n('https://a.test/p?s=20'), n('https://a.test/p'))
+        self.assertEqual(n('https://a.test/p?fbclid=1&gclid=2'), n('https://a.test/p'))
+
+    def test_repeated_params_keep_relative_order(self):
+        n = dedup.norm_url
+        self.assertNotEqual(n('https://a.test/p?id=1&id=2'), n('https://a.test/p?id=2&id=1'))
+        self.assertEqual(n('https://a.test/p?id=1&b=3&id=2'), n('https://a.test/p?b=3&id=1&id=2'))
+
+    def test_route_fragments_kept_plain_fragments_dropped(self):
+        n = dedup.norm_url
+        self.assertNotEqual(n('https://a.test/#/item/101'), n('https://a.test/#/item/202'))
+        self.assertNotEqual(n('https://a.test/#!/a'), n('https://a.test/#!/b'))
+        self.assertEqual(n('https://a.test/p#section-2'), n('https://a.test/p'))
+
+    def test_path_case_and_mobile_host_stay_distinct(self):
+        n = dedup.norm_url
+        self.assertNotEqual(n('https://a.test/News/A'), n('https://a.test/news/a'))
+        self.assertNotEqual(n('https://m.a.test/p'), n('https://a.test/p'))
+
     def test_tme_preview_path_and_non_http(self):
         self.assertEqual(dedup.norm_url('https://t.me/s/tnews365/1'), dedup.norm_url('https://t.me/tnews365/1'))
         self.assertEqual(dedup.norm_url(''), '')
@@ -130,6 +156,54 @@ class ClusterTests(unittest.TestCase):
             ids = {m['id'] for m in g}
             self.assertFalse({'xhqcankao:1', 'OneMillion_AI:3'} <= ids)
 
+    def test_english_same_template_different_proper_noun_does_not_merge(self):
+        a = item('google-blog', 1, 'Google launches Gemini 4 Hydrogen model for developers worldwide', lang='en')
+        b = item('techcrunch', 2, 'Google launches Gemini 4 Neon model for developers worldwide', lang='en')
+        self.assertGreaterEqual(self._jaccard(a, b), dedup.LATIN_THRESHOLD)   # 只看词重合会合并
+        self.assertEqual(dedup.title_similarity(dedup.entry_of(a), dedup.entry_of(b)), 0.0)
+        self.assertEqual(len(groups([a, b])), 2)
+
+    def test_negation_difference_does_not_merge(self):
+        a = item('bbc-world', 1, 'Court rules tech giant is liable for user data breach', lang='en', channel='world')
+        b = item('guardian-world', 2, 'Court rules tech giant is not liable for user data breach', lang='en', channel='world')
+        self.assertEqual(len(groups([a, b])), 2)
+        c = item('pelosi3', 3, '公司否认将在明年第一季度裁员三成', channel='finance')
+        d = item('FinanceNewsDaily', 4, '公司将在明年第一季度裁员三成', channel='finance')
+        self.assertEqual(len(groups([c, d])), 2)
+        e = item('pelosi3', 5, '央行宣布本月下调存款准备金率', channel='finance')
+        f = item('FinanceNewsDaily', 6, '央行宣布本月未下调存款准备金率', channel='finance')
+        self.assertEqual(len(groups([e, f])), 2)
+
+    def test_translation_match_does_not_override_conflict_in_original(self):
+        tr = {'title': '谷歌面向全球开发者推出新一代模型', 'summary': '', 'engine': 't', 'label': '机器翻译'}
+        a = item('google-blog', 1, 'Google launches Gemini 4 Hydrogen model for developers worldwide', lang='en',
+                 translated=True, translation=dict(tr))
+        b = item('techcrunch', 2, 'Google launches Gemini 4 Neon model for developers worldwide', lang='en',
+                 translated=True, translation=dict(tr))
+        self.assertEqual(len(groups([a, b])), 2)
+
+    def test_member_conflict_blocks_join_not_only_primary(self):
+        a = item('xhqcankao', 1, '谷歌发布 Gemini 新一代大模型 面向全球开发者开放', minutes=60)
+        b = item('zaihuapd', 2, '谷歌发布 Gemini Hydrogen 新一代大模型 面向全球开发者开放', minutes=30)
+        c = item('OneMillion_AI', 3, '谷歌发布 Gemini Neon 新一代大模型 面向全球开发者开放')
+        ea, eb, ec = map(dedup.entry_of, (a, b, c))
+        self.assertGreater(dedup.title_similarity(ea, eb), 0)    # 只写 Gemini 的和 Hydrogen 算同一件
+        self.assertGreater(dedup.title_similarity(ea, ec), 0)    # 只写 Gemini 的和 Neon 也算同一件
+        self.assertEqual(dedup.title_similarity(eb, ec), 0.0)    # Hydrogen 和 Neon 不是同一件
+        self.assertTrue(dedup.conflicts(eb, ec))
+        for g in dedup.cluster([a, b, c]):
+            self.assertFalse({'zaihuapd:2', 'OneMillion_AI:3'} <= {m['id'] for m in g}, g)
+
+    def test_same_raw_url_same_source_folds(self):
+        a = item('zaihuapd', 1, '一条消息的第一种写法', url='https://news.test/x', minutes=5)
+        b = item('zaihuapd', 2, '完全不同的另一种写法', url='https://news.test/x')
+        self.assertEqual(groups([a, b]), [['zaihuapd:1', 'zaihuapd:2']])
+
+    @staticmethod
+    def _jaccard(a, b):
+        ta, tb = dedup.title_tokens(a['title'])[0], dedup.title_tokens(b['title'])[0]
+        return len(ta & tb) / len(ta | tb)
+
     def test_fold_returns_copies_and_does_not_mutate_input(self):
         a = item('zaihuapd', 1, '🤖 DeepSeek 开放全家桶应用 API', minutes=10)
         b = item('xhqcankao', 2, 'DeepSeek开放“全家桶”应用API', minutes=40)
@@ -183,6 +257,29 @@ class SiteFoldTests(unittest.TestCase):
         self.assertEqual((tech['total'], tech['feed_total'], tech['merged_total']), (2, 2, 1))
         self.assertEqual(meta['counts']['news'], 4)        # 总条数不因折叠变少
         self.assertEqual(report['channels']['tech-ai']['merged'], 1)
+
+    def test_same_raw_url_keeps_every_id_reachable_and_highlight_only_marks(self):
+        url = 'https://news.test/same-article'
+        items = [item('zaihuapd', 1, '同一篇文章甲来源的写法', url=url, minutes=10, body='甲的正文'),
+                 item('xhqcankao', 2, '同一篇文章乙来源的说法', url=url, minutes=40, body='乙的正文'),
+                 item('zaihuapd', 3, '同一篇文章甲来源又发一次', url=url, minutes=5),
+                 item('hot-daily', 4, '今日重点', url=url, highlight=True, highlight_date='2026-11-15')]
+        seen = []
+        with mock.patch.object(site, '_run_archive', lambda its, out, report: seen.extend(i['id'] for i in its)):
+            data, _ = self.build(items)
+        self.assertEqual(sorted(seen), ['xhqcankao:2', 'zaihuapd:1', 'zaihuapd:3'])   # 搜索索引收到每个 id
+        index = json.loads((data / 'id-index.json').read_text(encoding='utf-8'))
+        self.assertNotIn('hot-daily:4', index)                                           # 今日重点仍只打标
+        page = json.loads((data / 'channel' / 'tech-ai' / 'page-1.json').read_text(encoding='utf-8'))
+        self.assertEqual([i['id'] for i in page['items']], ['zaihuapd:3'])   # 被打上今日重点标的那条当主条
+        self.assertTrue(page['items'][0].get('highlight'))
+        self.assertEqual({m['id'] for m in page['items'][0]['merged']}, {'zaihuapd:1', 'xhqcankao:2'})
+        for ident in ('xhqcankao:2', 'zaihuapd:1', 'zaihuapd:3'):                      # 每个 id 都能按 id-index 打开
+            payload = json.loads((data / index[ident]).read_text(encoding='utf-8'))
+            got = [i for i in payload.get('items', []) if i['id'] == ident]
+            self.assertEqual(len(got), 1, ident)
+        merged = json.loads((data / 'channel' / 'tech-ai' / 'merged.json').read_text(encoding='utf-8'))
+        self.assertEqual(next(i for i in merged['items'] if i['id'] == 'zaihuapd:1')['body'], '甲的正文')
 
     def test_primary_still_validates_as_contract_item(self):
         items = [item('zaihuapd', 1, '🤖 DeepSeek 开放全家桶应用 API', minutes=10),

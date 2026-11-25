@@ -132,7 +132,8 @@
   function dupHTML(item) {
     const list = Array.isArray(item.merged) ? item.merged.filter(m => m && m.id) : [];
     if (!list.length) return '';
-    const others = new Set(list.map(m => m.source_name || m.source_id).filter(n => n && n !== item.source_name));
+    // 按 source_id 数来源（同名不同号的来源分开数）；只是同来源同链接的折叠不算「来源」
+    const others = new Set(list.map(m => m.source_id || m.source_name).filter(n => n && n !== (item.source_id || item.source_name)));
     const label = others.size ? `另有 ${others.size} 个来源` : `另有 ${list.length} 条相同链接`;
     const rows = list.map(m => `<button type="button" class="dup-row" data-dup-id="${esc(m.id)}"><span class="src">${esc(m.source_name || m.source_id || '')}</span><span class="t">${esc(m.title_zh || m.title || '')}</span></button>`).join('');
     return `<div class="dup" data-dup><button type="button" class="dup-btn" data-dup-toggle aria-expanded="false">${label}</button><div class="dup-list" hidden>${rows}</div></div>`;
@@ -172,7 +173,7 @@
   }
   function heroHTML(item) {
     const d = display(item);
-    return `<article class="hero" data-id="${esc(item.id)}"><img src="${esc(item.image.url)}" alt="" data-zoom="${esc(item.image.url)}"><div class="cap"><div class="src">${esc(item.source_name)}${d.translated ? ' · ' + esc(d.label) : ''}</div><h3>${esc(d.title)}</h3></div></article>`;
+    return `<article class="hero" data-id="${esc(item.id)}"><img src="${esc(item.image.url)}" alt="" data-zoom="${esc(item.image.url)}"><div class="cap"><div class="src">${esc(item.source_name)}${d.translated ? ' · ' + esc(d.label) : ''}</div><h3>${esc(d.title)}</h3>${dupHTML(item)}</div></article>`;
   }
   function bannerHTML(slug, items) {
     if (!items || !items.length) return '';
