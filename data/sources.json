@@ -24448,8 +24448,24 @@
     },
     {
       "id": "FinanceNewsDaily",
-      "last_update": "2026-11-25T23:00:11+08:00",
+      "last_update": "2026-11-26T02:00:08+08:00",
       "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 02:00",
+          "id": "2096ae9f1aa0467d2e33",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497147",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "成分股IBM目前涨 3.3%，Sherwin-Williams涨2.7%，家得宝、Salesforce、耐克涨超2%，Travelers Companies Inc.涨1.9%，雪佛龙涨1.2%，波音涨0.7%，高盛仍然跌超1.2%，微软跌超1.4%，谷歌A跌2.8%，亚马逊跌3.1%，英伟达跌6.1%。\n\n纳斯达克金龙中国指数涨超1%，BOSS直聘涨11.26%，老虎证券涨9.60%，理想汽车涨8.74%，宝尊电商涨8.20%，名创优品涨5.57%。",
+          "text": "成分股IBM目前涨 3.3%，Sherwin-Williams涨2.7%，家得宝、Salesforce、耐克涨超2%，Travelers Companies Inc.涨1.9%，雪佛龙涨1.2%，波音涨0.7%，高盛仍然跌超1.2%，微软跌超1.4%，谷歌A跌2.8%，亚马逊跌3.1%，英伟达跌6.1%。\n\n纳斯达克金龙中国指数涨超1%，BOSS直聘涨11.26%，老虎证券涨9.60%，理想汽车涨8.74%，宝尊电商涨8.20%，名创优品涨5.57%。",
+          "time": "2026-11-26T02:00:08+08:00",
+          "title": "道指转涨，此前一度跌2.2%",
+          "type": "telegram"
+        },
         {
           "category": "财经",
           "day": "2026-11-25",
@@ -60436,10 +60452,10 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 277,
+      "seven_day_count": 278,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 0,
+      "today_count": 1,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
