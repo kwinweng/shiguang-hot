@@ -58,14 +58,14 @@
 
 ### 请阿欢在 Mac mini 上操作（AI 不碰 Cookie、不扫码）
 
-两条命令都要在**发布账号**（拥有 `~/projects/shiguang-news-publish/checkout` 的那个账号，不用 `sudo`）的终端里跑。命令放在 `( set -euo pipefail; … )` 里：任何一步失败（包括管道里 `pbpaste` 失败）就整段停下，不会接着写文件，也不会关掉终端。写入由程序完成：先确认当前账号就是这个 checkout 的属主、不是 root；目录逐级不跟软链接、不能被别人改，`rebang` 目录收紧为 0700；Cookie/会话先写进同目录里新建的 0600 随机名临时文件，写完再原子替换正式文件（不会沿软链接写，也不会保留旧文件的权限）。输出只有路径和是否成功，不含内容。
+两条命令都要在**发布账号**（拥有 `~/projects/shiguang-news-publish/checkout` 的那个账号，不用 `sudo`）的终端里跑。命令放在 `( set -euo pipefail; … )` 里：任何一步失败就整段停下，也不会关掉终端。微博写入直接由 `save-cookie --pbpaste` 在内存里调用 `pbpaste`，确认 `pbpaste` 退出码为 0 且大小合规后才动文件（不走管道，避免读取中途失败先覆盖旧 Cookie）。写入由程序完成：先确认当前账号就是这个 checkout 的属主、不是 root；目录逐级不跟软链接、不能被别人改，`rebang` 目录收紧为 0700；Cookie/会话先写进同目录里新建的 0600 随机名临时文件，写完再原子替换正式文件（不会沿软链接写，也不会保留旧文件的权限）。输出只有路径和是否成功，不含内容。
 
 1. **微博 Cookie**：在电脑浏览器登录微博副号，打开 weibo.com 任意页 → 开发者工具 → 网络 → 选一个 `weibo.com/ajax/...` 请求 → 请求头里 `Cookie` 的值，只复制值（带不带 `Cookie:` 前缀都行）。然后在 Mini 终端：
 
    ```sh
    ( set -euo pipefail
      cd ~/projects/shiguang-news-publish/checkout
-     pbpaste | ../venv/bin/python -m rebang.bloggers.weibo save-cookie
+     ../venv/bin/python -m rebang.bloggers.weibo save-cookie --pbpaste
      ../venv/bin/python -m rebang.bloggers.weibo check )
    ```
 

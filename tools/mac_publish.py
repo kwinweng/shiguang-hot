@@ -94,8 +94,9 @@ def source_credentials(state, home=None):
 
     The home comes from the user database (not HOME); environment overrides are ignored on purpose.
     This is only a preflight: the collectors open the files again with the same checks on the same
-    descriptor they read from. Anything missing, shared, linked or symlinked anywhere on the way falls
-    back to the reserved non-existent path, so that collector reports "not configured" instead of guessing.
+    descriptor they read from. Anything missing, shared, linked or symlinked anywhere on the way sets
+    the collector's environment variable to '' (explicitly disabled, never a fallback path), so that
+    collector reports "not configured" instead of reading any other file.
     """
     if home is None:
         try:
@@ -110,7 +111,7 @@ def source_credentials(state, home=None):
             env[key] = str(path)
             enabled.append(slot)
         else:
-            env[key] = str(state / 'no-source-credentials' / slot)
+            env[key] = ''
     return env, enabled
 
 
@@ -119,8 +120,8 @@ def run_cycle(code_sha, state, lock):
     env = {key: os.environ[key] for key in ('PATH', 'HOME', 'TMPDIR', 'SSH_AUTH_SOCK') if key in os.environ}
     env.update(BOX_PYTHON=sys.executable, TZ='Asia/Shanghai', SITE_MODE='public', MAIL_DIGEST='0',
                GIT_TERMINAL_PROMPT='0', GIT_SSH_COMMAND='ssh -o BatchMode=yes', GIT_OPTIONAL_LOCKS='0')
-    # Until collection starts, the collectors' credential variables point at the reserved missing paths.
-    env.update({key: str(state / 'no-source-credentials' / slot) for key, _, slot in CREDENTIALS})
+    # Until collection starts, the collectors' credential variables are explicitly disabled ('').
+    env.update({key: '' for key, _, _ in CREDENTIALS})
 
     def run(*args, capture=False, stdout=None, input=None, extra_env=None):
         result = subprocess.run(args, cwd=ROOT, env=dict(env, **(extra_env or {})), check=True,
@@ -158,8 +159,6 @@ def run_cycle(code_sha, state, lock):
             or git('diff', '--cached', '--name-only')
             or git('ls-files', '--others', '--exclude-standard')):
         raise RuntimeError('use a dedicated clean detached checkout at --code-sha (only unstaged tg.db may differ)')
-    if (state / 'no-source-credentials').exists():
-        raise RuntimeError('the reserved no-source-credentials path must not exist')
     origin = git('remote', 'get-url', 'origin')
     if git('remote', 'get-url', '--push', '--all', 'origin').splitlines() != [origin]:
         raise RuntimeError('origin must have exactly one push URL, identical to the fetch URL')

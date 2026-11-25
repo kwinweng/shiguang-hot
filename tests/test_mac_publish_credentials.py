@@ -70,7 +70,7 @@ class SourceCredentialTests(unittest.TestCase):
         path.chmod(mode)
 
     def sentinel(self, slot):
-        return str(self.state / 'no-source-credentials' / slot)
+        return ''
 
     def resolve(self, home=None):
         return mac_publish.source_credentials(self.state, self.home if home is None else home)

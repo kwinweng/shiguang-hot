@@ -276,12 +276,17 @@ exec '{GIT}' "$@"
         return cookie
 
     def test_collectors_get_only_owner_only_credential_paths(self):
+        # Even if an old fallback path exists with a valid file, publisher disables credentials via ''.
+        stale_fallback = self.state / 'no-source-credentials'
+        stale_fallback.mkdir(parents=True, mode=0o700, exist_ok=True)
+        (stale_fallback / 'weibo').write_text('decoy-cookie')
+        (stale_fallback / 'weibo').chmod(0o600)
+
         result = self.cycle()
         self.assert_success(result)
         self.assertIn('source_credentials=none', result.stdout)
         seen = json.loads((self.checkout / '.git/bloggers-env.json').read_text())
-        self.assertEqual(seen, {'REBANG_WEIBO_COOKIE': str(self.state / 'no-source-credentials/weibo'),
-                                'REBANG_WEREAD_SESSION': str(self.state / 'no-source-credentials/weread')})
+        self.assertEqual(seen, {'REBANG_WEIBO_COOKIE': '', 'REBANG_WEREAD_SESSION': ''})
 
         # Files under the inherited HOME (here self.root) are not the account's: still none.
         decoy = self.plant(self.root)
@@ -295,8 +300,7 @@ exec '{GIT}' "$@"
         self.assertIn('source_credentials=weibo', result.stdout)
         self.assertNotIn('secret-not-for-logs', result.stdout + result.stderr)
         seen = json.loads((self.checkout / '.git/bloggers-env.json').read_text())
-        self.assertEqual(seen, {'REBANG_WEIBO_COOKIE': str(cookie),
-                                'REBANG_WEREAD_SESSION': str(self.state / 'no-source-credentials/weread')})
+        self.assertEqual(seen, {'REBANG_WEIBO_COOKIE': str(cookie), 'REBANG_WEREAD_SESSION': ''})
 
     def test_halted_cycle_does_not_report_source_credentials(self):
         self.plant(self.account)

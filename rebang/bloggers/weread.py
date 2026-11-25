@@ -100,11 +100,48 @@ def _curl(url, session, timeout, accept, extra=(), run=None):
                                     input='\n'.join(config) + '\n', capture_output=True, text=True, timeout=timeout + 15)
     except (OSError, subprocess.TimeoutExpired):
         raise WereadError('network') from None
+    except UnicodeDecodeError:
+        raise WereadError('bad_encoding') from None
     if r.returncode:
         raise WereadError('network')
     body, _, tail = r.stdout.rpartition('\n')
     code, _, location = tail.partition(' ')
     return body, code, location.strip()
+
+
+def _parse_err_code(value):
+    if isinstance(value, bool):
+        return 'api_error'
+    if isinstance(value, int):
+        num = value
+    elif isinstance(value, str):
+        text = value.strip()
+        if re.fullmatch(r'[+-]?\d+', text):
+            num = int(text)
+        else:
+            return 'api_error'
+    else:
+        return 'api_error'
+    if num == 0:
+        return None
+    if num in LOGIN_ERRORS:
+        return 'login_expired'
+    return f'api_{num}'
+
+
+def _check_api_error(data):
+    """检查顶层与嵌套 data 里的 errCode/errcode（含整数与数字字符串）；bool 一律按 api_error。"""
+    if not isinstance(data, dict):
+        return
+    nested = data.get('data') if isinstance(data.get('data'), dict) else None
+    for container in (data, nested):
+        if not container:
+            continue
+        for key in ('errCode', 'errcode'):
+            if key in container and container[key] is not None:
+                code = _parse_err_code(container[key])
+                if code:
+                    raise WereadError(code)
 
 
 def _fetch(url, session, timeout, accept, extra=(), run=None):
@@ -123,21 +160,25 @@ def http_json(url, session=None, timeout=25, run=None):
     body, code = _fetch(url, session, timeout, 'application/json, text/plain, */*', run=run)
     try:
         data = json.loads(body) if body.strip() else {}
-    except ValueError:
+    except (ValueError, RecursionError):
         raise WereadError(f'http_{code}_not_json') from None
     if not isinstance(data, dict):
         raise WereadError(f'http_{code}_not_object')
-    err = data.get('errCode', data.get('errcode', (data.get('data') or {}).get('errcode') if isinstance(data.get('data'), dict) else None))
-    if isinstance(err, int) and err in LOGIN_ERRORS:
-        raise WereadError('login_expired')
-    if err not in (None, 0):
-        raise WereadError(f'api_{err}' if isinstance(err, int) else 'api_error')
+    _check_api_error(data)
     return data
 
 
 def http_text(url, session=None, timeout=40, run=None):
-    """正文页可达数 MB，请求压缩减少传输超时；Cookie 仍走标准输入，不打印。"""
+    """正文页可达数 MB，请求压缩减少传输超时；Cookie 仍走标准输入，不打印。
+    若 200 正文实际是 JSON 错误回包，复用同一套 errCode 检查。"""
     body, _ = _fetch(url, session, timeout, 'text/html,application/xhtml+xml', extra=('compressed',), run=run)
+    if body.lstrip().startswith('{'):
+        try:
+            data = json.loads(body)
+        except (ValueError, RecursionError):
+            data = None
+        if isinstance(data, dict):
+            _check_api_error(data)
     return body
 
 
@@ -407,6 +448,9 @@ def main(argv=None):
         return 0
     except WereadError as exc:
         print(json.dumps({'session': True, 'valid': False, 'error': exc.code, 'path': str(args.session)}))
+        return 1
+    except Exception:
+        print(json.dumps({'session': True, 'valid': False, 'error': 'status_failed', 'path': str(args.session)}))
         return 1
 
 

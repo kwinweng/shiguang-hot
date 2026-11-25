@@ -617,3 +617,155 @@ def test_save_cookie_refuses_symlinked_folder_root_and_empty_input(home, folder,
     monkeypatch.undo()
     assert private_file.account_problem(str(tmp_path / 'missing')) == 'no_checkout'
     assert SECRET not in capsys.readouterr().out
+
+
+# ---------- Blocker 1: explicit empty env disables credentials without fallback ----------
+
+def test_empty_env_disables_credentials_in_bloggers_cli(home, tmp_path, monkeypatch):
+    from rebang.bloggers import __main__ as cli
+    cookie = home / '.config' / 'rebang' / 'weibo-cookie.txt'
+    session = home / '.config' / 'rebang' / 'weread-session.json'
+    put(cookie, SECRET)
+    weread.save_session('1', 'k', session)
+    monkeypatch.setenv('REBANG_WEIBO_COOKIE', '')
+    monkeypatch.setenv('REBANG_WEREAD_SESSION', '')
+    monkeypatch.setattr(weibo, 'DEFAULT_COOKIE', cookie)
+    monkeypatch.setattr(weread, 'DEFAULT_SESSION', session)
+    seen = {}
+
+    def fake_run(platforms, previous=None, opts=None):
+        seen['weibo'] = opts.weibo_cookie_file
+        seen['weread'] = opts.weread_session
+        return {'schema': 'rebang.items/1', 'producer': 'bloggers', 'generated_at': '2026-11-25T00:00:00+08:00',
+                'platforms': [], 'items': []}
+
+    monkeypatch.setattr(cli, 'run', fake_run)
+    out = tmp_path / 'bloggers.json'
+    assert cli.main(['--out', str(out), '--platform', 'weibo,wechat', '--translate-engine', 'none', '--no-media']) == 0
+    assert seen == {'weibo': '', 'weread': ''}
+
+
+# ---------- Blocker 2: save-cookie --pbpaste fails before touching existing cookie ----------
+
+def test_save_cookie_pbpaste_failure_after_partial_output_preserves_old_cookie(home, monkeypatch, capsys):
+    cookie = home / '.config' / 'rebang' / 'weibo-cookie.txt'
+    put(cookie, SECRET)
+    before = (cookie.stat().st_ino, cookie.read_text())
+
+    class FailingProc:
+        def __init__(self, *args, **kwargs):
+            self.stdout = io.BytesIO(b'SUB=partial-new-cookie\n')
+
+        def wait(self, timeout=None):
+            return 1
+
+        def kill(self):
+            pass
+
+    monkeypatch.setattr(weibo.subprocess, 'Popen', FailingProc)
+    assert weibo.main(['save-cookie', '--pbpaste']) == 1
+    out = json.loads(capsys.readouterr().out)
+    assert out == {'saved': False, 'error': 'clipboard_failed'}
+    assert (cookie.stat().st_ino, cookie.read_text()) == before
+
+
+def test_save_cookie_pbpaste_oversized_kills_and_preserves_old_cookie(home, monkeypatch, capsys):
+    cookie = home / '.config' / 'rebang' / 'weibo-cookie.txt'
+    put(cookie, SECRET)
+    before = (cookie.stat().st_ino, cookie.read_text())
+    killed = []
+
+    class HugeProc:
+        def __init__(self, *args, **kwargs):
+            self.stdout = io.BytesIO(b'x' * (private_file.MAX_BYTES * 2))
+
+        def kill(self):
+            killed.append(True)
+
+        def wait(self, timeout=None):
+            return -9
+
+    monkeypatch.setattr(weibo.subprocess, 'Popen', HugeProc)
+    assert weibo.main(['save-cookie', '--pbpaste']) == 1
+    assert json.loads(capsys.readouterr().out) == {'saved': False, 'error': 'too_large'}
+    assert killed == [True]
+    assert (cookie.stat().st_ino, cookie.read_text()) == before
+
+
+def test_save_cookie_pbpaste_success_saves_owner_only(home, monkeypatch, capsys):
+    cookie = home / '.config' / 'rebang' / 'weibo-cookie.txt'
+
+    class OkProc:
+        def __init__(self, *args, **kwargs):
+            self.stdout = io.BytesIO(('Cookie: ' + SECRET + '\n').encode('utf-8'))
+
+        def wait(self, timeout=None):
+            return 0
+
+        def kill(self):
+            pass
+
+    monkeypatch.setattr(weibo.subprocess, 'Popen', OkProc)
+    assert weibo.main(['save-cookie', '--pbpaste']) == 0
+    out = capsys.readouterr().out
+    assert SECRET not in out and json.loads(out) == {'saved': True, 'cookie_file': str(cookie)}
+    assert weibo.read_cookie(cookie) == SECRET
+
+
+# ---------- Blocker 3: WeRead HTTP 200 JSON errors, nested data.errCode, numeric strings ----------
+
+@pytest.mark.parametrize('body,expected', [
+    ('{"errCode": -2010}', 'login_expired'),
+    ('{"errCode": "-2012"}', 'login_expired'),
+    ('{"data": {"errCode": -2010}}', 'login_expired'),
+    ('{"data": {"errCode": "-2012"}}', 'login_expired'),
+    ('{"errCode": 0, "data": {"errCode": -2013}}', 'api_-2013'),
+    ('{"errCode": "-2013"}', 'api_-2013'),
+    ('{"errCode": false}', 'api_error'),
+    ('{"errCode": true}', 'api_error'),
+])
+def test_weread_http_json_and_text_share_api_error_detection(body, expected):
+    curl = FakeCurl({'https://weread.qq.com/a': ('200', '', body)})
+    for call in (weread.http_json, weread.http_text):
+        with pytest.raises(weread.WereadError) as exc:
+            call('https://weread.qq.com/a', SESSION, run=curl)
+        assert exc.value.code == expected
+
+
+def test_weread_numeric_string_zero_is_accepted():
+    curl = FakeCurl({'https://weread.qq.com/a': ('200', '', '{"ok": 1, "errCode": "0"}')})
+    assert weread.http_json('https://weread.qq.com/a', SESSION, run=curl) == {'ok': 1, 'errCode': '0'}
+    assert weread.http_text('https://weread.qq.com/a', SESSION, run=curl) == '{"ok": 1, "errCode": "0"}'
+
+
+# ---------- Blocker 4: weread status handles non-UTF-8 and deeply nested JSON without traceback ----------
+
+def test_weread_status_handles_non_utf8_response(folder, monkeypatch, capsys):
+    def bad_utf8(*args, **kwargs):
+        raise UnicodeDecodeError('utf-8', b'\xff\xfe', 0, 1, 'invalid start byte')
+
+    rc, out = status_with(folder, monkeypatch, capsys, bad_utf8)
+    assert rc == 1 and out['session'] is True and out['valid'] is False and out['error'] == 'bad_encoding'
+
+
+def test_weread_status_handles_deep_json_response(folder, monkeypatch, capsys):
+    url = 'https://weread.qq.com/api/userInfo?userVid=1'
+    deep = '[' * 2000 + ']' * 2000
+    rc, out = status_with(folder, monkeypatch, capsys, FakeCurl({url: ('200', '', deep)}))
+    assert rc == 1 and out['session'] is True and out['valid'] is False and out['error'] == 'http_200_not_json'
+
+
+def test_weread_status_handles_non_utf8_and_deep_json_session_file(folder, capsys):
+    session = folder / 'weread-session.json'
+    session.write_bytes(b'\xff\xfe\x00')
+    session.chmod(0o600)
+    assert weread.main(['status', '--session', str(session)]) == 1
+    out = json.loads(capsys.readouterr().out)
+    assert out['session'] is False
+
+    session.write_text('[' * 2000 + ']' * 2000)
+    session.chmod(0o600)
+    assert weread.main(['status', '--session', str(session)]) == 1
+    out = json.loads(capsys.readouterr().out)
+    assert out['session'] is False and out['error'] == 'session_invalid'
+

@@ -42,10 +42,10 @@ ingest() {
 bloggers() {
     # X 只读现有转储。始终运行适配器，让 CLI 处理 REBANG_X_DUMP 并报告缺少原稿，而不是跳过整个平台。
     platforms=blog,wechat,jike,youtube,x,weibo
-    weibo_cookie=${REBANG_WEIBO_COOKIE:-$HOME/.config/rebang/weibo-cookie.txt}
+    weibo_cookie=${REBANG_WEIBO_COOKIE-$HOME/.config/rebang/weibo-cookie.txt}
     weibo_out=${REBANG_WEIBO_OUTPUT:-var/rebang/weibo-crawler}
-    # 只检查文件是否存在，缺配置也由适配器记录状态。
-    if [ -f "$weibo_cookie" ]; then
+    # 只检查文件是否存在，缺配置或显式置空也由适配器记录状态。
+    if [ -n "$weibo_cookie" ] && [ -f "$weibo_cookie" ]; then
         mkdir -p "$weibo_out"
     fi
     "$PY" -m rebang.bloggers --out var/rebang/in/bloggers.json --platform "$platforms" \

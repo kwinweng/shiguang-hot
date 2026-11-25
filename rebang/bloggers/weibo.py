@@ -13,6 +13,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -122,7 +123,7 @@ def http_json(url, cookie, timeout=25, opener=None):
         raise WeiboError('login_expired')
     try:
         data = json.loads(body)
-    except ValueError:
+    except (ValueError, RecursionError):
         raise WeiboError('login_expired') from None   # 失效时回的是登录/访客页 HTML
     check(data)
     return data
@@ -356,14 +357,47 @@ def read_stdin_limited(stream):
         raise WeiboError('cookie_unreadable') from None
 
 
+def read_pbpaste(popen=None, timeout=10):
+    """直接调用 pbpaste 读入内存（最多 MAX_BYTES+1 字节），确认退出码为 0 后才返回；失败不碰旧 Cookie。"""
+    try:
+        proc = (popen or subprocess.Popen)(['pbpaste'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    except OSError:
+        raise WeiboError('clipboard_failed') from None
+    try:
+        raw = proc.stdout.read(private_file.MAX_BYTES + 1) if proc.stdout is not None else b''
+        if len(raw) > private_file.MAX_BYTES:
+            proc.kill()
+            proc.wait(timeout=timeout)
+            raise WeiboError('too_large')
+        rc = proc.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+        raise WeiboError('clipboard_failed') from None
+    except OSError:
+        raise WeiboError('clipboard_failed') from None
+    finally:
+        if proc.stdout is not None:
+            proc.stdout.close()
+    if rc != 0:
+        raise WeiboError('clipboard_failed')
+    if isinstance(raw, str):
+        raw = raw.encode('utf-8', 'surrogateescape')
+    try:
+        return raw.decode('utf-8')
+    except UnicodeDecodeError:
+        raise WeiboError('cookie_unreadable') from None
+
+
 def main(argv=None, stdin=None):
-    """python3 -m rebang.bloggers.weibo save-cookie：从标准输入读 Cookie 值（如 ``pbpaste |``），安全落盘。
+    """python3 -m rebang.bloggers.weibo save-cookie [--pbpaste]：安全落盘 Cookie。
     只写账号家目录（pwd）下的固定路径 ~/.config/rebang/weibo-cookie.txt，忽略 HOME 和 REBANG_WEIBO_COOKIE。
-    只能由拥有本 checkout 的非 root 账号运行；超过 64 KiB 的输入在碰目录和旧文件之前就拒绝；
+    只能由拥有本 checkout 的非 root 账号运行；超过 64 KiB 或 pbpaste 非零退出在碰目录和旧文件之前就拒绝；
     写入同目录独占创建的 0600 临时文件后原子改名，输出不含内容。"""
     ap = argparse.ArgumentParser(prog='python3 -m rebang.bloggers.weibo')
     sub = ap.add_subparsers(dest='cmd', required=True)
-    sub.add_parser('save-cookie', help='从标准输入读一行 Cookie 值，写到账号家目录下固定的 0600 文件（不打印内容）')
+    sc = sub.add_parser('save-cookie', help='从标准输入或 --pbpaste 读一行 Cookie 值，写到账号家目录下固定的 0600 文件（不打印内容）')
+    sc.add_argument('--pbpaste', action='store_true', help='直接调用 macOS pbpaste 读入内存，确认退出码为 0 后才覆盖旧文件')
     sub.add_parser('check', help='只检查固定位置的 Cookie 文件能否被采集器安全读取（不打印内容）')
     args = ap.parse_args(argv)
     try:
@@ -380,7 +414,8 @@ def main(argv=None, stdin=None):
         print(json.dumps({'saved': False, 'error': problem}))
         return 1
     try:
-        value = clean_cookie(read_stdin_limited(stdin or sys.stdin))
+        raw_text = read_pbpaste() if args.pbpaste else read_stdin_limited(stdin or sys.stdin)
+        value = clean_cookie(raw_text)
         line = value + '\n'
         if len(line.encode('utf-8')) > private_file.MAX_BYTES:
             raise WeiboError('too_large')
