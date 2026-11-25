@@ -140,28 +140,41 @@
   const ch = {};                  // slug → {list, page, pages, total, loading, error}
   let articleOpen = false, articleId = null, returnState = null;
   let idIndex = null;
+  let dataEpoch = 0;
+  const pendingFindCtls = new Set();
+  function abortPendingFinds() {
+    pendingFindCtls.forEach(c => { try { c.abort(); } catch (e) {} });
+    pendingFindCtls.clear();
+  }
   let pendingList = null;         // 收藏/搜索模块点开条目时的同列表顺序（给详情的上一条/下一条）
 
   const ctx = {
     dataBase: DATA,
     get now() { return new Date(); },
     openItem: (it) => { const list = pendingList; pendingList = null; return openItem(it, {list}); },
+    cancelOpen: () => { openSeq++; },
     toast: (t) => toast(t),
     fetch: (u, o) => fetch(u, o),
     searchButton: null,
   };
 
-  async function getJSON(path, fresh, timeoutMs) {
+  async function getJSON(path, fresh, timeoutMs, trackFind) {
     const opts = fresh ? {cache: 'no-store'} : {};
     // timeoutMs：限时读（详情按 id 查完整条目用），超时就中止请求并报错，调用方回退快照
-    const ctl = timeoutMs && typeof AbortController !== 'undefined' ? new AbortController() : null;
-    const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
-    if (ctl) opts.signal = ctl.signal;
+    const ctl = (timeoutMs || trackFind) && typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctl && timeoutMs ? setTimeout(() => ctl.abort(), timeoutMs) : null;
+    if (ctl) {
+      opts.signal = ctl.signal;
+      if (trackFind) pendingFindCtls.add(ctl);
+    }
     try {
       const res = await fetch(`${DATA}/${path}${fresh ? (path.includes('?') ? '&' : '?') + 't=' + Date.now() : ''}`, Object.keys(opts).length ? opts : undefined);
       if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
       return await res.json();
-    } finally { if (timer) clearTimeout(timer); }
+    } finally {
+      if (timer) clearTimeout(timer);
+      if (ctl && trackFind) pendingFindCtls.delete(ctl);
+    }
   }
   function remember(list) { (list || []).forEach(it => it && it.id && items.set(it.id, it)); return list || []; }
   function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('on'), 3200); }
@@ -231,16 +244,18 @@
   async function loadPage(slug) {
     const st = ch[slug];
     if (st.loading || (st.page >= st.pages && st.page > 0)) return false;
+    const epoch = dataEpoch;
     st.loading = true; st.error = null;
     try {
-      const page = await getJSON(`channel/${slug}/page-${st.page + 1}.json`);
+      const page = await getJSON(`channel/${slug}/page-${st.page + 1}.json`, epoch > 0);
+      if (epoch !== dataEpoch) return false;
       st.list.push(...remember(page.items));
       st.page = page.page; st.pages = page.pages; st.total = page.total;
       return true;
     } catch (e) {
-      st.error = String(e.message || e);
+      if (epoch === dataEpoch) st.error = String(e.message || e);
       return false;
-    } finally { st.loading = false; }
+    } finally { if (epoch === dataEpoch) st.loading = false; }
   }
   async function loadAll(fresh) {
     meta = await getJSON('meta.json', fresh);
@@ -256,12 +271,19 @@
   }
   const FIND_TIMEOUT = 5000;   // 详情按 id 读 id-index / merged.json 的限时；超时回退收藏/搜索快照
   async function findItem(id) {
+    const epoch = dataEpoch;
     if (items.has(id)) return items.get(id);
     try {
-      idIndex = idIndex || await getJSON('id-index.json', false, FIND_TIMEOUT);
-      const file = idIndex[id];
+      let idx = idIndex;
+      if (!idx) {
+        const fetched = await getJSON('id-index.json', epoch > 0, FIND_TIMEOUT, true);
+        if (epoch !== dataEpoch) return null;
+        idIndex = idx = fetched;
+      }
+      const file = idx[id];
       if (!file) return null;
-      const data = await getJSON(file, false, FIND_TIMEOUT);
+      const data = await getJSON(file, epoch > 0, FIND_TIMEOUT, true);
+      if (epoch !== dataEpoch) return null;
       remember(data.items); remember((data.channels || []).flatMap(c => c.banner || []));
       return items.get(id) || null;
     } catch (e) { return null; }
@@ -950,10 +972,11 @@
     if (!navList || !articleOpen) return false;
     const at = navList.ids.indexOf(articleId), to = navList.ids[at + dir];
     if (at < 0 || !to) { toast(dir > 0 ? '已经是这个列表的最后一条。' : '已经是这个列表的第一条。'); return false; }
-    await openItem(to, {replace: true, keepNav: true});
+    const snap = (mounted.search && typeof mounted.search.getItem === 'function' ? mounted.search.getItem(to) : null) || null;
+    await openItem(snap || to, {replace: true, keepNav: true});
     return true;
   }
-  // 作废令牌：每次打开详情、关闭详情（返回按钮、右滑、切页）、浏览器前进后退都递增；
+  // 作废令牌：每次打开详情、关闭详情（返回按钮、右滑、切页）、来源状态、搜索、浏览器前进后退都递增；
   // 异步读完发现已不是最新一次，就丢弃结果（不打开详情、不改地址栏），包括正文还没显示的情况
   let openSeq = 0;
   async function openItem(ref, opts = {}) {
@@ -968,7 +991,18 @@
     if (seq !== openSeq) return;
     if (!it) {
       const fav = window.RebangFavorites && window.RebangFavorites.load ? window.RebangFavorites.load().find(x => x.id === id) : null;
-      if (fav) it = fav; else { toast('这条已经不在最近一次发布的数据里了。'); return; }
+      const hit = mounted.search && typeof mounted.search.getItem === 'function' ? mounted.search.getItem(id) : null;
+      if (fav || hit) it = fav || hit;
+      else {
+        if (opts.fromPop || opts.replaceHash) {
+          if (articleOpen) closeArticle({fromPop: true});
+          if (L.parseItemHash(location.hash) || (history.state && history.state.article)) {
+            history.replaceState({home: true}, '', location.pathname + location.search);
+          }
+        }
+        toast('这条已经不在最近一次发布的数据里了。');
+        return;
+      }
     }
     if (!opts.keepNav && !opts.fromPop) navList = opts.list ? {ids: opts.list} : null;
     if (ret) returnState = ret;
@@ -978,24 +1012,34 @@
     body.innerHTML = articleHTML(it);
     const slot = body.querySelector('[data-fav-slot]');
     if (slot) attachFav(slot, it);
-    $('#articleView').classList.add('on');
+    const av = $('#articleView');
+    av.style.transition = ''; av.style.transform = '';
+    av.classList.add('on');
     body.scrollTop = 0; $('#artBar').classList.remove('solid');
     articleOpen = true; articleId = id; artItem = it;
     const n = cmtCount(it); $('#dCmtN').textContent = n ? L.fmtN(n) : '评论';
     syncArtFav(); setRead(id);
     renderNav();
-    if (opts.replace && history.state && history.state.article) history.replaceState({article: id}, '', L.itemHash(id));
+    if (opts.replaceHash || (opts.replace && history.state && history.state.article)) history.replaceState({article: id}, '', L.itemHash(id));
     else if (!opts.fromPop) history.pushState({article: id}, '', L.itemHash(id));
   }
   function closeArticle(opts = {}) {
     openSeq++;                         // 离开详情：在途的打开（如「下一条」、慢深链）一律作废
-    if (!articleOpen) return;
+    if (!articleOpen) {
+      if (!opts.fromPop && (L.parseItemHash(location.hash) || (history.state && history.state.article))) {
+        history.replaceState({home: true}, '', location.pathname + location.search);
+      }
+      return;
+    }
     articleOpen = false; articleId = null; artItem = null;
     closeSheet();
     $('#articleView').classList.remove('on');
     $('#articleView').style.transform = '';
     restoreScroll(returnState);
-    if (!opts.fromPop && history.state && history.state.article) history.back();
+    if (!opts.fromPop) {
+      if (history.state && history.state.article) history.back();
+      else if (L.parseItemHash(location.hash)) history.replaceState({home: true}, '', location.pathname + location.search);
+    }
   }
   const HEALTH_HASH = '#/health';
   let healthLoad = 0, healthSnapshot = null;
@@ -1052,6 +1096,7 @@
     body.scrollTop = 0;
   }
   async function openHealth(fromPop = false) {
+    openSeq++;
     const dialog = $('#healthView');
     if (dialog.open) return;
     if (!fromPop) history.pushState({health: true}, '', HEALTH_HASH);
@@ -1094,10 +1139,8 @@
       history.replaceState({home: true}, '', location.pathname + location.search);
       try { openMoreLink(decodeURIComponent(key)); } catch (err) { /* 坏链接 */ }
     } else if (hashId) {
-      // 已开着的页面里再点一次私聊稿链接（只改了 #/item/…）：直接打开详情，返回回到原来的位置
-      if (!articleOpen) returnState = captureScroll();
-      history.replaceState({article: hashId}, '', L.itemHash(hashId));
-      openItem(hashId, {fromPop: true});
+      // 已开着的页面里再点一次私聊稿链接（只改了 #/item/…）：加载成功后才把历史条目替换成 {article}，失败时保持正文与地址栏一致
+      openItem(hashId, {replaceHash: true});
     } else if (articleOpen) closeArticle({fromPop: true});
   });
 
@@ -1118,6 +1161,7 @@
     stampRefresh(new Date());
     if (fresh.built_at !== old) {
       const idx = curCh, blAt = Number($('#bloggerList').dataset.cur || 0);
+      dataEpoch++; openSeq++; abortPendingFinds();
       items.clear(); idIndex = null; bloggers = null; segCache.clear(); hotIndex = null; Object.keys(hotDays).forEach(k => delete hotDays[k]);
       await loadAll(true);
       renderChannels();
@@ -1310,7 +1354,12 @@
     if (s0.kind === 'menu') { suppressClickUntil = performance.now() + 250; return; }   // 只吞掉松手时补发的那一下点击
     if (s0.kind === 'back') {
       const av = $('#articleView');
-      if (dx > 80) { av.style.transition = MOTION.tr('transform', MOTION.fast); av.style.transform = 'translateX(100%)'; setTimeout(() => { av.style.transition = ''; closeArticle(); }, MOTION.fast); }
+      if (dx > 80) {
+        const closingSeq = ++openSeq;
+        av.style.transition = MOTION.tr('transform', MOTION.fast);
+        av.style.transform = 'translateX(100%)';
+        setTimeout(() => { av.style.transition = ''; if (openSeq === closingSeq) closeArticle(); }, MOTION.fast);
+      }
       else { av.style.transition = MOTION.tr('transform', MOTION.base); av.style.transform = ''; setTimeout(() => { av.style.transition = ''; }, MOTION.base); }
     } else if (s0.kind === 'step') {
       const body = $('#articleBody'); body.style.transform = '';
@@ -1618,6 +1667,7 @@
       if (!history.state || !history.state.home) history.replaceState({home: true}, '', location.pathname + location.search);
       if (deepHealth) openHealth();
     }
+    const bootSeq = openSeq;
     try { await loadAll(false); } catch (e) {
       $('#channelRoot').innerHTML = `<p class="muted" style="padding:16px">数据没加载出来（${L.esc(e.message)}）。稍后点右上角刷新再试。</p>`;
       $('#app').removeAttribute('aria-busy'); return;
@@ -1635,8 +1685,8 @@
     if (registry.search) mountFeature('search');
     else $('#btnSearch').onclick = () => toast('搜索功能还没接入。');
     $('#app').removeAttribute('aria-busy');
-    if (deep) openItem(deep);
-    else if (deepMore) { try { openMoreLink(decodeURIComponent(deepMore)); } catch (e) { /* 坏链接就留在首页 */ } }
+    if (deep && openSeq === bootSeq) openItem(deep);
+    else if (deepMore && openSeq === bootSeq) { try { openMoreLink(decodeURIComponent(deepMore)); } catch (e) { /* 坏链接就留在首页 */ } }
   }
   window.Rebang.openItem = (x) => openItem(x);
   window.Rebang.ctx = ctx;

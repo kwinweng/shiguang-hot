@@ -152,7 +152,8 @@ def merge_items(envelopes, report):
             if old is None or (parse_time(item.get('fetched_at')) or _sort_key(item)) >= \
                     (parse_time(old.get('fetched_at')) or _sort_key(old)):
                 by_id[item['id']] = item
-    items = sorted(by_id.values(), key=_sort_key, reverse=True)
+    # 同发布时间按 id 升序决胜，保证输入顺序不影响「今日重点」打标和最终排序
+    items = sorted(sorted(by_id.values(), key=lambda i: str(i.get('id') or '')), key=_sort_key, reverse=True)
     highlight_src = schema.load_channels()['highlights']['source_id']
     by_url, out = {}, []
     # 先放非「今日重点」条目，再让重点条目按 url 并进已有条目（只打标），找不到才单独成条。
@@ -168,7 +169,7 @@ def merge_items(envelopes, report):
         if item.get('url'):
             by_url.setdefault(key, item)
         out.append(item)
-    return sorted(out, key=_sort_key, reverse=True)
+    return sorted(sorted(out, key=lambda i: str(i.get('id') or '')), key=_sort_key, reverse=True)
 
 
 def build_hotsearch(hotsearch, report):

@@ -274,6 +274,27 @@ class SiteFoldTests(unittest.TestCase):
         page = json.loads((data / 'channel' / 'tech-ai' / 'page-1.json').read_text(encoding='utf-8'))
         self.assertEqual(schema.validate_item(page['items'][0], 'primary'), [])
 
+    def test_non_utf8_percent_encoded_query_bytes_do_not_collide(self):
+        u_ff = 'https://news.test/a?x=%FF&utm_source=tg'
+        u_fe = 'https://news.test/a?x=%FE&utm_source=tg'
+        self.assertNotEqual(dedup.norm_url(u_ff), dedup.norm_url(u_fe))
+        items = [item('zaihuapd', 1, '同标题', url=u_ff, minutes=10),
+                 item('xhqcankao', 2, '同标题', url=u_fe, minutes=15)]
+        self.assertEqual(len(dedup.cluster(items)), 2)
+
+    def test_highlight_tie_break_is_independent_of_input_order(self):
+        url = 'https://news.test/same-ts'
+        a = item('alpha', 1, '同时间新闻', url=url, minutes=10)
+        b = item('beta', 2, '同时间新闻', url=url, minutes=10)
+        hl = item('hot-daily', 9, '重点标题', url=url, minutes=10, highlight=True, highlight_date='2026-11-25')
+        data1, _ = self.build([a, b, hl])
+        data2, _ = self.build([b, a, hl])
+        p1 = json.loads((data1 / 'channel' / 'tech-ai' / 'page-1.json').read_text(encoding='utf-8'))
+        p2 = json.loads((data2 / 'channel' / 'tech-ai' / 'page-1.json').read_text(encoding='utf-8'))
+        self.assertEqual(p1['items'][0]['id'], p2['items'][0]['id'])
+        self.assertEqual(p1['items'][0].get('highlight'), p2['items'][0].get('highlight'))
+        self.assertTrue(p1['items'][0].get('highlight'))
+
 
 if __name__ == '__main__':
     unittest.main()

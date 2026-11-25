@@ -69,8 +69,16 @@ def norm_url(url):
         path = path[2:]
     path = path.rstrip('/') or '/'
     rule = _site_rule(host)
-    kept = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True)
-            if not _TRACKING.match(k) and not _site_drops(rule, k)]
+    # 按字节解析查询参数，保留非 UTF-8 百分号字节（如 %FF vs %FE），避免替换字符导致不同链接误判相同
+    kept = []
+    for kb, vb in parse_qsl(parts.query.encode('utf-8'), keep_blank_values=True):
+        try:
+            k_str = kb.decode('utf-8')
+        except UnicodeDecodeError:
+            kept.append((kb, vb))
+            continue
+        if not _TRACKING.match(k_str) and not _site_drops(rule, k_str):
+            kept.append((kb, vb))
     query = sorted(kept, key=lambda kv: kv[0])      # 稳定排序：同名参数保持原相对顺序
     fragment = parts.fragment if parts.fragment[:1] in ('/', '!') else ''
     return urlunsplit(('https', host, path, urlencode(query), fragment))

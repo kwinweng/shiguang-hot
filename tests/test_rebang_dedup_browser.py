@@ -305,5 +305,88 @@ class DedupBrowserTests(unittest.TestCase):
         self.assert_detail_closed()
         self.assertEqual(self.page.evaluate('location.hash'), '')
 
+    def test_opening_health_cancels_in_flight_detail_open(self):
+        self.open_home()
+        self.hold_paths.add('/data/id-index.json')
+        self.page.evaluate("() => { window.Rebang.openItem('freechinese:901'); }")
+        self.wait_held()
+        self.page.locator('#healthEntry').click()
+        self.page.wait_for_function("() => document.querySelector('#healthView').open")
+        self.release()
+        self.page.wait_for_timeout(600)
+        self.assert_detail_closed()
+        self.assertEqual(self.page.evaluate('location.hash'), '#/health')
+
+    def test_reopening_search_cancels_in_flight_detail_open(self):
+        self.open_home()
+        self.page.locator('#btnSearch').click()
+        self.page.wait_for_selector('#search-panel.on [data-search-input]')
+        self.page.locator('[data-search-input]').fill('合成测试')
+        self.page.locator('[data-search-hit="freechinese:901"]').wait_for()
+        self.hold_paths.add('/data/id-index.json')
+        self.page.locator('[data-search-hit="freechinese:901"]').click()
+        self.wait_held()
+        self.page.locator('#btnSearch').click()
+        self.page.wait_for_selector('#search-panel.on')
+        self.release()
+        self.page.wait_for_timeout(600)
+        self.assert_detail_closed()
+        self.assertTrue(self.page.locator('#search-panel').evaluate("el => el.classList.contains('on')"))
+
+    def test_failed_deep_link_keeps_url_and_body_consistent(self):
+        self.open_home()
+        self.page.evaluate("() => { location.hash = '#/item/nonexistent%3A99999'; }")
+        self.page.wait_for_timeout(600)
+        self.assert_detail_closed()
+        self.assertEqual(self.page.evaluate('location.hash'), '')
+
+    def test_search_detail_step_offline_falls_back_to_search_snapshot(self):
+        self.open_home()
+        self.page.locator('#btnSearch').click()
+        self.page.wait_for_selector('#search-panel.on [data-search-input]')
+        self.page.locator('[data-search-input]').fill('合成测试')
+        self.page.locator('[data-search-hit="freechinese:901"]').wait_for()
+        ids = self.page.evaluate("() => [...document.querySelectorAll('[data-search-hit]')].map(e => e.dataset.searchHit)")
+        self.page.locator('[data-search-hit="tnews365:900"]').click()
+        self.page.wait_for_selector('#articleView.on')
+        # 断网（拦截 id-index 和 merged.json 返回 500），点上一条/下一条切到折叠条 901 应回退搜索快照打开
+        self.page.route('**/data/id-index.json*', lambda route: route.fulfill(status=500, body=''))
+        self.page.route('**/data/channel/*/merged.json*', lambda route: route.fulfill(status=500, body=''))
+        direction = '1' if ids.index('freechinese:901') > ids.index('tnews365:900') else '-1'
+        self.page.locator(f'#artNav [data-nav="{direction}"]').click()
+        self.page.wait_for_function("() => location.hash.includes('freechinese%3A901')")
+        self.assertIn('合成测试', self.page.locator('#articleBody').inner_text())
+
+    def test_stale_merged_response_after_refresh_does_not_pollute_cache(self):
+        self.open_home()
+        self.hold_paths.add('/data/channel/current/merged.json')
+        self.page.evaluate("() => { window.Rebang.openItem('freechinese:901'); }")
+        self.wait_held()
+        # 模拟版本刷新：返回新的 built_at 与新的 merged.json 标题
+        self.page.route('**/data/meta.json*', lambda route: route.fulfill(
+            status=200, content_type='application/json',
+            body=json.dumps({**json.loads((self.out / 'data' / 'meta.json').read_text(encoding='utf-8')),
+                             'built_at': '2026-11-26T00:00:00+08:00'})))
+        self.page.locator('#btnRefresh').click()
+        self.page.wait_for_timeout(400)
+        # 放行旧版 merged.json：不应污染新版缓存，也不应打开旧详情
+        self.release()
+        self.page.wait_for_timeout(600)
+        self.assert_detail_closed()
+        # 新版本下再次打开 901，应重新请求新版 merged.json 而不是读到旧缓存
+        new_merged_hits = []
+        def serve_new_merged(route):
+            new_merged_hits.append(route.request.url)
+            payload = json.loads((self.out / 'data' / 'channel' / 'current' / 'merged.json').read_text(encoding='utf-8'))
+            for it in payload['items']:
+                if it['id'] == 'freechinese:901':
+                    it['body'] = '新版正文标记'
+            route.fulfill(status=200, content_type='application/json', body=json.dumps(payload))
+        self.page.route('**/data/channel/current/merged.json*', serve_new_merged)
+        self.page.evaluate("() => { window.Rebang.openItem('freechinese:901'); }")
+        self.page.wait_for_selector('#articleView.on')
+        self.assertTrue(new_merged_hits)
+        self.assertIn('新版正文标记', self.page.locator('#articleBody').inner_text())
+
 if __name__ == '__main__':
     unittest.main()
