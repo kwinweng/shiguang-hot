@@ -6,7 +6,7 @@
 
 ## 现在做到哪（2026-11-25）
 - **线上**：https://news.kwinweng.com/ 。11/24 晚发布已迁到 Mac mini（线程「迁移拾光资讯发布到 Mini」）：首轮手动发布线上核实为 `06d08d7c`（新闻约 2400 条、博主 293 条、仍 noindex）；系统级定时任务已装，每小时 :05 运行，首次自然运行（11/25 01:05）的结果尚未核实。线上代码版本看 gh-pages `build-info.json` 的 `source_commit`。
-- **mini 发布器的停发问题**：代码固定在 `--code-sha`（`tools/mac_publish.py`，见 `docs/rebang-v1/MAC-PUBLISH.md`），`main` 一有非它自己推的提交（哪怕只改文档），下一轮就写 `.git/mac-publish/HALT` 停发。阿欢 11/25 选「自动跟进 main」：先单独做第 0.5 步，合并后手动换一次版本、清一次标记，之后的合并由发布器自动跟上。
+- **mini 发布器的停发问题**：代码固定在 `--code-sha`（`tools/mac_publish.py`，见 `docs/rebang-v1/MAC-PUBLISH.md`），`main` 一有非它自己推的提交（哪怕只改文档），下一轮就写 `.git/mac-publish/HALT` 停发。PR #83 经四轮复核仍有交接复杂度问题，阿欢 11/25 10:09 定先不做自动跟进：mini 保持当前手动换版本方案，每次合并后手动换版本、清停发标记；自动跟进另立新需求，后续按「先试跑、下一轮再切」的更简单思路排期重做。
 - **GitHub Pages 已停用（11/25 00:40）**：旧 Pages 地址 404；`gh-pages` 分支保留，news.kwinweng.com 的同步照常（停用后第一轮自然同步 00:42 成功）。不要改或删 `gh-pages`。
 - **仓库改名**：引用改名的分支 `chore/shiguang-news-repo-identity` 阿欢 11/25 同意全部合并（含代码里换成 `shiguang-news` 的仓库名）；GitHub 上真正改名放到 5 步之后。真正改名前，`tools/dispatch_hourly.py` 和 README 里的新地址用不了；服务器上的 `news-sync.sh` 是单独装的一份，不受合并影响，改名时须基于服务器现装版本做最小改动。细节见 `进度.md`。
 - **采集缺口（11/23 23:10）**：X 16 个博主 0 条（没收到原始转储）；微博 6 个 0 条（疑似 Cookie 失效）；公众号 6 个只有「夕小瑶科技说」有内容（其余 5 个等微信读书扫码）。即刻、YouTube、博客、6 个新闻频道正常。
@@ -14,16 +14,17 @@
 
 ## 串行计划（阿欢 11/23 确认，11/25 补 0.5 步和第 1 步形式；一步一分支，合并并核验线上后再合下一步）
 0. ✅ `chore/t3-handover-rules`（PR #81）：规则、两个积压 PR。
-0.5 `fix/mac-publish-follow-main`：发布器在 `main` 正常往前合并时不停发、下一轮换成最新代码建站；历史被改写、异常推送或建站失败才停，旧站保留。动发布链路，须跨模型复核。
+0.5 ⏸️ `fix/mac-publish-follow-main`（PR #83，暂挂）：四轮跨模型复核仍有交接复杂度漏洞，阿欢 11/25 10:09 定先不做，保持手动换版本；后续另立新需求按「先试跑、下一轮再切」的更简单思路排期重做。mini 发布目录迁移（`~/projects/shiguang-news-publish`）与浅克隆放到下次手动换版本时一起做。
 1. `feat/source-health-monitor`：统一来源健康表（各新闻频道、博主平台的最后成功时间、条数、状态、失败原因），**先做成网页里的健康看板**（阿欢 11/25），提醒渠道以后再接。
 2. `fix/blogger-collection-recovery`：查清并恢复 X 原有转储供稿；微博新 Cookie、微信读书扫码时停下来请阿欢操作，验证真回包后合并。
 3. `chore/source-audit-archive`：盘点 `sources.json`、`trial-sources.json`、`rebang/contract/*.json` 与旧站代码（TG 采集仍靠 `pipeline.py`/`shiguang/`，先迁移再归档），出「在用 / 归档 / 删除」清单和「环球」等薄弱频道的免登录来源建议。**清单先给阿欢过目再执行。**
 4. `feat/blogger-twitter-feed`：博主页改成推特/微博手机版式信息流 + 个人用户流。**先做样页给阿欢确认。**
 5. `feat/dedup-and-auto-highlights`：跨来源去重、同类事件合并（主条 + 折叠同源）；「今日重点」自动打分（多源交叉、来源权重、时效），只做筛选不做热点排行。**先确认打分偏好。**
-6. 名字统一成 News、清除 hot/热榜（阿欢 11/25 01:36 定，取代「rebang 不改」）：产品叫「拾光资讯」，英文和技术标识一律 `shiguang-news`。清除范围含 GitHub 仓库、本地主仓与工作树、T3、remotes、服务器同步脚本、Air，以及 `rebang/` 模块、`site-v11` 产物、`gh-pages` 里的 `rebang/`、站点 `/rebang/`、`docs/rebang-v1`、`rebang_refresh.sh` 和测试/文档里的有效引用；历史记录保留原文。线上分「新旧并存 → 服务器切新路径并核验自然同步 → 删旧路径」三段，每段可回退；GitHub 改名、服务器/nginx、定时任务、删文件逐段请阿欢批准。方案 `docs/rebang-v1/NEWS-RENAME-PLAN.md`（重写中）。
+6. 名字统一成 News、清除 hot/热榜（阿欢 11/25 01:36 定，取代「rebang 不改」）：产品叫「拾光资讯」，英文和技术标识一律 `shiguang-news`。清除范围含 GitHub 仓库、本地主仓与工作树、T3、remotes、服务器同步脚本、Air，以及 `rebang/` 模块、`site-v11` 产物、`gh-pages` 里的 `rebang/`、站点 `/rebang/`、`docs/rebang-v1`、`rebang_refresh.sh` 和测试/文档里的有效引用；历史记录保留原文。线上分「新旧并存 → 服务器切新路径并核验自然同步 → 删旧路径」三段，每段可回退；GitHub 改名、服务器/nginx、定时任务、删文件逐段请阿欢批准。方案见 `docs/rebang-v1/NEWS-RENAME-PLAN.md`。
 
 ## 其他待办
 1. 采集断更恢复方案见 `docs/rebang-v1/COLLECTION-RECOVERY.md`（11/21）；11/22 晚起每小时数据提交与发布已恢复，执行主机待第 2 步一并查清。
+2. 新需求待排期（阿欢 11/25 10:09）：合并 `main` 后自动给 Mac mini 发布器换版本，按「先试跑新版本、确认无误后下一轮再正式切换」的更简单思路重做（取代暂挂的 PR #83）。
 
 ## 已定的决定
 - 开发、合并、上线由 T3 Code 接手，非高风险改动测试通过即合并上线再汇报（阿欢 11/23 破例，取代 11/15 仅 Grok、11/17 逐次批准）；见 `AGENTS.md`、`DECISIONS.md`。
