@@ -24,6 +24,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 with sqlite3.connect('tg.db') as db:
     db.execute("insert or ignore into messages values ('old-pipeline')")
+    if Path('.git/extra-row').exists():
+        db.execute("insert or ignore into messages values (?)", (Path('.git/extra-row').read_text(),))
 site = Path('site')
 shutil.copytree('packed-fixture', site, dirs_exist_ok=True)
 now = datetime.now(timezone.utc)
@@ -107,6 +109,8 @@ class MacPublishTests(unittest.TestCase):
         self.git('commit', '-m', 'Pinned publisher')
         self.git('checkout', '--detach')
         self.code = self.git('rev-parse', 'HEAD')
+        # Production main contains the running code; data commits sit on top of it.
+        self.git('push', 'origin', 'HEAD:refs/heads/main')
         self.plist['ProgramArguments'][1] = str(self.checkout / 'tools/mac_publish.sh')
         self.plist['ProgramArguments'][3] = self.code
         baseline = self.root / 'baseline'
@@ -152,6 +156,56 @@ class MacPublishTests(unittest.TestCase):
         hook.write_text('#!/bin/sh\nset -eu\n' + script + '\n')
         hook.chmod(0o755)
 
+    def remote_git(self, *args, index=None, input=None):
+        env = dict(self.env, GIT_INDEX_FILE=str(index)) if index else self.env
+        result = subprocess.run([GIT, '--git-dir', str(self.remote), '-c', 'user.name=Other', '-c',
+                                 'user.email=other@localhost', *args], env=env, check=True,
+                                capture_output=True, input=input)
+        return result.stdout.decode().strip()
+
+    def remote_commit(self, parent, entries, message='Merge docs change', update=True):
+        """Someone else's commit on top of parent; entries map path -> (mode, bytes or blob id)."""
+        index = self.root / 'other-index'
+        self.remote_git('read-tree', parent, index=index)
+        for path, (mode, data) in entries.items():
+            blob = self.remote_git('hash-object', '-w', '--stdin', input=data) if isinstance(data, bytes) else data
+            self.remote_git('update-index', '--add', '--cacheinfo', f'{mode},{blob},{path}', index=index)
+        tree = self.remote_git('write-tree', index=index)
+        index.unlink()
+        commit = self.remote_git('commit-tree', tree, '-p', parent, '-m', message)
+        if update:
+            self.remote_git('update-ref', 'refs/heads/main', commit)
+        return commit
+
+    def docs_merge(self, parent, update=True):
+        return self.remote_commit(parent, {'docs/note.md': ('100644', b'docs only\n')}, update=update)
+
+    def on_first(self, command, script):
+        """Wrap git: the first `git <command>` runs script first (exec real git unless it exits)."""
+        wrapper = self.bin / 'git'
+        wrapper.write_text(f'''#!/bin/sh
+set -eu
+if [ "$1" = {command} ] && [ ! -e '{self.root}/fired' ]; then
+    touch '{self.root}/fired'
+    {script}
+fi
+exec '{GIT}' "$@"
+''')
+        wrapper.chmod(0o755)
+
+    def checkpoint(self):
+        return json.loads((self.state / 'refs.json').read_text())
+
+    def assert_halted(self, result):
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue((self.state / 'HALT').is_file(), result.stdout + result.stderr)
+        self.assertIn('HALT exists', self.cycle().stderr)
+
+    def assert_skipped(self, result):
+        self.assertEqual(result.returncode, 75, result.stdout + result.stderr)
+        self.assertIn('Mac publish skipped', result.stderr)
+        self.assertFalse((self.state / 'HALT').exists())
+
     def assert_success(self, result):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('validation=passed', result.stdout)
@@ -179,9 +233,21 @@ class MacPublishTests(unittest.TestCase):
         with sqlite3.connect(self.checkout / 'tg.db') as connection:
             self.assertEqual(connection.execute('select id from messages order by id').fetchall(),
                              [('after-rebang-ingest',), ('old-pipeline',)])
+        # No DB change: still a new (empty) data commit, so both refs go into one atomic push.
+        self.install_hook('pre-receive', 'while read -r old new ref; do printf "%s %s\\n" "$ref" "$old" >> pushed; done')
         self.assert_success(self.cycle())
-        self.assertEqual(self.heads()[0], main, 'no DB change must not produce a data commit')
-        self.assertEqual(self.git('rev-parse', self.heads()[1] + '^'), pages)
+        main2, pages2 = self.heads()
+        self.assertEqual(self.git('rev-parse', f'{main2}^'), main)
+        self.assertEqual(self.git('rev-parse', f'{main2}^{{tree}}'), self.git('rev-parse', f'{main}^{{tree}}'))
+        self.assertEqual(self.git('log', '-1', '--format=%s', main2), 'Refresh public collection data')
+        self.assertEqual(self.git('rev-parse', f'{pages2}^'), pages)
+        self.assertCountEqual((self.remote / 'pushed').read_text().splitlines(),
+                              [f'refs/heads/main {main}', f'refs/heads/gh-pages {pages}'])
+        self.assertEqual(self.checkpoint(), dict(zip(('refs/heads/main', 'refs/heads/gh-pages'), (main2, pages2))))
+        # The empty data commit is recognised as ours next round (no "advanced normally", no HALT).
+        third = self.cycle()
+        self.assert_success(third)
+        self.assertNotIn('main advanced normally', third.stdout)
         self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
         self.assertEqual(index.read_bytes(), original_index)
 
@@ -221,7 +287,8 @@ class MacPublishTests(unittest.TestCase):
         result = self.cycle()
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('validation=passed', result.stdout)
-        self.assertIn('atomic push failure', result.stderr)
+        self.assertIn('[remote rejected] (atomic push failure)', result.stdout)  # porcelain receipt
+        self.assertIn('HALT kept', result.stderr)
         self.assertEqual(self.heads(), self.before)
         self.assertTrue((self.state / 'HALT').exists())
         self.assertNotEqual((self.checkout / 'tg.db').read_bytes(), self.git('show', 'HEAD:tg.db', binary=True))
@@ -285,3 +352,305 @@ exec '{GIT}' "$@"
         self.assertNotIn('Pages prepared:', result.stdout)
         self.assertEqual(self.heads(), self.before)
         self.assertTrue((self.checkout / 'tg.db-journal').exists())
+
+    # --- main moves on while the code stays pinned -------------------------------------
+
+    def test_docs_merge_on_main_keeps_publishing_with_pinned_code(self):
+        self.assert_success(self.cycle())
+        main1, pages1 = self.heads()
+        docs = self.docs_merge(main1)
+        (self.checkout / '.git/extra-row').write_text('after-docs-merge')
+        result = self.cycle()
+        self.assert_success(result)
+        self.assertIn('main advanced normally', result.stdout)
+        main2, pages2 = self.heads()
+        self.assertEqual(self.git('rev-parse', f'{main2}^'), docs)
+        self.assertEqual(self.git('diff-tree', '--no-commit-id', '--name-only', '-r', docs, main2), 'tg.db')
+        self.assertEqual(self.git('rev-parse', f'{pages2}^'), pages1)
+        self.assertEqual(json.loads(self.git('show', f'{pages2}:build-info.json'))['source_commit'], self.code)
+        self.assertEqual(self.checkpoint(), dict(zip(('refs/heads/main', 'refs/heads/gh-pages'), (main2, pages2))))
+        self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
+        # Another docs merge with no database change: an empty data commit on it, Pages advances.
+        docs2 = self.docs_merge(main2)
+        self.assert_success(self.cycle())
+        self.assertEqual(self.git('rev-parse', f'{self.heads()[0]}^'), docs2)
+        self.assertEqual(self.git('rev-parse', f'{self.heads()[0]}^{{tree}}'), self.git('rev-parse', f'{docs2}^{{tree}}'))
+        self.assertEqual(self.git('rev-parse', f'{self.heads()[1]}^'), pages2)
+
+    def test_merge_after_ls_remote_without_db_change_skips_round_then_recovers(self):
+        self.assert_success(self.cycle())
+        main1, pages1 = self.heads()
+        docs = self.docs_merge(main1, update=False)
+        self.on_first('push', f"'{GIT}' --git-dir '{self.remote}' update-ref refs/heads/main {docs}")
+        result = self.cycle()
+        self.assert_skipped(result)
+        self.assertIn('[rejected] (stale info)', result.stdout)
+        self.assertEqual(self.heads(), (docs, pages1), 'gh-pages must not advance on a stale main')
+        self.assertEqual(self.checkpoint(), dict(zip(('refs/heads/main', 'refs/heads/gh-pages'), (main1, pages1))))
+        self.assert_success(self.cycle())
+        self.assertEqual(self.git('rev-parse', f'{self.heads()[0]}^'), docs)
+        self.assertEqual(self.git('rev-parse', f'{self.heads()[1]}^'), pages1)
+
+    def test_lease_rejection_with_db_change_and_normal_merge_skips_round(self):
+        docs = self.docs_merge(self.before[0], update=False)
+        self.on_first('push', f"'{GIT}' --git-dir '{self.remote}' update-ref refs/heads/main {docs}")
+        result = self.cycle()
+        self.assert_skipped(result)
+        self.assertIn('checkpoint unchanged', result.stderr)
+        self.assertEqual(self.heads(), (docs, self.before[1]))
+        # First round: the skip leaves the initial checkpoint (the refs it built on), not the candidates.
+        self.assertEqual(self.checkpoint(), dict(zip(('refs/heads/main', 'refs/heads/gh-pages'), self.before)))
+        self.assert_success(self.cycle())
+        self.assertEqual(self.git('rev-parse', f'{self.heads()[0]}^'), docs)
+        self.assertEqual(self.git('rev-parse', f'{self.heads()[1]}^'), self.before[1])
+
+    def test_merge_during_collection_skips_without_push(self):
+        docs = self.docs_merge(self.before[0], update=False)
+        self.on_first('ls-remote', f"'{GIT}' --git-dir '{self.remote}' update-ref refs/heads/main {docs}")
+        self.install_hook('pre-receive', 'touch push-attempt')
+        self.assert_skipped(self.cycle())
+        self.assertFalse((self.remote / 'push-attempt').exists())
+        self.assertEqual(self.heads(), (docs, self.before[1]))
+        self.assertEqual(self.checkpoint(), dict(zip(('refs/heads/main', 'refs/heads/gh-pages'), self.before)))
+
+    def test_pages_rewound_to_ancestor_between_ls_remote_and_push_halts(self):
+        self.assert_success(self.cycle())
+        main1, pages1 = self.heads()
+        # Without the explicit lease this would be a fast-forward and would clear HALT.
+        self.on_first('push', f"'{GIT}' --git-dir '{self.remote}' update-ref refs/heads/gh-pages {self.before[1]}")
+        self.assert_halted(self.cycle())
+        self.assertEqual(self.heads(), (main1, self.before[1]))
+
+    def test_pages_rewound_to_ancestor_before_round_halts(self):
+        self.assert_success(self.cycle())
+        main1, _ = self.heads()
+        self.remote_git('update-ref', 'refs/heads/gh-pages', self.before[1])
+        self.assert_halted(self.cycle())
+        self.assertEqual(self.heads(), (main1, self.before[1]))
+
+    def test_push_disconnect_with_concurrent_merge_keeps_halt(self):
+        docs = self.docs_merge(self.before[0], update=False)
+        self.on_first('push', f"'{GIT}' --git-dir '{self.remote}' update-ref refs/heads/main {docs}\n"
+                              "    echo 'fatal: the remote end hung up unexpectedly' >&2\n    exit 128")
+        self.assert_halted(self.cycle())
+        self.assertEqual(self.heads(), (docs, self.before[1]))
+
+    def test_main_history_rewrite_halts(self):
+        self.assert_success(self.cycle())
+        main1, pages1 = self.heads()
+        rewritten = self.remote_git('commit-tree', f'{main1}^{{tree}}', '-p', f'{main1}^', '-m', 'Rewritten')
+        self.remote_git('update-ref', 'refs/heads/main', rewritten)
+        self.assert_halted(self.cycle())
+        self.assertEqual(self.heads(), (rewritten, pages1))
+
+    def test_someone_else_changing_tg_db_halts(self):
+        self.assert_success(self.cycle())
+        main1, pages1 = self.heads()
+        other = self.remote_commit(main1, {'tg.db': ('100644', b'not our database')})
+        self.assert_halted(self.cycle())
+        self.assertEqual(self.heads(), (other, pages1))
+
+    def test_tg_db_mode_only_change_halts(self):
+        self.assert_success(self.cycle())
+        main1, pages1 = self.heads()
+        other = self.remote_commit(main1, {'tg.db': ('100755', self.git('rev-parse', f'{main1}:tg.db'))})
+        self.assert_halted(self.cycle())
+        self.assertEqual(self.heads(), (other, pages1))
+
+    def test_first_start_refuses_when_main_lacks_code_sha(self):
+        self.remote_git('update-ref', 'refs/heads/main', f'{self.code}^')
+        heads = self.heads()
+        database = (self.checkout / 'tg.db').read_bytes()
+        result = self.cycle()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('remote main must contain --code-sha', result.stderr)
+        self.assertFalse((self.state / 'refs.json').exists())
+        self.assertFalse((self.state / 'HALT').exists())
+        self.assertEqual(self.heads(), heads)
+        self.assertEqual((self.checkout / 'tg.db').read_bytes(), database)
+
+    # --- review round 2: boundary cases ------------------------------------------------
+    #  1. no DB change still yields a main data commit; both refs in one atomic push
+    #     (covered in test_two_cycles_in_plist_environment_with_pinned_code_and_exact_parent_trees)
+    #  2. main's tg.db changed after the server advertised refs (inside the push) -> rejected, HALT kept
+    #  3. gh-pages seen rewound at ls-remote, restored before the re-read -> HALT, never skip
+    #  4. receipt shows gh-pages stale (even if restored before the re-read) -> HALT
+    #  5. checkpoint SHAs well-formed but missing / not a commit -> HALT, file and DB preserved
+    #  6. remote reachable but gh-pages (or main) missing -> HALT; remote unreachable -> exit 1, no HALT
+    #  7. receipt truncated (no Done) / only one ref line / push timeout -> HALT
+
+    def run_then(self, after, filter_output='cat'):
+        """Shell for on_first: run the real command, then `after`, then replay its stdout through filter."""
+        return (f"out=$('{GIT}' \"$@\") && code=0 || code=$?\n    {after}\n"
+                f"    printf '%s\\n' \"$out\" | {filter_output}\n    exit $code")
+
+    def test_tg_db_change_on_main_inside_push_is_rejected_and_halts(self):
+        self.assert_success(self.cycle())
+        main1, pages1 = self.heads()
+        other = self.remote_commit(main1, {'tg.db': ('100644', b'not our database')}, update=False)
+        # Runs after the server advertised main1, before its ref transaction: only a real main
+        # update in the same atomic transaction notices it. This round has no DB change.
+        self.install_hook('pre-receive', f'cat >/dev/null\nenv -u GIT_QUARANTINE_PATH git update-ref refs/heads/main {other}')
+        result = self.cycle()
+        self.assertIn('[remote rejected] (atomic transaction failed)', result.stdout)
+        self.assert_halted(result)
+        self.assertEqual(self.heads(), (other, pages1), 'old-database pages must not be published')
+        self.assertEqual(self.checkpoint(), dict(zip(('refs/heads/main', 'refs/heads/gh-pages'), (main1, pages1))))
+
+    def test_pages_rewound_at_ls_remote_then_restored_halts(self):
+        self.assert_success(self.cycle())
+        main1, pages1 = self.heads()
+        docs = self.docs_merge(main1, update=False)
+        rgit = f"'{GIT}' --git-dir '{self.remote}' update-ref"
+        self.on_first('ls-remote', f"{rgit} refs/heads/main {docs}; {rgit} refs/heads/gh-pages {self.before[1]}\n    "
+                      + self.run_then(f'{rgit} refs/heads/gh-pages {pages1}'))
+        self.install_hook('pre-receive', 'touch push-attempt')
+        self.assert_halted(self.cycle())
+        self.assertFalse((self.remote / 'push-attempt').exists())
+        self.assertEqual(self.heads(), (docs, pages1))
+
+    def test_receipt_with_pages_stale_halts_even_if_restored(self):
+        self.assert_success(self.cycle())
+        main1, pages1 = self.heads()
+        docs = self.docs_merge(main1, update=False)
+        rgit = f"'{GIT}' --git-dir '{self.remote}' update-ref"
+        self.on_first('push', f"{rgit} refs/heads/main {docs}; {rgit} refs/heads/gh-pages {self.before[1]}\n    "
+                      + self.run_then(f'{rgit} refs/heads/gh-pages {pages1}'))
+        result = self.cycle()
+        self.assertIn('refs/heads/gh-pages\t[rejected] (stale info)', result.stdout)
+        self.assert_halted(result)
+        self.assertEqual(self.heads(), (docs, pages1))
+
+    def test_checkpoint_with_missing_or_non_commit_sha_halts(self):
+        for value in ('0' * 40, None):
+            with self.subTest(value=value):
+                self.setUp()
+                self.assert_success(self.cycle())
+                main1, pages1 = self.heads()
+                if value is None:
+                    value = self.git('rev-parse', f'{main1}^{{tree}}')  # exists, but is a tree
+                text = json.dumps({'refs/heads/main': value, 'refs/heads/gh-pages': pages1}) + '\n'
+                (self.state / 'refs.json').write_text(text)
+                database = (self.checkout / 'tg.db').read_bytes()
+                result = self.cycle()
+                self.assertIn('is unreadable (not a usable local commit', result.stderr)
+                self.assert_halted(result)
+                self.assertEqual((self.state / 'refs.json').read_text(), text)
+                self.assertEqual((self.checkout / 'tg.db').read_bytes(), database)
+                self.assertEqual(self.heads(), (main1, pages1))
+
+    def test_missing_remote_branch_halts(self):
+        for branch in ('gh-pages', 'main'):
+            with self.subTest(branch=branch):
+                self.setUp()
+                self.assert_success(self.cycle())
+                self.remote_git('update-ref', '-d', f'refs/heads/{branch}')
+                heads = self.git('--git-dir', str(self.remote), 'for-each-ref')
+                result = self.cycle()
+                self.assertIn('lacks', result.stderr)
+                self.assert_halted(result)
+                self.assertEqual(self.git('--git-dir', str(self.remote), 'for-each-ref'), heads)
+
+    def test_unreachable_remote_fails_without_halt(self):
+        self.assert_success(self.cycle())
+        self.git('remote', 'set-url', 'origin', (self.root / 'gone.git').as_uri())
+        result = self.cycle()
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertFalse((self.state / 'HALT').exists())
+        self.git('remote', 'set-url', 'origin', self.remote.as_uri())
+        self.assert_success(self.cycle())
+
+    def test_unclear_push_receipt_keeps_halt(self):
+        for name, flt in (('truncated', "grep -v '^Done$'"), ('one ref', 'grep -v gh-pages')):
+            with self.subTest(name):
+                self.setUp()
+                rgit = f"'{GIT}' --git-dir '{self.remote}' update-ref"
+                docs = self.docs_merge(self.before[0], update=False)
+                self.on_first('push', f'{rgit} refs/heads/main {docs}\n    ' + self.run_then(':', flt))
+                result = self.cycle()
+                self.assertIn('[rejected] (stale info)', result.stdout)
+                self.assert_halted(result)
+                self.assertEqual(self.heads(), (docs, self.before[1]))
+
+    # --- review round 3: a failed initial fetch, and receipts with stray lines ----------
+    #  8. fetch reports gh-pages missing, branch restored before any re-check -> HALT
+    #  9. fetch reports a missing ref, then the remote disconnects -> HALT (no network excuse)
+    # 10. fetch fails like a network error, ls-remote then shows gh-pages rewound -> HALT
+    # 11. fetch fails like a network error, ls-remote shows nothing odd -> HALT (cause unknown)
+    # 12. fetch and ls-remote both fail on the network -> exit 1, no HALT, then publishes normally
+    #     (test_unreachable_remote_fails_without_halt)
+    # 13. receipt matches but carries one extra, incomplete status line -> HALT
+
+    NETWORK_ERROR = "echo 'fatal: unable to access remote: Could not resolve host' >&2\n    exit 128"
+
+    def test_fetch_reports_missing_pages_then_restored_halts(self):
+        self.assert_success(self.cycle())
+        main1, pages1 = self.heads()
+        rgit = f"'{GIT}' --git-dir '{self.remote}' update-ref"
+        self.on_first('fetch', f'{rgit} -d refs/heads/gh-pages\n    '
+                      + self.run_then(f'{rgit} refs/heads/gh-pages {pages1}'))
+        result = self.cycle()
+        self.assertIn("couldn't find remote ref", result.stderr)
+        self.assertIn('lacks', result.stderr)
+        self.assert_halted(result)
+        self.assertEqual(self.heads(), (main1, pages1))
+
+    def test_fetch_reports_missing_ref_then_remote_disconnects_halts(self):
+        self.assert_success(self.cycle())
+        gone = self.root / 'gone.git'
+        self.on_first('fetch', f"'{GIT}' --git-dir '{self.remote}' update-ref -d refs/heads/gh-pages\n    "
+                      + self.run_then(f"mv '{self.remote}' '{gone}'"))
+        result = self.cycle()
+        self.assertIn("couldn't find remote ref", result.stderr)
+        self.assert_halted(result)
+        self.assertFalse(self.remote.exists())
+
+    def test_fetch_failure_then_pages_rewound_at_ls_remote_halts(self):
+        self.assert_success(self.cycle())
+        main1, _ = self.heads()
+        self.on_first('fetch', f"'{GIT}' --git-dir '{self.remote}' update-ref refs/heads/gh-pages {self.before[1]}\n"
+                               f'    {self.NETWORK_ERROR}')
+        result = self.cycle()
+        self.assertIn('differs from the checkpoint', result.stderr)
+        self.assert_halted(result)
+        self.assertEqual(self.heads(), (main1, self.before[1]))
+
+    def test_fetch_failure_with_reachable_consistent_remote_halts(self):
+        self.assert_success(self.cycle())
+        heads = self.heads()
+        self.on_first('fetch', self.NETWORK_ERROR)
+        result = self.cycle()
+        self.assertIn('cause unknown', result.stderr)
+        self.assert_halted(result)
+        self.assertEqual(self.heads(), heads)
+
+    def test_receipt_with_extra_incomplete_status_line_halts(self):
+        rgit = f"'{GIT}' --git-dir '{self.remote}' update-ref"
+        docs = self.docs_merge(self.before[0], update=False)
+        extra = "awk 'NR==1{print; print \"!\\trefs/heads/main\"; next} {print}'"
+        self.on_first('push', f'{rgit} refs/heads/main {docs}\n    ' + self.run_then(':', extra))
+        result = self.cycle()
+        self.assertIn('[rejected] (stale info)', result.stdout)
+        self.assertIn('!\trefs/heads/main\n', result.stdout)
+        self.assert_halted(result)
+        self.assertEqual(self.heads(), (docs, self.before[1]))
+
+    def test_push_timeout_keeps_halt(self):
+        self.on_first('push', 'exec sleep 30')
+        driver = ("import sys; sys.path.insert(0, 'tools'); import mac_publish; mac_publish.PUSH_TIMEOUT = 2; "
+                  f"sys.argv = ['mac_publish.py', '--code-sha', '{self.code}']; sys.exit(mac_publish.main())")
+        result = subprocess.run([sys.executable, '-c', driver], cwd=self.checkout, env=self.env,
+                                timeout=60, capture_output=True, text=True)
+        self.assertIn('timed out', result.stderr)
+        self.assert_halted(result)
+        self.assertEqual(self.heads(), self.before)
+
+    def test_corrupt_checkpoint_halts_and_preserves_state(self):
+        self.assert_success(self.cycle())
+        heads = self.heads()
+        (self.state / 'refs.json').write_text('{"refs/heads/main": ')
+        database = (self.checkout / 'tg.db').read_bytes()
+        self.assert_halted(self.cycle())
+        self.assertEqual((self.state / 'refs.json').read_text(), '{"refs/heads/main": ')
+        self.assertEqual((self.checkout / 'tg.db').read_bytes(), database)
+        self.assertEqual(self.heads(), heads)

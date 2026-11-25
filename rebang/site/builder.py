@@ -7,6 +7,7 @@
   data/meta.json、data/channel/<slug>/page-<n>.json（每页 30）、data/hotsearch.json（当前热搜）、
   data/hotsearch/index.json + data/hotsearch/<北京日期>.json（底栏「热搜」页按日期回看，每天最后一次成功抓取）、
   data/bloggers.json（平台/名单 + 每平台、每人最新几条）、data/blogger/<平台>/<all|h-xxxx>/page-<n>.json（「查看更多」全量分页）、
+  data/channel/<slug>/merged.json（频道内跨来源合并后被折叠的条目，深链/搜索仍能打开，见 rebang/site/dedup.py）、
   data/id-index.json，以及 rebang.archive.build(items, out_dir) 产出的 search-index。
 """
 import argparse
@@ -19,6 +20,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from rebang.contract import schema
+from rebang.site.dedup import fold
 from rebang.site.health import build_health
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -129,7 +131,10 @@ def load_inputs(in_dir, use_fixture=False):
 
 
 def merge_items(envelopes, report):
-    """校验 + 合并去重。同 id 取 fetched_at 较新的；同频道同 url 只留一条（保留 highlight 标）。"""
+    """校验 + 合并去重。同 id 取 fetched_at 较新的。
+    新闻：同链接的不同 id 全部保留（交给 rebang/site/dedup.fold 在频道内折叠，id-index、搜索都能找到每个 id）；
+    只有「今日重点」条目按同频道同 url 并进已有条目（只打 highlight 标），找不到才单独成条。
+    帖子（博主）：同 url 只留一条，规则不变。"""
     by_id = {}
     for name, envelope in envelopes:
         entry = {'file': name, 'producer': envelope.get('producer'), 'generated_at': envelope.get('generated_at'),
@@ -147,22 +152,24 @@ def merge_items(envelopes, report):
             if old is None or (parse_time(item.get('fetched_at')) or _sort_key(item)) >= \
                     (parse_time(old.get('fetched_at')) or _sort_key(old)):
                 by_id[item['id']] = item
-    items = sorted(by_id.values(), key=_sort_key, reverse=True)
+    # 同发布时间按 id 升序决胜，保证输入顺序不影响「今日重点」打标和最终排序
+    items = sorted(sorted(by_id.values(), key=lambda i: str(i.get('id') or '')), key=_sort_key, reverse=True)
     highlight_src = schema.load_channels()['highlights']['source_id']
     by_url, out = {}, []
     # 先放非「今日重点」条目，再让重点条目按 url 并进已有条目（只打标），找不到才单独成条。
     for item in [i for i in items if i['source_id'] != highlight_src] + [i for i in items if i['source_id'] == highlight_src]:
         key = (item['kind'], item.get('channel'), item.get('url'))
-        if item.get('url') and key in by_url:
+        folds_by_url = item['kind'] != 'news' or item['source_id'] == highlight_src
+        if item.get('url') and key in by_url and folds_by_url:
             kept = by_url[key]
             if item.get('highlight'):
                 kept['highlight'] = True
                 kept.setdefault('highlight_date', item.get('highlight_date'))
             continue
         if item.get('url'):
-            by_url[key] = item
+            by_url.setdefault(key, item)
         out.append(item)
-    return sorted(out, key=_sort_key, reverse=True)
+    return sorted(sorted(out, key=lambda i: str(i.get('id') or '')), key=_sort_key, reverse=True)
 
 
 def build_hotsearch(hotsearch, report):
@@ -417,7 +424,12 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
     channels_meta = []
     id_index = {}  # 条目 id → 所在数据文件；给 #/item/<id> 深链（8:30 私聊稿）直接打开详情用
     for channel in sorted(schema.load_channels()['channels'], key=lambda c: c['order']):
-        mine = [i for i in news if i['channel'] == channel['slug']]
+        mine, folded = fold([i for i in news if i['channel'] == channel['slug']])
+        if folded:
+            rel = f'channel/{channel["slug"]}/merged.json'
+            _write(data / rel, {'schema': 'rebang.merged/1', 'channel': channel['slug'], 'items': folded})
+            for item in folded:
+                id_index[item['id']] = rel
         banner = select_banners(mine)
         banner_ids = {i['id'] for i in banner}
         feed = [i for i in mine if i['id'] not in banner_ids]
@@ -434,7 +446,8 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
             'desc': CHANNEL_DESC.get(channel['slug'], ''),
             'sources': [s['name'] for s in channel['sources']],
             'unavailable': bad_sources.get(channel['slug'], []),
-            'total': len(mine), 'feed_total': len(feed), 'pages': len(pages), 'banner': banner,
+            'total': len(mine), 'feed_total': len(feed), 'merged_total': len(folded), 'pages': len(pages),
+            'banner': banner,
         })
     current_hot = build_hotsearch(hotsearch, report)
     _write(data / 'hotsearch.json', current_hot)
@@ -481,7 +494,8 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
         shutil.rmtree(out)
     tmp.rename(out)
     report.update({'out': str(out), 'news': len(news), 'posts': len(posts),
-                   'channels': {c['slug']: {'total': c['total'], 'banner': len(c['banner']), 'pages': c['pages']}
+                   'channels': {c['slug']: {'total': c['total'], 'banner': len(c['banner']), 'pages': c['pages'],
+                                            'merged': c['merged_total']}
                                 for c in channels_meta}})
     return report
 

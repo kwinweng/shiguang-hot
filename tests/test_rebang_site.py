@@ -134,8 +134,10 @@ class SiteBuildTests(unittest.TestCase):
         entry = next(f for f in report['files'] if f['file'] == 'ingest.json')
         self.assertEqual(entry['dropped'], 1)
         items = self.read(out, 'channel/current/page-1.json')['items']
-        self.assertEqual(len(items), 1)
-        self.assertTrue(items[0]['highlight'], '今日重点按 url 并进已有条目，只打标')
+        # 同来源同链接、标题不同：频道内合并只认「同链接且原标题相同、不同来源」，两条都留
+        self.assertEqual(sorted(i['id'] for i in items), ['tnews365:1', 'tnews365:2'])
+        self.assertEqual(sum(bool(i.get('highlight')) for i in items), 1, '今日重点按 url 并进已有条目，只打标')
+        self.assertNotIn('hot-daily:4', self.read(out, 'id-index.json'))
 
     def test_invalid_hotsearch_becomes_error_not_fake_ranks(self):
         self.write('ingest.json', envelope([news('tnews365', 'current', 1)]))
