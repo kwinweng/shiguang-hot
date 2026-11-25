@@ -111,21 +111,59 @@ class NewSourceFixtureTests(unittest.TestCase):
         self.assertNotIn('dw-world', {i['source_id'] for i in items})
 
 
-BAD_RSS = b'''<?xml version="1.0" encoding="UTF-8"?>
+BAD_RSS = b"""<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"><channel><title>MacRumors</title>
 <item><title>Bad thumbnail keeps the story</title><link>https://www.macrumors.com/2026/11/25/bad-thumb/</link>
 <guid>bad-thumb</guid><pubDate>Wed, 25 Nov 2026 08:00:00 +0000</pubDate>
 <description>Story with a broken image address.</description><enclosure url="https://" type="image/jpeg"/></item>
-<item><title>Broken link is dropped</title><link>https:///2026/11/25/no-host/</link>
+<item><title>Broken link keeps the story</title><link>https:///2026/11/25/no-host/</link>
 <guid>bad-link</guid><pubDate>Wed, 25 Nov 2026 07:00:00 +0000</pubDate><description>No host.</description></item>
 <item><title>Healthy story</title><link>https://www.macrumors.com/2026/11/25/ok/</link>
 <guid>ok</guid><pubDate>Wed, 25 Nov 2026 06:00:00 +0000</pubDate><description>Fine.</description>
 <enclosure url="https://images.macrumors.com/ok.jpg" type="image/jpeg"/></item>
-</channel></rss>'''
+</channel></rss>"""
+
+# 合法 Atom：相对链接靠 xml:base（feed 级、entry 级叠加）或订阅自身地址补全；补不出合格地址的置空，条目都保留
+ATOM_REL = b"""<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:base="https://news.example.org/"><title>NPR</title>
+<entry><id>rel-root</id><title>Root relative story</title><link href="/world/story"/>
+<updated>2026-11-25T08:00:00Z</updated><summary>Relative href with feed xml:base.</summary></entry>
+<entry xml:base="section/"><id>rel-entry</id><title>Entry base story</title><link rel="alternate" href="a.html"/>
+<updated>2026-11-25T07:30:00Z</updated><summary>Entry level xml:base stacks on the feed one.</summary></entry>
+<entry><id>abs</id><title>Absolute story</title><link href="https://other.example.com/x"/>
+<updated>2026-11-25T07:00:00Z</updated><summary>Already absolute.</summary></entry>
+<entry><id>js</id><title>Script link story</title><link href="javascript:alert(1)"/>
+<updated>2026-11-25T06:30:00Z</updated><summary>Unusable link.</summary></entry>
+</feed>"""
+ATOM_NO_BASE = b"""<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>NPR</title>
+<entry><id>feed-url</id><title>Resolved against feed URL</title><link href="/2026/11/25/story"/>
+<updated>2026-11-25T08:00:00Z</updated><summary>No xml:base at all.</summary></entry>
+</feed>"""
+
+MIXED_RSS = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>CNA</title>
+<item><title>中国外交部回应美方关税措施</title><link>https://www.channelnewsasia.com/zh-1</link><guid>zh-1</guid>
+<pubDate>Wed, 25 Nov 2026 08:00:00 +0000</pubDate><description>外交部发言人在例行记者会上表示，中方将采取必要措施。</description></item>
+<item><title>MacBook Pro M4 Max 评测</title><link>https://www.channelnewsasia.com/zh-2</link><guid>zh-2</guid>
+<pubDate>Wed, 25 Nov 2026 07:50:00 +0000</pubDate><description>Apple M4 Max benchmark results and battery life tests.</description></item>
+<item><title>震后救援</title><link>https://www.channelnewsasia.com/zh-3</link><guid>zh-3</guid>
+<pubDate>Wed, 25 Nov 2026 07:40:00 +0000</pubDate><description>https://www.channelnewsasia.com/zh-3</description></item>
+<item><title>Review of 《黑神话：悟空》</title><link>https://www.channelnewsasia.com/en-2</link><guid>en-2</guid>
+<pubDate>Wed, 25 Nov 2026 07:30:00 +0000</pubDate><description>游戏科学 action RPG, reviewed.</description></item>
+<item><title>Xi meets Lee in Beijing</title><link>https://www.channelnewsasia.com/en-1</link><guid>en-1</guid>
+<pubDate>Wed, 25 Nov 2026 07:00:00 +0000</pubDate>
+<description>中国国家主席习近平在北京会见新加坡总理黄循财，双方讨论贸易。</description></item>
+</channel></rss>""".encode('utf-8')
+
+ZH_IDS = {'cna-world:zh-1', 'cna-world:zh-2', 'cna-world:zh-3'}
+EN_IDS = {'cna-world:en-1', 'cna-world:en-2'}
 
 
-class BrokenEntryTests(unittest.TestCase):
-    """一条坏缩略图/坏链接不能让入库命令整包校验失败、把其他来源一起拖下去。"""
+class IngestCliEdgeTests(unittest.TestCase):
+    """从入库命令入口验证：坏图只丢图、坏链接/相对链接不丢条、按标题判语言、中文条不进待翻队列。"""
+
+    FEEDS = {'macrumors': BAD_RSS, 'npr-world': ATOM_REL, 'dw-world': ATOM_NO_BASE, 'cna-world': MIXED_RSS}
 
     def run_cli(self, tmp, *extra):
         from unittest.mock import patch
@@ -137,10 +175,11 @@ class BrokenEntryTests(unittest.TestCase):
         by_url = {url: sid for sid, (_, url) in NEW.items()}
 
         def http_get(url, now):   # 只回离线样本；其他地址（老来源、正文抽取）一律当网络失败
-            if by_url.get(url) == 'macrumors':
-                return BAD_RSS
-            if url in by_url:
-                return (FIX / f'{by_url[url]}.xml').read_bytes()
+            sid = by_url.get(url)
+            if sid in self.FEEDS:
+                return self.FEEDS[sid]
+            if sid:
+                return (FIX / f'{sid}.xml').read_bytes()
             raise OSError('offline')
 
         out = tmp / 'ingest.json'
@@ -150,100 +189,109 @@ class BrokenEntryTests(unittest.TestCase):
                 patch.dict('os.environ', env), redirect_stdout(io.StringIO()):
             code = cli.main(['--db', str(tmp / 'missing-tg.db'), '--out', str(out), '--cache', str(tmp / 'cache'),
                              '--no-tgmeta', '--now', NOW.isoformat(), *extra])
-        return code, (json.loads(out.read_text(encoding='utf-8')) if out.exists() else None)
+        envelope = json.loads(out.read_text(encoding='utf-8')) if out.exists() else None
+        pending_path = tmp / 'translate' / 'pending.json'
+        pending = json.loads(pending_path.read_text(encoding='utf-8'))['pending'] if pending_path.exists() else {}
+        return code, envelope, {rec['src'] for rec in pending.values()}
 
-    def check(self, code, envelope):
+    def by_id(self, envelope):
+        return {i['id']: i for i in envelope['items']}
+
+    def check_common(self, code, envelope):
         self.assertEqual(code, 0)
         self.assertEqual(validate_items_envelope(envelope), [])
-        by_source = {}
+        counts = {}
         for item in envelope['items']:
-            by_source.setdefault(item['source_id'], []).append(item)
+            counts[item['source_id']] = counts.get(item['source_id'], 0) + 1
         for sid in NEW:   # 其他新来源照常产出
-            if sid != 'macrumors':
-                self.assertEqual(len(by_source.get(sid, [])), 2, sid)
-        mac = {i['id']: i for i in by_source['macrumors']}
-        self.assertEqual(set(mac), {'macrumors:bad-thumb', 'macrumors:ok'})   # 坏链接那条丢了
-        self.assertIsNone(mac['macrumors:bad-thumb']['image'])                 # 坏图丢掉，条目保留
-        self.assertEqual(mac['macrumors:ok']['image'], {'url': 'https://images.macrumors.com/ok.jpg'})
+            if sid not in self.FEEDS:
+                self.assertEqual(counts.get(sid), 2, sid)
+        items = self.by_id(envelope)
+        self.assertLessEqual({'macrumors:bad-thumb', 'macrumors:bad-link', 'macrumors:ok'},
+                             {k for k in items if k.startswith('macrumors:')})
+        self.assertIsNone(items['macrumors:bad-thumb']['image'])                 # 坏图丢掉，条目保留
+        self.assertEqual(items['macrumors:bad-thumb']['url'], 'https://www.macrumors.com/2026/11/25/bad-thumb/')
+        self.assertEqual(items['macrumors:bad-link']['url'], '')                 # 坏链接置空，条目保留
+        self.assertEqual(items['macrumors:ok']['image'], {'url': 'https://images.macrumors.com/ok.jpg'})
+        self.assertEqual({k for k in items if k.startswith('npr-world:')},
+                         {'npr-world:rel-root', 'npr-world:rel-entry', 'npr-world:abs', 'npr-world:js'})
+        self.assertEqual(items['npr-world:abs']['url'], 'https://other.example.com/x')
+        self.assertEqual(items['npr-world:js']['url'], '')
+        self.assertIn('dw-world:feed-url', items)
+        return items
 
-    def test_cli_fetch_survives_bad_thumbnail_and_bad_link(self):
+    def check_lang(self, items, queued):
+        lang = {k: v['lang'] for k, v in items.items() if k.startswith('cna-world:')}
+        self.assertEqual(lang, {**{k: 'zh' for k in ZH_IDS}, **{k: 'en' for k in EN_IDS}})
+        self.assertIn('Review of 《黑神话：悟空》', queued)
+        self.assertIn('Xi meets Lee in Beijing', queued)
+        for zh in ('中国外交部回应美方关税措施', 'MacBook Pro M4 Max 评测', '震后救援',
+                   'Apple M4 Max benchmark results and battery life tests.'):
+            self.assertNotIn(zh, queued)
+
+    def test_cli_fetch(self):
         with tempfile.TemporaryDirectory() as tmp:
-            self.check(*self.run_cli(Path(tmp)))
+            code, envelope, queued = self.run_cli(Path(tmp))
+        items = self.check_common(code, envelope)
+        self.assertEqual(items['npr-world:rel-root']['url'], 'https://news.example.org/world/story')
+        self.assertEqual(items['npr-world:rel-entry']['url'], 'https://news.example.org/section/a.html')
+        self.assertEqual(items['dw-world:feed-url']['url'], 'https://rss.dw.com/2026/11/25/story')
+        self.check_lang(items, queued)
 
-    def test_cli_no_fetch_survives_poisoned_cache(self):
-        """缓存里已存了坏图/坏链接（旧版本写入的）：只读缓存的一轮同样不被卡住。"""
+    def test_cli_no_fetch_reads_old_cache(self):
+        """旧版本写入的缓存：存着相对链接（没有基准地址）、坏图、坏链接。只读缓存的一轮置空链接、保留条目。"""
         import json
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
             self.run_cli(tmp)
-            path = tmp / 'cache' / 'macrumors.json'
-            cached = json.loads(path.read_text(encoding='utf-8'))
-            cached['entries'] = [dict(e, image='https://') if e['id'] == 'bad-thumb' else e for e in cached['entries']]
-            cached['entries'].append({'id': 'bad-link', 'ts': '2026-11-25T15:00:00+08:00', 'title': 'Broken link',
-                                      'summary': '', 'url': 'https://[broken', 'image': None})
-            path.write_text(json.dumps(cached), encoding='utf-8')
-            self.check(*self.run_cli(tmp, '--no-fetch'))
+            for sid, patch_entries in (
+                    ('macrumors', lambda es: [dict(e, image='https://') if e['id'] == 'bad-thumb' else e for e in es]
+                     + [{'id': 'broken-v6', 'ts': '2026-11-25T15:00:00+08:00', 'title': 'Broken IPv6 link',
+                         'summary': '', 'url': 'https://[broken', 'image': None}]),
+                    ('npr-world', lambda es: [dict(e, url='/world/story') if e['id'] == 'rel-root' else e for e in es])):
+                path = tmp / 'cache' / f'{sid}.json'
+                cached = json.loads(path.read_text(encoding='utf-8'))
+                cached['entries'] = patch_entries(cached['entries'])
+                path.write_text(json.dumps(cached), encoding='utf-8')
+            code, envelope, queued = self.run_cli(tmp, '--no-fetch')
+        items = self.check_common(code, envelope)
+        self.assertEqual(items['macrumors:broken-v6']['url'], '')
+        self.assertEqual(items['npr-world:rel-root']['url'], '')                  # 旧缓存没基准：置空
+        self.assertEqual(items['npr-world:rel-entry']['url'], 'https://news.example.org/section/a.html')
+        self.check_lang(items, queued)
 
-    def test_parse_feed_skips_bad_image_for_next_good_one(self):
+    def test_parse_feed_drops_only_bad_images(self):
         from rebang.ingest.core import _valid_http
         for bad in ('https://', 'https:///x.jpg', 'https://[::1', 'ftp://h/x.jpg', '', None, 'javascript:alert(1)'):
             self.assertFalse(_valid_http(bad), bad)
         self.assertTrue(_valid_http('https://img.example.com/a.jpg'))
         entries = {e['id']: e for e in parse_feed(BAD_RSS)}
+        self.assertEqual(set(entries), {'bad-thumb', 'bad-link', 'ok'})
         self.assertIsNone(entries['bad-thumb']['image'])
         self.assertEqual(entries['ok']['image'], 'https://images.macrumors.com/ok.jpg')
+        rel = {e['id']: e['url'] for e in parse_feed(ATOM_REL)}   # 不给订阅地址也能用 xml:base 补全
+        self.assertEqual(rel['rel-root'], 'https://news.example.org/world/story')
+        self.assertEqual(parse_feed(ATOM_NO_BASE)[0]['url'], '')    # 没有任何基准：置空、条目保留
 
 
-MIXED_RSS = '''<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0"><channel><title>CNA</title>
-<item><title>中国外交部回应美方关税措施</title><link>https://www.channelnewsasia.com/zh-1</link><guid>zh-1</guid>
-<pubDate>Wed, 25 Nov 2026 08:00:00 +0000</pubDate><description>外交部发言人在例行记者会上表示，中方将采取必要措施。</description></item>
-<item><title>苹果发布 iPhone 新品</title><link>https://www.channelnewsasia.com/zh-2</link><guid>zh-2</guid>
-<pubDate>Wed, 25 Nov 2026 07:30:00 +0000</pubDate><description>苹果公司今天在加州发布会上推出了新款手机。</description></item>
-<item><title>Xi meets Lee in Beijing</title><link>https://www.channelnewsasia.com/en-1</link><guid>en-1</guid>
-<pubDate>Wed, 25 Nov 2026 07:00:00 +0000</pubDate>
-<description>Chinese President Xi Jinping (习近平) met Singapore Prime Minister Lawrence Wong on Tuesday to discuss trade.</description></item>
-</channel></rss>'''.encode('utf-8')
-
-
-class MixedLanguageTests(unittest.TestCase):
-    def test_mostly_chinese_rule(self):
+class MostlyChineseTests(unittest.TestCase):
+    def test_title_only_rule(self):
         from rebang.ingest.core import mostly_chinese
-        self.assertTrue(mostly_chinese('中国外交部回应美方关税措施'))
-        self.assertTrue(mostly_chinese('苹果发布 iPhone 新品', ''))
-        self.assertFalse(mostly_chinese('Xi meets Lee', 'President Xi Jinping (习近平) met the prime minister'))
-        self.assertFalse(mostly_chinese('Plain English headline', ''))
-        self.assertFalse(mostly_chinese('', ''))
-
-    def test_chinese_entries_skip_translation_queue(self):
-        """真实 rebang.translate 缓存（离线、只写临时目录）：中文条不进 pending，英文条进。"""
-        import json
-        from rebang.ingest.core import apply_translation
-        from rebang.translate import Cache, Translator
-        rows = configured()
-        sources = [(rows['cna-world'][0], rows['cna-world'][1])]
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp = Path(tmp)
-            items, _ = remote_items(sources, NOW, NOW - timedelta(days=14), fetch=True, cache=tmp / 'ingest',
-                                    http_get=lambda url, now: MIXED_RSS)
-            lang = {i['id']: i['lang'] for i in items}
-            self.assertEqual(lang, {'cna-world:zh-1': 'zh', 'cna-world:zh-2': 'zh', 'cna-world:en-1': 'en'})
-            tr = Translator(engine='cache', cache=Cache(tmp / 'translate' / 'cache.json'))
-            apply_translation(items, (lambda texts, src: tr.translate_detailed(texts, src), tr.engine, tr.save),
-                              tmp / 'ingest')
-            pending = json.loads((tmp / 'translate' / 'pending.json').read_text(encoding='utf-8'))['pending']
-        queued = {rec['src'] for rec in pending.values()}
-        self.assertIn('Xi meets Lee in Beijing', queued)
-        self.assertFalse(any(_has_cjk_only(src) for src in queued), queued)
-        self.assertNotIn('中国外交部回应美方关税措施', queued)
-        self.assertNotIn('苹果发布 iPhone 新品', queued)
-        envelope = {'schema': ITEMS_SCHEMA, 'producer': 'ingest', 'generated_at': NOW.isoformat(), 'items': items}
-        self.assertEqual(validate_items_envelope(envelope), [])
-
-
-def _has_cjk_only(text):
-    from rebang.ingest.core import mostly_chinese
-    return mostly_chinese(text)
+        cases = {
+            'Review of 《黑神话：悟空》': False,
+            'MacBook Pro M4 Max 评测': True,
+            '震后救援': True,
+            '中国外交部回应美方关税措施': True,
+            'Plain English headline': False,
+            'Xi says 「合作共赢」 at summit': False,
+            'Quote “你好” only': False,
+            'See https://example.cn/中文 now': False,
+            '': False,
+            None: False,
+        }
+        for title, want in cases.items():
+            with self.subTest(title=title):
+                self.assertIs(mostly_chinese(title), want)
 
 
 if __name__ == '__main__':
