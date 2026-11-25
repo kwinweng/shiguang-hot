@@ -13,6 +13,8 @@ import tempfile
 import time
 import unittest
 
+from tests.test_x_inbox_pull import Inbox
+
 
 ROOT = Path(__file__).resolve().parents[1]
 GIT = shutil.which('git')
@@ -32,6 +34,13 @@ now = datetime.now(timezone.utc)
 day = now.astimezone(timezone(timedelta(hours=8))).date().isoformat()
 (site / 'data/live.json').write_text(json.dumps(dict(updated=now.isoformat(),
     sample=Path('.git/reject-candidate').exists(), messages=[dict(id='fixture')])))
+'''
+
+BLOGGERS = '''\
+from pathlib import Path
+expected = Path('.git/expect-x-dump')
+if expected.is_file():
+    assert (Path('var/rebang/x-dump') / expected.read_text() / '_dump.json').is_file()
 '''
 
 INGEST = '''\
@@ -93,16 +102,19 @@ class MacPublishTests(unittest.TestCase):
         self.git('push', 'origin', 'main')
         self.git('checkout', '-b', 'code')
         for directory, names in (('tools', ('mac_publish.py', 'mac_publish.sh', 'publish_pages.sh',
-                                           'rebang_refresh.sh', 'write_build_info.py')),
+                                           'rebang_refresh.sh', 'write_build_info.py', 'x_inbox_pull.py')),
                                  ('deploy', ('news-sync.sh',))):
             (self.checkout / directory).mkdir()
             for name in names:
                 shutil.copyfile(ROOT / directory / name, self.checkout / directory / name)
         (self.checkout / 'pipeline.py').write_text(PIPELINE)
-        for name, program in (('tgmeta', ''), ('hotsearch', ''), ('bloggers', ''), ('ingest', INGEST), ('site', SITE)):
+        for name, program in (('tgmeta', ''), ('hotsearch', ''), ('bloggers', BLOGGERS), ('ingest', INGEST), ('site', SITE)):
             module = self.checkout / 'rebang' / name
             module.mkdir(parents=True)
             (module / '__main__.py').write_text(program)
+        for relative in ('rebang/__init__.py', 'rebang/bloggers/__init__.py',
+                         'rebang/bloggers/x.py', 'rebang/bloggers/common.py'):
+            shutil.copyfile(ROOT / relative, self.checkout / relative)
         self.site_fixture = self.checkout / 'packed-fixture'
         self.make_site(self.site_fixture)
         self.git('add', '.')
@@ -218,6 +230,8 @@ exec '{GIT}' "$@"
         original_index = index.read_bytes()
         result = self.cycle()
         self.assert_success(result)
+        self.assertFalse((self.state / 'x-inbox.git').exists())
+        self.assertNotIn('X inbox', result.stdout + result.stderr)
         main, pages = self.heads()
         self.assertEqual(self.git('rev-parse', f'{main}^'), self.before[0])
         self.assertEqual(self.git('rev-parse', f'{pages}^'), self.before[1])
@@ -250,6 +264,27 @@ exec '{GIT}' "$@"
         self.assertNotIn('main advanced normally', third.stdout)
         self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
         self.assertEqual(index.read_bytes(), original_index)
+
+    def test_inbox_fetch_failure_keeps_existing_dump_and_publishes(self):
+        existing = self.checkout / 'var/rebang/x-dump/20010101T0000/_dump.json'
+        existing.parent.mkdir(parents=True)
+        existing.write_text('{"generated_at":"2001-01-01T00:00:00+08:00"}')
+        env = dict(self.env, REBANG_X_INBOX_REPO=(self.root / 'nonexistent-inbox.git').as_uri())
+        result = self.cycle(env)
+        self.assert_success(result)
+        self.assertIn('X inbox pull failed: git fetch failed', result.stderr)
+        self.assertTrue((self.state / 'x-inbox.git').is_dir())
+        self.assertTrue(existing.is_file())
+        self.assertNotEqual(self.heads()[1], self.before[1])
+
+    def test_inbox_dump_is_installed_before_bloggers_refresh(self):
+        inbox = Inbox(self.root)
+        dump_id = inbox.send()
+        (self.checkout / '.git/expect-x-dump').write_text(dump_id)
+        env = dict(self.env, REBANG_X_INBOX_REPO=inbox.remote.as_uri())
+        result = self.cycle(env)
+        self.assert_success(result)
+        self.assertIn(f'X inbox: installed {dump_id}', result.stdout)
 
     def test_initial_checkout_seeds_database_from_fetched_main(self):
         # Move only the fixture remote's main, keeping the publisher's checkout pinned.

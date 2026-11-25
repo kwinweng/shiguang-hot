@@ -5,7 +5,7 @@
 ## 入口与防护
 
 - `tools/mac_publish.sh --code-sha FULL_SHA` 只用于专用 clone。由同一个标准账号从手动和系统 `launchd` 运行。`PATH` 和 `BOX_PYTHON` 使用绝对路径；需要 Python 3.11+、`beautifulsoup4`、`pillow`、`lxml`、`flock`、`realpath` 和支持原子推送的 Git。`PATH` 将该 Python 环境的 `bin` 放在系统目录之前，以便接收脚本调用同一环境的 `python3`。
-- 代码固定在 detached HEAD（必须等于 `--code-sha`），不自动拉入生产代码，换代码只能手动（见下文）；每轮只 `fetch` 两个数据来源 ref，不 reset/clean。首轮以远端 `main:tg.db` 为起点，最多只替换仍与固定提交一致的 `tg.db`；后续保留本地采集数据和运行缓存。专用工作区不要运行任何其他会写 DB、采集缓存或发布的入口。首期不读取来源 Cookie、会话文件或翻译密钥。
+- 代码固定在 detached HEAD（必须等于 `--code-sha`），不自动拉入生产代码，换代码只能手动（见下文）；每轮从发布仓库只 `fetch` 两个数据来源 ref，不 reset/clean。首轮以远端 `main:tg.db` 为起点，最多只替换仍与固定提交一致的 `tg.db`；后续保留本地采集数据和运行缓存。专用工作区不要运行任何其他会写 DB、采集缓存或发布的入口。首期不读取来源 Cookie、会话文件或翻译密钥。
 - 持锁依次跑旧流水线、`rebang_refresh.sh --no-publish`、`write_build_info.py`。有 SQLite journal/WAL/SHM 就拒绝。在临时 Git index 上从 `main` 父提交构造纯 `tg.db` 数据提交，提交信息固定为 `Refresh public collection data`；**库没变也照样建一个空的数据提交**（树与父提交相同），所以每轮 `main` 都会前进一个提交。下一轮靠 `refs.json` 记录的 SHA 认出这是自己推的，空提交同样适用。`build-info.json` 的 `source_commit` 是固定运行代码，不是数据提交；`database_sha256` 对比实际入库的 blob。
 - `publish_pages.sh --dry-run --already-built` 只打包。新入口以观察到的 `gh-pages` 为唯一父提交，保持打包 tree 不变。把父包和待推包分别 `git archive` 到干净树，给原版 `deploy/news-sync.sh --dry-run` 检查。公网 `data/meta.json` 须与父包 `rebang/data/meta.json` 字节一致，才把父包作为本地基线。它只是公开版本标记，不证明 DO 已安装的每个文件都相同；`file://` 演练不访问公网。
 - 校验后再 `ls-remote` 核对远端两个 ref，然后只调用一次 `LC_ALL=C git push --atomic --porcelain`：`main` 和 `gh-pages` 都是**真正的更新**（各自是父提交的新子提交，推送前核对是快进且不等于原值），都进同一个原子事务，每个都带 `--force-with-lease=<ref>:<建包时的 SHA>`。客户端发现任何一边已变就整次拒绝；服务端在同一个事务里核对两边的旧值，推送途中有人改动任何一边（包括 `gh-pages` 回退到祖先、别人改了 `main` 的 `tg.db`），也整次拒绝，不会发布旧库页面、不会清 HALT。不降级、不重试。普通快进不是独占写入权，切换前必须排除其他写入口。
@@ -16,6 +16,10 @@
   - 否则跑 `ls-remote --refs`。它**成功**时一律写 HALT：缺 `main` 或 `gh-pages`、`gh-pages` 不等于 `refs.json` 里的值、输出有看不懂的行，各有对应原因；都没有也写 HALT（`fetch` 失败而远端能连上，原因不明）。
   - 只有 `ls-remote` 本身也失败（断网、认证）、且前面没看到任何明确异常 → 报 `remote unreachable` 退出 1，不写 HALT，下一轮自然重试。
 - 推送回执逐行核对：只认 Git 的 `To …` 抬头、恰好两条状态行、`Done`，多出任何行（含残缺状态行、空行）都按回执不明处理，HALT 保留。
+
+## 可选：X 转储收件
+
+设置 `REBANG_X_INBOX_REPO` 时，发布器会在 `rebang_refresh.sh` 之前只读拉取 X 转储。未配置就跳过；收件失败只记日志，继续使用已有转储，不写 HALT。格式、时效和离线验收见 [X 转储私有收件箱](X-INBOX.md)。
 
 ## main 正常合并后继续发布（11/25 起）
 

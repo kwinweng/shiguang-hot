@@ -81,9 +81,9 @@ def run_cycle(code_sha, state, lock):
                REBANG_WEIBO_COOKIE=str(state / 'no-source-credentials/weibo'),
                REBANG_WEREAD_SESSION=str(state / 'no-source-credentials/weread'))
 
-    def run(*args, capture=False, stdout=None, input=None, extra_env=None):
+    def run(*args, capture=False, stdout=None, input=None, extra_env=None, timeout=None):
         result = subprocess.run(args, cwd=ROOT, env=dict(env, **(extra_env or {})), check=True,
-                                pass_fds=(lock,), input=input,
+                                pass_fds=(lock,), input=input, timeout=timeout,
                                 stdout=subprocess.PIPE if capture else stdout)
         return result.stdout
 
@@ -260,6 +260,16 @@ def run_cycle(code_sha, state, lock):
         run(sys.executable, 'pipeline.py')
         meta = ROOT / 'site-v11/data/meta.json'
         previous = meta.stat() if meta.is_file() else None
+        inbox_repo = os.environ.get('REBANG_X_INBOX_REPO')
+        if inbox_repo:
+            try:
+                run(sys.executable, '-I', 'tools/x_inbox_pull.py', f'--repo={inbox_repo}',
+                    '--cache', str(state / 'x-inbox.git'),
+                    '--target-root', str(ROOT / 'var/rebang/x-dump'), timeout=60)
+            except subprocess.CalledProcessError as error:
+                print(f'X inbox exited {error.returncode}; continuing with existing dumps', file=sys.stderr, flush=True)
+            except (OSError, ValueError, subprocess.TimeoutExpired):
+                print('X inbox could not finish; continuing with existing dumps', file=sys.stderr, flush=True)
         run('sh', 'tools/rebang_refresh.sh', '--no-publish')
         if previous and os.path.samestat(previous, meta.stat()):
             raise RuntimeError('refresh did not replace the v11 metadata')
