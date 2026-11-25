@@ -10,7 +10,8 @@
   const HOT_FAIL = '暂时取不到。抓到之前这里空着，不编排名。';
 
   function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+    const text = typeof s === 'string' || typeof s === 'number' ? String(s) : '';
+    return text.replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   }
   const parts = (date) => {
     const out = {};
