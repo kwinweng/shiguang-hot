@@ -40,6 +40,13 @@ with sqlite3.connect('tg.db') as db:
 Path(sys.argv[sys.argv.index('--out') + 1]).write_text('{}')
 '''
 
+BLOGGERS = '''\
+import json, os
+from pathlib import Path
+Path('.git/bloggers-env.json').write_text(json.dumps(
+    {key: os.environ.get(key) for key in ('REBANG_WEIBO_COOKIE', 'REBANG_WEREAD_SESSION')}))
+'''
+
 SITE = '''\
 import json, sys
 from pathlib import Path
@@ -97,7 +104,7 @@ class MacPublishTests(unittest.TestCase):
             for name in names:
                 shutil.copyfile(ROOT / directory / name, self.checkout / directory / name)
         (self.checkout / 'pipeline.py').write_text(PIPELINE)
-        for name, program in (('tgmeta', ''), ('hotsearch', ''), ('bloggers', ''), ('ingest', INGEST), ('site', SITE)):
+        for name, program in (('tgmeta', ''), ('hotsearch', ''), ('bloggers', BLOGGERS), ('ingest', INGEST), ('site', SITE)):
             module = self.checkout / 'rebang' / name
             module.mkdir(parents=True)
             (module / '__main__.py').write_text(program)
@@ -184,6 +191,28 @@ class MacPublishTests(unittest.TestCase):
         self.assertEqual(self.git('rev-parse', self.heads()[1] + '^'), pages)
         self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
         self.assertEqual(index.read_bytes(), original_index)
+
+    def test_collectors_get_only_owner_only_credential_paths(self):
+        result = self.cycle()
+        self.assert_success(result)
+        self.assertIn('source_credentials=none', result.stdout)
+        seen = json.loads((self.checkout / '.git/bloggers-env.json').read_text())
+        self.assertEqual(seen, {'REBANG_WEIBO_COOKIE': str(self.state / 'no-source-credentials/weibo'),
+                                'REBANG_WEREAD_SESSION': str(self.state / 'no-source-credentials/weread')})
+
+        folder = self.root / '.config/rebang'
+        folder.mkdir(parents=True, mode=0o700)
+        folder.chmod(0o700)
+        cookie = folder / 'weibo-cookie.txt'
+        cookie.write_text('secret-not-for-logs')
+        cookie.chmod(0o600)
+        result = self.cycle(dict(self.env, REBANG_WEREAD_SESSION=str(cookie)))
+        self.assert_success(result)
+        self.assertIn('source_credentials=weibo', result.stdout)
+        self.assertNotIn('secret-not-for-logs', result.stdout + result.stderr)
+        seen = json.loads((self.checkout / '.git/bloggers-env.json').read_text())
+        self.assertEqual(seen, {'REBANG_WEIBO_COOKIE': str(cookie),
+                                'REBANG_WEREAD_SESSION': str(self.state / 'no-source-credentials/weread')})
 
     def test_initial_checkout_seeds_database_from_fetched_main(self):
         # Move only the fixture remote's main, keeping the publisher's checkout pinned.

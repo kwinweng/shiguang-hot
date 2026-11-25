@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import stat
 import subprocess
 import sys
 import tempfile
@@ -19,13 +20,46 @@ PUBLIC_META = 'https://news.kwinweng.com/data/meta.json'
 META_PATH = 'rebang/data/meta.json'
 
 
+CREDENTIALS = (('REBANG_WEIBO_COOKIE', 'weibo-cookie.txt', 'weibo'),
+               ('REBANG_WEREAD_SESSION', 'weread-session.json', 'weread'))
+
+
+def _owner_only(path, kind):
+    """True only for a real (non-symlink) file/dir of this user with no group/other permission bits."""
+    try:
+        info = os.lstat(path)
+    except OSError:
+        return False
+    return kind(info.st_mode) and info.st_uid == os.getuid() and not info.st_mode & 0o077
+
+
+def source_credentials(home, state):
+    """Pass the fixed owner-only files in ~/.config/rebang to the collectors by path, never by content.
+
+    Environment overrides are ignored on purpose; anything missing, shared or symlinked falls back to
+    the reserved non-existent path, so that collector reports "not configured" instead of guessing.
+    """
+    folder = Path(home) / '.config/rebang' if home else None
+    usable = folder is not None and _owner_only(folder, stat.S_ISDIR)
+    env, enabled = {}, []
+    for key, name, slot in CREDENTIALS:
+        path = folder / name if usable else None
+        if path is not None and _owner_only(path, stat.S_ISREG):
+            env[key] = str(path)
+            enabled.append(slot)
+        else:
+            env[key] = str(state / 'no-source-credentials' / slot)
+    return env, enabled
+
+
 def run_cycle(code_sha, state, lock):
-    # Do not inherit build overrides, Git ref/index overrides or source credentials.
+    # Do not inherit build overrides, Git ref/index overrides or source credential overrides.
     env = {key: os.environ[key] for key in ('PATH', 'HOME', 'TMPDIR', 'SSH_AUTH_SOCK') if key in os.environ}
+    credentials, enabled = source_credentials(env.get('HOME'), state)
     env.update(BOX_PYTHON=sys.executable, TZ='Asia/Shanghai', SITE_MODE='public', MAIL_DIGEST='0',
                GIT_TERMINAL_PROMPT='0', GIT_SSH_COMMAND='ssh -o BatchMode=yes', GIT_OPTIONAL_LOCKS='0',
-               REBANG_WEIBO_COOKIE=str(state / 'no-source-credentials/weibo'),
-               REBANG_WEREAD_SESSION=str(state / 'no-source-credentials/weread'))
+               **credentials)
+    print(f'source_credentials={",".join(enabled) or "none"}', flush=True)
 
     def run(*args, capture=False, stdout=None, input=None, extra_env=None):
         result = subprocess.run(args, cwd=ROOT, env=dict(env, **(extra_env or {})), check=True,
