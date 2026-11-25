@@ -1,4 +1,8 @@
-"""Collect in a pinned checkout and publish a validated, fast-forward pair once."""
+"""Collect in a pinned checkout and publish a validated, fast-forward pair once.
+
+The code stays at --code-sha. Remote main may move on by normal merges (fast-forward,
+gh-pages and tg.db untouched); the next data commit is then built on the new main with
+the same pinned code. Anything else stops with HALT. Switching code is a manual step."""
 import argparse
 import fcntl
 import hashlib
@@ -17,6 +21,56 @@ REFS = ('refs/heads/main', 'refs/heads/gh-pages')
 SNAPSHOTS = ('refs/mac-publish/main', 'refs/mac-publish/gh-pages')
 PUBLIC_META = 'https://news.kwinweng.com/data/meta.json'
 META_PATH = 'rebang/data/meta.json'
+PUSH_TIMEOUT = 900
+SKIPPED = 75  # EX_TEMPFAIL: nothing published, nothing stopped, the next round retries
+SHA = re.compile(r'[0-9a-f]{40}')
+# `git push --porcelain` summaries that mean the push was refused before any ref moved.
+LEASE_REJECTED, ATOMIC_REJECTED = '[rejected] (stale info)', '[rejected] (atomic push failed)'
+
+
+class Skipped(Exception):
+    """Someone merged main normally during this round; publish again from the new main next round."""
+
+
+def write_atomic(path, text):
+    """Replace path in one step: a temporary file in the same directory, flushed, then renamed."""
+    fd, temp = tempfile.mkstemp(prefix=f'.{path.name}.', dir=path.parent)
+    try:
+        with os.fdopen(fd, 'w') as stream:
+            stream.write(text)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temp, path)
+    except BaseException:
+        if os.path.lexists(temp):
+            os.unlink(temp)
+        raise
+    directory = os.open(path.parent, os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
+def main_only_rejection(output, candidates):
+    """True only for the one retryable receipt, line for line: Git's `To <url>` header, exactly two
+    status lines (main refused client-side by its lease, gh-pages refused only as a consequence of
+    --atomic, each naming our exact candidate), then `Done`. Anything else (gh-pages stale, a
+    server-side refusal, a missing, extra, blank or truncated line) is False."""
+    lines = output.splitlines()
+    if len(lines) != 4 or not lines[0].startswith('To ') or lines[-1] != 'Done':
+        return False
+    status = {}
+    for line in lines[1:3]:
+        fields = line.split('\t')
+        if len(fields) != 3 or ':' not in fields[1]:
+            return False
+        source, destination = fields[1].rsplit(':', 1)
+        if destination in status:
+            return False
+        status[destination] = (fields[0], source, fields[2])
+    expected = {REFS[0]: ('!', candidates[0], LEASE_REJECTED), REFS[1]: ('!', candidates[1], ATOMIC_REJECTED)}
+    return status == expected
 
 
 def run_cycle(code_sha, state, lock):
@@ -36,6 +90,17 @@ def run_cycle(code_sha, state, lock):
     def git(*args, **kwargs):
         return run('git', *args, capture=True, **kwargs).decode().strip()
 
+    def is_ancestor(old, new):
+        found = subprocess.run(['git', 'merge-base', '--is-ancestor', old, new], cwd=ROOT, env=env,
+                               pass_fds=(lock,), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if found.returncode not in (0, 1):
+            raise RuntimeError(f'cannot compare {old} and {new}')
+        return found.returncode == 0
+
+    def database_entry(commit):
+        # Mode, type and blob of tg.db in the tree; empty if missing.
+        return git('ls-tree', '--full-tree', commit, '--', 'tg.db')
+
     halt = state / 'HALT'
     if halt.exists():
         raise RuntimeError(f'HALT exists: {halt}; reconcile the local database and both remote refs before resuming')
@@ -43,6 +108,8 @@ def run_cycle(code_sha, state, lock):
     def halt_now(reason):
         with halt.open('x') as stream:
             stream.write(reason + '\n')
+            stream.flush()
+            os.fsync(stream.fileno())
         raise RuntimeError(f'{reason}; stopped: {halt}')
 
     if (git('branch', '--show-current') or git('rev-parse', 'HEAD') != code_sha
@@ -56,19 +123,110 @@ def run_cycle(code_sha, state, lock):
     if git('remote', 'get-url', '--push', '--all', 'origin').splitlines() != [origin]:
         raise RuntimeError('origin must have exactly one push URL, identical to the fetch URL')
 
-    git('fetch', '--no-tags', '--refmap=', 'origin',
-        *(f'{source}:{dest}' for source, dest in zip(REFS, SNAPSHOTS)))
-    observed = tuple(git('rev-parse', f'{ref}^{{commit}}') for ref in SNAPSHOTS)
-    main_parent, pages_parent = observed
+    def fetch():
+        # Snapshots are private scratch refs; force them so a rewritten main reaches the checks below.
+        # stderr is kept (in the C locale) so a missing remote branch can be told from a network error.
+        fetched = subprocess.run(['git', 'fetch', '--no-tags', '--refmap=', 'origin',
+                                  *(f'+{source}:{dest}' for source, dest in zip(REFS, SNAPSHOTS))],
+                                 cwd=ROOT, env=dict(env, LC_ALL='C'), pass_fds=(lock,),
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        sys.stderr.write(fetched.stderr.decode(errors='replace'))
+        sys.stderr.flush()
+        if fetched.returncode:
+            raise subprocess.CalledProcessError(fetched.returncode, fetched.args, fetched.stdout, fetched.stderr)
+        return tuple(git('rev-parse', f'{ref}^{{commit}}') for ref in SNAPSHOTS)
+
+    def ls_remote():
+        """The two remote refs as advertised right now (missing refs are simply absent)."""
+        listed = git('ls-remote', '--refs', 'origin', *REFS, extra_env={'LC_ALL': 'C'})
+        return dict(line.split('\t')[::-1] for line in listed.splitlines())
+
+    def normal_advance(old_main, new_main):
+        """Someone else fast-forwarded main (e.g. a merge) without touching tg.db's mode, type or blob."""
+        old_entry = database_entry(old_main)
+        return (new_main != old_main and is_ancestor(old_main, new_main)
+                and old_entry != '' and database_entry(new_main) == old_entry)
+
+    def only_main_advanced(main_parent, pages_parent, main_seen=None):
+        """Re-read the remote: gh-pages exactly as we built on, main only normally ahead of it.
+        main_seen is a main value an earlier check already observed; it must sit on the same
+        normal path (main_parent -> main_seen -> now). A re-read never overrides an earlier anomaly:
+        callers only get here after gh-pages was seen at its baseline in every observation."""
+        try:
+            main_now, pages_now = fetch()
+            if pages_now != pages_parent:
+                return False
+            if main_seen is None:
+                return normal_advance(main_parent, main_now)
+            return normal_advance(main_parent, main_seen) and (
+                main_now == main_seen or normal_advance(main_seen, main_now))
+        except (OSError, RuntimeError, subprocess.SubprocessError):
+            return False
+
     record = state / 'refs.json'
 
     def remember(refs):
-        temp = state / 'refs.next'
-        temp.write_text(json.dumps(dict(zip(REFS, refs))) + '\n')
-        temp.replace(record)
+        write_atomic(record, json.dumps(dict(zip(REFS, refs))) + '\n')
 
-    if record.exists() and json.loads(record.read_text()) != dict(zip(REFS, observed)):
-        halt_now(f'remote refs changed since the last local checkpoint: {observed}')
+    def is_commit(sha):
+        found = subprocess.run(['git', 'rev-parse', '--verify', '--quiet', f'{sha}^{{commit}}'], cwd=ROOT,
+                               env=env, pass_fds=(lock,), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        return found.returncode == 0 and found.stdout.decode().strip() == sha
+
+    # Validate the checkpoint before talking to the remote: a failed fetch is judged against it.
+    recorded = None
+    if os.path.lexists(record):
+        try:
+            recorded = json.loads(record.read_text())
+            if (not isinstance(recorded, dict) or set(recorded) != set(REFS)
+                    or not all(isinstance(value, str) and SHA.fullmatch(value) for value in recorded.values())):
+                raise ValueError('unexpected structure')
+            invalid = [value for value in recorded.values() if not is_commit(value)]
+            if invalid:
+                raise ValueError(f'not a usable local commit: {invalid}')
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            halt_now(f'local checkpoint {record} is unreadable ({error}); preserved for inspection')
+
+    try:
+        observed = fetch()
+    except subprocess.CalledProcessError as error:
+        # Conservative: only "the remote cannot be reached at all, and nothing odd was seen" retries
+        # without HALT. A missing branch reported by fetch stops at once; a later re-read never
+        # overrides it. A reachable remote after a failed fetch also stops, whatever it shows.
+        if "couldn't find remote ref" in (error.stderr or b'').decode(errors='replace'):
+            halt_now("remote lacks a branch (fetch: couldn't find remote ref); "
+                     'reconcile the remote branches before resuming')
+        listed = subprocess.run(['git', 'ls-remote', '--refs', 'origin', *REFS], cwd=ROOT,
+                                env=dict(env, LC_ALL='C'), pass_fds=(lock,), stdout=subprocess.PIPE)
+        if listed.returncode:
+            raise RuntimeError(f'remote unreachable (fetch exit {error.returncode}, ls-remote exit '
+                               f'{listed.returncode}); no HALT, the next round retries') from None
+        advertised = {}
+        for line in listed.stdout.decode(errors='replace').splitlines():
+            fields = line.split('\t')
+            if len(fields) != 2 or not SHA.fullmatch(fields[0]) or fields[1] not in REFS or fields[1] in advertised:
+                halt_now(f'unexpected ls-remote line {line!r} after a failed fetch')
+            advertised[fields[1]] = fields[0]
+        missing = [ref for ref in REFS if ref not in advertised]
+        if missing:
+            halt_now(f'remote is reachable but lacks {missing}; reconcile the remote branches before resuming')
+        if recorded is not None and advertised[REFS[1]] != recorded[REFS[1]]:
+            halt_now(f'gh-pages on the remote ({advertised[REFS[1]]}) differs from the checkpoint '
+                     f'({recorded[REFS[1]]}) after a failed fetch')
+        halt_now(f'fetch failed (exit {error.returncode}) although the remote is reachable '
+                 f'(advertised={advertised}); cause unknown, reconcile before resuming')
+    main_parent, pages_parent = observed
+
+    if recorded is not None:
+        if recorded != dict(zip(REFS, observed)):
+            if recorded[REFS[1]] == pages_parent and normal_advance(recorded[REFS[0]], main_parent):
+                print(f'main advanced normally {recorded[REFS[0]]}..{main_parent}; '
+                      f'publishing on it with pinned code {code_sha}', flush=True)
+            else:
+                halt_now(f'remote refs changed since the last local checkpoint: recorded={recorded}, '
+                         f'observed={observed}')
+    if not is_ancestor(code_sha, main_parent):
+        raise RuntimeError(f'remote main must contain --code-sha {code_sha}; refusing without writing checkpoints')
 
     database = ROOT / 'tg.db'
 
@@ -80,7 +238,7 @@ def run_cycle(code_sha, state, lock):
     check_database()
     with tempfile.TemporaryDirectory(prefix='cycle-', dir=state) as name:
         work = Path(name)
-        if not record.exists():
+        if not os.path.lexists(record):
             current_blob = git('hash-object', '--no-filters', str(database))
             main_blob = git('rev-parse', f'{main_parent}:tg.db')
             if current_blob != main_blob:
@@ -128,7 +286,11 @@ def run_cycle(code_sha, state, lock):
         changes = git('diff-tree', '--no-commit-id', '--name-only', '-r', main_parent, data_tree)
         if changes not in ('', 'tg.db'):
             raise RuntimeError('data tree changes files other than tg.db')
-        main_next = git('commit-tree', data_tree, '-p', main_parent, '-m', 'Refresh public collection data') if changes else main_parent
+        # Always a new data commit, empty when tg.db is unchanged: then main is a real update too,
+        # so the server checks both old values inside one atomic transaction (an unchanged ref
+        # would not be sent at all and could move unnoticed). The checkpoint records this commit,
+        # which is how the next round recognises it as ours, empty or not.
+        main_next = git('commit-tree', data_tree, '-p', main_parent, '-m', 'Refresh public collection data')
 
         output = run('sh', 'tools/publish_pages.sh', '--dry-run', '--already-built', capture=True).decode()
         print(output, end='', flush=True)
@@ -154,16 +316,44 @@ def run_cycle(code_sha, state, lock):
             raise RuntimeError('archive build metadata differs from this cycle')
 
         upcoming = (main_next, pages_next)
-        # Normal Git push detects changes after its own advertisement; this also
-        # catches rewinds or unrelated writes already visible before that push.
-        advertised = dict(line.split('\t')[::-1] for line in git('ls-remote', '--refs', 'origin', *REFS).splitlines())
+        if not all(new != old and is_ancestor(old, new) for old, new in zip(observed, upcoming)):
+            raise RuntimeError('candidates are not new fast-forwards of the observed refs')
+        skip = (f'main advanced normally during this round; nothing published, no HALT, checkpoint unchanged; '
+                f'the next round builds on the new main. Built on {observed}')
+        # Catch rewinds or unrelated writes already visible before the push. Skipping needs gh-pages
+        # at its baseline here and again on re-read, and main on one normal path through both reads.
+        advertised = ls_remote()
         if advertised != dict(zip(REFS, observed)):
-            halt_now(f'remote refs moved during collection; observed={observed}, candidate={upcoming}; no push attempted')
-        refspecs = [f'{new}:{ref}' for ref, old, new in zip(REFS, observed, upcoming) if new != old]
+            if (set(advertised) == set(REFS) and advertised[REFS[1]] == pages_parent
+                    and only_main_advanced(main_parent, pages_parent, advertised[REFS[0]])):
+                raise Skipped(skip)
+            halt_now(f'remote refs moved during collection; observed={observed}, advertised={advertised}, '
+                     f'candidate={upcoming}; no push attempted')
+        # One atomic push with two real updates, each leased to the exact old value it was built on:
+        # the client refuses a ref that already moved, and the server checks both old values in
+        # one transaction, so a later move of either ref (including a rewind) refuses the whole push.
+        leases = [f'--force-with-lease={ref}:{old}' for ref, old in zip(REFS, observed)]
+        refspecs = [f'{new}:{ref}' for ref, new in zip(REFS, upcoming)]
         # Leave this marker on rejection, ambiguous network result or interruption.
         with halt.open('x') as stream:
             stream.write(f'Push started; reconcile before resuming. Parents: {observed}; candidates: {upcoming}\n')
-        run('git', 'push', '--atomic', '--no-follow-tags', 'origin', *refspecs)
+            stream.flush()
+            os.fsync(stream.fileno())
+        pushed = subprocess.run(['git', 'push', '--atomic', '--porcelain', '--no-follow-tags', *leases,
+                                 'origin', *refspecs], cwd=ROOT, env=dict(env, LC_ALL='C'), pass_fds=(lock,),
+                                stdout=subprocess.PIPE, timeout=PUSH_TIMEOUT)
+        output = pushed.stdout.decode(errors='replace')
+        print(output, end='', flush=True)
+        if pushed.returncode:
+            # Only main refused by its lease (gh-pages merely carried along by --atomic), then a
+            # re-read showing gh-pages still at baseline and a normal merge on main, is safe to
+            # retry. HALT stays for anything else: gh-pages stale, server-side refusal (including
+            # `atomic transaction failed`), disconnect, timeout, hook, truncated or unclear receipt.
+            if (pushed.returncode == 1 and main_only_rejection(output, upcoming)
+                    and only_main_advanced(main_parent, pages_parent)):
+                halt.unlink()
+                raise Skipped(skip)
+            raise RuntimeError(f'push failed (exit {pushed.returncode}); HALT kept: {halt}')
         remember(upcoming)
         halt.unlink()
         print(f'published main={main_next} gh-pages={pages_next} database_sha256={db_sha}', flush=True)
@@ -185,7 +375,10 @@ def main():
             except BlockingIOError:
                 raise RuntimeError('Mac publisher is already running') from None
             run_cycle(args.code_sha, state, lock.fileno())
-    except (OSError, RuntimeError, ValueError, KeyError, subprocess.CalledProcessError) as error:
+    except Skipped as skipped:
+        print(f'Mac publish skipped: {skipped}', file=sys.stderr)
+        return SKIPPED
+    except (OSError, RuntimeError, ValueError, KeyError, subprocess.SubprocessError) as error:
         print(f'Mac publish failed: {error}', file=sys.stderr)
         return 1
     return 0
