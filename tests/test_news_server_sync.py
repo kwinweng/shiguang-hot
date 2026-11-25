@@ -236,7 +236,7 @@ class NewsServerSyncTests(unittest.TestCase):
     def prepare_download(self):
         archive = self.root / 'fixture.tar.gz'
         with tarfile.open(archive, 'w:gz') as stream:
-            stream.add(self.source, arcname='shiguang-hot-gh-pages')
+            stream.add(self.source, arcname='shiguang-news-gh-pages')
         tools = self.root / 'tools'
         tools.mkdir()
         curl = tools / 'curl'
@@ -258,7 +258,7 @@ class NewsServerSyncTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         args = (self.root / 'curl-args').read_text().splitlines()
         self.assertEqual(args[0], '-q')  # Ignore credential-bearing .curlrc files.
-        self.assertEqual(args[-1], 'https://codeload.github.com/kwinweng/shiguang-hot/tar.gz/refs/heads/gh-pages')
+        self.assertEqual(args[-1], 'https://codeload.github.com/kwinweng/shiguang-news/tar.gz/refs/heads/gh-pages')
         self.assertFalse(sentinel.exists())
         self.assertEqual(self.snapshot(self.target), before)
         self.assertFalse([p for p in self.root.glob('.news-sync.*') if p.is_dir()])
@@ -266,7 +266,7 @@ class NewsServerSyncTests(unittest.TestCase):
     def test_download_rejects_traversal_and_links(self):
         archive = self.prepare_download()
         for name, kind in (('../escaped', tarfile.REGTYPE),
-                           ('shiguang-hot-gh-pages/linked', tarfile.SYMTYPE)):
+                           ('shiguang-news-gh-pages/linked', tarfile.SYMTYPE)):
             with self.subTest(name=name):
                 with tarfile.open(archive, 'w:gz') as stream:
                     entry = tarfile.TarInfo(name)

@@ -4,7 +4,7 @@
 
 | | 拾光资讯 v11（现行） | 旧站（保留运行，不再对外主推） |
 |---|---|---|
-| 线上 | https://news.kwinweng.com/ （2026-11-16 起根路径；`/rebang/` 301 到根；全站 noindex） | 仍随 gh-pages 根目录发布到 https://kwinweng.github.io/shiguang-hot/ （阿欢已批准关闭，API 无法关掉，需在仓库 Settings → Pages 把源改为 None）；news.kwinweng.com 不再提供 |
+| 线上 | https://news.kwinweng.com/ （2026-11-16 起根路径；`/rebang/` 301 到根；全站 noindex） | 仍随 gh-pages 根目录发布到 https://kwinweng.github.io/shiguang-news/ （改名后的 Pages 地址，须在切换后核验） （阿欢已批准关闭，API 无法关掉，需在仓库 Settings → Pages 把源改为 None）；news.kwinweng.com 不再提供 |
 | 内容 | 6 频道（时事/环球/财经/科技与 AI/数码/工具与项目）+ 博主 + 热搜 + 收藏 + 搜索 | 资讯 / 探索 / 我的 |
 | 代码 | `rebang/`（采集适配、建站、推送稿）、`web-v11/`（前端） | `pipeline.py`、`shiguang/`、`web/` |
 | 产物 | `site-v11/`、`var/rebang/`（均不进 git） | `site/`（不进 git） |
@@ -44,4 +44,4 @@ NO_FETCH=1 python3 pipeline.py             # 旧站离线构建到 site/
 python3 -m pytest -q && node --test tests/*.test.js
 ```
 
-已知基线：`tests/test_news_modules_browser.py` 的 dark 主题子用例在未改动的 main 上也失败。
+测试失败先在改动前的同一提交上复现，再判断是不是旧问题（dark 主题子用例已由 `dd782494` 修复）。

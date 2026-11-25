@@ -328,14 +328,14 @@ class ExternalDispatchTests(unittest.TestCase):
 
     def matching_run(self, **extra):
         return dict(databaseId=99, displayTitle='hourly / workflow_dispatch / bot-test-id',
-                    url='https://github.com/kwinweng/shiguang-hot/actions/runs/99',
+                    url='https://github.com/kwinweng/shiguang-news/actions/runs/99',
                     status='in_progress', conclusion='', **extra)
 
     def test_read_check_does_not_dispatch_or_claim_write_permission(self):
         calls = []
         def fake(*args, **kw):
             calls.append(args)
-            return json.dumps(dict(state='active', html_url='https://github.com/kwinweng/shiguang-hot/actions'))
+            return json.dumps(dict(state='active', html_url='https://github.com/kwinweng/shiguang-news/actions'))
         code, output = self.invoke(fake, ['--check'])
         self.assertEqual(code, 0)
         self.assertEqual(calls[0][0], 'api')
