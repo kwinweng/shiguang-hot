@@ -843,6 +843,7 @@ mark{background:none;color:var(--primary)}
 #diagBox pre{margin:0;font:var(--text-xs)/1.4 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
 #diagBox a{display:inline-flex;align-items:center;min-height:40px;padding:0 var(--space-2);margin-bottom:var(--space-1);color:#fff;pointer-events:auto;text-underline-offset:3px}
 .health-view{position:fixed;inset:0;margin:auto;width:100%;max-width:480px;height:100%;max-height:none;padding:0;border:0;background:var(--background);color:var(--foreground);overflow:hidden}
+html.app-fullscreen .health-view{bottom:auto;height:var(--app-h)}
 .health-view[open]{display:flex;flex-direction:column}
 .health-view::backdrop{background:var(--dim)}
 .health-bar{flex:none;display:flex;align-items:center;gap:var(--space-3);padding:calc(var(--safe-top) + var(--space-3)) var(--page-pad) var(--space-3);border-bottom:1px solid var(--border)}
@@ -853,7 +854,8 @@ mark{background:none;color:var(--primary)}
 .health-controls{position:sticky;top:0;z-index:1;padding:var(--space-3) 0 var(--space-2);background:var(--background)}
 .health-overview{display:flex;align-items:center;gap:var(--space-2);margin:0 0 var(--space-1);min-height:36px;font-size:var(--text-base);color:var(--foreground-soft);font-variant-numeric:tabular-nums}
 .health-overview::before{content:'✓' / '';color:var(--foreground-soft)}
-.health-overview[data-overview="issues"]::before{content:'⚠︎' / '';color:var(--destructive)}
+.health-overview[data-overview="issues"]::before,.health-overview[data-overview="warning"]::before{content:'⚠︎' / '';color:var(--destructive)}
+.health-data-warning{margin:var(--space-1) 0;font-size:var(--text-sm);color:var(--foreground-soft)}
 .health-overview b{color:var(--foreground)}
 .health-overview button{min-height:36px;padding:0;border:0;background:none;color:inherit;cursor:pointer;text-align:left}
 .health-overview button[aria-pressed="false"] b{text-decoration:underline;text-underline-offset:3px}
@@ -886,6 +888,8 @@ mark{background:none;color:var(--primary)}
 .health-row-head>div{flex-wrap:wrap;min-width:0}
 .health-name,.health-account-name{font-size:var(--text-base);line-height:1.35}
 .health-age{flex:none;white-space:nowrap}
+.health-age[tabindex]{position:relative}
+.health-age:focus::after{content:attr(title);position:absolute;top:100%;right:0;z-index:1;width:max-content;max-width:70vw;padding:var(--space-1) var(--space-2);border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--background);color:var(--foreground);white-space:normal}
 .health-meta{margin:var(--space-1) 0 0;line-height:1.5}
 .health-accounts{font-size:var(--text-sm)}
 .health-accounts summary{width:fit-content;padding:var(--space-2) 0 var(--space-1);cursor:pointer;color:var(--foreground-soft)}

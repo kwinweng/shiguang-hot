@@ -9,6 +9,7 @@ import unittest
 from contextlib import redirect_stdout
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 from PIL import Image
@@ -189,6 +190,33 @@ class IngestTests(unittest.TestCase):
         offline = {s['id']: s for s in self.run_collect()['sources']}
         self.assertEqual(offline['openai-blog']['status'], 'cached')
         self.assertIsNone(offline['openai-blog']['run_count'])
+
+    def test_cache_write_failure_preserves_fresh_items_and_reports_safe_warning(self):
+        from rebang.ingest import core
+        from rebang.site.health import build_health
+
+        original_write = core._write_json
+        fetch = fake_http()
+
+        def updated(url, now):
+            return fetch(url, now).replace(b'Fresh headline', b'New headline')
+
+        def write(path, data):
+            if path.name == 'bbc-world.json':
+                raise OSError('/private/do-not-publish')
+            return original_write(path, data)
+
+        for with_cache in (False, True):
+            with self.subTest(with_cache=with_cache):
+                if with_cache:
+                    self.run_collect(fetch=True, http_get=fetch)
+                with patch.object(core, '_write_json', write):
+                    result = self.run_collect(fetch=True, http_get=updated)
+                self.assertEqual([i['title'] for i in self.by_source(result).get('bbc-world', [])], ['New headline'])
+                snapshot = build_health([('ingest.json', result)], result['items'], NOW)
+                row = next(s for s in snapshot['sources'] if s['id'] == 'bbc-world')
+                self.assertEqual((row['status'], row['run_count'], row['reason']), ('ok', 1, '本轮数据已采集，缓存写入失败'))
+                self.assertNotIn('/private/', json.dumps(snapshot))
 
     def test_no_fetch_without_cache_reports_not_fetched(self):
         env = self.run_collect()

@@ -1,7 +1,9 @@
 """博主分支单测：全部用 tests/fixtures/rebang/bloggers 下的真实节选样本，不联网。"""
 import json
 import os
-from datetime import datetime
+import shutil
+import subprocess
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -189,6 +191,48 @@ def test_x_accounts_without_posts_are_empty_not_invented(tmp_path):
     rows = {a['handle']: a for a in x['accounts']}
     assert rows['karpathy']['status'] == 'empty' and rows['karpathy']['count'] == 0
     assert not [i for i in env['items'] if i['source_id'] == 'x-karpathy']
+
+
+@pytest.mark.parametrize(('body', 'code'), [
+    ('this is not JSON', 'parse'),
+    ('{"errors": [{"message": "private upstream details"}]}', 'x_dump_error'),
+])
+def test_x_unusable_export_keeps_last_success_and_posts(tmp_path, body, code):
+    good = runmod.run(('x',), http=fake_http(), now=NOW, opts=opts(tmp_path))
+    dump = tmp_path / 'x-export.txt'
+    dump.write_text(body)
+    later = NOW + timedelta(hours=1)
+    os.utime(dump, (later.timestamp(), later.timestamp()))
+    result = runmod.run(('x',), http=fake_http(), now=later, previous=good, opts=opts(tmp_path, x_dump=dump))
+    assert result['items'] == good['items']
+    assert all((a['status'], a.get('error'), a['last_ok_at']) == ('error', code, NOW.isoformat())
+               for a in result['platforms'][0]['accounts'])
+    assert 'private upstream details' not in json.dumps(result)
+
+
+def test_x_mixed_export_preserves_identified_failure_and_accepts_valid_zero(tmp_path):
+    good = runmod.run(('x',), http=fake_http(), now=NOW, opts=opts(tmp_path))
+    later = NOW + timedelta(hours=1)
+    dump = tmp_path / 'export'
+    dump.mkdir()
+    (dump / '_dump.json').write_text(json.dumps({'generated_at': later.isoformat()}))
+    (dump / 'search.json').write_text('{"meta": {"result_count": 0}}')
+    (dump / 'search-errors.txt').write_text('''output: { "errors": [{"resource_type":"user", "parameter":"username", "value":"LXFATER"}]}''')
+    result = runmod.run(('x',), http=fake_http(), now=later, previous=good, opts=opts(tmp_path, x_dump=dump))
+    rows = {a['handle']: a for a in result['platforms'][0]['accounts']}
+    assert (rows['lxfater']['status'], rows['lxfater'].get('error'), rows['lxfater']['last_ok_at']) == (
+        'error', 'x_dump_error', NOW.isoformat())
+    assert (rows['karpathy']['status'], rows['karpathy']['last_ok_at']) == ('empty', later.isoformat())
+
+
+@pytest.mark.parametrize('timestamp', ['2026-11-17T21:00:00+08:00', '9999-12-31T23:00:00+00:00', 'invalid'])
+def test_x_rejects_invalid_or_future_export_timestamp(tmp_path, timestamp):
+    (tmp_path / '_dump.json').write_text(json.dumps({'generated_at': timestamp}))
+    (tmp_path / 'posts.json').write_text('{"data": []}')
+    os.utime(tmp_path / 'posts.json', (NOW.timestamp(), NOW.timestamp()))
+    result = runmod.run(('x',), http=fake_http(), now=NOW, opts=opts(tmp_path, x_dump=tmp_path))
+    assert all((a['status'], a.get('error'), a['last_ok_at']) == ('error', 'x_dump_time_invalid', None)
+               for a in result['platforms'][0]['accounts'])
 
 
 def test_x_missing_dump_is_not_configured_and_keeps_last_good(tmp_path):
@@ -812,7 +856,6 @@ def test_x_latest_dump_skips_dump_still_being_written(tmp_path):
 
 
 def test_x_reads_older_complete_dumps_in_window(tmp_path):
-    import shutil
     root = tmp_path / 'x-dump'
     shutil.copytree(FX / 'x_dump', root / '20261116T0752')
     newest = root / '20261116T1353'
@@ -936,3 +979,55 @@ def test_weibo_default_cookie_path_not_present_is_not_configured(tmp_path, monke
     wb = next(p for p in env['platforms'] if p['id'] == 'weibo')
     assert wb['status'] == 'not_configured'
     assert not [i for i in env['items'] if i['blogger']['platform'] == 'weibo']
+
+
+def test_weibo_missing_cookie_refresh_keeps_content_and_reports_not_configured(tmp_path, monkeypatch):
+    from rebang.bloggers import weibo
+    from rebang.site.health import build_health
+
+    good = runmod.run(('weibo',), http=fake_http(), now=NOW, opts=weibo_opts(tmp_path, weibo_get()), sleep=lambda _: None)
+    assert good['items']
+
+    def unexpected(*args, **kwargs):
+        pytest.fail('missing configuration must not read a cookie or request media')
+
+    monkeypatch.setattr(weibo, 'read_cookie', unexpected)
+    later = NOW + timedelta(hours=1)
+    o = opts(tmp_path, weibo_cookie_file=tmp_path / 'missing-cookie')
+    o.localize_media = True
+    o.weibo_media_get = unexpected
+    o.media_dir = tmp_path / 'media'
+    result = runmod.run(('weibo',), http=unexpected, now=later, previous=good, opts=o)
+    assert result['platforms'][0]['status'] == 'not_configured'
+    assert result['items'] == good['items']
+    snapshot = build_health([('bloggers.json', result)], result['items'], later)
+    row = next(r for r in snapshot['sources'] if r['id'] == 'weibo')
+    assert (row['status'], row['last_ok_at'], row['reason']) == ('not_configured', NOW.isoformat(), '微博登录尚未配置')
+
+
+def test_refresh_dispatches_weibo_even_without_cookie_file(tmp_path, monkeypatch):
+    tools = tmp_path / 'tools'
+    tools.mkdir()
+    refresh = tools / 'rebang_refresh.sh'
+    shutil.copyfile(Path(__file__).resolve().parents[1] / 'tools/rebang_refresh.sh', refresh)
+    # A temporary root and stand-ins exercise argument selection without running collection or publication.
+    fake_python = tools / 'fake-python'
+    fake_python.write_text('''#!/bin/sh
+case "$2" in
+    rebang.bloggers) printf '%s\n' "$*" > bloggers-args ;;
+    rebang.ingest) touch var/rebang/in/ingest.json.tmp ;;
+    rebang.site) mkdir -p "$6/data" && touch "$6/index.html" "$6/data/meta.json" ;;
+esac
+''')
+    fake_flock = tools / 'flock'
+    fake_flock.write_text('#!/bin/sh\nexit 0\n')
+    for path in (fake_python, fake_flock):
+        path.chmod(0o700)
+    monkeypatch.setenv('PATH', str(tools) + os.pathsep + os.environ['PATH'])
+    monkeypatch.setenv('BOX_PYTHON', str(fake_python))
+    monkeypatch.setenv('REBANG_WEIBO_COOKIE', str(tmp_path / 'missing-cookie'))
+    monkeypatch.setenv('REBANG_WEIBO_OUTPUT', str(tmp_path / 'weibo-output'))
+    subprocess.run(['sh', str(refresh), '--no-publish'], cwd=tmp_path, check=True, capture_output=True)
+    arguments = (tmp_path / 'bloggers-args').read_text().split()
+    assert 'weibo' in arguments[arguments.index('--platform') + 1].split(',')
+    assert not (tmp_path / 'weibo-output').exists()

@@ -122,3 +122,52 @@ def test_home_metadata_summarizes_the_same_top_level_sources(health_files, healt
     rows = health['sources']
     assert meta['health_summary'] == {'total': len(rows), 'issues': sum(row['status'] != 'ok' for row in rows)}
     assert set(meta['health_summary']) == {'total', 'issues'}
+
+
+def test_health_rejects_bad_times_and_distinguishes_unknown_status():
+    from rebang.site.health import build_health
+
+    future = (NOW + timedelta(hours=1)).isoformat()
+    old = (NOW - timedelta(hours=40)).isoformat()
+    handle = next(p for p in load_bloggers()['platforms'] if p['id'] == 'x')['accounts'][0]['handle']
+    for dump_at in (None, 'broken', future, old):
+        result = build_health([('test.json', {
+            'sources': [
+                {'id': 'bbc-world', 'status': 'ok', 'fetched_at': future},
+                {'id': 'guardian-world', 'status': 'ok', 'fetched_at': '9999-12-31T23:00:00+00:00'},
+                {'id': 'apple-newsroom', 'status': 'new-state', 'fetched_at': NOW.isoformat()},
+                {'id': 'google-blog', 'status': 'not_fetched'},
+            ],
+            'platforms': [{'id': 'x', 'accounts': [
+                {'handle': handle, 'status': 'error', 'error': 'x_dump_stale', 'last_ok_at': old, 'dump_at': dump_at},
+            ]}],
+        })], [], NOW)
+        rows = {r['id']: r for r in result['sources']}
+        for sid in ('bbc-world', 'guardian-world'):
+            assert (rows[sid]['status'], rows[sid]['last_ok_at']) == ('failed', None)
+        assert rows['apple-newsroom']['status'] == 'unknown'
+        assert rows['google-blog']['status'] == 'not_configured'
+        x = next(r for r in rows['x']['accounts'] if r['id'] == f'x-{handle}')
+        assert x['status'] == ('stale' if dump_at == old else 'failed')
+        assert ('超过 36 小时' in x['reason']) == (dump_at == old)
+
+
+def test_ingest_ignores_extreme_and_future_telegram_success_times(tmp_path):
+    db = tmp_path / 'fixture.sqlite'
+    cache = tmp_path / 'cache'
+    cache.mkdir()
+    future = (NOW + timedelta(days=2)).isoformat()
+    (cache / 'telegram-health.json').write_text(json.dumps({'tnews365': future}))
+    with sqlite3.connect(db) as con:
+        con.execute('create table msg(ch text, id int, ts text, text text)')
+        con.execute('create table status(ch text primary key, ok int, err text, at text)')
+        con.execute('insert into status values (?, ?, ?, ?)', ('tnews365', 1, None, '9999-12-31T23:00:00+00:00'))
+    options = dict(db=db, cache=cache, inbox_loader=lambda _: [], translator=None)
+    result = collect(NOW, **options)
+    row = next(r for r in result['sources'] if r['id'] == 'tnews365')
+    assert row['last_ok_at'] is None
+    assert json.loads((cache / 'telegram-health.json').read_text()) == {}
+    with sqlite3.connect(db) as con:
+        con.execute('update status set at=?', (NOW.isoformat(),))
+    result = collect(NOW, **options)
+    assert next(r for r in result['sources'] if r['id'] == 'tnews365')['last_ok_at'] == NOW.isoformat()

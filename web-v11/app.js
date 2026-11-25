@@ -79,12 +79,25 @@
   window.__rebangDiag = {data: diagData, set: diagSet};
   function bindDiagLongPress(el, onToggle) {
     if (!el) return;
-    let t = 0, x = 0, y = 0;
+    let t = 0, x = 0, y = 0, longPressed = false;
     const cancel = () => { clearTimeout(t); t = 0; };
-    el.addEventListener('pointerdown', e => { x = e.clientX; y = e.clientY; cancel(); t = setTimeout(() => { t = 0; onToggle(); }, 1000); });
+    el.addEventListener('pointerdown', e => {
+      if (!e.isPrimary || e.button !== 0) return;
+      longPressed = false;
+      x = e.clientX; y = e.clientY;
+      cancel();
+      t = setTimeout(() => { t = 0; longPressed = true; onToggle(); }, 1000);
+    });
     el.addEventListener('pointermove', e => { if (t && Math.hypot(e.clientX - x, e.clientY - y) > 10) cancel(); });
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => el.addEventListener(ev, cancel));
     el.addEventListener('contextmenu', e => e.preventDefault());
+    // 松手后补发的 click 归这次手势，下一次按下或键盘激活照常处理。
+    el.addEventListener('click', e => {
+      if (!longPressed || e.detail === 0) return;
+      longPressed = false;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }, true);
   }
   const DATA = 'data';
   const MKEY = 'rebang-v11-mode';
@@ -146,8 +159,7 @@
   }
   function remember(list) { (list || []).forEach(it => it && it.id && items.set(it.id, it)); return list || []; }
   function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('on'), 3200); }
-  let diagSwallow = 0;   // 长按开/关诊断后，松手那一下点击不要再打开下拉
-  bindDiagLongPress(document.querySelector('#chBtn'), () => { const on = !diagOn(); diagSet(on); diagSwallow = performance.now() + 800; toast(on ? '诊断已打开（再长按左上角标题关闭）' : '诊断已关闭'); });
+  bindDiagLongPress(document.querySelector('#chBtn'), () => { const on = !diagOn(); diagSet(on); toast(on ? '诊断已打开（再长按左上角标题关闭）' : '诊断已关闭'); });
   function channels() { return (meta && meta.channels) || []; }
 
   /* ---------- 已读（v16）：点开过的条目在所有列表里变灰，只记在这台设备 ---------- */
@@ -226,7 +238,7 @@
   }
   async function loadAll(fresh) {
     meta = await getJSON('meta.json', fresh);
-    updateHealthEntry(meta.health_summary);
+    updateHealthEntry();
     channels().forEach(c => {
       remember(c.banner);
       ch[c.slug] = {list: [], page: 0, pages: c.pages || 1, total: c.feed_total || 0, loading: false, error: null};
@@ -968,19 +980,23 @@
   }
   const HEALTH_HASH = '#/health';
   let healthLoad = 0;
-  function updateHealthEntry(summary) {
+  function updateHealthEntry() {
+    if (!meta) return;
     const entry = $('#healthEntry');
     const count = entry.querySelector('.health-entry-count');
-    const {total, issues} = summary || {};
+    const {total, issues} = meta.health_summary || {};
+    const stale = window.RebangHealth.isSnapshotStale(meta.built_at, Date.now());
     const known = Number.isInteger(total) && Number.isInteger(issues) && total > 0 && issues >= 0 && issues <= total;
-    const needsAttention = known && issues > 0;
+    const needsAttention = stale || (known && issues > 0);
     entry.classList.toggle('has-issues', needsAttention);
-    count.textContent = needsAttention ? issues : '';
+    count.textContent = stale ? '数据已过期' : needsAttention ? issues : '';
     count.hidden = !needsAttention;
-    if (known) entry.setAttribute('aria-label', needsAttention ? `来源状态，${issues} 个来源需处理` : '来源状态，全部健康');
+    if (stale) entry.setAttribute('aria-label', '来源状态，数据已过期');
+    else if (known) entry.setAttribute('aria-label', needsAttention ? `来源状态，${issues} 个来源需处理` : '来源状态，全部健康');
     else entry.removeAttribute('aria-label');
   }
   function filterHealth(event) {
+    event.target.closest('.health-age')?.focus();
     const selected = event.target.closest('[data-health-filter]');
     if (!selected) return;
     const body = event.currentTarget;
@@ -1009,12 +1025,13 @@
       const data = await getJSON('health.json');
       if (load !== healthLoad || !dialog.open) return;
       if (data.schema !== 'rebang.source-health/1' || !Array.isArray(data.sources)) throw new Error('Invalid health snapshot');
-      const generated = Date.parse(data.generated_at);
-      if (Number.isFinite(generated)) {
-        stamp.textContent = `数据更新于 ${L.fmtFull(data.generated_at)}（北京时间）`;
+      const now = Date.now();
+      const stale = window.RebangHealth.isSnapshotStale(data.generated_at, now);
+      if (Number.isFinite(Date.parse(data.generated_at))) {
+        stamp.textContent = `${stale ? '数据已过期 · ' : ''}数据更新于 ${L.fmtFull(data.generated_at)}（北京时间）`;
         stamp.hidden = false;
       }
-      body.innerHTML = window.RebangHealth.healthHTML(data.sources, Number.isFinite(generated) ? generated : Date.now());
+      body.innerHTML = window.RebangHealth.healthHTML(data.sources, now, stale);
     } catch (e) {
       if (load === healthLoad && dialog.open) body.innerHTML = '<p class="muted" role="status">健康数据暂时加载不出来。</p>';
     }
@@ -1498,7 +1515,7 @@
     $('#cardMenu').addEventListener('click', onMenu);
     $('#actSheet').addEventListener('click', onSheet);
     // 顶栏：点标题开/关下拉（频道 / 平台 / 日期）；点遮罩关
-    $('#chBtn').addEventListener('click', () => { if (performance.now() < diagSwallow) return; if (dropOpen()) closeDrop(); else openDrop(); });
+    $('#chBtn').addEventListener('click', () => { if (dropOpen()) closeDrop(); else openDrop(); });
     $('#dropMask').addEventListener('click', closeDrop);
     $('#dropList').addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
@@ -1534,6 +1551,7 @@
       e.preventDefault();
       openHealth();
     });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) updateHealthEntry(); });
     $('#healthBody').addEventListener('click', filterHealth);
     $('#healthBack').onclick = leaveHealth;
     $('#healthView').addEventListener('cancel', e => { e.preventDefault(); leaveHealth(); });

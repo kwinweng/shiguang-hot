@@ -20,69 +20,126 @@ METRIC_MAP = {
 MAX_COMMENTS = 10
 REF_PREFIXES = ('quotes', 'replies', 'refs')
 _TCO = re.compile(r'\s*https://t\.co/\w+\s*$')
+_BLOB_START = re.compile(r'{\s*"(?:data|meta|includes|errors)"\s*:')
 
 
 def _decode_blobs(text):
     """从一段文本里取出所有顶层 X 响应 JSON 对象。"""
+    try:
+        value = json.loads(text)
+    except ValueError:
+        pass  # 兼容文本日志里的嵌入式响应
+    else:
+        return value if isinstance(value, list) else [value]
     dec = json.JSONDecoder()
     out, pos = [], 0
-    while True:
-        starts = [i for i in (text.find('{"data"', pos), text.find('{"meta"', pos), text.find('{"includes"', pos)) if i >= 0]
-        if not starts:
-            return out
-        start = min(starts)
+    while match := _BLOB_START.search(text, pos):
         try:
-            obj, end = dec.raw_decode(text[start:])
+            obj, pos = dec.raw_decode(text, match.start())
         except ValueError:
-            pos = start + 1
-            continue
-        if isinstance(obj, dict):
+            pos = match.end()
+        else:
             out.append(obj)
-        pos = start + end
+    return out
 
 
-def load_dump(path):
-    """合并一个 dump 目录（或单个文件）里的所有响应 → (posts, users, media)。"""
+def _main_data(blob):
+    data = blob.get('data')
+    if isinstance(data, list) and all(isinstance(p, dict) and p.get('id') for p in data):
+        return data
+    meta = blob.get('meta')
+    if data is None and isinstance(meta, dict) and type(meta.get('result_count')) is int and meta['result_count'] == 0:
+        return []
+    return None
+
+
+def _failed_handles(file, errors, handles, users):
+    def known(value):
+        return handles.get(value.strip().lstrip('@').lower()) if isinstance(value, str) else None
+
+    file_handle = known(file.stem.lower().removeprefix('search-').removeprefix('posts-'))
+    if not isinstance(errors, list) or not errors:
+        return {file_handle} if file_handle else set(handles.values())
+    failed = set()
+    for error in errors:
+        handle = file_handle
+        if isinstance(error, dict):
+            handle = known(error.get('username')) or known(error.get('handle')) or handle
+            if error.get('parameter') == 'username':
+                handle = known(error.get('value')) or handle
+            if error.get('resource_type') == 'user':
+                user = users.get(str(error.get('resource_id')), {})
+                handle = known(user.get('username')) or handle
+        if not handle:
+            return set(handles.values())
+        failed.add(handle)
+    return failed
+
+
+def read_export(path, account_handles):
+    """Return the combined dump and fixed error codes for the affected accounts."""
     path = Path(path)
     files = (sorted(f for f in path.glob('*.json') if f.name != '_dump.json') + sorted(path.glob('*.txt'))) if path.is_dir() else [path]
     posts, users, media = {}, {}, {}
-    main_ids = set()
+    main_ids, problems = set(), []
+    valid_main = False
     for f in files:
         reference_only = f.name.startswith(REF_PREFIXES)
-        text = f.read_text(encoding='utf-8', errors='replace')
-        blobs = []
-        if f.suffix == '.json':
-            try:
-                data = json.loads(text)
-                blobs = data if isinstance(data, list) else [data]
-            except ValueError:
-                blobs = _decode_blobs(text)
-        else:
-            blobs = _decode_blobs(text)
+        try:
+            blobs = _decode_blobs(f.read_text(encoding='utf-8', errors='replace'))
+        except OSError:
+            blobs = []
+        if not blobs and not reference_only:
+            problems.append((f, 'parse', None))
         for blob in blobs:
             if not isinstance(blob, dict):
+                if not reference_only:
+                    problems.append((f, 'parse', None))
                 continue
+            data = _main_data(blob)
+            if not reference_only:
+                errors = blob.get('errors')
+                if errors:
+                    problems.append((f, 'x_dump_error', errors))
+                elif data is None and ('data' in blob or 'meta' in blob or 'includes' not in blob):
+                    problems.append((f, 'parse', None))
+                if data or (data is not None and not errors):
+                    valid_main = True
+                main_ids.update(p['id'] for p in data or [])
             inc = blob.get('includes') or {}
             for u in inc.get('users') or []:
                 users.setdefault(u['id'], {}).update(u)
             for m in inc.get('media') or []:
                 media.setdefault(m['media_key'], {}).update(m)
-            data = [p for p in blob.get('data') or [] if isinstance(p, dict)]
-            if not reference_only:
-                main_ids.update(p['id'] for p in data if p.get('id'))
-            for p in data + list(inc.get('posts') or []) + list(inc.get('tweets') or []):
+            for p in (data or []) + list(inc.get('posts') or []) + list(inc.get('tweets') or []):
                 if isinstance(p, dict) and p.get('id'):
                     # 后读到的字段补齐先读到的（例如搜索结果缺 note_tweet，按 id 详情补上）
                     merged = posts.setdefault(p['id'], {})
                     for k, v in p.items():
                         if k not in merged or (k == 'text' and len(v) > len(merged.get(k, ''))):
                             merged[k] = v
+    handles = {handle.lower(): handle for handle in account_handles}
+    failures = {}
+    for file, code, errors in problems:
+        for handle in _failed_handles(file, errors, handles, users):
+            if code == 'x_dump_error' or handle not in failures:
+                failures[handle] = code
+    if not valid_main:
+        default = 'x_dump_error' if any(code == 'x_dump_error' for _, code, _ in problems) else 'parse'
+        for handle in handles.values():
+            failures.setdefault(handle, default)
     for pid in main_ids:
         posts[pid]['_main'] = True
     store = reply_store_near(path)
     if store:
         merge_reply_store(posts, users, store)
-    return posts, users, media
+    return (posts, users, media), failures
+
+
+def load_dump(path):
+    """Read posts, users and media from a dump directory or a single file."""
+    dump, _ = read_export(path, ())
+    return dump
 
 
 def reply_store_near(dump):
@@ -298,13 +355,15 @@ def dump_time(path):
     from datetime import datetime, timezone
     path = Path(path)
     meta = path / '_dump.json' if path.is_dir() else None
-    if meta and meta.exists():
-        try:
-            moment = parse_time(json.loads(meta.read_text(encoding='utf-8')).get('generated_at'))
-            if moment:
-                return moment
-        except ValueError:
-            pass
-    files = list(path.glob('*')) if path.is_dir() else [path]
-    newest = max((f.stat().st_mtime for f in files if f.is_file()), default=None)
-    return datetime.fromtimestamp(newest, timezone.utc) if newest else None
+    try:
+        if meta and meta.exists():
+            metadata = json.loads(meta.read_text(encoding='utf-8'))
+            if not isinstance(metadata, dict):
+                return None
+            if 'generated_at' in metadata:
+                return parse_time(metadata['generated_at'])
+        files = path.iterdir() if path.is_dir() else [path]
+        newest = max((f.stat().st_mtime for f in files if f.is_file()), default=None)
+        return datetime.fromtimestamp(newest, timezone.utc) if newest is not None else None
+    except (OSError, ValueError, OverflowError):
+        return None

@@ -71,3 +71,17 @@ test('rows keep exact times and specific reasons without generic failure or empt
   assert.doesNotMatch(html, /Telegram 本轮采集失败|最近 0 条/);
   assert.match(html, /超过 48 小时未更新采集数据.*最近 14 条/);
 });
+
+
+test('health skips malformed sources and accounts while showing one warning', () => {
+  const rows = [null, 4, {}, row('ok', '有效源'), {
+    ...row('stale', '有效平台'), accounts: [null, false, row('stale', '有效账号'), {}],
+  }, {...row('failed', '另一平台'), accounts: 'bad'}];
+  const html = H.healthHTML(rows, base);
+  assert.match(html, /2 个来源需处理.*1 正常/);
+  assert.match(html, /查看 1 个账号/);
+  assert.match(html, /有效账号/);
+  assert.match(html, /另一平台/);
+  assert.equal([...html.matchAll(/部分数据缺损/g)].length, 1);
+  assert.match(H.healthHTML([null], base), /部分数据缺损/);
+});

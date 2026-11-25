@@ -18,14 +18,18 @@
     login_expired: ['登录已失效，需要重新登录', '微博需要重新登录', '微信读书需要重新登录'],
     not_configured: ['尚未配置账号'],
   };
+  const STALE_SNAPSHOT_MS = 3 * 60 * 60 * 1000; // 每小时发布，给连续延迟留出余量
   const date = value => typeof value === 'string' ? Date.parse(value) : NaN;
   const byAge = value => Number.isFinite(date(value)) ? date(value) : Infinity;
   const isCount = value => Number.isInteger(value) && value >= 0;
   const statusKey = status => ORDER.includes(status) ? status : 'unknown';
+  const isSnapshotStale = (value, now) => now - date(value) > STALE_SNAPSHOT_MS;
+  const validRow = row => row && typeof row.name === 'string' && row.name.trim()
+    && typeof row.status === 'string' && row.status.trim();
 
   function healthSections(rows) {
     const groups = Object.fromEntries(ORDER.map(status => [status, []]));
-    for (const row of rows) groups[statusKey(row.status)].push(row);
+    for (const row of rows) if (validRow(row)) groups[statusKey(row.status)].push(row);
     for (const status of ORDER) {
       if (status !== 'ok') groups[status].sort((a, b) => byAge(a.issue_since) - byAge(b.issue_since));
       if (!groups[status].length) delete groups[status];
@@ -47,7 +51,7 @@
     if (!age) return '';
     const label = since === row.last_ok_at ? '上次成功' : '数据时间';
     const exact = `${label} ${fmtFull(since)}（北京时间）`;
-    return `<time class="health-age" datetime="${esc(since)}" title="${esc(exact)}">${age}</time>`;
+    return `<time class="health-age" tabindex="0" datetime="${esc(since)}" aria-label="${esc(exact)}" title="${esc(exact)}">${age}</time>`;
   }
 
   function rowBody(row, now, account = false) {
@@ -76,17 +80,27 @@
       }).join('')}</ul></details>`;
   }
 
-  function healthHTML(rows, now) {
-    if (!rows.length) return '<p class="muted">暂无来源健康数据。</p>';
+  function healthHTML(sources, now, stale = false) {
+    let damaged = false;
+    const rows = sources.filter(validRow).map(row => {
+      if (row.accounts === undefined) return row;
+      const accounts = Array.isArray(row.accounts) ? row.accounts.filter(validRow) : [];
+      if (!Array.isArray(row.accounts) || accounts.length !== row.accounts.length) damaged = true;
+      return {...row, accounts};
+    });
+    const warning = damaged || rows.length !== sources.length
+      ? '<p class="health-data-warning" role="status">部分数据缺损。</p>' : '';
+    if (!rows.length) return `${warning}<p class="muted">暂无来源健康数据。</p>`;
     const groups = healthSections(rows);
     const good = groups.ok?.length || 0;
     const issues = rows.length - good;
     const initial = issues ? 'issues' : 'ok';
     const summary = issues
       ? `<button type="button" data-health-filter="issues" aria-pressed="true"><b>${issues} 个来源需处理</b> · ${good} 正常</button>`
-      : `<b>${good} 个来源全部正常</b>`;
+      : stale || warning ? `<b>${good} 个可用来源记录为正常</b>` : `<b>${good} 个来源全部正常</b>`;
     return `<div class="health-controls">
-      <p class="health-overview" data-overview="${initial}">${summary}</p>
+      ${warning}
+      <p class="health-overview" data-overview="${stale || warning ? 'warning' : initial}">${summary}</p>
       <div class="health-filters" role="group" aria-label="按来源状态筛选">${Object.entries(groups).map(([status, sources]) =>
         `<button type="button" data-health-filter="${status}" aria-pressed="${status === initial}">${LABELS[status]} <span>${sources.length}</span></button>`
       ).join('')}</div>
@@ -94,7 +108,7 @@
     ${Object.entries(groups).map(([status, sources]) => section(status, sources, now, initial)).join('')}`;
   }
 
-  const api = {healthSections, elapsed, healthHTML};
+  const api = {healthSections, elapsed, isSnapshotStale, healthHTML};
   if (node) module.exports = api;
   else root.RebangHealth = api;
 })(typeof window !== 'undefined' ? window : globalThis);

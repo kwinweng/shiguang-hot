@@ -12,6 +12,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from rebang.contract import ITEMS_SCHEMA, load_channels
+from rebang.health_time import observation_time
 
 ROOT = Path(__file__).resolve().parents[2]
 BEIJING = ZoneInfo('Asia/Shanghai')
@@ -36,7 +37,7 @@ def _iso(moment):
 def _parse_when(value):
     try:
         return _aware(datetime.fromisoformat(str(value or '').strip().replace('Z', '+00:00'))).astimezone(BEIJING)
-    except ValueError:
+    except (ValueError, OverflowError):
         return None
 
 
@@ -309,7 +310,7 @@ def _write_json(path, data):
     os.replace(tmp, path)
 
 
-def _preserve_tg_success(rows, cache):
+def _preserve_tg_success(rows, cache, now):
     # The legacy DB keeps a single attempt per channel. Keep the last observed success with the ingest cache.
     key = 'telegram-health'
     saved = _read_cache(cache, key)
@@ -317,8 +318,8 @@ def _preserve_tg_success(rows, cache):
     updated = {}
     for row in rows:
         source_id = row['id']
-        previous = _parse_when(saved.get(source_id))
-        reported = _parse_when(row.get('fetched_at')) if row.get('collection_ok') else None
+        previous = observation_time(_parse_when(saved.get(source_id)), now)
+        reported = observation_time(_parse_when(row.get('fetched_at')), now) if row.get('collection_ok') else None
         last_ok = max(filter(None, (previous, reported)), default=None)
         row['last_ok_at'] = _iso(last_ok) if last_ok else None
         if last_ok:
@@ -334,17 +335,21 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
     items, statuses = [], []
     for channel, cfg in sources:
         sid, entries, state, error, fetched_at = cfg['id'], None, None, None, None
+        cache_warning = None
         if fetch:
             try:
                 raw = http_get(cfg['url'], now)
                 parsed = parse_trending(raw.decode('utf-8', 'replace'), now) if cfg['type'] == 'page' else parse_feed(raw)
-                stamp = _iso(now)
-                _write_json(_cache_path(cache, sid), {'fetched_at': stamp, 'url': cfg['url'], 'entries': parsed})
-                entries, fetched_at = parsed, stamp
-                state = 'ok' if entries else 'empty'
             except Exception as ex:  # 一家失败不影响其它家；错误只记代码，不带响应体
                 code = getattr(ex, 'code', None) or ('invalid_content' if isinstance(ex, (ET.ParseError, ValueError)) else type(ex).__name__)
                 state, error = 'error', str(code)
+            else:
+                entries, fetched_at = parsed, _iso(now)
+                state = 'ok' if entries else 'empty'
+                try:
+                    _write_json(_cache_path(cache, sid), {'fetched_at': fetched_at, 'url': cfg['url'], 'entries': entries})
+                except OSError:
+                    cache_warning = 'write_failed'
         if entries is None:
             cached = _read_cache(cache, sid)
             if cached:
@@ -375,7 +380,10 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
         run_count = (0 if state == 'error' else count) if fetch else None
         if state in ('ok', 'cached') and not count:
             state = 'empty'
-        statuses.append(dict(_status(cfg, channel, state, count, error=error, fetched_at=fetched_at), run_count=run_count))
+        row = dict(_status(cfg, channel, state, count, error=error, fetched_at=fetched_at), run_count=run_count)
+        if cache_warning:
+            row['cache_warning'] = cache_warning
+        statuses.append(row)
     return items, statuses
 
 
@@ -641,7 +649,7 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
         from rebang.tgmeta import load_store
         tgmeta = load_store(tgmeta).get('messages', {})
     got, st = telegram_items(db or ROOT / 'tg.db', media_root, by_type.get('telegram', []), now, floor, tgmeta)
-    _preserve_tg_success(st, cache)
+    _preserve_tg_success(st, cache, now)
     items += got; statuses += st
     got, st = remote_items(by_type.get('feed', []) + by_type.get('page', []), now, floor, fetch=fetch, cache=cache,
                            http_get=http_get or default_http_get)

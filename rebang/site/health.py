@@ -4,10 +4,12 @@ from datetime import datetime, timedelta
 
 from rebang.bloggers import X_STALE_HOURS
 from rebang.contract import HEALTH_SCHEMA, load_bloggers, load_channels
+from rebang.health_time import observation_time
 
 STALE_HOURS = 48
 SUCCESS = ('ok', 'empty', 'cached')
-PRIORITY = ('login_expired', 'failed', 'stale', 'not_configured', 'ok')
+UNCONFIGURED = (None, 'not_configured', 'not_fetched')
+PRIORITY = ('login_expired', 'failed', 'stale', 'not_configured', 'unknown', 'ok')
 REASONS = {
     'blocked': '来源拒绝访问',
     'network': '网络连接失败',
@@ -26,6 +28,8 @@ REASONS = {
     'wechat_weread_expired': '微信读书需要重新登录',
     'wechat_book_not_found': '微信读书未找到此公众号',
     'x_dump_missing': '未收到 X 导出数据',
+    'x_dump_error': 'X 导出响应报告错误',
+    'x_dump_time_invalid': 'X 导出时间无效或缺失',
     'youtube_unreachable': 'YouTube 订阅和频道页均不可用',
 }
 
@@ -35,7 +39,7 @@ def _time(value, now):
         return None
     try:
         moment = datetime.fromisoformat(value.replace('Z', '+00:00'))
-        return moment.astimezone(now.tzinfo) if moment.tzinfo else None
+        return observation_time(moment, now)
     except (ValueError, OverflowError):
         return None
 
@@ -59,12 +63,19 @@ def _row(source, observed, group, now, visible_count, *, kind):
     is_tg = kind == 'telegram'
     is_news = kind != 'blogger' and kind != 'x'
     tg_failed = is_tg and (observed.get('collection_ok') is False or bool(code))
-    last_ok = _time(observed.get('last_ok_at'), now)
-    if is_news and not last_ok and not tg_failed:
+    last_value = observed.get('last_ok_at')
+    last_ok = _time(last_value, now)
+    fetched_value = observed.get('fetched_at') if is_news and not tg_failed else None
+    fetched_at = _time(fetched_value, now)
+    if last_value is None:
         # Ingest feeds use fetched_at for the cache timestamp even on network failure.
-        last_ok = _time(observed.get('fetched_at'), now)
-    dump_at = _time(observed.get('dump_at'), now) if kind == 'x' else None
-    freshness_at = dump_at or last_ok
+        last_ok = fetched_at
+    dump_value = observed.get('dump_at') if kind == 'x' else None
+    dump_at = _time(dump_value, now)
+    invalid_time = ((last_value is not None and last_ok is None)
+                    or (fetched_value is not None and fetched_at is None)
+                    or (dump_value is not None and dump_at is None))
+    freshness_at = dump_at if kind == 'x' else last_ok
     max_age = X_STALE_HOURS if kind == 'x' else STALE_HOURS
     count = _count(observed.get('count'), visible_count)
     run_count = None
@@ -73,21 +84,25 @@ def _row(source, observed, group, now, visible_count, *, kind):
         if raw in ('error', 'login_expired'):
             inferred = 0
         run_count = _count(observed.get('run_count', inferred))
-    issue_since = None
+    overdue = freshness_at is not None and now - freshness_at > timedelta(hours=max_age)
     if raw == 'login_expired':
         status, reason = 'login_expired', reason or '登录已失效，需要重新登录'
     elif kind == 'x' and code == 'x_dump_stale':
-        status, reason = 'stale', 'X 导出数据超过 36 小时未更新' if dump_at or last_ok else 'X 导出数据已过期或缺少时间'
+        status, reason = ('stale', 'X 导出数据超过 36 小时未更新') if overdue else ('failed', REASONS['x_dump_time_invalid'])
     elif tg_failed or raw == 'error' or (kind == 'x' and code == 'x_dump_missing' and last_ok):
         status, reason = 'failed', reason or ('Telegram 本轮采集失败' if is_tg else '本轮采集失败')
-    elif raw in SUCCESS and freshness_at and now - freshness_at > timedelta(hours=max_age):
+    elif raw in SUCCESS and invalid_time:
+        status, reason = 'failed', '采集时间无效'
+    elif raw in SUCCESS and overdue:
         status, reason = 'stale', f'超过 {max_age} 小时未更新采集数据'
     elif raw in SUCCESS and last_ok:
-        status, reason = 'ok', None
-    else:
+        status = 'ok'
+        reason = '本轮数据已采集，缓存写入失败' if observed.get('cache_warning') == 'write_failed' else None
+    elif raw in SUCCESS or raw in UNCONFIGURED:
         status, reason = 'not_configured', reason or '尚无采集记录'
-    if status in ('failed', 'stale', 'login_expired'):
-        issue_since = freshness_at if status == 'stale' else last_ok
+    else:
+        status, reason = 'unknown', '采集状态无法识别'
+    issue_since = freshness_at if status == 'stale' else last_ok if status in ('failed', 'login_expired', 'unknown') else None
     return {'id': source['id'], 'name': source['name'], 'group': group, 'status': status,
             'last_ok_at': _iso(last_ok), 'count': count, 'run_count': run_count, 'reason': reason,
             'issue_since': _iso(issue_since)}
