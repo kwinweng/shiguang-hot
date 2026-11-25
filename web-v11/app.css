@@ -77,11 +77,7 @@ button,input{font:inherit;color:inherit}a{color:inherit}
 .ch-sec[hidden]{display:none}
 .carousel{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 16px 6px;overscroll-behavior:contain;scrollbar-width:none;-ms-overflow-style:none;position:relative}
 .carousel .slide{flex:0 0 78%;scroll-snap-align:start}
-.ch-kicker{display:flex;align-items:baseline;justify-content:space-between;padding:0 16px;margin-bottom:4px}
-.idx{font-size:var(--text-xs);letter-spacing:.12em;color:var(--gold)}
-.hint{font-size:var(--text-xs);color:var(--mute-2)}
 h2.ch{margin:0 16px 4px;font-size:var(--text-display);letter-spacing:-.04em;line-height:1.05;font-weight:650}
-.ch-sec h2.ch{margin:0}
 .desc{margin:0 16px 8px;color:var(--mute);font-size:var(--text-sm2);line-height:1.5}
 .ch-sec .desc{margin:0}
 .note{font-size:var(--text-sm);line-height:1.5;color:var(--note-ink);background:var(--note-bg);border:1px solid var(--note-line);border-radius:var(--radius-md);padding:8px 10px;margin:0 16px 8px}
@@ -287,7 +283,6 @@ html,body{margin:0;height:100%;height:100dvh;background:var(--bg);color:var(--in
 .next-div{display:flex;align-items:center;gap:10px;margin:14px 0 4px;color:var(--gold);font-size:var(--text-sm);letter-spacing:.06em}
 .next-div::before,.next-div::after{content:"";flex:1;height:1px;background:var(--gold-line)}
 .end-all{padding:22px 8px 18px;color:var(--mute-2)}
-.ch-count{flex:0 0 auto;font-size:var(--text-sm);color:var(--mute);letter-spacing:.04em;margin-bottom:4px}
 .bl-seg[hidden],.bl-group[hidden]{display:none}
 .bl-group + .bl-group{margin-top:4px}
 .bl-seg + .bl-seg{margin-top:4px}
@@ -351,10 +346,6 @@ html,body{margin:0;height:100%;height:100dvh;background:var(--bg);color:var(--in
 .fav-slot:empty{display:none}
 
 /* ---- 2026-11-15 21:26 改版：热搜页、平台官方图标（「查看更多」整页 11-16 去掉，改成一直往下刷） ---- */
-.ch-row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:0 16px 4px}
-.ch-row h2.ch{margin:0}
-.ch-sec .ch-row{margin:0 0 4px}
-
 .chip.logo{background:var(--inset)}
 .chip.logo .plat-ico{width:22px;height:22px;display:block;border-radius:var(--radius-xs)}
 .chip.logo.on{background:var(--inset);box-shadow:0 0 0 2px var(--gold)}
@@ -365,10 +356,7 @@ html,body{margin:0;height:100%;height:100dvh;background:var(--bg);color:var(--in
 /* ---- 2026-11-15 22:08–22:11 v13：顶栏、吸顶标题、TG 引用/互动、详情翻条、手势、公众号正文 ---- */
 /* 顶栏：日期居左，只写一次；「刷新于」同一天只写时间。四个底栏页共用同一条顶栏 */
 .when-wrap{text-align:left;padding:0}
-/* 吸顶：频道名那一行（左右/上下两种模式）、博主（标题 + 平台图标行）、热搜（标题 + 日期）、收藏标题 */
-.ch-head{position:sticky;top:0;z-index:4;background:var(--bg)}
-.ch-sec .ch-head{margin:0 -16px;padding:8px 16px 6px;box-shadow:0 1px 0 var(--line)}
-.ch-sec .ch-kicker{padding:0}
+/* 吸顶：博主（标题 + 平台图标行）、热搜（标题 + 日期）、收藏标题 */
 .sub{padding-top:0;overflow-x:hidden}
 .sticky-hd{position:sticky;top:0;z-index:4;background:var(--bg);margin:0 0 8px;padding:8px max(16px,var(--safe-right)) 0 max(16px,var(--safe-left));box-shadow:0 1px 0 var(--line)}
 .sticky-hd h2.ch{margin:0 0 6px}
@@ -476,8 +464,12 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang S
 
 /* 顶栏：频道名 + 下拉箭头，右边来源状态 / 刷新 / 搜索 */
 .top{min-height:calc(var(--top) + var(--safe-top));padding:var(--safe-top) 8px 0 16px;gap:4px;justify-content:space-between;z-index:7;transition:transform var(--duration-slow) var(--ease-out)}
-.brand{display:flex;align-items:center;gap:6px;min-width:0;border:0;background:none;padding:6px 4px 6px 0;cursor:pointer;color:var(--ink);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-.chname{font-size:22px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62vw;line-height:1.2}
+.top-heading{min-width:0;margin:0;font:inherit}
+.brand{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%;border:0;background:none;padding:6px 4px 6px 0;cursor:pointer;color:var(--ink);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.chname{font-size:var(--text-4xl);font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62vw;line-height:1.2}
+.app[data-tab="channels"] .brand{height:var(--top)}
+.app[data-tab="channels"] .chname{font-size:30px;transition:font-size var(--duration-base) var(--ease-out)}
+.app[data-tab="channels"] .channel-compact .chname{font-size:var(--text-3xl)}
 .chev{display:inline-flex;color:var(--mute)}
 .chev svg{width:18px;height:18px;stroke-width:2.6;transition:transform var(--duration-base) var(--ease-out)}
 .brand.open .chev svg{transform:rotate(180deg)}
@@ -524,13 +516,9 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang S
 .toast{bottom:calc(var(--safe-bot) + var(--tab) + 26px);border-radius:20px;font-size:14px;background:rgba(20,20,20,.9);color:#fff}
 @media (prefers-color-scheme:dark){.toast{background:rgba(240,240,240,.95);color:#111}}
 
-/* 频道长流：段头 = 大标题 + 一句说明（不吸顶，当前频道名在顶栏） */
+/* 频道说明和条数在段首，随正文滚动。 */
 .ch-sec{padding:0 0 4px;gap:0}
-.ch-sec .ch-head{position:static;margin:0;padding:22px 16px 2px;box-shadow:none;background:none}
-.ch-sec .ch-kicker{display:none}
-.ch-sec h2.ch{font-size:var(--text-display);font-weight:800;letter-spacing:-.02em;line-height:1.2}
-.ch-count{font-size:12.5px;margin-bottom:4px;letter-spacing:0}
-.ch-sec .desc{margin:4px 16px 6px;font-size:13px}
+.ch-sec .desc{margin:0 16px 6px;font-size:var(--text-sm2);color:var(--foreground-soft)}
 .ch-sec .note{margin:4px 16px 8px}
 .ch-sec .banner-wrap{margin:8px 16px 4px;width:auto;border-radius:var(--radius-lg)}
 .banner-pager{color:#fff;background:rgba(0,0,0,.45)}
@@ -862,39 +850,43 @@ mark{background:none;color:var(--primary)}
 .health-bar h1{font-size:var(--text-4xl);line-height:1.2;margin:0;letter-spacing:-.02em}
 .health-bar p{margin:var(--space-1) 0 0;font-size:var(--text-sm);color:var(--foreground-soft)}
 .health-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 var(--page-pad) calc(var(--space-8) + var(--safe-bot))}
-.health-controls{position:sticky;top:0;z-index:1;padding:var(--space-4) 0 var(--space-3);background:var(--background)}
-.health-overview{margin:0 0 var(--space-2);font-size:var(--text-sm2);color:var(--foreground-soft);font-variant-numeric:tabular-nums}
+.health-controls{position:sticky;top:0;z-index:1;padding:var(--space-3) 0 var(--space-2);background:var(--background)}
+.health-overview{display:flex;align-items:center;gap:var(--space-2);margin:0 0 var(--space-1);min-height:36px;font-size:var(--text-base);color:var(--foreground-soft);font-variant-numeric:tabular-nums}
+.health-overview::before{content:'✓' / '';color:var(--foreground-soft)}
+.health-overview[data-overview="issues"]::before{content:'⚠︎' / '';color:var(--destructive)}
 .health-overview b{color:var(--foreground)}
-.health-filters{display:flex;gap:3px;overflow-x:auto;padding:2px;scrollbar-width:none}
-.health-filters::-webkit-scrollbar{display:none}
-.health-filters button{flex:none;min-height:36px;padding:0 4px;border:1px solid var(--border);border-radius:var(--radius-full);background:var(--background);color:var(--foreground-soft);font:inherit;font-size:var(--text-sm);white-space:nowrap;cursor:pointer}
+.health-overview button{min-height:36px;padding:0;border:0;background:none;color:inherit;cursor:pointer;text-align:left}
+.health-overview button[aria-pressed="false"] b{text-decoration:underline;text-underline-offset:3px}
+.health-filters{display:flex;flex-wrap:wrap;gap:var(--space-1);padding:2px}
+.health-filters button{min-height:36px;padding:0 var(--space-2);border:1px solid var(--border-strong);border-radius:var(--radius-full);background:var(--background);color:var(--foreground-soft);font:inherit;font-size:var(--text-sm);white-space:nowrap;cursor:pointer}
 .health-filters button span{font-weight:700;font-variant-numeric:tabular-nums}
 .health-filters button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent-border);color:var(--accent-foreground)}
-.health-filters button:focus-visible{outline:2px solid var(--ring);outline-offset:0}
-.health-section{--health-mark:var(--foreground-soft);border:1px solid var(--border);border-radius:var(--radius-md);background:var(--background);margin-bottom:var(--space-3)}
+.health-filters button[data-health-filter="ok"][aria-pressed="true"]{background:var(--muted);border-color:var(--border-strong);color:var(--foreground)}
+.health-controls button:focus-visible{outline:2px solid var(--ring);outline-offset:0}
+.health-section{--health-mark:var(--foreground-soft);border-top:1px solid var(--border);margin-bottom:var(--space-2)}
 .health-section[data-health-group="login_expired"],.health-section[data-health-group="failed"]{--health-mark:var(--destructive)}
 .health-section[data-health-group="stale"]{--health-mark:var(--warning)}
-.health-section-head{display:flex;align-items:center;gap:var(--space-2);min-height:44px;padding:0 var(--space-3);list-style:none;cursor:pointer}
+.health-section-head{display:flex;align-items:center;gap:var(--space-2);min-height:40px;list-style:none;cursor:pointer;font-size:var(--text-base);font-weight:700}
 .health-section-head::-webkit-details-marker{display:none}
-.health-section-head::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--health-mark)}
-.health-section-head::after{content:'';width:7px;height:7px;margin:0 3px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);color:var(--foreground-soft)}
+.health-section-head::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--health-mark)}
+.health-section-head::after{content:'';width:7px;height:7px;margin:0 4px 0 auto;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);color:var(--foreground-soft)}
 .health-section[open]>.health-section-head::after{transform:translateY(-2px) rotate(45deg)}
-.health-group-title{flex:1;font-size:var(--text-base);font-weight:700}
-.health-group-count,.health-group{font-size:var(--text-sm);color:var(--foreground-soft)}
-.health-group-count{font-variant-numeric:tabular-nums}
-.health-advice{margin:0 var(--space-3);padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);background:var(--muted);color:var(--foreground-soft);font-size:var(--text-sm);line-height:1.55}
-.health-advice b{color:var(--foreground);margin-right:var(--space-1)}
-.health-rows,.health-accounts ul{margin:0;padding:0 var(--space-3);list-style:none}
-.health-row,.health-account{padding:var(--space-3) 0;overflow-wrap:anywhere}
+.health-group-count,.health-group,.health-age,.health-advice,.health-meta{font-size:var(--text-sm);color:var(--foreground-soft)}
+.health-group-count,.health-age,.health-meta{font-variant-numeric:tabular-nums}
+.health-group-count{margin-left:2px;font-weight:500}
+.health-group{padding:1px var(--space-1);border-radius:var(--radius-xs);background:var(--muted)}
+.health-group[data-status="login_expired"],.health-group[data-status="failed"]{color:var(--accent-foreground);background:var(--accent)}
+.health-advice{margin:0;line-height:1.5}
+.health-section-head[hidden]+.health-advice{padding-top:var(--space-3)}
+.health-rows,.health-accounts ul{margin:0;padding:0;list-style:none}
+.health-row,.health-account{padding:var(--space-2) 0;overflow-wrap:anywhere}
 .health-row+.health-row,.health-account+.health-account{border-top:1px solid var(--border)}
-.health-row-head,.health-row-head>div{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-1) var(--space-2)}
+.health-row-head,.health-row-head>div{display:flex;align-items:baseline;gap:var(--space-1) var(--space-2)}
 .health-row-head{justify-content:space-between}
+.health-row-head>div{flex-wrap:wrap;min-width:0}
 .health-name,.health-account-name{font-size:var(--text-base);line-height:1.35}
-.health-status{flex:none;padding:var(--space-1) var(--space-2);border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--foreground-soft);font-size:var(--text-sm);line-height:1}
-.health-status[data-status="login_expired"],.health-status[data-status="failed"]{color:var(--accent-foreground);background:var(--accent);border-color:var(--accent-border)}
-.health-reason,.health-age{margin:var(--space-1) 0 0;font-size:var(--text-sm);color:var(--foreground-soft)}
-.health-age{font-weight:700;font-variant-numeric:tabular-nums}
-.health-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-1) var(--space-3);margin-top:var(--space-1);font-size:var(--text-sm);color:var(--foreground-soft);font-variant-numeric:tabular-nums}
-.health-accounts{margin-top:var(--space-1);font-size:var(--text-sm2)}
-.health-accounts summary{width:fit-content;padding:var(--space-2) 0;cursor:pointer;color:var(--foreground-soft)}
-.health-accounts ul{border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card)}
+.health-age{flex:none;white-space:nowrap}
+.health-meta{margin:var(--space-1) 0 0;line-height:1.5}
+.health-accounts{font-size:var(--text-sm)}
+.health-accounts summary{width:fit-content;padding:var(--space-2) 0 var(--space-1);cursor:pointer;color:var(--foreground-soft)}
+.health-accounts ul{margin-top:var(--space-1);padding:0 var(--space-2);border-left:1px solid var(--border-strong)}

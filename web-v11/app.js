@@ -175,7 +175,7 @@
   }
   function updateTopName() {
     const v = currentView();
-    if (v === 'channels') setTopName(nameOf((channels()[curCh] || {}).slug) || '频道');
+    if (v === 'channels') setTopName(channels()[curCh]?.name || '频道');
     else if (v === 'blogger') { const s = blSegs[Number($('#bloggerList').dataset.cur || 0)]; const p = s && platOf(s.plat); setTopName(p ? p.name : '博主'); }
     else if (v === 'hot') setTopName('热搜');
     else setTopName('收藏');
@@ -328,18 +328,11 @@
     const cs = channels(), i = cs.findIndex(c => c.slug === slug);
     return chainFoot(cs[i + 1] && cs[i + 1].name);
   }
-  function nameOf(slug) { const c = channels().find(x => x.slug === slug); return c ? c.name : slug; }
-  function chHint(i) {
-    const last = i === channels().length - 1;
-    if (mode === 'ud') return last ? '最后一个频道' : '下滑接着看下一个频道';
-    return last ? '最后一个频道 · 右滑回上一个' : '左右滑换频道 · 下滑接着看';
-  }
-  function channelInner(c, i) {
+  function channelInner(c) {
     const st = ch[c.slug];
     const empty = !c.banner.length && !st.total ? '<p class="muted">这一频道暂时还没有内容。</p>' : '';
-    return `<div class="ch-head"><div class="ch-kicker"><span class="idx">${i + 1} / ${channels().length}</span><span class="hint">${chHint(i)}</span></div>
-      <div class="ch-row"><h2 class="ch">${L.esc(c.name)}</h2>${c.total ? `<span class="ch-count">共 ${L.esc(c.total)} 条</span>` : ''}</div></div>
-      <p class="desc">${L.esc(c.desc || '')}</p>
+    const description = [c.desc, `${c.total ?? st.total} 条`].filter(Boolean).join(' · ');
+    return `<p class="desc">${L.esc(description)}</p>
       ${unavailableNote(c)}
       ${L.bannerHTML(c.slug, c.banner)}
       <div class="feed" data-ch="${c.slug}">${empty}<div class="feed-list">${chunkHTML(st.list.map(L.feedRowHTML))}</div><div class="feed-foot">${feedFooter(c.slug)}</div></div>`;
@@ -358,12 +351,11 @@
     $('#modeUD').setAttribute('aria-pressed', String(mode === 'ud'));
     const root = $('#channelRoot');
     root.classList.toggle('lr', mode === 'lr'); root.classList.toggle('ud', mode === 'ud');
-    chSections().forEach((sec, i) => { const h = sec.querySelector('.ch-kicker .hint'); if (h) h.textContent = chHint(i); });
   }
   function renderChannels() {
     const root = $('#channelRoot');
     root.className = 'feed-root';
-    root.innerHTML = channels().map((c, i) => `<section class="ch-sec" data-ch="${c.slug}" data-i="${i}">${channelInner(c, i)}</section>`).join('');
+    root.innerHTML = channels().map((c, i) => `<section class="ch-sec" data-ch="${c.slug}" data-i="${i}">${channelInner(c)}</section>`).join('');
     applyMode(); gateChannels();
     bindLoaders(); bindGestures(); fixBrokenThumbs(root); settleChunks(root); markRead(root);
     if (!root._spy) { root._spy = true; root.addEventListener('scroll', spyChannels, {passive: true}); }
@@ -400,23 +392,30 @@
     observeSentinels();
   }
   function observeSentinels() { if (chObs) $$('#channelRoot .sentinel').forEach(el => { if (!el._obs) { el._obs = true; chObs.observe(el); } }); }
-  /* 吸顶：每段的 .ch-head 自己 sticky，标题/条数天然跟着当前段走；这里只记下当前是哪一段（换频道、刷新、测试用） */
+  /* 顶栏标题跟随当前段；收缩只改字号，滚动容器的位置保持稳定。 */
   let curCh = 0, spyRaf = 0;
   function spyChannels() {
     if (spyRaf) return;
     spyRaf = requestAnimationFrame(() => {
       spyRaf = 0;
-      const root = $('#channelRoot'); if (!root) return;
-      const top = root.getBoundingClientRect().top + 8;
-      if (pin && pin.scroller === root && performance.now() < pin.until) return;   // 刚跳过去：以跳到的那段为准
-      let at = 0;
-      chSections().forEach((sec, i) => { if (!sec.hidden && sec.getBoundingClientRect().top <= top) at = i; });
-      if (root.scrollTop + root.clientHeight >= root.scrollHeight - 4) chSections().forEach((sec, i) => { if (!sec.hidden) at = i; });   // 到底了：最后一段算当前
-      if (at !== curCh || root.dataset.cur === undefined) {
-        curCh = at; root.dataset.cur = (channels()[at] || {}).slug || '';
-        chSections().forEach((sec, i) => sec.classList.toggle('cur', i === at));
-        if (currentView() === 'channels') updateTopName();
+      const root = $('#channelRoot');
+      if (currentView() !== 'channels') return;
+      const top = root.getBoundingClientRect().top;
+      const sections = chSections();
+      if (!(pin && pin.scroller === root && performance.now() < pin.until)) {
+        let at = 0;
+        const atBottom = root.scrollTop > 0 && root.scrollTop + root.clientHeight >= root.scrollHeight - 4;
+        sections.forEach((sec, i) => {
+          if (!sec.hidden && (atBottom || sec.getBoundingClientRect().top <= top + 8)) at = i;
+        });
+        if (at !== curCh || root.dataset.cur === undefined) {
+          curCh = at;
+          root.dataset.cur = channels()[at]?.slug || '';
+          updateTopName();
+        }
       }
+      const section = sections[curCh];
+      $('#top').classList.toggle('channel-compact', !!section && top - section.getBoundingClientRect().top >= 24);
     });
   }
   function jumpChannel(i, dir) {
@@ -425,8 +424,8 @@
     chRevealed.add(cs[i].slug); gateChannels();
     const sec = hostOf(cs[i].slug);
     pinTo(root, sec, 0);
-    curCh = i; root.dataset.cur = cs[i].slug; chSections().forEach((s, k) => s.classList.toggle('cur', k === i));
-    updateTopName();
+    curCh = i; root.dataset.cur = cs[i].slug;
+    updateTopName(); spyChannels();
     slideIn(root, dir);
     return true;
   }
@@ -727,6 +726,7 @@
     $$('.tabbar button').forEach(b => { b.classList.toggle('on', b.dataset.view === name); b.setAttribute('aria-current', b.dataset.view === name ? 'page' : 'false'); });
     $('#app').dataset.tab = name;
     closeDrop(); updateTopName(); syncBlTop();
+    if (name === 'channels') spyChannels();
     if (name === 'blogger') ensureBloggers();
     if (name === 'hot') renderHot();
     if (name === 'favorites') mountFeature(name);
@@ -985,18 +985,15 @@
     if (!selected) return;
     const body = event.currentTarget;
     const status = selected.dataset.healthFilter;
-    body.querySelectorAll('[data-health-filter]').forEach(button => button.setAttribute('aria-pressed', button === selected));
-    let visible = false;
-    body.querySelectorAll('[data-health-group]').forEach(group => {
-      group.hidden = status !== 'all' && group.dataset.healthGroup !== status;
-      if (!group.hidden) {
-        visible = true;
-        if (status !== 'all') group.open = true;
-      }
+    if (selected.getAttribute('aria-pressed') === 'true') return;
+    const showIssues = status === 'issues';
+    $$('[data-health-filter]', body).forEach(button => button.setAttribute('aria-pressed', button === selected));
+    $$('[data-health-group]', body).forEach(group => {
+      group.hidden = !showIssues && group.dataset.healthGroup !== status;
+      group.querySelector('summary').hidden = !showIssues;
+      group.open = !showIssues || group.dataset.healthGroup !== 'ok';
     });
-    const empty = body.querySelector('.health-empty');
-    empty.hidden = visible;
-    empty.textContent = visible ? '' : '此状态暂无来源。';
+    body.scrollTop = 0;
   }
   async function openHealth(fromPop = false) {
     const dialog = $('#healthView');

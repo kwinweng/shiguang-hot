@@ -18,10 +18,10 @@ test('health lists login failures first and orders comparable issues by age', ()
   assert.equal(rows[0].name, '正常源');
 });
 
-test('age renders complete days and hours, with no fabricated duration', () => {
-  assert.equal(H.elapsed('2026-11-13T14:00:00+08:00', base), '2 天 6 小时');
-  assert.equal(H.elapsed('2026-11-15T16:30:00+08:00', base), '3 小时');
-  assert.equal(H.elapsed('2026-11-15T19:30:00+08:00', base), '不到 1 小时');
+test('age renders one relative unit, with no fabricated duration', () => {
+  assert.equal(H.elapsed('2026-11-13T14:00:00+08:00', base), '2 天前');
+  assert.equal(H.elapsed('2026-11-15T16:30:00+08:00', base), '3 小时前');
+  assert.equal(H.elapsed('2026-11-15T19:30:00+08:00', base), '刚刚');
   for (const value of [null, 'garbage', '2026-11-16T20:00:00+08:00']) assert.equal(H.elapsed(value, base), '');
 });
 
@@ -32,7 +32,7 @@ test('health HTML escapes data and distinguishes zero from an unknown count', ()
   assert.match(html, /&lt;img onerror=boom&gt;/);
   assert.match(html, /&lt;script&gt;boom&lt;\/script&gt;/);
   assert.match(html, /本轮 0 条/);
-  assert.match(html, /本轮 —/);
+  assert.doesNotMatch(html, /本轮 —/);
   assert.match(H.healthHTML([], base), /暂无来源健康数据/);
 });
 
@@ -41,21 +41,33 @@ test('health counts each source once and shows fixed recovery advice by group', 
   const rows = ['login_expired', 'failed', 'stale', 'not_configured', 'ok'].map(status => row(status, status));
   rows[0].accounts = [row('ok', '健康账号'), row('login_expired', '失效账号')];
   const html = H.healthHTML(rows, base);
-  assert.match(html, /5 个来源.*1 健康.*4 需处理/);
-  assert.match(html, /data-health-filter="all" aria-pressed="true">全部 <span>5<\/span>/);
-  for (const [status, label] of Object.entries({ok: '健康', failed: '失败', login_expired: '登录失效', stale: '断更', not_configured: '未配置'})) {
+  assert.match(html, /4 个来源需处理.*1 正常/);
+  assert.match(html, /data-health-filter="issues" aria-pressed="true"/);
+  assert.doesNotMatch(html, /data-health-filter="all"/);
+  for (const [status, label] of Object.entries({ok: '正常', failed: '失败', login_expired: '登录失效', stale: '断更', not_configured: '未配置'})) {
     assert.ok(html.includes(`data-health-filter="${status}" aria-pressed="false">${label} <span>1</span>`));
     assert.ok(html.includes(`data-health-group="${status}"${status === 'ok' ? '' : ' open'}>`));
   }
-  for (const advice of ['提供新的 Cookie 或扫码', '下一轮会自动重试', '检查原始转储是否仍在供稿', '需要时再配置']) {
+  for (const advice of ['扫码重新登录', '下轮重试', '检查原始转储', '需要时再接入']) {
     assert.ok(html.includes(advice));
   }
   assert.match(html, /查看 2 个账号/);
 });
 
-test('health includes zero-count filters and keeps unrecognized states visible', () => {
+test('health omits zero-count filters and keeps unrecognized states visible', () => {
   const html = H.healthHTML([row('other', '新状态来源')], base);
-  assert.match(html, /data-health-filter="ok" aria-pressed="false">健康 <span>0<\/span>/);
+  assert.doesNotMatch(html, /data-health-filter="(?:ok|failed|stale|not_configured|login_expired)"/);
   assert.match(html, /data-health-group="unknown" open>/);
   assert.match(html, /新状态来源/);
+});
+
+
+test('rows keep exact times and specific reasons without generic failure or empty metadata', () => {
+  const last_ok_at = '2026-11-13T14:00:00+08:00';
+  const failed = {...row('failed', '失败源', last_ok_at), last_ok_at, reason: 'Telegram 本轮采集失败'};
+  const stale = {...row('stale', '断更源', last_ok_at), last_ok_at, reason: '超过 48 小时未更新采集数据', count: 14};
+  const html = H.healthHTML([failed, stale], base);
+  assert.match(html, /<time[^>]*title="上次成功 2026年11月13日 14:00（北京时间）"[^>]*>2 天前<\/time>/);
+  assert.doesNotMatch(html, /Telegram 本轮采集失败|最近 0 条/);
+  assert.match(html, /超过 48 小时未更新采集数据.*最近 14 条/);
 });

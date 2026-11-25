@@ -134,9 +134,10 @@ class SiteBrowserTests(unittest.TestCase):
         with self.page.expect_request('**/data/health.json*'):
             self.open('#/health')
         dialog = self.page.get_by_role('dialog', name='来源健康')
-        dialog.get_by_role('button', name='全部', exact=False).wait_for()
+        dialog.get_by_role('button', name='5 个来源需处理', exact=False).wait_for()
         self.assertEqual(dialog.locator('.health-name').all_text_contents()[:4], ['微博', '竹新社', 'X', '卫报 World'])
-        self.assertIn('2 天 5 小时', dialog.inner_text())
+        self.assertEqual(dialog.locator('.health-age').first.inner_text(), '2 天前')
+        self.assertIn('2026年11月13日 15:00', dialog.locator('.health-age').first.get_attribute('title'))
         self.assertLessEqual(dialog.evaluate('e => e.scrollWidth'), 390)
         dialog.get_by_text('查看 6 个账号', exact=True).first.click()
         self.assertTrue(dialog.locator('.health-accounts[open] .health-account').first.is_visible())
@@ -166,25 +167,29 @@ class SiteBrowserTests(unittest.TestCase):
         snapshot = json.loads((self.health_out / 'data/health.json').read_text())
         total = len(snapshot['sources'])
         self.assertEqual(filters.get_by_role('button').all_text_contents(),
-                         [f'全部 {total}', f'健康 {total - 5}', '失败 1', '登录失效 1', '断更 2', '未配置 1'])
-        self.assertEqual(dialog.locator('.health-overview').inner_text(), f'{total} 个来源 · {total - 5} 健康 · 5 需处理')
+                         ['登录失效 1', '失败 1', '断更 2', '未配置 1', f'正常 {total - 5}'])
+        self.assertEqual(dialog.locator('.health-overview').inner_text(), f'5 个来源需处理 · {total - 5} 正常')
+        overview = dialog.locator('.health-overview button')
+        self.assertEqual(overview.get_attribute('aria-pressed'), 'true')
         self.assertFalse(dialog.locator('[data-health-group="ok"]').evaluate('e => e.open'))
         self.assertEqual(dialog.locator('details.health-section[open]').count(), 4)
         filters.get_by_role('button', name='断更 2').tap()
         self.assertEqual(filters.get_by_role('button', pressed=True).inner_text(), '断更 2')
         self.assertEqual(dialog.locator('.health-name:visible').all_text_contents(), ['X', '卫报 World'])
-        self.assertTrue(dialog.get_by_text('检查原始转储是否仍在供稿', exact=False).is_visible())
+        self.assertTrue(dialog.get_by_text('检查原始转储', exact=False).is_visible())
+        self.assertEqual(dialog.locator('.health-section-head:visible').count(), 0)
         filters.get_by_role('button', name='未配置 1').tap()
         self.assertEqual(dialog.locator('.health-name:visible').all_text_contents(), ['知乎'])
-        self.assertTrue(dialog.get_by_text('需要时再配置', exact=False).is_visible())
-        filters.get_by_role('button', name=f'健康 {total - 5}').tap()
+        self.assertTrue(dialog.get_by_text('需要时再接入', exact=False).is_visible())
+        filters.get_by_role('button', name=f'正常 {total - 5}').tap()
         self.assertEqual(dialog.locator('.health-name:visible').count(), total - 5)
-        filters.get_by_role('button', name=f'全部 {total}').tap()
+        overview.tap()
+        self.assertFalse(dialog.locator('[data-health-group="ok"]').evaluate('e => e.open'))
         failed = dialog.locator('[data-health-group="failed"]')
         self.assertTrue(failed.is_visible())
         failed.locator('summary').tap()
         self.assertFalse(failed.evaluate('e => e.open'))
-        self.assertFalse(failed.get_by_text('通常下一轮会自动重试', exact=False).is_visible())
+        self.assertFalse(failed.get_by_text('下轮重试', exact=False).is_visible())
         dialog.get_by_role('button', name='返回').tap()
         dialog.wait_for(state='hidden')
         self.assertTrue(entry.is_visible())
@@ -204,12 +209,28 @@ class SiteBrowserTests(unittest.TestCase):
                 self.assertNotIn('0', entry.inner_text())
                 self.page.unroute('**/data/meta.json*', serve_meta)
 
+    def test_health_all_normal_shows_only_normal_sources(self):
+        snapshot = json.loads((self.health_out / 'data/health.json').read_text())
+        snapshot['sources'] = [row for row in snapshot['sources'] if row['status'] == 'ok']
+        self.page.route('**/data/health.json*', lambda route: route.fulfill(json=snapshot))
+        self.open('#/health')
+        dialog = self.page.get_by_role('dialog', name='来源健康')
+        total = len(snapshot['sources'])
+        self.assertEqual(dialog.locator('.health-overview').inner_text(), f'{total} 个来源全部正常')
+        filters = dialog.get_by_role('group', name='按来源状态筛选')
+        self.assertEqual(filters.get_by_role('button').all_text_contents(), [f'正常 {total}'])
+        self.assertEqual(filters.get_by_role('button', pressed=True).inner_text(), f'正常 {total}')
+        self.assertEqual(dialog.locator('.health-section-head:visible').count(), 0)
+        self.assertEqual(dialog.locator('.health-name:visible').count(), total)
+
     def test_health_diagnostics_link_is_lazy_and_handles_fetch_failure(self):
         requested = []
         self.page.on('request', lambda request: requested.append(request.url))
         self.open()
         self.assertFalse(any('/data/health.json' in url for url in requested))
         self.page.route('**/data/health.json*', lambda route: route.fulfill(status=404))
+        self.page.locator('#channelRoot').evaluate('el => el.scrollTop = 240')
+        self.page.wait_for_selector('#top.channel-compact')
         title = self.page.locator('#chBtn').bounding_box()
         cdp = self.context.new_cdp_session(self.page)
         cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [
@@ -223,9 +244,12 @@ class SiteBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.locator('meta[name="robots"]').get_attribute('content'), 'noindex,nofollow')
 
 
+    def test_channel_title_switcher_and_navigation(self):
         self.open()
-        # v16：顶栏只有「频道名 + 下拉」，没有 logo、没有日期；刷新时间收进下拉
-        self.assertEqual(self.page.locator('#chName').inner_text(), '时事')
+        # 顶栏只有「频道名 + 下拉」，没有 logo、没有日期；刷新时间收进下拉
+        self.assertEqual(self.page.get_by_role('heading', name='时事', exact=True).count(), 1)
+        self.assertEqual(self.page.locator('#top, #channelRoot').get_by_text('时事', exact=True).count(), 1)
+        self.assertEqual(self.page.locator('.ch-sec[data-ch=current] .desc').inner_text(), '国内外正在发生的事 · 70 条')
         self.assertEqual(self.page.locator('#when, .logo, .brand img').count(), 0)
         self.page.locator('#chBtn').click()
         self.assertTrue(self.page.locator('#drop.on').is_visible())
@@ -234,12 +258,31 @@ class SiteBrowserTests(unittest.TestCase):
         expect = self.page.evaluate("'刷新于 ' + RebangLib.fmtRefreshed('2026-11-15T12:00:00Z', new Date())")
         self.assertIn(expect, ('刷新于 20:00', '刷新于 11月15日 20:00'))
         self.assertEqual(self.page.locator('#refreshed').inner_text(), expect)
-        self.assertEqual(self.page.locator('#channelRoot > .ch-sec h2.ch').evaluate_all('es => es.map(e => e.textContent)'), ['时事', '环球', '财经', '科技与 AI', '数码', '工具与项目'])
+        self.page.get_by_role('option', name='环球', exact=False).tap()
+        self.assertEqual(self.page.locator('#chName').inner_text(), '环球')
+        self.assertEqual(self.page.locator('#top, #channelRoot').get_by_text('环球', exact=True).count(), 1)
         self.assertEqual(self.page.locator('.see-more, [data-see], #moreView').count(), 0, '「查看更多」入口和整页都去掉了')
         self.assertEqual([t.strip() for t in self.page.locator('.tabbar button').all_inner_texts()], ['频道', '博主', '热搜', '收藏'])
         self.assertEqual(self.page.locator('#view-history').count(), 0, '历史页已改为热搜页')
         for mount in ('#view-hot', '#view-favorites', '#search-panel'):
             self.assertEqual(self.page.locator(mount).count(), 1)
+
+    def test_channel_title_shrinks_on_scroll_and_remains_interactive(self):
+        self.open()
+        title = self.page.locator('#chName')
+        from playwright.sync_api import expect
+
+        expect(title).to_have_css('font-size', '30px')
+        root = self.page.locator('#channelRoot')
+        root.evaluate('el => el.scrollTop = 240')
+        expect(title).to_have_css('font-size', '20px')
+        self.assertEqual(self.page.locator('#top, #channelRoot').get_by_text('时事', exact=True).count(), 1)
+        self.page.locator('#chBtn').tap()
+        self.assertEqual(self.page.locator('#chBtn').get_attribute('aria-expanded'), 'true')
+        self.page.keyboard.press('Escape')
+        self.assertEqual(self.page.locator('#chBtn').get_attribute('aria-expanded'), 'false')
+        root.evaluate('el => el.scrollTop = 0')
+        expect(title).to_have_css('font-size', '30px')
 
     def test_swipe_changes_channel_but_banner_swipe_does_not(self):
         self.open()
@@ -293,12 +336,11 @@ class SiteBrowserTests(unittest.TestCase):
     def test_header_follows_scrolled_channel(self):
         self.open()
         self.scroll_to_end('#channelRoot')
-        for slug in ('world', 'finance', 'current'):
+        for slug, name in (('world', '环球'), ('finance', '财经'), ('current', '时事')):
             self.page.evaluate(f"""(() => {{ const r = document.querySelector('#channelRoot'), s = r.querySelector('.ch-sec[data-ch="{slug}"]');
               r.scrollTop += s.getBoundingClientRect().top - r.getBoundingClientRect().top + 40; }})()""")
             self.page.wait_for_timeout(150)
             self.assertEqual(self.page.locator('#channelRoot').get_attribute('data-cur'), slug)
-            name = self.page.locator(f'.ch-sec[data-ch="{slug}"] h2.ch').inner_text()
             self.assertEqual(self.page.locator('#chName').inner_text(), name, 'v16：顶栏频道名跟着当前这一段变')
 
     def test_article_full_page_and_back_restores_channel_and_scroll(self):
