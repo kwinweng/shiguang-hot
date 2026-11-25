@@ -751,7 +751,7 @@
     if (name === 'blogger') ensureBloggers();
     if (name === 'hot') renderHot();
     if (name === 'favorites') mountFeature(name);
-    if (!keepArticle && articleOpen) closeArticle();
+    if (!keepArticle) closeArticle();   // 详情没开、还在加载时也要作废在途的打开
   }
 
   /* ---------- 正文（整页）与返回原位 ---------- */
@@ -953,7 +953,9 @@
     await openItem(to, {replace: true, keepNav: true});
     return true;
   }
-  let openSeq = 0;   // 每次打开详情递增；异步读完发现已不是最新一次打开，就丢弃结果（不渲染、不改地址栏）
+  // 作废令牌：每次打开详情、关闭详情（返回按钮、右滑、切页）、浏览器前进后退都递增；
+  // 异步读完发现已不是最新一次，就丢弃结果（不打开详情、不改地址栏），包括正文还没显示的情况
+  let openSeq = 0;
   async function openItem(ref, opts = {}) {
     const id = typeof ref === 'string' ? ref : ref && ref.id;
     if (!id) return;
@@ -986,6 +988,7 @@
     else if (!opts.fromPop) history.pushState({article: id}, '', L.itemHash(id));
   }
   function closeArticle(opts = {}) {
+    openSeq++;                         // 离开详情：在途的打开（如「下一条」、慢深链）一律作废
     if (!articleOpen) return;
     articleOpen = false; articleId = null; artItem = null;
     closeSheet();
@@ -1077,6 +1080,7 @@
     else location.hash = '';
   }
   window.addEventListener('popstate', e => {
+    openSeq++;                         // 浏览器前进/后退：先作废在途的详情打开；要打开详情的分支下面会重新开
     if (location.hash === HEALTH_HASH) { openHealth(true); return; }
     const health = $('#healthView');
     if (health.open) { health.close(); updateHealthFreshness(); }
