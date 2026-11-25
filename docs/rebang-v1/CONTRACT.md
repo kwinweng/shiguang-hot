@@ -61,7 +61,7 @@
 | TG 附加信息 tgmeta | `rebang/tgmeta/`、`tests/test_rebang_tgmeta*.py` |
 | 热搜 hotsearch | `rebang/hotsearch/`、`tests/test_rebang_hotsearch*.py`、`tests/fixtures/rebang/hotsearch/` |
 | 博主与翻译 | `rebang/bloggers/`、`rebang/translate/`、`tests/test_rebang_bloggers*.py`、`tests/fixtures/rebang/bloggers/` |
-| 建站与前端 | `rebang/site/`、`web-v11/`、`tests/test_rebang_site*.py`、`tests/rebang_site*.test.js` |
+| 建站与前端 | `rebang/site/`、`web-v11/`、`tests/test_rebang_site*.py`、`tests/test_rebang_dedup.py`（频道内合并）、`tests/rebang_site*.test.js` |
 | 归档、收藏、搜索 | `rebang/archive/`、`web-v11/features/`、`tests/test_rebang_archive*.py`、`tests/rebang_features*.test.js` |
 | 8:30 私聊稿 | `rebang/push/`、`tests/test_rebang_push*.py` |
 
@@ -75,8 +75,9 @@
 - `var/rebang/translate/{cache,pending}.json`：译文缓存与待翻队列。
 - `var/rebang/cache/`（tgmeta、ingest 订阅缓存）、`var/rebang/x-dump/`（X 原始响应）、`var/rebang/media/`（公众号图片）、`var/rebang/logs/`（`tools/rebang_refresh.sh` 日志）。
 - `site-v11/`：新版静态站构建输出（`python3 -m rebang.site --out <dir> [--hot-archive DIR]`）。`<site>/data/` 下：
-  - `meta.json`（`rebang.site-meta/1`）：`built_at`、`data_at`、`today`、`page_size`、`note`、`public_base`（8:30 私聊稿链接 = `public_base#/item/<id>`）、`counts`、`channels[{slug,name,order,desc,sources,unavailable,total,feed_total,pages,banner[≤5]}]`。
+  - `meta.json`（`rebang.site-meta/1`）：`built_at`、`data_at`、`today`、`page_size`、`note`、`public_base`（8:30 私聊稿链接 = `public_base#/item/<id>`）、`counts`、`channels[{slug,name,order,desc,sources,unavailable,total,feed_total,merged_total,pages,banner[≤5]}]`。
   - `channel/<slug>/page-<n>.json`（`rebang.page/1`）：每页 30 条，`has_more` 到最后一页为 false；「查看更多」整页按页往下加载到「没有更多了」。
+  - 频道内跨来源合并（第 5 步，`rebang/site/dedup.py`）：**只在同一频道内合并，不跨频道**（一个来源只进一个频道，频道归属不变）。建站预处理只按 id 去重（同 id 取较新），原始链接完全相同的不同 id 都保留，交给合并步骤折叠；只有「今日重点」条目仍按同频道同链接并进已有条目、只打标。只认一种「同一条」（2026-11-25 第 3 轮复核到上限后收紧，宁可几乎不合也不误合）：**规范化后的链接相同且原标题相同**，并且是不同来源、组里最早最晚相差 ≤24 小时，缺一不合。链接规范化：http→https、去 `www.`（`m.` 等子域保留）、去尾 `/`、路径大小写不动；只去明确的追踪参数：`utm_*`、`fbclid`/`gclid` 等点击追踪参数全局去，BBC 的 `at_*` 只在 bbc.com / bbc.co.uk 及其子域去，`ref_src`/`si`/`spm_id_from` 等只在 X、YouTube、B 站等对应网站去，`ref`/`from`/`at_format` 等在其它网站保留；其余参数按名字排序、同名参数保持原相对顺序；`#` 片段去掉，以 `/` 或 `!` 开头的路由片段保留；没有链接或不是 http(s) 的不合。原标题只去首尾空白、合并连续空白，**不改大小写、不改全半角、不去标点**（`100 mW`/`100 MW`、`？`/`。` 都算不同），不用机器翻译标题比较。因此：滚动新闻共用一个链接但标题不同（如「上调」/「下调」）不合；**仅标题相同、链接不同的不合**（如同名「实时汇总」）；**同来源同链接同标题也不合**（每组每个来源最多一条）。分组按（规范化链接, 原标题）分桶，桶内按（发布时间, id）从早到晚逐条放进第一个没有同来源、放进去后整组跨度仍 ≤24 小时的组，放不进就自成一组；结果与输入顺序无关。主条 = 组里有今日重点标的，否则最早发的。主条在分页和 `banner` 里多一个可选字段 `merged[{id, source_id, source_name, title, title_zh?, url, published_at}]`（按时间正序），前端在列表行和顶部大图卡都显示「另有 N 个来源」（按 `source_id` 计数）折叠列表；被折叠的完整条目写进 `channel/<slug>/merged.json`（`rebang.merged/1`：`{schema, channel, items}`），**`id-index.json` 里被折叠条目的 id 也指向这个 `merged.json`**；详情页先按 id 经 `id-index` 读本次发布的完整条目，读不到才用收藏/搜索快照兜底，所以联网时收藏/深链/搜索打开的都是带正文和今日重点标的完整条目。读 `id-index.json` 和正文所在文件（分页或 `merged.json`）**各限时 5 秒**，串行最长约 10 秒；超时或离线时，有快照的照样打开快照，但可能缺正文和今日重点标，没快照的提示「这条已经不在最近一次发布的数据里了」。打开还在加载时，关闭详情、点返回、浏览器前进后退、切到别的页，或又打开了别的条目，这次加载作废：晚到的结果不打开详情、不改地址栏、不覆盖已显示的快照。频道的 `total`/`feed_total` 只数主条，另加 `merged_total`；`counts.news` 仍是全部条数，搜索索引收到每个 id。旧前端忽略 `merged` 字段，只是频道里不再出现被折叠的条目。
   - `hotsearch.json`（当前）、`hotsearch/index.json`（`rebang.hotsearch-index/1`：`today`、`current_at`、`dates[{date,generated_at}]`）+ `hotsearch/<date>.json`（往日最后一份）。
   - `bloggers.json`（`rebang.site-bloggers/1`）：`platforms[{id,name,login,curated,icon,connected,count,status,reason,last_ok_at,accounts[{handle,name,key,total}]}]` + `items`（每平台、每人各取最新 10 条做预览）；`blogger/<platform>/<all|key>/page-<n>.json` 是每平台、每人的全部帖子分页（`key = "h-" + sha1(handle)[:10]`）。
   - `meta.json` 的 `health_summary` 含 `total`（来源数）和 `issues`（健康以外的来源数），均按 `health.json` 的顶层来源计数。入口按 `built_at`、看板按自己的 `generated_at` 与当前时间比较，超过 3 小时提示快照已过期。
