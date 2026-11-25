@@ -9,17 +9,22 @@
   后面的账号不再请求，站上沿用上次成功的内容（run.py 通用逻辑）。
 - 输出目录（默认 ``var/rebang/weibo-crawler/``，``--weibo-output`` 可改）：放 longtext 缓存和每个账号最近一次原始回包（不含 Cookie）。
 """
+import argparse
 import json
 import os
 import re
+import sys
 import urllib.error
 import urllib.request
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
+from .. import private_file
 from .common import BODY_CHARS, clip, detect_lang, iso, normalize_text, source_id, summary_of
 
-DEFAULT_COOKIE = Path(os.environ.get("REBANG_WEIBO_COOKIE") or Path.home() / ".config" / "rebang" / "weibo-cookie.txt")
+DEFAULT_COOKIE = Path(os.environ.get("REBANG_WEIBO_COOKIE")
+                      or Path(private_file.default_home()) / ".config" / "rebang" / "weibo-cookie.txt")
 DEFAULT_OUTPUT = Path(__file__).resolve().parents[2] / "var" / "rebang" / "weibo-crawler"
 BASE = 'https://weibo.com'
 UA = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -42,33 +47,78 @@ def cookie_configured(cookie_file):
     return bool(cookie_file) and os.path.isfile(cookie_file)
 
 
-def read_cookie(cookie_file):
-    """读进内存给请求用；空文件当未配置。出错只报代码，不带内容。"""
-    try:
-        value = Path(cookie_file).read_text(encoding='utf-8').strip()
-    except (OSError, UnicodeDecodeError):
-        raise WeiboError('cookie_unreadable') from None
+def clean_cookie(value):
+    """去掉首尾空白和可选的 ``Cookie:`` 前缀；空值、多行或带控制字符的当作不可用。"""
+    value = (value or '').strip()
     for prefix in ('Cookie:', 'cookie:'):
         if value.startswith(prefix):
             value = value[len(prefix):].strip()
-    if not value or '\n' in value:
+    if not value or any(ord(ch) < 0x20 or ord(ch) == 0x7f for ch in value):
         raise WeiboError('cookie_unreadable')
     return value
 
 
-def http_json(url, cookie, timeout=25):
+def read_cookie(cookie_file):
+    """读进内存给请求用；空文件当未配置。出错只报代码，不带内容。
+
+    用 private_file 安全打开：整条路径不跟软链接、目录和文件都只本人可用、单一硬链接、无 ACL，
+    并在读的同一个文件描述符上校验，检查后被换掉也只会打开失败。不合格一律当未配置。"""
+    try:
+        value = private_file.read_private(cookie_file).strip()
+    except (private_file.PrivateFileError, OSError, ValueError, TypeError):
+        raise WeiboError('cookie_unreadable') from None
+    return clean_cookie(value)
+
+
+def _origin(url):
+    parts = urlsplit(url)
+    try:
+        port = parts.port
+    except ValueError:
+        return None
+    return parts.scheme.lower(), (parts.hostname or '').lower(), port or (443 if parts.scheme.lower() == 'https' else 80)
+
+
+def _looks_like_login(url):
+    return 'passport.weibo' in url or '/login' in url or 'login.sina' in url
+
+
+class RedirectBlocked(urllib.error.URLError):
+    def __init__(self, location):
+        super().__init__('redirect_blocked')
+        self.location = location
+
+
+class SameOriginRedirect(urllib.request.HTTPRedirectHandler):
+    """带 Cookie 的请求只在同一个 HTTPS 源（scheme+host+port 都一样）里跟随跳转；
+    跨域、降级到 http 或原请求本身不是 https 都不跟，Cookie 不会被带到别处。"""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        source = _origin(req.full_url)
+        if source is None or source[0] != 'https' or _origin(newurl) != source:
+            raise RedirectBlocked(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_OPENER = urllib.request.build_opener(SameOriginRedirect)
+
+
+def http_json(url, cookie, timeout=25, opener=None):
     """GET weibo.com ajax → dict；登录失效抛 login_expired，其它网络问题抛 network/http_xxx。异常里不带 Cookie。"""
     req = urllib.request.Request(url, headers={
         'Cookie': cookie, 'User-Agent': UA, 'Referer': BASE + '/', 'Accept': 'application/json, text/plain, */*',
         'X-Requested-With': 'XMLHttpRequest'})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with (opener or _OPENER).open(req, timeout=timeout) as resp:
             final, body = resp.geturl(), resp.read()
+    except RedirectBlocked as exc:
+        # 跳去登录页（跨域到 passport）就是 Cookie 失效；其它跨域/降级跳转不跟，按这次没取到处理。
+        raise WeiboError('login_expired' if _looks_like_login(exc.location) else 'redirect_blocked') from None
     except urllib.error.HTTPError as exc:
         raise WeiboError('login_expired' if exc.code in (401, 403) else f'http_{exc.code}') from None
     except (urllib.error.URLError, OSError, ValueError):
         raise WeiboError('network') from None
-    if 'passport.weibo' in final or '/login' in final or 'login.sina' in final:
+    if _looks_like_login(final):
         raise WeiboError('login_expired')
     try:
         data = json.loads(body)
@@ -285,3 +335,38 @@ def save_json(path, data):
 def save_cache(path, cache):
     keep = dict(list(cache.items())[-CACHE_KEEP:])
     save_json(path, keep)
+
+
+def main(argv=None, stdin=None):
+    """python3 -m rebang.bloggers.weibo save-cookie：从标准输入读 Cookie 值（如 ``pbpaste |``），安全落盘。
+    只能由拥有本 checkout 的非 root 账号运行；写入同目录独占创建的 0600 临时文件后原子改名，输出不含内容。"""
+    ap = argparse.ArgumentParser(prog='python3 -m rebang.bloggers.weibo')
+    sub = ap.add_subparsers(dest='cmd', required=True)
+    sv = sub.add_parser('save-cookie', help='从标准输入读一行 Cookie 值，写到仓库外 0600 文件（不打印内容）')
+    sv.add_argument('--cookie-file', default=str(DEFAULT_COOKIE))
+    sub.add_parser('check', help='只检查 Cookie 文件能否被采集器安全读取（不打印内容）').add_argument(
+        '--cookie-file', default=str(DEFAULT_COOKIE))
+    args = ap.parse_args(argv)
+    if args.cmd == 'check':
+        ok = private_file.check_private(args.cookie_file)
+        print(json.dumps({'cookie_file': args.cookie_file, 'usable': ok}))
+        return 0 if ok else 1
+    problem = private_file.account_problem()
+    if problem:
+        print(json.dumps({'saved': False, 'error': problem}))
+        return 1
+    try:
+        value = clean_cookie((stdin or sys.stdin).read())
+        private_file.write_private(args.cookie_file, value + '\n')
+    except WeiboError as exc:
+        print(json.dumps({'saved': False, 'error': exc.code}))
+        return 1
+    except private_file.PrivateFileError as exc:
+        print(json.dumps({'saved': False, 'error': exc.code, 'cookie_file': args.cookie_file}))
+        return 1
+    print(json.dumps({'saved': True, 'cookie_file': args.cookie_file}))
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

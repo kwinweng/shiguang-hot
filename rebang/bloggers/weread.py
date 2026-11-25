@@ -1,7 +1,7 @@
 """微信读书（weread.qq.com 网页版）读公众号文章列表：5 个没有公开订阅的公众号走这里。
 
 登录：微信读书网页版自己的扫码登录（不经第三方中转）。
-  python3 -m rebang.bloggers.weread login --qr-png /tmp/weread-qr.png [--wait 600]
+  python3 -m rebang.bloggers.weread login --session <会话路径> [--qr-png <私有目录里的 png>] [--wait 600]
     1. GET  /api/auth/getLoginUid            → uid
     2. 二维码内容 = https://weread.qq.com/web/confirm?uid=<uid>（用微信扫，或在微信里打开这个链接）
     3. GET  /api/auth/getLoginInfo?uid=…    长轮询，扫码确认后返回 webLoginVid + accessToken
@@ -11,6 +11,8 @@
 读取：优先 GET /web/mp/articles?bookId=MP_WXS_…&offset=0（列表）。2026-11-16 实测新鲜会话上这个接口仍回 -2041（不是登录失效，/api/userInfo 与 /api/mp/cover 都正常），所以失败时改走 /api/mp/cover（最新一篇：标题、封面、reviewId）再读 /web/mp/content 补发布时间和原文链接。
 bookId 优先用 bloggers.json 的 `book_id`（由公众号公开 __biz Base64 解码得到 MP_WXS_<数字>，并用 cover 返回的名字核对过）。没写才登录后用站内搜索；网页搜索经常搜不到公众号本身。
 Cookie 只通过 curl 的标准输入配置传给 curl（不进命令行参数、不进日志），任何输出都不打印会话内容。
+curl 不自动跟跳转；只在同一个 HTTPS 源里带 Cookie 跟随，跨域或降级到 http 直接报 redirect_blocked。
+会话文件用 rebang/private_file.py 安全打开和原子写入（不跟软链接、只本人可用、无 ACL、单一硬链接）。
 错误码：-2010 没登录 / -2012 登录超时 → login_expired，站上保留旧内容。-2041 在列表接口上当「这次列表不可用」处理，改走 cover，不把整次登录判死。
 """
 import argparse
@@ -19,18 +21,24 @@ import re
 import os
 import subprocess
 import sys
+import tempfile
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import quote, urlencode
+from urllib.parse import quote, urlencode, urljoin, urlsplit
 
+from .. import private_file
 from .common import detect_lang, iso, normalize_text, source_id, summary_of
 
 BASE = 'https://weread.qq.com'
 UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36'
-DEFAULT_SESSION = Path(os.environ.get('REBANG_WEREAD_SESSION') or Path.home() / '.config' / 'rebang' / 'weread-session.json')
+DEFAULT_SESSION = Path(os.environ.get('REBANG_WEREAD_SESSION')
+                       or Path(private_file.default_home()) / '.config' / 'rebang' / 'weread-session.json')
 BOOKS_CACHE = Path(__file__).resolve().parents[2] / 'var' / 'rebang' / 'cache' / 'weread-books.json'
 LOGIN_ERRORS = {-2010, -2012}  # -2041 在列表接口上常见，不一定是登录失效
+MAX_REDIRECTS = 5
+# vid/skey 会写进 curl 配置的引号里：只收不会改变配置语义的字符。
+_TOKEN = re.compile(r'[A-Za-z0-9_.+/=:-]{1,512}')
 
 
 class WereadError(Exception):
@@ -46,42 +54,85 @@ def session_exists(path=DEFAULT_SESSION):
 
 
 def load_session(path=DEFAULT_SESSION):
-    data = json.loads(Path(path).read_text(encoding='utf-8'))
-    if not (data.get('vid') and data.get('skey')):
+    """安全打开（见 rebang/private_file.py）并校验：必须是 JSON 对象，vid/skey 是非空的安全字符串。
+    任何不合格（权限、软链接、`[]`、`null`、缺字段……）都只抛 WereadError，编排层当作未配置。"""
+    try:
+        data = json.loads(private_file.read_private(path))
+    except private_file.PrivateFileError:
+        raise WereadError('session_unsafe') from None
+    except (OSError, ValueError, TypeError, RecursionError):
+        raise WereadError('session_invalid') from None
+    if not isinstance(data, dict) or not all(isinstance(data.get(k), str) and _TOKEN.fullmatch(data[k])
+                                             for k in ('vid', 'skey')):
         raise WereadError('session_incomplete')
     return data
 
 
 def save_session(vid, skey, path=DEFAULT_SESSION):
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    os.chmod(path.parent, 0o700)
-    tmp = path.with_name(path.name + '.tmp')
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, 'w', encoding='utf-8') as f:
-        json.dump({'vid': str(vid), 'skey': str(skey), 'saved_at': datetime.now(timezone.utc).isoformat(timespec='seconds')}, f)
-    os.replace(tmp, path)
+    """独占创建同目录随机名 0600 临时文件，写完 fsync 再原子改名；目录链有软链接或共享权限就拒绝。"""
+    vid, skey = str(vid), str(skey)
+    if not (_TOKEN.fullmatch(vid) and _TOKEN.fullmatch(skey)):
+        raise WereadError('session_incomplete')
+    body = json.dumps({'vid': vid, 'skey': skey, 'saved_at': datetime.now(timezone.utc).isoformat(timespec='seconds')})
+    try:
+        private_file.write_private(path, body)
+    except private_file.PrivateFileError as exc:
+        raise WereadError(f'session_save_{exc.code}') from None
 
 
 # ---------- HTTP（curl；Cookie 走标准输入） ----------
 
-def http_json(url, session=None, timeout=25):
-    config = [f'url = "{url}"', f'user-agent = "{UA}"', 'header = "Accept: application/json, text/plain, */*"',
-              f'header = "Referer: {BASE}/"', f'max-time = {int(timeout)}', 'silent', 'location']
+def _origin(url):
+    parts = urlsplit(url)
+    try:
+        port = parts.port
+    except ValueError:
+        return None
+    return parts.scheme.lower(), (parts.hostname or '').lower(), port or (443 if parts.scheme.lower() == 'https' else 80)
+
+
+def _curl(url, session, timeout, accept, extra=(), run=None):
+    """一次请求，不让 curl 自己跟跳转（不开 location）。返回 (body, http_code, 跳转目标)。
+
+    跳转由调用方按同源规则处理：只在原来的 HTTPS 源（scheme+host+port 相同）里带 Cookie 跟随，
+    跨域或降级到 http 一律不跟，Cookie 不会被带到别处。"""
+    config = [f'url = "{url}"', f'user-agent = "{UA}"', f'header = "Accept: {accept}"',
+              f'header = "Referer: {BASE}/"', f'max-time = {int(timeout)}', 'silent', 'proto = "=https"', *extra]
     if session:
         config.append(f'cookie = "wr_vid={session["vid"]}; wr_skey={session["skey"]}"')
     try:
-        r = subprocess.run(['curl', '-q', '-K', '-', '-w', '\n%{http_code}'], input='\n'.join(config) + '\n',
-                           capture_output=True, text=True, timeout=timeout + 10)
+        r = (run or subprocess.run)(['curl', '-q', '-K', '-', '-w', '\n%{http_code} %{redirect_url}'],
+                                    input='\n'.join(config) + '\n', capture_output=True, text=True, timeout=timeout + 15)
     except (OSError, subprocess.TimeoutExpired):
         raise WereadError('network') from None
     if r.returncode:
         raise WereadError('network')
-    body, _, code = r.stdout.rpartition('\n')
+    body, _, tail = r.stdout.rpartition('\n')
+    code, _, location = tail.partition(' ')
+    return body, code, location.strip()
+
+
+def _fetch(url, session, timeout, accept, extra=(), run=None):
+    origin = _origin(url)
+    for _ in range(MAX_REDIRECTS + 1):
+        body, code, location = _curl(url, session, timeout, accept, extra, run=run)
+        if not (code.startswith('3') and location):
+            return body, code
+        target = urljoin(url, location)
+        if origin is None or origin[0] != 'https' or _origin(target) != origin:
+            raise WereadError('redirect_blocked')
+        url = target
+    raise WereadError('too_many_redirects')
+
+
+def http_json(url, session=None, timeout=25, run=None):
+    body, code = _fetch(url, session, timeout, 'application/json, text/plain, */*', run=run)
     try:
         data = json.loads(body) if body.strip() else {}
     except ValueError:
         raise WereadError(f'http_{code}_not_json') from None
+    if not isinstance(data, dict):
+        raise WereadError(f'http_{code}_not_object')
     err = data.get('errCode', data.get('errcode', (data.get('data') or {}).get('errcode') if isinstance(data.get('data'), dict) else None))
     if isinstance(err, int) and err in LOGIN_ERRORS:
         raise WereadError('login_expired')
@@ -90,21 +141,10 @@ def http_json(url, session=None, timeout=25):
     return data
 
 
-def http_text(url, session=None, timeout=40):
+def http_text(url, session=None, timeout=40, run=None):
     """正文页可达数 MB，请求压缩减少传输超时；Cookie 仍走标准输入，不打印。"""
-    config = [f'url = "{url}"', f'user-agent = "{UA}"', 'header = "Accept: text/html,application/xhtml+xml"',
-              f'header = "Referer: {BASE}/"', f'max-time = {int(timeout)}', 'silent', 'location', 'compressed']
-    if session:
-        config.append(f'cookie = "wr_vid={session["vid"]}; wr_skey={session["skey"]}"')
-    try:
-        r = subprocess.run(['curl', '-q', '-K', '-', '-w', '\n%{http_code}'], input='\n'.join(config) + '\n',
-                           capture_output=True, text=True, timeout=timeout + 15)
-    except (OSError, subprocess.TimeoutExpired):
-        raise WereadError('network') from None
-    if r.returncode:
-        raise WereadError('network')
-    body, _, code = r.stdout.rpartition('\n')
-    if code.startswith(('4', '5')):
+    body, code = _fetch(url, session, timeout, 'text/html,application/xhtml+xml', extra=('compressed',), run=run)
+    if code.startswith(('3', '4', '5')):
         raise WereadError(f'http_{code}')
     return body
 
@@ -337,7 +377,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(prog='python3 -m rebang.bloggers.weread')
     sub = ap.add_subparsers(dest='cmd', required=True)
     lg = sub.add_parser('login', help='扫码登录微信读书网页版，成功后写会话文件（0600，仓库外）')
-    lg.add_argument('--qr-png', default='/tmp/weread-login-qr.png')
+    lg.add_argument('--qr-png', default=None, help='二维码图片路径；默认放进新建的私有临时目录（mktemp -d 那种，0700）')
     lg.add_argument('--wait', type=int, default=600, help='最多等几秒')
     lg.add_argument('--uid', default=None, help='接着等同一个二维码（验证码步骤用）')
     lg.add_argument('--otp', default='')
@@ -346,17 +386,26 @@ def main(argv=None):
     st.add_argument('--session', default=str(DEFAULT_SESSION))
     args = ap.parse_args(argv)
     if args.cmd == 'login':
-        return 0 if login(args.qr_png, args.wait, args.uid, args.otp, Path(args.session)) else 1
+        problem = private_file.account_problem()
+        if problem:
+            print(json.dumps({'step': 'failed', 'error': problem}, ensure_ascii=False))
+            return 1
+        qr_png = args.qr_png or str(Path(tempfile.mkdtemp(prefix='weread-qr-')) / 'weread-login-qr.png')
+        try:
+            return 0 if login(qr_png, args.wait, args.uid, args.otp, Path(args.session)) else 1
+        except WereadError as exc:
+            print(json.dumps({'step': 'failed', 'error': exc.code}, ensure_ascii=False))
+            return 1
     if not session_exists(args.session):
-        print(json.dumps({'session': False}))
+        print(json.dumps({'session': False, 'path': str(args.session)}))
         return 1
     try:
         session = load_session(args.session)
         http_json(f'{BASE}/api/userInfo?' + urlencode({'userVid': session['vid']}), session=session)
-        print(json.dumps({'session': True, 'valid': True}))
+        print(json.dumps({'session': True, 'valid': True, 'path': str(args.session)}))
         return 0
     except WereadError as exc:
-        print(json.dumps({'session': True, 'valid': False, 'error': exc.code}))
+        print(json.dumps({'session': True, 'valid': False, 'error': exc.code, 'path': str(args.session)}))
         return 1
 
 
