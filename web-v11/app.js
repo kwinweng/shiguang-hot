@@ -151,10 +151,17 @@
     searchButton: null,
   };
 
-  async function getJSON(path, fresh) {
-    const res = await fetch(`${DATA}/${path}${fresh ? (path.includes('?') ? '&' : '?') + 't=' + Date.now() : ''}`, fresh ? {cache: 'no-store'} : undefined);
-    if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
-    return res.json();
+  async function getJSON(path, fresh, timeoutMs) {
+    const opts = fresh ? {cache: 'no-store'} : {};
+    // timeoutMs：限时读（详情按 id 查完整条目用），超时就中止请求并报错，调用方回退快照
+    const ctl = timeoutMs && typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
+    if (ctl) opts.signal = ctl.signal;
+    try {
+      const res = await fetch(`${DATA}/${path}${fresh ? (path.includes('?') ? '&' : '?') + 't=' + Date.now() : ''}`, Object.keys(opts).length ? opts : undefined);
+      if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+      return await res.json();
+    } finally { if (timer) clearTimeout(timer); }
   }
   function remember(list) { (list || []).forEach(it => it && it.id && items.set(it.id, it)); return list || []; }
   function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('on'), 3200); }
@@ -247,13 +254,14 @@
       getJSON('hotsearch.json', fresh).then(h => { hot = h; }).catch(() => { hot = null; }),
     ]);
   }
+  const FIND_TIMEOUT = 5000;   // 详情按 id 读 id-index / merged.json 的限时；超时回退收藏/搜索快照
   async function findItem(id) {
     if (items.has(id)) return items.get(id);
     try {
-      idIndex = idIndex || await getJSON('id-index.json');
+      idIndex = idIndex || await getJSON('id-index.json', false, FIND_TIMEOUT);
       const file = idIndex[id];
       if (!file) return null;
-      const data = await getJSON(file);
+      const data = await getJSON(file, false, FIND_TIMEOUT);
       remember(data.items); remember((data.channels || []).flatMap(c => c.banner || []));
       return items.get(id) || null;
     } catch (e) { return null; }
@@ -945,18 +953,23 @@
     await openItem(to, {replace: true, keepNav: true});
     return true;
   }
+  let openSeq = 0;   // 每次打开详情递增；异步读完发现已不是最新一次打开，就丢弃结果（不渲染、不改地址栏）
   async function openItem(ref, opts = {}) {
     const id = typeof ref === 'string' ? ref : ref && ref.id;
     if (!id) return;
+    const seq = ++openSeq;
+    // 进入 await 之前先记下返回位置：调用方（如搜索）可能紧接着就把自己的层收起来
+    const ret = !opts.fromPop && !(articleOpen && articleId === id) ? (articleOpen ? returnState : captureScroll()) : null;
     // 先按 id 经 id-index 读本次发布的完整条目（被折叠的条目在 merged.json 里，带正文和「今日重点」标）；
-    // 读不到再用收藏/搜索传进来的快照兜底
+    // 读不到（或超时）再用收藏/搜索传进来的快照兜底
     let it = await findItem(id) || (typeof ref === 'object' ? ref : null);
+    if (seq !== openSeq) return;
     if (!it) {
       const fav = window.RebangFavorites && window.RebangFavorites.load ? window.RebangFavorites.load().find(x => x.id === id) : null;
       if (fav) it = fav; else { toast('这条已经不在最近一次发布的数据里了。'); return; }
     }
     if (!opts.keepNav && !opts.fromPop) navList = opts.list ? {ids: opts.list} : null;
-    if (!opts.fromPop && !(articleOpen && articleId === id)) returnState = articleOpen ? returnState : captureScroll();
+    if (ret) returnState = ret;
     $('#search-panel').classList.remove('on');
     $('#articleTitle').textContent = it.kind === 'post' ? ((it.blogger && it.blogger.display_name) || '帖子') : (L.display(it).title || '正文');
     const body = $('#articleBody');

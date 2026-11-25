@@ -20,10 +20,22 @@ HL = {'highlight': True, 'highlight_date': '2026-11-15'}
 SAME_URL = 'https://news.test/same-raw-url'
 
 
+def snapshot(ident, title):
+    """收藏 / 搜索索引里存的快照：没有正文。"""
+    source, n = ident.split(':')
+    return {'id': ident, 'kind': 'news', 'channel': 'current', 'source_id': source, 'source_name': source,
+            'title': title, 'summary': '', 'url': f'https://example.com/{source}/{n}', 'published_at': NOW.isoformat(),
+            'lang': 'zh', 'translated': False, 'translation': None, 'image': None}
+
+
+SEARCH_ENTRIES = [snapshot('freechinese:901', 'DeepSeek 开放全家桶应用 API 合成测试')]
+
+
 def dup_items():
-    return [news('freechinese', 'current', 901, minutes=0, title='🤖 DeepSeek 开放全家桶应用 API 合成测试',
+    # 第 3 轮起只按同链接或完全相同的原标题合并（全半角、大小写、末尾标点不算差别）
+    return [news('freechinese', 'current', 901, minutes=0, title='DeepSeek 开放全家桶应用 API 合成测试',
                  body='被折叠那条的正文', **HL),
-            news('tnews365', 'current', 900, minutes=1, title='DeepSeek开放“全家桶”应用API 合成测试', **HL),
+            news('tnews365', 'current', 900, minutes=1, title='ＤｅｅｐＳｅｅｋ 开放全家桶应用 API 合成测试。', **HL),
             # 顶部大图卡上的主条（比时事其它条都新，排在 banner 第 1 屏）
             news('myBigCharacterPoster', 'current', 961, minutes=-3, title='大图卡折叠测试：谷歌发布新一代开源模型 面向开发者',
                  image=img(961)),
@@ -63,14 +75,31 @@ class DedupBrowserTests(unittest.TestCase):
         self.page.on('pageerror', lambda e: self.errors.append(str(e)))
         self.addCleanup(lambda: self.assertEqual(self.errors, []))
 
+        self.hold_paths, self.held = set(), []    # 挂起这些路径的请求，测试里再放行（模拟慢网 / 卡死）
+
         def serve(route):
             url = urlsplit(route.request.url)
             if url.netloc != 'rebang.test':
                 return route.abort()
-            path = self.out / (unquote(url.path).lstrip('/') or 'index.html')
-            route.fulfill(status=200 if path.is_file() else 404, body=path.read_bytes() if path.is_file() else b'missing',
-                          content_type=mimetypes.guess_type(str(path))[0] or 'application/octet-stream')
+            if url.path in self.hold_paths:
+                self.held.append(route)
+                return None
+            return self.fulfill(route)
         self.page.route('**/*', serve)
+
+    def fulfill(self, route):
+        url = urlsplit(route.request.url)
+        if url.path == '/data/search-index.json':
+            return route.fulfill(status=200, content_type='application/json', body=json.dumps({'entries': SEARCH_ENTRIES}))
+        path = self.out / (unquote(url.path).lstrip('/') or 'index.html')
+        route.fulfill(status=200 if path.is_file() else 404, body=path.read_bytes() if path.is_file() else b'missing',
+                      content_type=mimetypes.guess_type(str(path))[0] or 'application/octet-stream')
+
+    def release(self):
+        self.hold_paths.clear()
+        held, self.held = self.held, []
+        for route in held:
+            self.fulfill(route)
 
     def test_folded_sources_expand_in_place_and_open_the_folded_item(self):
         self.page.goto('https://rebang.test/index.html')
@@ -149,10 +178,7 @@ class DedupBrowserTests(unittest.TestCase):
         self.page.on('request', lambda r: requested.append(urlsplit(r.url).path))
         self.open_home()
         # 收藏 / 搜索只存了快照（没有正文、没有今日重点标）；打开时应按 id 读本次发布的完整条目
-        snap = {'id': 'freechinese:901', 'kind': 'news', 'channel': 'current', 'source_id': 'freechinese',
-                'source_name': 'freechinese', 'title': '🤖 DeepSeek 开放全家桶应用 API 合成测试', 'summary': '',
-                'url': 'https://example.com/freechinese/901', 'published_at': NOW.isoformat(), 'lang': 'zh',
-                'translated': False, 'translation': None, 'image': None}
+        snap = snapshot('freechinese:901', 'DeepSeek 开放全家桶应用 API 合成测试')
         self.page.evaluate('s => window.Rebang.openItem(s)', snap)
         self.page.wait_for_selector('#articleView.on')
         self.assertIn('/data/channel/current/merged.json', requested)
@@ -169,6 +195,55 @@ class DedupBrowserTests(unittest.TestCase):
         self.page.goto('https://rebang.test/index.html#/item/freechinese%3A901')
         self.page.wait_for_selector('#articleView.on')
         self.assertIn('全家桶', self.page.locator('#articleTitle').inner_text())
+
+    def test_back_from_search_opened_folded_item_returns_to_search_results(self):
+        self.open_home()
+        self.page.locator('#btnSearch').click()
+        self.page.wait_for_selector('#search-panel.on [data-search-input]')
+        self.page.locator('[data-search-input]').fill('合成测试')
+        hit = self.page.locator('[data-search-hit="freechinese:901"]')
+        hit.wait_for()
+        hit.click()                                               # 被折叠的条目：要先异步读 id-index、merged.json
+        self.page.wait_for_selector('#articleView.on')
+        self.assertIn('被折叠那条的正文', self.page.locator('#articleBody').inner_text())
+        self.page.locator('#btnBack').click()
+        self.page.wait_for_selector('#search-panel.on')
+        self.assertFalse(self.page.locator('#articleView').evaluate('e => e.classList.contains("on")'))
+        self.assertTrue(self.page.locator('[data-search-hit="freechinese:901"]').is_visible())
+        self.assertEqual(self.page.locator('[data-search-input]').input_value(), '合成测试')
+
+    def test_later_open_wins_over_slow_earlier_open(self):
+        self.open_home()
+        self.hold_paths.add('/data/id-index.json')
+        self.page.evaluate("() => { window.Rebang.openItem('freechinese:901'); }")      # A：要读 id-index，被挂起
+        for _ in range(40):                                       # 等请求真被挂起
+            if self.held:
+                break
+            self.page.wait_for_timeout(50)
+        self.assertTrue(self.held)
+        self.page.evaluate("() => { window.Rebang.openItem('myBigCharacterPoster:961'); }")   # B：已在内存
+        self.page.wait_for_selector('#articleView.on')
+        self.release()                                            # A 现在才读完：结果过期，丢弃
+        self.page.wait_for_timeout(600)
+        self.assertIn('大图卡折叠测试', self.page.locator('#articleTitle').inner_text())
+        self.assertEqual(self.page.evaluate('location.hash'), '#/item/myBigCharacterPoster%3A961')
+
+    def test_hung_index_request_times_out_and_falls_back_to_snapshot(self):
+        self.open_home()
+        self.hold_paths.add('/data/id-index.json')
+        self.page.evaluate("s => { window.Rebang.openItem(s); }", snapshot('freechinese:901', '快照里的标题 合成测试'))
+        start = self.page.evaluate('performance.now()')
+        self.page.wait_for_selector('#articleView.on', timeout=9000)
+        waited = self.page.evaluate('performance.now()') - start
+        self.assertIn('快照里的标题', self.page.locator('#articleTitle').inner_text())
+        self.assertGreater(waited, 3000)
+        self.assertEqual(self.page.evaluate('location.hash'), '#/item/freechinese%3A901')
+        for route in self.held:                                   # 放掉挂起的请求，不留到下一个用例
+            try:
+                route.abort()
+            except Exception:  # noqa: BLE001  请求可能已被浏览器中止
+                pass
+        self.held = []
 
 
 if __name__ == '__main__':
