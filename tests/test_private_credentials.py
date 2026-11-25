@@ -761,18 +761,15 @@ def test_save_cookie_pbpaste_stalled_stdout_times_out_and_preserves_old_cookie(h
 
 
 def test_read_pbpaste_handles_high_fd():
+    import fcntl
     r_fd, w_fd = os.pipe()
-    high_fd = None
+    stdout = None
     try:
-        for cand in range(1100, 1120):
-            try:
-                os.fstat(cand)
-            except OSError:
-                high_fd = cand
-                break
-        if high_fd is None:
-            pytest.skip('no free fd in 1100..1119')
-        os.dup2(r_fd, high_fd)
+        try:
+            high_fd = fcntl.fcntl(r_fd, fcntl.F_DUPFD, 1100)   # 原子分配 >= 1100 的最小空闲 fd
+        except OSError:
+            pytest.skip('cannot allocate fd >= 1100 (RLIMIT_NOFILE too low)')
+        stdout = os.fdopen(high_fd, 'rb', buffering=0)          # fd 归 stdout 对象所有
         os.close(r_fd)
         r_fd = None
         os.write(w_fd, (SECRET + '\n').encode('utf-8'))
@@ -781,7 +778,7 @@ def test_read_pbpaste_handles_high_fd():
 
         class HighFdProc:
             def __init__(self, *args, **kwargs):
-                self.stdout = os.fdopen(high_fd, 'rb', buffering=0)
+                self.stdout = stdout
 
             def wait(self, timeout=None):
                 return 0
@@ -790,14 +787,75 @@ def test_read_pbpaste_handles_high_fd():
                 pass
 
         assert weibo.read_pbpaste(popen=HighFdProc, timeout=2).strip() == SECRET
-        high_fd = None   # closed by read_pbpaste finally
+        assert stdout.closed
     finally:
-        for fd in (r_fd, w_fd, high_fd):
+        if stdout is not None and not stdout.closed:
+            stdout.close()
+        for fd in (r_fd, w_fd):
             if fd is not None:
-                try:
-                    os.close(fd)
-                except OSError:
-                    pass
+                os.close(fd)
+
+
+def test_read_pbpaste_selector_failure_kills_and_reaps_child(monkeypatch):
+    import errno
+    r_fd, w_fd = os.pipe()
+    events = []
+
+    class Proc:
+        def __init__(self, *args, **kwargs):
+            self.stdout = os.fdopen(r_fd, 'rb', buffering=0)
+
+        def wait(self, timeout=None):
+            events.append('wait')
+            return 0
+
+        def kill(self):
+            events.append('kill')
+
+    def no_selector():
+        raise OSError(errno.EMFILE, 'Too many open files')
+
+    monkeypatch.setattr(weibo.selectors, 'DefaultSelector', no_selector)
+    try:
+        with pytest.raises(weibo.WeiboError, match='clipboard_failed'):
+            weibo.read_pbpaste(popen=Proc, timeout=2)
+    finally:
+        os.close(w_fd)
+    assert events[:2] == ['kill', 'wait']
+
+
+def test_read_pbpaste_select_valueerror_kills_and_reaps_child(monkeypatch):
+    r_fd, w_fd = os.pipe()
+    events = []
+
+    class Proc:
+        def __init__(self, *args, **kwargs):
+            self.stdout = os.fdopen(r_fd, 'rb', buffering=0)
+
+        def wait(self, timeout=None):
+            events.append('wait')
+            return 0
+
+        def kill(self):
+            events.append('kill')
+
+    class BadSelector:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def register(self, fd, ev):
+            raise ValueError('filedescriptor out of range in select()')
+
+    monkeypatch.setattr(weibo.selectors, 'DefaultSelector', BadSelector)
+    try:
+        with pytest.raises(weibo.WeiboError, match='clipboard_failed'):
+            weibo.read_pbpaste(popen=Proc, timeout=2)
+    finally:
+        os.close(w_fd)
+    assert events[:2] == ['kill', 'wait']
 
 
 # ---------- Blocker 4: weread status handles non-UTF-8 and deeply nested JSON without traceback ----------

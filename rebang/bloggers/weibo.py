@@ -402,14 +402,16 @@ def read_pbpaste(popen=None, timeout=10):
         if remaining <= 0:
             raise subprocess.TimeoutExpired('pbpaste', timeout)
         rc = proc.wait(timeout=remaining)
-    except subprocess.TimeoutExpired:
-        proc.kill()
+    except (subprocess.TimeoutExpired, OSError, ValueError):
+        # 任何失败（超时、选择器建不起来如 EMFILE、只剩 select() 时的高 fd ValueError）都先结束并回收子进程
+        try:
+            proc.kill()
+        except OSError:
+            pass
         try:
             proc.wait(timeout=2)
-        except subprocess.TimeoutExpired:
+        except (subprocess.TimeoutExpired, OSError):
             pass
-        raise WeiboError('clipboard_failed') from None
-    except OSError:
         raise WeiboError('clipboard_failed') from None
     finally:
         if proc.stdout is not None:
