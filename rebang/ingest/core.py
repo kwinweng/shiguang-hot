@@ -21,7 +21,7 @@ DEFAULT_CACHE = ROOT / 'var' / 'rebang' / 'cache' / 'ingest'
 MEDIA_DAYS = 14          # 与 shiguang/ingest/telegram.py MEDIA_DAYS 一致：图片按条目时间保留 14 天
 SUMMARY_CHARS = 300
 PRODUCER = 'ingest'
-FEED_LANG = 'en'         # 6 个官方订阅都是英文
+FEED_LANG = 'en'         # 官方订阅都是英文
 MT = '机器翻译'
 
 

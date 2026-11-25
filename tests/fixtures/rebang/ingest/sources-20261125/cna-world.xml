@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xml:base="https://www.channelnewsasia.com/"  xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:og="http://ogp.me/ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:schema="http://schema.org/" xmlns:sioc="http://rdfs.org/sioc/ns#" xmlns:sioct="http://rdfs.org/sioc/types#" xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+  <channel>
+    <title>Latest News</title>
+    <link>https://www.channelnewsasia.com/</link>
+    <description>mediacorp feed news</description>
+            <lastBuildDate>Wed, 25 Nov 2026 18:26:22 +0800 </lastBuildDate>
+              <generator>Mediacorp</generator>
+              <ttl> 20 </ttl>
+        
+        
+    <item>
+  <title>3 dead as Indonesian rescuers search for &#039;estimated&#039; 23 more workers trapped in mine</title>
+  <link>https://www.channelnewsasia.com/asia/indonesia-search-dozens-trapped-mine-workers-6580561</link>
+    <description>Heavy rain cuts off a 100m-deep West Java mine, with workers feared trapped since Monday as rescuers battle narrow, dark access.</description>
+  <pubDate>Wed, 25 Nov 2026 13:15:00 +0800</pubDate>
+    <guid isPermaLink="false">https://www.channelnewsasia.com/asia/indonesia-search-dozens-trapped-mine-workers-6580561</guid>
+    <category>Asia ,World</category>
+    <media:thumbnail url="https://dam.mediacorp.sg/image/upload/s--LxP_9PnU--/c_crop,h_720,w_1280,x_0,y_120/fl_relative,g_south_east,l_mediacorp:cna:watermark:2024-04:reuters_1,w_0.1/f_auto,q_auto/c_fill,g_auto,h_468,w_830/v1/mediacorp/cna/image/2026/11/25/whatsapp_image_2026-11-25_at_2.32.19_pm.jpeg?itok=iJ5J1r2w" width="830" height="468" />
+    </item>
+<item>
+  <title>Australia, Solomon Islands sign sweeping pact stymieing China</title>
+  <link>https://www.channelnewsasia.com/world/australia-solomon-islands-pact-china-6580656</link>
+    <description>The treaty cements Australia as the island nation&#039;s &quot;primary security partner&quot; and will see Canberra commit US$490 million over a decade to fund free education and other programmes.</description>
+  <pubDate>Wed, 25 Nov 2026 12:34:00 +0800</pubDate>
+    <guid isPermaLink="false">https://www.channelnewsasia.com/world/australia-solomon-islands-pact-china-6580656</guid>
+    <category>World</category>
+    <media:thumbnail url="https://dam.mediacorp.sg/image/upload/s--w6OEaFKV--/fl_relative,g_south_east,l_mediacorp:cna:watermark:2023-11:afp_watermark_14112023,w_0.1/f_auto,q_auto/c_fill,g_auto,h_468,w_830/v1/mediacorp/cna/image/2026/11/25/000_d8jg8du.jpg?itok=flFPzwI4" width="830" height="468" />
+    </item>
+
+  </channel>
+</rss>

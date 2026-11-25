@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:georss="http://www.georss.org/georss" xmlns:atom="http://www.w3.org/2005/Atom">
+ <channel>
+  <title>World | Deutsche Welle</title>
+  <link>https://www.dw.com/english/?maca=en-rss-en-world-4025-xml-mrss</link>
+  <description>World | Deutsche Welle</description>
+  <language>en</language>
+  <copyright>2026 DW</copyright>
+  <pubDate>Wed, 25 Nov 2026 10:23:30 GMT</pubDate>
+  <lastBuildDate>Wed, 25 Nov 2026 10:23:30 GMT</lastBuildDate>
+  <atom:link href="https://rss.dw.com/xml/rss-en-world" rel="self"/>
+  
+  <ttl>10</ttl>
+  <item>
+   <guid isPermaLink="false">80029852</guid>
+   <pubDate>Tue, 24 Nov 2026 16:18:00 GMT</pubDate>
+   <title>Ukraine&#039;s bid for NATO membership and more air defense remains controversial</title>
+   <link>https://www.dw.com/en/ukraine-s-bid-for-nato-membership-and-more-air-defense-remains-controversial/a-80029852?maca=en-rss-en-world-4025-xml-mrss</link>
+   <description>Ukrainian President Volodymyr Zelenskyy is calling for the rapid acceptance of his country into NATO. However, the necessary unanimity for this is lacking, as shown during the NATO Parliamentary Assembly in Berlin.</description>
+   <category>World</category>
+  </item>
+<item>
+   <guid isPermaLink="false">80034401</guid>
+   <pubDate>Tue, 24 Nov 2026 14:49:00 GMT</pubDate>
+   <title>EU enlargement: Why do some EU member states use their vetoes to block the accession of certain candidate countries?</title>
+   <link>https://www.dw.com/en/eu-enlargement-why-do-some-eu-member-states-use-their-vetoes-to-block-the-accession-of-certain-candidate-countries/a-80034401?maca=en-rss-en-world-4025-xml-mrss</link>
+   <description>Individual EU member states use their veto powers to block candidate countries in the accession process — often for reasons of domestic politics. DW takes a look at some cases and examines what&#039;s behind them.</description>
+   <category>World</category>
+  </item>
+ </channel>
+</rss>

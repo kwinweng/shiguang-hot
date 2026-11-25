@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:feedpress="https://feed.press/xmlns" xmlns:podcast="https://podcastindex.org/namespace/1.0" version="2.0">
+  <channel>
+    <feedpress:locale>en</feedpress:locale>
+    <feedpress:newsletterId>itsfoss</feedpress:newsletterId>
+    <atom:link rel="hub" href="https://feedpress.superfeedr.com/"/>
+    <title>It's FOSS</title>
+    <description>Making You a Better Linux User</description>
+    <link>https://itsfoss.com/</link>
+    
+    <generator>Ghost </generator>
+    <lastBuildDate>Wed, 25 Nov 2026 14:37:49 +0530</lastBuildDate>
+    <atom:link href="https://feed.itsfoss.com/" rel="self" type="application/rss+xml"/>
+    <ttl>60</ttl>
+    <item>
+      <title><![CDATA[After 29 Years of Konsole, There's a New KDE Terminal and I Took It for a Spin]]></title>
+      <description><![CDATA[KDE has a new modern terminal in works. It has a Ghostty connection, and it offers GPU acceleration. Take a look at it in this hands-on review.]]></description>
+      <link>https://feed.itsfoss.com/link/24361/17540145/kwi-terminal</link>
+      <guid isPermaLink="false">6b066add82845000011c9a51</guid>
+      <category><![CDATA[Terminal Tools]]></category>
+      <dc:creator><![CDATA[Abhishek Prakash]]></dc:creator>
+      <pubDate>Wed, 25 Nov 2026 12:15:00 +0530</pubDate>
+      <media:content url="https://itsfoss.com/content/images/2026/11/kwi-featured.jpg" medium="image">
+        <media:description type="plain">Kwi Terminal</media:description>
+      </media:content>
+      
+    </item>
+<item>
+      <title><![CDATA[No One is Using Real Firefox Browser on iPhones (Blame it on Apple)]]></title>
+      <description><![CDATA[The EU told Apple to open up. Apple said "fine." Then it published its own set of conditions so that complying in practice is nearly impossible for Mozilla Firefox.]]></description>
+      <link>https://feed.itsfoss.com/link/24361/17538371/firefox-apple-dispute</link>
+      <guid isPermaLink="false">6b043c4e070f24000124397e</guid>
+      <category><![CDATA[News]]></category>
+      <dc:creator><![CDATA[Abhishek Prakash]]></dc:creator>
+      <pubDate>Mon, 23 Nov 2026 20:54:42 +0530</pubDate>
+      <media:content url="https://itsfoss.com/content/images/2026/11/firefox-ios-issue.png" medium="image"/>
+      
+    </item>
+  </channel>
+</rss>

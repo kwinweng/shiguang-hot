@@ -8,7 +8,7 @@
 |---|---|
 | `rebang/contract/channels.json` | 6 个频道（current 时事 / world 环球 / finance 财经 / tech-ai 科技与 AI / digital 数码 / tools 工具与项目）与来源映射；18 个 TG（不含 reorx_share）；今日重点只给频道里同链接条目打标（2026-11-15 21:26 起不再进频道） |
 | `rebang/contract/hotsearch.json` | 热搜提供方 baidu、zhihu、bilibili（11/15 20:41 阿欢确认；不要微博），可替换；每家最多 51 条（百度 = 置顶 1 + 普通 50）；展示在底栏「热搜」页（`view:hot`），按北京日期归档（`archive.dir/keep`） |
-| `rebang/contract/bloggers.json` | 博主平台与名单：X 16、博客 7、即刻 9、微博 6、公众号 6、YouTube 13、知乎 0 |
+| `rebang/contract/bloggers.json` | 博主平台与名单：X 16、博客 7、即刻 9、微博 6、公众号 6、YouTube 13（知乎空占位 2026-11-25 撤掉） |
 | `rebang/contract/schema.py` | 纯标准库校验：`validate_item` / `validate_items_envelope` / `validate_hotsearch` |
 
 旧 `sources.json` 和 `shiguang/` 继续驱动 TG 采集（写 `tg.db`）和旧站（现状见 `docs/legacy/README.md`），新版**复用**而不改它们的行为。

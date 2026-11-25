@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	xmlns:media="https://search.yahoo.com/mrss/"
+	xmlns:webfeeds="http://webfeeds.org/rss/1.0"  >
+
+<channel>
+	<title>Android Authority</title>
+	<atom:link href="https://www.androidauthority.com/feed/" rel="self" type="application/rss+xml" />
+	<link>https://www.androidauthority.com/</link>
+	<description>Android News, Reviews, How To</description>
+	<lastBuildDate>Wed, 25 Nov 2026 09:52:54 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=7.0.9</generator>
+<webfeeds:accentColor>00D49F</webfeeds:accentColor>
+	<webfeeds:related layout="card" target="browser" />
+	<webfeeds:analytics id="UA-20765087-1" engine="GoogleAnalytics" />
+	<webfeeds:icon>https://www.androidauthority.com/wp-content/uploads/feed/aa-mascot-192x192.png?v=1.0.2</webfeeds:icon>
+	<webfeeds:logo>https://www.androidauthority.com/wp-content/uploads/feed/aa_icon_feed.svg?v=1.0.2</webfeeds:logo>
+	<webfeeds:cover image="https://www.androidauthority.com/wp-content/uploads/feed/aboutus_top_imagev2.jpg?v=1.0.2" />        <item>
+            <title>Google’s AI Mode now lets you attach up to 10 photos at once</title>
+            <link>https://www.androidauthority.com/ai-mode-camera-multiple-photo-support-rolling-out-3739263/</link>
+                            <comments>https://www.androidauthority.com/ai-mode-camera-multiple-photo-support-rolling-out-3739263/#respond</comments>
+            
+            <dc:creator><![CDATA[Akshay Gangwar]]></dc:creator>
+            <pubDate>Wed, 25 Nov 2026 09:52:54 +0000</pubDate>
+            		<category><![CDATA[News]]></category>
+		<category><![CDATA[Google]]></category>
+		<category><![CDATA[Google Apps]]></category>
+            <guid isPermaLink="false">https://www.androidauthority.com/ai-mode-camera-multiple-photo-support-rolling-out-3739263/</guid>
+
+                            <description><![CDATA[You can finally attach multiple photos in AI Mode without opening the camera every time.]]></description>
+                <media:content name="AndroidAuthority" url="https://www.androidauthority.com/wp-content/uploads/2025/05/google-ai-mode-vs-google-search-hero-photo-5-scaled.jpg" medium="image" />                                    
+                            
+                            <wfw:commentRss>https://www.androidauthority.com/ai-mode-camera-multiple-photo-support-rolling-out-3739263/feed/</wfw:commentRss>
+                <slash:comments>0</slash:comments>
+            
+            
+                    </item>
+<item>
+            <title>ChatGPT and Codex will share usage limits for paid users starting in December</title>
+            <link>https://www.androidauthority.com/chatgpt-codex-shared-usage-limits-3739254/</link>
+                            <comments>https://www.androidauthority.com/chatgpt-codex-shared-usage-limits-3739254/#respond</comments>
+            
+            <dc:creator><![CDATA[Hillary Keverenge]]></dc:creator>
+            <pubDate>Wed, 25 Nov 2026 09:37:20 +0000</pubDate>
+            		<category><![CDATA[News]]></category>
+		<category><![CDATA[AI]]></category>
+		<category><![CDATA[ChatGPT]]></category>
+		<category><![CDATA[OpenAI]]></category>
+            <guid isPermaLink="false">https://www.androidauthority.com/chatgpt-codex-shared-usage-limits-3739254/</guid>
+
+                            <description><![CDATA[Using one AI tool could limit how much you can use another.]]></description>
+                <media:content name="AndroidAuthority" url="https://www.androidauthority.com/wp-content/uploads/2026/05/Open-AI-ChatGPT-logo-on-phone-stock-photo-9.jpg" medium="image" />                                    
+                            
+                            <wfw:commentRss>https://www.androidauthority.com/chatgpt-codex-shared-usage-limits-3739254/feed/</wfw:commentRss>
+                <slash:comments>0</slash:comments>
+            
+            
+                    </item>
+        </channel>
+</rss>
