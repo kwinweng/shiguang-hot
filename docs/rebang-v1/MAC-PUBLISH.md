@@ -5,11 +5,49 @@
 ## 入口与防护
 
 - `tools/mac_publish.sh --code-sha FULL_SHA` 只用于专用 clone。由同一个标准账号从手动和系统 `launchd` 运行。`PATH` 和 `BOX_PYTHON` 使用绝对路径；需要 Python 3.11+、`beautifulsoup4`、`pillow`、`lxml`、`flock`、`realpath` 和支持原子推送的 Git。`PATH` 将该 Python 环境的 `bin` 放在系统目录之前，以便接收脚本调用同一环境的 `python3`。
-- 代码固定在 detached HEAD，不自动拉入生产代码；每轮只 `fetch` 两个数据来源 ref，不 reset/clean。首轮以远端 `main:tg.db` 为起点，最多只替换仍与固定提交一致的 `tg.db`；后续保留本地采集数据和运行缓存。专用工作区不要运行任何其他会写 DB、采集缓存或发布的入口。首期不读取来源 Cookie、会话文件或翻译密钥。
+- 代码在 detached HEAD 上运行，`--code-sha` 是批准的起点：HEAD 必须是它本身或它的后代（只能是下文「自动跟进」切过去的）。每轮只 `fetch` 两个数据来源 ref，不 reset/clean。首轮以远端 `main:tg.db` 为起点，最多只替换仍与固定提交一致的 `tg.db`；后续保留本地采集数据和运行缓存。专用工作区不要运行任何其他会写 DB、采集缓存或发布的入口。首期不读取来源 Cookie、会话文件或翻译密钥。
 - 持锁依次跑旧流水线、`rebang_refresh.sh --no-publish`、`write_build_info.py`。有 SQLite journal/WAL/SHM 就拒绝。在临时 Git index 上从 `main` 父提交构造纯 `tg.db` 数据提交；若库没变则不写 `main`。`build-info.json` 的 `source_commit` 是固定运行代码，不是数据提交；`database_sha256` 对比实际入库的 blob。
 - `publish_pages.sh --dry-run --already-built` 只打包。新入口以观察到的 `gh-pages` 为唯一父提交，保持打包 tree 不变。把父包和待推包分别 `git archive` 到干净树，给原版 `deploy/news-sync.sh --dry-run` 检查。公网 `data/meta.json` 须与父包 `rebang/data/meta.json` 字节一致，才把父包作为本地基线。它只是公开版本标记，不证明 DO 已安装的每个文件都相同；`file://` 演练不访问公网。
 - 校验后再核对远端两个 ref，只调用一次普通 `git push --atomic`，不强推、不降级、不重试。两个 ref 都需更新时要么一起更新，要么都不更新。普通快进不是独占写入权，切换前必须排除其他写入口。
 - `.git/mac-publish/HALT` 在发起推送前创建，成功记录两条远端 ref 后才清除。推送被拒、结果不明、或发现未经预期的 ref 变化，都停止后续手动和定时轮次。保留 `tg.db`、`refs.json`、`HALT` 和日志，核对两个真实远端 SHA、候选 SHA、数据库和公网，再另行批准恢复。不要自动删标记、覆盖库、重置分支或强推旧包。接收校验失败未推送，保留本地库；常规下一轮可在同一远端基线上重试。
+
+## 自动跟进 main：先试跑，下一轮再切
+
+`main` 正常往前合并（含只改文档）不再写 HALT。状态都在 `.git/mac-publish/`：
+
+| 文件 | 含义 |
+| --- | --- |
+| `refs.json` | 上轮成功推送后的两条远端 ref（原有） |
+| `trial.json` | 最近一次试跑：`sha`、`ok`、第几次 `attempts`、失败原因 `reason`、时间 |
+| `trial.log` | 最近一次试跑的完整输出 |
+| `candidate.json` | 试跑通过、等下一轮切换的提交 |
+| `switch.json`、`tg.db.switching` | 只在切换那几秒存在；中途被杀时由下次启动收尾 |
+
+每轮顺序：
+
+1. **启动收尾**：有 `switch.json` 就先把 `tg.db.switching` 放回 `tg.db`。原位置若有文件，只有它等于切换两端提交里的 `tg.db` 才覆盖；否则两份都留着、本轮报错，等人工核对。
+2. **看远端**：和 `refs.json` 一样 → 照常。不一样时，只有「`gh-pages` 没动、新 `main` 是旧 `main` 和当前代码的后代、`tg.db` 没被别人改」才算正常合并，继续；历史改写、非后代、别人改了 `tg.db` 或 `gh-pages` 都 HALT（与原来一样）。首次启动（没有 `refs.json`）要求远端 `main` 已包含当前代码，否则拒绝、什么都不写。
+3. **切换**：有 `candidate.json`，且它仍在「当前代码 → 远端 `main`」这条线上，就把 `tg.db` 挪到一边、`git checkout` 候选、再放回 `tg.db`（本地库始终不被提交里的副本替换），然后用新代码的入口重新跑本轮。切换失败：放回 `tg.db`、丢掉候选、把这版代码记为不再试跑，本轮报错，下一轮照旧用老版本发布。重跑的那次不会再切第二次。
+4. **正式发布**：用当前版本，流程和校验与原来一样。数据提交接在观察到的 `main` 上。推送前或推送时 `main` 被别人正常合并：本轮不发布、**不写 HALT**，库保留，下一轮在新 `main` 上重建；其他变化或推送结果不明照旧 HALT。
+5. **试跑**（只在推送成功后、且 `main` 的代码和当前代码不同才做）：在 `.git/mac-publish/trial/` 用 `git clone --shared` 检出新 `main`，复制本轮的 `tg.db`、`media/`、`var/rebang/`（APFS 上是写时复制），跑同一套 `pipeline.py` → `rebang_refresh.sh --no-publish` → `write_build_info.py` → `publish_pages.sh --dry-run`，再用当前的接收脚本以刚发布的包为基线做 dry-run。全程不推送、不碰正式目录和远端；跑完删掉试跑目录。
+   - 成功 → 写 `candidate.json`，日志 `follow: trial passed`，下一轮切换。
+   - 失败或超时（默认 20 分钟，`--trial-timeout` 可改）→ 杀掉整个试跑进程组，写 `trial.json` 原因，日志 `follow: trial FAILED …`，**照常用老版本发布，不停发**。同一份代码最多试 3 次，之后日志 `failed 3 times` 并等新代码；要强制重试就删 `trial.json`。
+   - 发布器在试跑中被停（launchd 发 SIGTERM）→ 杀掉试跑进程组，这次计入次数。试跑进程不持有发布锁。
+
+日志里搜 `follow:` 就能看到每次跟进、试跑结果和切换；健康看板暂未接入这些状态。
+
+### 上线这次改动（主线程在 Mini 手动做一次）
+
+1. 停发间隙内（不在 :05 运行中），确认没有 `HALT`、发布锁空闲，备份 `tg.db` 和 `.git/mac-publish/`。
+2. 在发布 clone 里 `git fetch origin main`，确认合并后的 `main` 包含本改动；把 `tg.db` 挪到一边，`git checkout --detach <合并后的 main SHA>`，再把 `tg.db` 放回，`git status` 只应显示 `tg.db` 改动。
+3. plist 里的 `--code-sha` 可以不改（旧值 `06d08d7c…` 是新 `main` 的祖先即可；也可以改成新 SHA）。`refs.json` 保留。
+4. 等下一次 :05 自然运行，日志里应有 `published main=…`，`build-info.json` 的 `source_commit` 是新 SHA。之后合一次只改文档的 PR，确认下一轮有 `follow: trial passed`、再下一轮有 `follow: switched code`，且没有 `HALT`。
+
+### 回退
+
+- **不想自动切了**：删 `candidate.json`；在 `trial.json` 里写 `{"sha": "<新 main SHA>", "ok": false, "attempts": 3}` 可让这版代码不再试跑。
+- **切过去的新版本有问题**：等当前一轮结束，按上面第 2 步的同样做法（`tg.db` 先挪开再放回）检出上一个好的 SHA，删 `candidate.json` 和 `trial.json`。注意：只要 `main` 上的代码和运行版本不同，下一轮还会试跑并切回去，所以真正的回退是在 `main` 上合一个 revert PR；临时止血可以同时写上面的 `trial.json` 锁住那版代码。
+- **完全退回旧行为**：检出本改动之前的提交（同样保护 `tg.db`），删 `candidate.json`、`trial.json`；旧代码会在 `main` 下次被别人推动时写 HALT。
 
 ## 贴给 Mini 本机 T3 的切换指令（获批后才执行）
 
