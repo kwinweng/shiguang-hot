@@ -47,7 +47,7 @@ class SiteBrowserTests(unittest.TestCase):
         sources, platforms = health_inputs()
         health_in = root / 'health-in'
         health_in.mkdir()
-        (health_in / 'ingest.json').write_text(json.dumps(dict(envelope([], 'ingest'), sources=sources)), encoding='utf-8')
+        (health_in / 'ingest.json').write_text(json.dumps(dict(envelope(site_items(), 'ingest'), sources=sources)), encoding='utf-8')
         (health_in / 'bloggers.json').write_text(json.dumps(dict(envelope([], 'bloggers'), platforms=platforms)), encoding='utf-8')
         cls.health_out = root / 'health-site'
         site.build(cls.health_out, health_in, now=NOW, hot_archive_dir=root / 'hot')
@@ -134,12 +134,12 @@ class SiteBrowserTests(unittest.TestCase):
         with self.page.expect_request('**/data/health.json*'):
             self.open('#/health')
         dialog = self.page.get_by_role('dialog', name='来源健康')
-        dialog.get_by_role('heading', name='待检查').wait_for()
+        dialog.get_by_role('button', name='全部', exact=False).wait_for()
         self.assertEqual(dialog.locator('.health-name').all_text_contents()[:4], ['微博', '竹新社', 'X', '卫报 World'])
         self.assertIn('2 天 5 小时', dialog.inner_text())
         self.assertLessEqual(dialog.evaluate('e => e.scrollWidth'), 390)
         dialog.get_by_text('查看 6 个账号', exact=True).first.click()
-        self.assertTrue(dialog.locator('details[open] .health-account').first.is_visible())
+        self.assertTrue(dialog.locator('.health-accounts[open] .health-account').first.is_visible())
         dialog.get_by_role('button', name='返回').click()
         dialog.wait_for(state='hidden')
         self.assertEqual(self.page.locator('.tabbar button').count(), 4)
@@ -148,6 +148,61 @@ class SiteBrowserTests(unittest.TestCase):
         dialog.wait_for()
         self.page.keyboard.press('Escape')
         dialog.wait_for(state='hidden')
+
+    def test_health_channel_entry_opens_counted_groups_and_filters_sources(self):
+        requested = []
+        self.page.on('request', lambda request: requested.append(request.url))
+        self.open()
+        entry = self.page.get_by_role('link', name='来源状态，5 个来源需处理')
+        self.assertTrue(entry.is_visible())
+        self.assertEqual(entry.get_attribute('href'), '#/health')
+        self.assertFalse(any('/data/health.json' in url for url in requested))
+        self.assertEqual(self.page.locator('.tabbar button').count(), 4)
+        entry.tap()
+        dialog = self.page.get_by_role('dialog', name='来源健康')
+        filters = dialog.get_by_role('group', name='按来源状态筛选')
+        filters.wait_for()
+        self.assertTrue(filters.evaluate('e => e.scrollWidth === e.clientWidth'))
+        snapshot = json.loads((self.health_out / 'data/health.json').read_text())
+        total = len(snapshot['sources'])
+        self.assertEqual(filters.get_by_role('button').all_text_contents(),
+                         [f'全部 {total}', f'健康 {total - 5}', '失败 1', '登录失效 1', '断更 2', '未配置 1'])
+        self.assertEqual(dialog.locator('.health-overview').inner_text(), f'{total} 个来源 · {total - 5} 健康 · 5 需处理')
+        self.assertFalse(dialog.locator('[data-health-group="ok"]').evaluate('e => e.open'))
+        self.assertEqual(dialog.locator('details.health-section[open]').count(), 4)
+        filters.get_by_role('button', name='断更 2').tap()
+        self.assertEqual(filters.get_by_role('button', pressed=True).inner_text(), '断更 2')
+        self.assertEqual(dialog.locator('.health-name:visible').all_text_contents(), ['X', '卫报 World'])
+        self.assertTrue(dialog.get_by_text('检查原始转储是否仍在供稿', exact=False).is_visible())
+        filters.get_by_role('button', name='未配置 1').tap()
+        self.assertEqual(dialog.locator('.health-name:visible').all_text_contents(), ['知乎'])
+        self.assertTrue(dialog.get_by_text('需要时再配置', exact=False).is_visible())
+        filters.get_by_role('button', name=f'健康 {total - 5}').tap()
+        self.assertEqual(dialog.locator('.health-name:visible').count(), total - 5)
+        filters.get_by_role('button', name=f'全部 {total}').tap()
+        failed = dialog.locator('[data-health-group="failed"]')
+        self.assertTrue(failed.is_visible())
+        failed.locator('summary').tap()
+        self.assertFalse(failed.evaluate('e => e.open'))
+        self.assertFalse(failed.get_by_text('通常下一轮会自动重试', exact=False).is_visible())
+        dialog.get_by_role('button', name='返回').tap()
+        dialog.wait_for(state='hidden')
+        self.assertTrue(entry.is_visible())
+
+    def test_health_entry_remains_available_when_summary_is_missing_or_all_healthy(self):
+        for summary in (None, {'total': 8, 'issues': 0}):
+            with self.subTest(summary=summary):
+                def serve_meta(route):
+                    meta = json.loads((self.health_out / 'data/meta.json').read_text())
+                    meta['health_summary'] = summary
+                    route.fulfill(json=meta)
+
+                self.page.route('**/data/meta.json*', serve_meta)
+                self.open()
+                entry = self.page.get_by_role('link', name='来源状态' if summary is None else '来源状态，全部健康', exact=True)
+                self.assertTrue(entry.is_visible())
+                self.assertNotIn('0', entry.inner_text())
+                self.page.unroute('**/data/meta.json*', serve_meta)
 
     def test_health_diagnostics_link_is_lazy_and_handles_fetch_failure(self):
         requested = []

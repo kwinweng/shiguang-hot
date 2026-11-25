@@ -453,7 +453,8 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
     for item in bloggers['items']:
         id_index[item['id']] = 'bloggers.json'
     _write(data / 'id-index.json', id_index)
-    _write(data / 'health.json', build_health(envelopes, items, now))
+    health = build_health(envelopes, items, now)
+    _write(data / 'health.json', health)
     _inject_features(tmp)
     input_times = [parse_time(e.get('generated_at')) for _, e in envelopes] + \
                   ([parse_time(hotsearch[1].get('generated_at'))] if hotsearch else [])
@@ -468,6 +469,10 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
         'public_base': public_base,
         'fixture': report['fallback_fixture'],
         'counts': {'news': len(news), 'posts': len(posts)},
+        'health_summary': {
+            'total': len(health['sources']),
+            'issues': sum(row['status'] != 'ok' for row in health['sources']),
+        },
         'channels': channels_meta,
     }
     _write(data / 'meta.json', meta)

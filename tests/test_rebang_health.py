@@ -12,7 +12,7 @@ from tests.rebang_site_testdata import NOW, envelope
 
 
 @pytest.fixture
-def health(tmp_path):
+def health_files(tmp_path):
     root = tmp_path / 'in'
     root.mkdir()
     old = (NOW - timedelta(days=3)).isoformat()
@@ -46,7 +46,12 @@ def health(tmp_path):
         (root / f'{entry["producer"]}.json').write_text(json.dumps(entry), encoding='utf-8')
     output = tmp_path / 'site'
     builder.build(output, root, now=NOW, hot_archive_dir=tmp_path / 'hot')
-    return json.loads((output / 'data/health.json').read_text())
+    return output / 'data'
+
+
+@pytest.fixture
+def health(health_files):
+    return json.loads((health_files / 'health.json').read_text())
 
 
 def test_health_contract_covers_news_channels_and_blogger_platforms(health):
@@ -110,3 +115,10 @@ def test_tg_success_survives_an_overwritten_failed_status(tmp_path):
     assert row(first)['last_ok_at'] == NOW.isoformat()
     assert row(second)['last_ok_at'] == NOW.isoformat()
     assert row(second)['collection_ok'] is False
+
+
+def test_home_metadata_summarizes_the_same_top_level_sources(health_files, health):
+    meta = json.loads((health_files / 'meta.json').read_text())
+    rows = health['sources']
+    assert meta['health_summary'] == {'total': len(rows), 'issues': sum(row['status'] != 'ok' for row in rows)}
+    assert set(meta['health_summary']) == {'total', 'issues'}

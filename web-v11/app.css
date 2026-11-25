@@ -474,7 +474,7 @@ html.app-fullscreen .app{bottom:auto;height:var(--app-h)}
 html,body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Microsoft YaHei",sans-serif}
 .lucide{stroke-width:var(--icon-stroke)}
 
-/* 顶栏：频道名 + 下拉箭头，右边刷新 / 搜索；没有 logo、没有日期 */
+/* 顶栏：频道名 + 下拉箭头，右边来源状态 / 刷新 / 搜索 */
 .top{min-height:calc(var(--top) + var(--safe-top));padding:var(--safe-top) 8px 0 16px;gap:4px;justify-content:space-between;z-index:7;transition:transform var(--duration-slow) var(--ease-out)}
 .brand{display:flex;align-items:center;gap:6px;min-width:0;border:0;background:none;padding:6px 4px 6px 0;cursor:pointer;color:var(--ink);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .chname{font-size:22px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62vw;line-height:1.2}
@@ -482,7 +482,11 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang S
 .chev svg{width:18px;height:18px;stroke-width:2.6;transition:transform var(--duration-base) var(--ease-out)}
 .brand.open .chev svg{transform:rotate(180deg)}
 .app[data-tab="favorites"] .chev{visibility:hidden}
-.top-act{display:flex;gap:2px;flex:none}
+.top-act{display:flex;align-items:center;gap:2px;flex:none}
+.health-entry{display:inline-flex;align-items:center;gap:5px;min-height:44px;padding:0 6px;color:var(--mute);font-size:var(--text-sm);text-decoration:none;white-space:nowrap}
+.health-entry-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.health-entry.has-issues .health-entry-dot{background:var(--destructive)}
+.health-entry-count{color:var(--destructive);font-weight:700;font-variant-numeric:tabular-nums}
 .icon-btn{width:40px;height:40px}
 .icon-btn svg{width:22px;height:22px}
 /* 下拉：频道 / 平台 / 日期 */
@@ -857,25 +861,40 @@ mark{background:none;color:var(--primary)}
 .health-bar .rb{border-color:var(--border);background:var(--card)}
 .health-bar h1{font-size:var(--text-4xl);line-height:1.2;margin:0;letter-spacing:-.02em}
 .health-bar p{margin:var(--space-1) 0 0;font-size:var(--text-sm);color:var(--foreground-soft)}
-.health-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:var(--space-5) var(--page-pad) calc(var(--space-8) + var(--safe-bot))}
-.health-section+.health-section{margin-top:var(--space-8)}
-.health-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-2);padding-bottom:var(--space-2);border-bottom:1px solid var(--border-strong)}
-.health-section-head h2{margin:0;font-size:var(--text-lg)}
-.health-section-head span,.health-group{font-size:var(--text-sm);color:var(--foreground-soft)}
-.health-rows,.health-accounts ul{margin:0;padding:0;list-style:none}
-.health-row,.health-account{padding:var(--space-3) 0;border-bottom:1px solid var(--border);overflow-wrap:anywhere}
-.health-row-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-3)}
-.health-group{display:block;margin-bottom:var(--space-1)}
-.health-name,.health-account-name{font-size:var(--text-lg);line-height:1.35}
-.health-status{flex:none;display:inline-flex;align-items:center;gap:var(--space-1);padding:var(--space-1) var(--space-2);border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--foreground-soft);font-size:var(--text-sm);line-height:1}
-.health-status::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
-.health-status[data-status="login_expired"],.health-status[data-status="failed"]{color:var(--destructive);background:var(--accent);border-color:var(--accent-border)}
-.health-status[data-status="stale"]::before{background:var(--warning)}
-.health-reason,.health-age{margin:var(--space-1) 0 0;font-size:var(--text-sm2);color:var(--foreground-soft)}
-.health-age{font-weight:700;color:var(--foreground);font-variant-numeric:tabular-nums}
-.health-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-1) var(--space-3);margin-top:var(--space-2);font-size:var(--text-sm);color:var(--foreground-soft);font-variant-numeric:tabular-nums}
-.health-accounts{margin-top:var(--space-2);font-size:var(--text-sm2)}
+.health-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 var(--page-pad) calc(var(--space-8) + var(--safe-bot))}
+.health-controls{position:sticky;top:0;z-index:1;padding:var(--space-4) 0 var(--space-3);background:var(--background)}
+.health-overview{margin:0 0 var(--space-2);font-size:var(--text-sm2);color:var(--foreground-soft);font-variant-numeric:tabular-nums}
+.health-overview b{color:var(--foreground)}
+.health-filters{display:flex;gap:3px;overflow-x:auto;padding:2px;scrollbar-width:none}
+.health-filters::-webkit-scrollbar{display:none}
+.health-filters button{flex:none;min-height:36px;padding:0 4px;border:1px solid var(--border);border-radius:var(--radius-full);background:var(--background);color:var(--foreground-soft);font:inherit;font-size:var(--text-sm);white-space:nowrap;cursor:pointer}
+.health-filters button span{font-weight:700;font-variant-numeric:tabular-nums}
+.health-filters button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent-border);color:var(--accent-foreground)}
+.health-filters button:focus-visible{outline:2px solid var(--ring);outline-offset:0}
+.health-section{--health-mark:var(--foreground-soft);border:1px solid var(--border);border-radius:var(--radius-md);background:var(--background);margin-bottom:var(--space-3)}
+.health-section[data-health-group="login_expired"],.health-section[data-health-group="failed"]{--health-mark:var(--destructive)}
+.health-section[data-health-group="stale"]{--health-mark:var(--warning)}
+.health-section-head{display:flex;align-items:center;gap:var(--space-2);min-height:44px;padding:0 var(--space-3);list-style:none;cursor:pointer}
+.health-section-head::-webkit-details-marker{display:none}
+.health-section-head::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--health-mark)}
+.health-section-head::after{content:'';width:7px;height:7px;margin:0 3px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);color:var(--foreground-soft)}
+.health-section[open]>.health-section-head::after{transform:translateY(-2px) rotate(45deg)}
+.health-group-title{flex:1;font-size:var(--text-base);font-weight:700}
+.health-group-count,.health-group{font-size:var(--text-sm);color:var(--foreground-soft)}
+.health-group-count{font-variant-numeric:tabular-nums}
+.health-advice{margin:0 var(--space-3);padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);background:var(--muted);color:var(--foreground-soft);font-size:var(--text-sm);line-height:1.55}
+.health-advice b{color:var(--foreground);margin-right:var(--space-1)}
+.health-rows,.health-accounts ul{margin:0;padding:0 var(--space-3);list-style:none}
+.health-row,.health-account{padding:var(--space-3) 0;overflow-wrap:anywhere}
+.health-row+.health-row,.health-account+.health-account{border-top:1px solid var(--border)}
+.health-row-head,.health-row-head>div{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-1) var(--space-2)}
+.health-row-head{justify-content:space-between}
+.health-name,.health-account-name{font-size:var(--text-base);line-height:1.35}
+.health-status{flex:none;padding:var(--space-1) var(--space-2);border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--foreground-soft);font-size:var(--text-sm);line-height:1}
+.health-status[data-status="login_expired"],.health-status[data-status="failed"]{color:var(--accent-foreground);background:var(--accent);border-color:var(--accent-border)}
+.health-reason,.health-age{margin:var(--space-1) 0 0;font-size:var(--text-sm);color:var(--foreground-soft)}
+.health-age{font-weight:700;font-variant-numeric:tabular-nums}
+.health-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-1) var(--space-3);margin-top:var(--space-1);font-size:var(--text-sm);color:var(--foreground-soft);font-variant-numeric:tabular-nums}
+.health-accounts{margin-top:var(--space-1);font-size:var(--text-sm2)}
 .health-accounts summary{width:fit-content;padding:var(--space-2) 0;cursor:pointer;color:var(--foreground-soft)}
-.health-accounts ul{padding:0 var(--space-3);border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card)}
-.health-account:last-child{border-bottom:0}
-.health-account-name{font-size:var(--text-base)}
+.health-accounts ul{border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card)}

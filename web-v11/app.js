@@ -226,6 +226,7 @@
   }
   async function loadAll(fresh) {
     meta = await getJSON('meta.json', fresh);
+    updateHealthEntry(meta.health_summary);
     channels().forEach(c => {
       remember(c.banner);
       ch[c.slug] = {list: [], page: 0, pages: c.pages || 1, total: c.feed_total || 0, loading: false, error: null};
@@ -967,6 +968,36 @@
   }
   const HEALTH_HASH = '#/health';
   let healthLoad = 0;
+  function updateHealthEntry(summary) {
+    const entry = $('#healthEntry');
+    const count = entry.querySelector('.health-entry-count');
+    const {total, issues} = summary || {};
+    const known = Number.isInteger(total) && Number.isInteger(issues) && total > 0 && issues >= 0 && issues <= total;
+    const needsAttention = known && issues > 0;
+    entry.classList.toggle('has-issues', needsAttention);
+    count.textContent = needsAttention ? issues : '';
+    count.hidden = !needsAttention;
+    if (known) entry.setAttribute('aria-label', needsAttention ? `来源状态，${issues} 个来源需处理` : '来源状态，全部健康');
+    else entry.removeAttribute('aria-label');
+  }
+  function filterHealth(event) {
+    const selected = event.target.closest('[data-health-filter]');
+    if (!selected) return;
+    const body = event.currentTarget;
+    const status = selected.dataset.healthFilter;
+    body.querySelectorAll('[data-health-filter]').forEach(button => button.setAttribute('aria-pressed', button === selected));
+    let visible = false;
+    body.querySelectorAll('[data-health-group]').forEach(group => {
+      group.hidden = status !== 'all' && group.dataset.healthGroup !== status;
+      if (!group.hidden) {
+        visible = true;
+        if (status !== 'all') group.open = true;
+      }
+    });
+    const empty = body.querySelector('.health-empty');
+    empty.hidden = visible;
+    empty.textContent = visible ? '' : '此状态暂无来源。';
+  }
   async function openHealth(fromPop = false) {
     const dialog = $('#healthView');
     if (dialog.open) return;
@@ -1501,6 +1532,12 @@
     $('#btnRefresh').onclick = doRefresh;
     $('#btnBack').onclick = () => closeArticle();
     document.querySelector('.app').addEventListener('click', onClick);
+    $('#healthEntry').addEventListener('click', e => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      openHealth();
+    });
+    $('#healthBody').addEventListener('click', filterHealth);
     $('#healthBack').onclick = leaveHealth;
     $('#healthView').addEventListener('cancel', e => { e.preventDefault(); leaveHealth(); });
     const deepHealth = location.hash === HEALTH_HASH;
