@@ -1,7 +1,7 @@
 {
  "schema": "rebang.search-index/1",
  "timezone": "Asia/Shanghai",
- "generated_at": "2026-11-26T02:10:13+08:00",
+ "generated_at": "2026-11-26T03:11:28+08:00",
  "entries": [
   {
    "id": "github-trending:HKUDS/CLI-Anything",
@@ -11,7 +11,7 @@
    "source_name": "GitHub Trending",
    "title": "HKUDS/CLI-Anything",
    "summary": "\"CLI-Anything: Making ALL Software Agent-Native\" -- CLI-Hub: https://clianything.cc/",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -30,7 +30,7 @@
    "source_name": "GitHub Trending",
    "title": "Tracer-Cloud/opensre",
    "summary": "The open-source agent for CI/CD reliability.",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -49,7 +49,7 @@
    "source_name": "GitHub Trending",
    "title": "XiaoYouChR/Ghost-Downloader-3",
    "summary": "The only downloader you need. 下载器的集大成者。",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "zh",
    "translated": false,
    "image": null,
@@ -68,7 +68,7 @@
    "source_name": "GitHub Trending",
    "title": "cathrynlavery/diagram-design",
    "summary": "Editorial diagram design for Claude Code, Codex, GitHub Copilot, Cursor, Factory Droid, Qoder, and Pi. 52 diagram types. Self-contained HTML + SVG. No shadows. No Mermaid slop.",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -87,7 +87,7 @@
    "source_name": "GitHub Trending",
    "title": "cursor/plugins",
    "summary": "Cursor plugin specification and official plugins",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -106,7 +106,7 @@
    "source_name": "GitHub Trending",
    "title": "elementalsouls/Claude-BugHunter",
    "summary": "A Claude Code skill bundle for bug hunting and external red-team work - 84 skills, 15 slash commands, 681 disclosed-report patterns curated across 24 core vulnerability classes, plus enterprise identity + infrastructure attack matrices.",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -125,7 +125,7 @@
    "source_name": "GitHub Trending",
    "title": "firecrawl/firecrawl",
    "summary": "Knowledge infrastructure to make your agents smarter. Search, scrape and access 550+ data providers through one API.",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -144,7 +144,7 @@
    "source_name": "GitHub Trending",
    "title": "google-labs-code/stitch-skills",
    "summary": "A library of Agent Skills designed to work with the Stitch MCP server. Each skill follows the Agent Skills open standard, for compatibility with coding agents such as Antigravity, Gemini CLI, Claude Code, Cursor.",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -163,7 +163,7 @@
    "source_name": "GitHub Trending",
    "title": "jingyaogong/minimind",
    "summary": "🧠 两小时从 0 训出你的 64M 大模型。Train your own 64M LLM from scratch in 2 hours.",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "zh",
    "translated": false,
    "image": null,
@@ -182,7 +182,7 @@
    "source_name": "GitHub Trending",
    "title": "mjmirza/app-store-compliance",
    "summary": "Avoid common App Store and Google Play rejections. Open playbook and pre-submission guard with 124 documented rejection patterns and fixes, privacy manifest and Data safety checks, 114 tracked deadlines (EU AI Act, DSA, COPPA, age laws), and a skill for AI coding agents.",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -201,7 +201,7 @@
    "source_name": "GitHub Trending",
    "title": "mvanhorn/last30days-skill",
    "summary": "AI agent skill that researches any topic across Reddit, X, YouTube, HN, Polymarket, and the web - then synthesizes a grounded summary",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -220,7 +220,7 @@
    "source_name": "GitHub Trending",
    "title": "nginx/nginx",
    "summary": "The official NGINX Open Source repository.",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -239,7 +239,7 @@
    "source_name": "GitHub Trending",
    "title": "obra/superpowers",
    "summary": "An agentic skills framework & software development methodology that works.",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -258,7 +258,7 @@
    "source_name": "GitHub Trending",
    "title": "openvinotoolkit/openvino",
    "summary": "OpenVINO™ is an open source toolkit for optimizing and deploying AI inference",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -277,7 +277,7 @@
    "source_name": "GitHub Trending",
    "title": "toeverything/AFFiNE",
    "summary": "There can be more than Notion and Miro. AFFiNE(pronounced [ə‘fain]) is a next-gen knowledge base that brings planning, sorting and creating all together. Privacy first, open-source, customizable and ready to use.",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -296,12 +296,138 @@
    "source_name": "GitHub Trending",
    "title": "zhouxiaoka/autoclip",
    "summary": "AutoClip｜一个链接，一键出片。开源 AI 视频剪辑桌面工具，将播客、访谈、课程等长视频自动剪成短视频，生成字幕、封面和发布文案，适配抖音、小红书、TikTok、Reels 与 YouTube Shorts。Open-source AI video clipping & content repurposing.",
-   "published_at": "2026-11-26T02:09:22+08:00",
+   "published_at": "2026-11-26T03:10:22+08:00",
    "lang": "zh",
    "translated": false,
    "image": null,
    "display_title": "zhouxiaoka/autoclip",
    "display_summary": "AutoClip｜一个链接，一键出片。开源 AI 视频剪辑桌面工具，将播客、访谈、课程等长视频自动剪成短视频，生成字幕、封面和发布文案，适配抖音、小红书、TikTok、Reels 与 YouTube Shorts。Open-source AI video clipping & content repurposing.",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "france24-en:abb4915e-e8ec-11f1-815c-19884702b0eb",
+   "kind": "news",
+   "channel": "world",
+   "source_id": "france24-en",
+   "source_name": "France 24 English",
+   "title": "The ‘French Milei’? Presidential candidate David Lisnard aims to reshape France’s right wing",
+   "summary": "Having secured reelection victory Wednesday as leader of France's mayors, Cannes Mayor David Lisnard turns once more to build on his recent bid for the Élysée. As his Nouvelle Énergie movement gains momentum, questions swirl over whether his campaign will reshape the French political landscape, or i…",
+   "published_at": "2026-11-26T02:59:26+08:00",
+   "lang": "en",
+   "translated": false,
+   "image": {
+    "url": "https://s.france24.com/media/display/b4432cb4-e8f0-11f1-9c76-29d00e23de9a/w:1024/p:16x9/000-D8KT7H4.jpg"
+   },
+   "display_title": "The ‘French Milei’? Presidential candidate David Lisnard aims to reshape France’s right wing",
+   "display_summary": "Having secured reelection victory Wednesday as leader of France's mayors, Cannes Mayor David Lisnard turns once more to build on his recent bid for the Élysée. As his Nouvelle Énergie movement gains momentum, questions swirl over whether his campaign will reshape the French political landscape, or i…",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "android-authority:https://www.androidauthority.com/anker-maggo-2-in-1-qi2-stand-deal-3739435/",
+   "kind": "news",
+   "channel": "digital",
+   "source_id": "android-authority",
+   "source_name": "Android Authority",
+   "title": "Anker’s MagGo 2-in-1 Qi2 charging stand is 35% off on Amazon",
+   "summary": "Save $19 on a Qi2 stand that charges an iPhone and earbuds together, with a tilting pad made for StandBy mode.",
+   "published_at": "2026-11-26T02:58:39+08:00",
+   "lang": "en",
+   "translated": false,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
+   "display_title": "Anker’s MagGo 2-in-1 Qi2 charging stand is 35% off on Amazon",
+   "display_summary": "Save $19 on a Qi2 stand that charges an iPhone and earbuds together, with a tilting pad made for StandBy mode.",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "android-authority:https://www.androidauthority.com/whatsapp-message-scheduling-3739465/",
+   "kind": "news",
+   "channel": "digital",
+   "source_id": "android-authority",
+   "source_name": "Android Authority",
+   "title": "WhatsApp catches up to Google Messages with scheduling for texts, photos, and videos",
+   "summary": "Messages can be set 10 minutes to 14 days ahead of time.",
+   "published_at": "2026-11-26T02:56:35+08:00",
+   "lang": "en",
+   "translated": false,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/abcf0d8ed9e15363a846c5c9abfee3f4ff25b4d53060bf3a6b6bea4f42922592?s=96&d=mm&r=g"
+   },
+   "display_title": "WhatsApp catches up to Google Messages with scheduling for texts, photos, and videos",
+   "display_summary": "Messages can be set 10 minutes to 14 days ahead of time.",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497148",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "#标普 可能下调 #英伟达 信用评级",
+   "summary": "标普：将英伟达AA评级置于负面观察清单。 英伟达的管理和治理框架暴露出脆弱性，尤其是在董事会结构、构成和效能方面。 英伟达CEO #黄仁勋 的离职与复职，未能充分解答我们对董事会监督高管行为准则的疑问。 近期事件动摇了对英伟达管理与治理框架的判断。 有关首席执行官的消息，以及潜在出口管制违规相关疑问，暴露出英伟达管理与治理体系存在薄弱环节，尤其是董事会架构、组成与履职有效性方面。",
+   "published_at": "2026-11-26T02:45:02+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "#标普 可能下调 #英伟达 信用评级",
+   "display_summary": "标普：将英伟达AA评级置于负面观察清单。 英伟达的管理和治理框架暴露出脆弱性，尤其是在董事会结构、构成和效能方面。 英伟达CEO #黄仁勋 的离职与复职，未能充分解答我们对董事会监督高管行为准则的疑问。 近期事件动摇了对英伟达管理与治理框架的判断。 有关首席执行官的消息，以及潜在出口管制违规相关疑问，暴露出英伟达管理与治理体系存在薄弱环节，尤其是董事会架构、组成与履职有效性方面。",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "bbc-world:https://www.bbc.co.uk/news/articles/ckp80mjr9emyo#1",
+   "kind": "news",
+   "channel": "world",
+   "source_id": "bbc-world",
+   "source_name": "BBC World",
+   "title": "Colombian police storm supermarket to free 76 held hostage for 17 hours",
+   "summary": "One gunman was killed after what the country's president described as a robbery of a cash-laden armoured car gone wrong.",
+   "published_at": "2026-11-26T02:41:33+08:00",
+   "lang": "en",
+   "translated": false,
+   "image": {
+    "url": "https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/997a/live/4f4b3940-e8c4-11f1-ac76-db9e97f93d67.jpg"
+   },
+   "display_title": "Colombian police storm supermarket to free 76 held hostage for 17 hours",
+   "display_summary": "One gunman was killed after what the country's president described as a robbery of a cash-laden armoured car gone wrong.",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "youtube-UCBJycsmduvYEL83R_U4JriQ:-Cd_JmKG1SM",
+   "kind": "post",
+   "channel": null,
+   "source_id": "youtube-UCBJycsmduvYEL83R_U4JriQ",
+   "source_name": "MKBHD",
+   "title": "I've Been Keeping This A Secret",
+   "summary": "The biggest project I've ever done Get dbrand’s Black Friday’s deals at https://dbrand.com/shop/black-friday MKBHD Merch: http://shop.MKBHD.com Playlist of MKBHD Intro music: https://goo.gl/B3AWV5 ~ h…",
+   "published_at": "2026-11-26T02:32:40+08:00",
+   "lang": "en",
+   "translated": false,
+   "image": {
+    "url": "https://i.ytimg.com/vi/-Cd_JmKG1SM/hqdefault.jpg",
+    "width": 480,
+    "height": 360
+   },
+   "display_title": "I've Been Keeping This A Secret",
+   "display_summary": "The biggest project I've ever done Get dbrand’s Black Friday’s deals at https://dbrand.com/shop/black-friday MKBHD Merch: http://shop.MKBHD.com Playlist of MKBHD Intro music: https://goo.gl/B3AWV5 ~ h…",
    "translation_title": "",
    "translation_summary": "",
    "original_title": "",
@@ -724,6 +850,27 @@
    "original_summary": ""
   },
   {
+   "id": "bbc-world:https://www.bbc.co.uk/news/articles/c893r9ke5p97o#0",
+   "kind": "news",
+   "channel": "world",
+   "source_id": "bbc-world",
+   "source_name": "BBC World",
+   "title": "US announces new tariffs on host of countries including China",
+   "summary": "The new levies would hit many of America's biggest trading partners, including China and the EU.",
+   "published_at": "2026-11-26T00:21:34+08:00",
+   "lang": "en",
+   "translated": false,
+   "image": {
+    "url": "https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/511d/live/da29c130-e860-11f1-a330-6153c8fb2fad.jpg"
+   },
+   "display_title": "US announces new tariffs on host of countries including China",
+   "display_summary": "The new levies would hit many of America's biggest trading partners, including China and the EU.",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
    "id": "france24-en:54477996-e8e6-11f1-b322-bd1f14743847",
    "kind": "news",
    "channel": "world",
@@ -755,30 +902,11 @@
    "published_at": "2026-11-26T00:20:48+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "CMF Watch 3 Pro hits a new low at just $55",
    "display_summary": "Save 30% on Nothing's budget smartwatch with an AMOLED screen, dual-band GPS, and 13-day battery life.",
-   "translation_title": "",
-   "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
-  },
-  {
-   "id": "bbc-world:https://www.bbc.co.uk/news/articles/ckp80mjr9emyo#1",
-   "kind": "news",
-   "channel": "world",
-   "source_id": "bbc-world",
-   "source_name": "BBC World",
-   "title": "Colombian police storm supermarket to free 20 held hostage for 17 hours",
-   "summary": "One gunman was killed in the operation to free around 20 shoppers and employees after a 17-hour hostage ordeal.",
-   "published_at": "2026-11-26T00:20:14+08:00",
-   "lang": "en",
-   "translated": false,
-   "image": {
-    "url": "https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/997a/live/4f4b3940-e8c4-11f1-ac76-db9e97f93d67.jpg"
-   },
-   "display_title": "Colombian police storm supermarket to free 20 held hostage for 17 hours",
-   "display_summary": "One gunman was killed in the operation to free around 20 shoppers and employees after a 17-hour hostage ordeal.",
    "translation_title": "",
    "translation_summary": "",
    "original_title": "",
@@ -795,7 +923,9 @@
    "published_at": "2026-11-26T00:17:30+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "Save $90 on the subscription-free RingConn Gen 2 smart ring",
    "display_summary": "RingConn's titanium smart ring with sleep breathing insights is down to $209.30 in most colors and sizes on Amazon.",
    "translation_title": "",
@@ -926,6 +1056,27 @@
    "original_summary": ""
   },
   {
+   "id": "itsfoss:6b06604382845000011c9a41",
+   "kind": "news",
+   "channel": "tools",
+   "source_id": "itsfoss",
+   "source_name": "It's FOSS",
+   "title": "Meet Warty, the AI Launcher Canonical Is Building for Ubuntu",
+   "summary": "Ubuntu's AI launcher should be available in January. Every AI feature introduced is being strictly opt-in and local-first.",
+   "published_at": "2026-11-25T23:58:00+08:00",
+   "lang": "en",
+   "translated": false,
+   "image": {
+    "url": "https://itsfoss.com/content/images/2026/11/warty-ai-launcher-featured.png"
+   },
+   "display_title": "Meet Warty, the AI Launcher Canonical Is Building for Ubuntu",
+   "display_summary": "Ubuntu's AI launcher should be available in January. Every AI feature introduced is being strictly opt-in and local-first.",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
    "id": "android-authority:https://www.androidauthority.com/hyperx-cloud-stinger-3-deal-3739090/",
    "kind": "news",
    "channel": "digital",
@@ -936,7 +1087,9 @@
    "published_at": "2026-11-25T23:48:16+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "HyperX Cloud Stinger 3 gaming headset drops to a record-low $29.99",
    "display_summary": "Save 40% on HyperX's wired multi-platform headset with 50mm drivers ahead of Black Friday.",
    "translation_title": "",
@@ -1144,7 +1297,9 @@
    "published_at": "2026-11-25T23:06:17+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/6cd5b4fff48a72343378204d7ff12b76f26c17a2c7b80034d427b5d0b1d8daeb?s=96&d=mm&r=g"
+   },
    "display_title": "Samsung quietly expands Modes and Routines with AI and 7 presets in One UI 9.5",
    "display_summary": "You can ask Gemini or Perplexity, but only Perplexity answers automatically.",
    "translation_title": "",
@@ -1481,7 +1636,9 @@
    "published_at": "2026-11-25T22:42:56+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "Dreame D30 Ultra CE robot vacuum falls $250 to record low",
    "display_summary": "Save 42% on Dreame's self-emptying, mop-washing robot with 25,000Pa suction ahead of Black Friday.",
    "translation_title": "",
@@ -1742,7 +1899,9 @@
    "published_at": "2026-11-25T22:01:46+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "Soundcore Space One Pro foldable ANC headphones are 43% off",
    "display_summary": "Save $86 on Anker's travel-friendly noise canceling headphones, now matching their lowest price on Amazon.",
    "translation_title": "",
@@ -1784,7 +1943,9 @@
    "published_at": "2026-11-25T21:59:00+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "Best Black Friday deals: Big discounts on phones, smartwatches, and more",
    "display_summary": "The biggest sale of the year is underway, and prices are plunging already. Here are the best tech deals you can grab now.",
    "translation_title": "",
@@ -1999,7 +2160,9 @@
    "published_at": "2026-11-25T21:22:31+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "Blink Outdoor 4 XR four-camera kit drops $195 before Black Friday",
    "display_summary": "Get four Blink Outdoor 4 cameras and the long-range Sync Module XR for $104.99, matching the lowest price yet.",
    "translation_title": "",
@@ -2018,7 +2181,9 @@
    "published_at": "2026-11-25T21:22:11+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "Anker’s 100W Universal Charger gets its first discount at 25% off",
    "display_summary": "Save $20 on Anker's 4-in-1 travel charger with built-in US, UK, and EU plugs ahead of Black Friday.",
    "translation_title": "",
@@ -2058,7 +2223,9 @@
    "published_at": "2026-11-25T21:18:36+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/058e8e6b631e57744dd9123c899b3e20af8d4935a921278e81df78bdcecb83ca?s=96&d=mm&r=g"
+   },
    "display_title": "Motorola’s Android 17 update fixes Android Auto connections on folded Razr phones",
    "display_summary": "No more flipping open your Razr every time you start your car.",
    "translation_title": "",
@@ -2077,7 +2244,9 @@
    "published_at": "2026-11-25T21:18:32+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/de57d49533224884cb44d9482c8cffb377003b5789e35d5b5af1b172e306e276?s=96&d=mm&r=g"
+   },
    "display_title": "Google Messages is testing a revamped voice messaging and media viewer interface",
    "display_summary": "The app is also testing an updated media viewer with a larger viewing area and other tweaks.",
    "translation_title": "",
@@ -2464,7 +2633,9 @@
    "published_at": "2026-11-25T20:31:15+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "Sony WH-1000XM4C get their first big discount at $102 off",
    "display_summary": "Sony's refreshed M4 2nd Gen noise canceling headphones are 34% off on Amazon in every color.",
    "translation_title": "",
@@ -2609,7 +2780,9 @@
    "published_at": "2026-11-25T20:17:10+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "Prime members can grab UGREEN’s 10,000mAh power bank for $19.99",
    "display_summary": "UGREEN's compact two-port power bank with a digital display is 33% off for Prime members on Amazon.",
    "translation_title": "",
@@ -2649,7 +2822,9 @@
    "published_at": "2026-11-25T20:14:35+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "Nothing Phone (4a) Pro drops to $397.99, its lowest price yet",
    "display_summary": "Save $101 on Nothing's midrange phone with a 3.5x periscope camera and a 144Hz AMOLED display.",
    "translation_title": "",
@@ -2727,7 +2902,9 @@
    "published_at": "2026-11-25T19:46:18+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "Sony’s ULT Field 3 speaker drops 39% to a record low",
    "display_summary": "Save $82 on Sony's rugged IP67 speaker with a shoulder strap and up to 24 hours of battery.",
    "translation_title": "",
@@ -2805,7 +2982,9 @@
    "published_at": "2026-11-25T19:38:31+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/6cd5b4fff48a72343378204d7ff12b76f26c17a2c7b80034d427b5d0b1d8daeb?s=96&d=mm&r=g"
+   },
    "display_title": "One UI 9.5 may try to sell you Samsung Care Plus if you drop your Galaxy phone",
    "display_summary": "One UI 9.5 Beta 1 code shows Warranty Care uses drop sensor data to trigger protection plan ads without mentioning the fall.",
    "translation_title": "",
@@ -2824,7 +3003,9 @@
    "published_at": "2026-11-25T19:35:17+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/058e8e6b631e57744dd9123c899b3e20af8d4935a921278e81df78bdcecb83ca?s=96&d=mm&r=g"
+   },
    "display_title": "Samsung Galaxy Z TriFold 2 codename leak hints at another limited release",
    "display_summary": "Internal naming pattern offers clues about Samsung's plans.",
    "translation_title": "",
@@ -2902,7 +3083,9 @@
    "published_at": "2026-11-25T19:30:51+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/5bf559c72da43f04bd4554db82a8f81b7cf0090dd83e541b7415e1435f13b49b?s=96&d=mm&r=g"
+   },
    "display_title": "I’ve used the Pixel 11 Pro XL for months, and I wouldn’t go without these 6 accessories",
    "display_summary": "Keeping my Pixel spoiled and charged.",
    "translation_title": "",
@@ -2940,7 +3123,9 @@
    "published_at": "2026-11-25T19:26:01+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "Amazfit T-Rex 3 Pro rugged smartwatch hits a record low",
    "display_summary": "Save $87 on the 44mm T-Rex 3 Pro with a titanium bezel, sapphire glass, offline maps, and a flashlight.",
    "translation_title": "",
@@ -3045,7 +3230,9 @@
    "published_at": "2026-11-25T19:01:12+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "Samsung Galaxy Tab A11 Plus falls to $199.99 for Black Friday",
    "display_summary": "Save $100 on Samsung's 11-inch family tablet with quad speakers and a 7,040mAh battery.",
    "translation_title": "",
@@ -3253,7 +3440,9 @@
    "published_at": "2026-11-25T18:39:43+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/b27af426fe857d6e9f6e60a83e03ba4ab095d836fbb5f878886563426248f136?s=96&d=mm&r=g"
+   },
    "display_title": "SimpliSafe’s six-piece security system with outdoor camera is 60% off",
    "display_summary": "Save $180 on this no-contract SimpliSafe kit, now down to its lowest price ever on Amazon.",
    "translation_title": "",
@@ -3312,7 +3501,9 @@
    "published_at": "2026-11-25T18:31:16+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/15f29d52dfaf5ef5c66fba946d21cbd21b13515a91154e00d035315ddf66298a?s=96&d=mm&r=g"
+   },
    "display_title": "Galaxy Watch is reportedly no longer summing up multi-activity sessions, and users are upset",
    "display_summary": "But an easy fix to the problem is to create a workout routine.",
    "translation_title": "",
@@ -3526,7 +3717,9 @@
    "published_at": "2026-11-25T17:52:54+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/a53ed6b4751896a56a03afdec7f9758c9b2f811e944ea66f22afa8c1bed4514c?s=96&d=mm&r=g"
+   },
    "display_title": "Google’s AI Mode now lets you attach up to 10 photos at once",
    "display_summary": "You can finally attach multiple photos in AI Mode without opening the camera every time.",
    "translation_title": "",
@@ -3589,7 +3782,9 @@
    "published_at": "2026-11-25T17:37:20+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/058e8e6b631e57744dd9123c899b3e20af8d4935a921278e81df78bdcecb83ca?s=96&d=mm&r=g"
+   },
    "display_title": "ChatGPT and Codex will share usage limits for paid users starting in December",
    "display_summary": "Using one AI tool could limit how much you can use another.",
    "translation_title": "",
@@ -3646,7 +3841,9 @@
    "published_at": "2026-11-25T17:30:23+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/029c35a751c00716b1c7b28fe1ad3343e7f54f4121d4d4604591fe73dabdf05a?s=96&d=mm&r=g"
+   },
    "display_title": "I didn’t realize how useful Google Contacts was until I used these 5 features",
    "display_summary": "I was missing out on some of the app's best features.",
    "translation_title": "",
@@ -3711,7 +3908,9 @@
    "published_at": "2026-11-25T17:11:25+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/a53ed6b4751896a56a03afdec7f9758c9b2f811e944ea66f22afa8c1bed4514c?s=96&d=mm&r=g"
+   },
    "display_title": "Apple, Samsung, and other phone makers don’t think they can sell as many phones in 2027",
    "display_summary": "The smartphone market is bracing for troubled times ahead.",
    "translation_title": "",
@@ -3749,7 +3948,9 @@
    "published_at": "2026-11-25T17:02:21+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/9c7f56fbb975a5fb385c2ec30931fe6b2752fabc0000f5a5cc3b8cdea827cf5d?s=96&d=mm&r=g"
+   },
    "display_title": "Survey says nearly 3 in 5 readers are already on Android 17, despite low global numbers",
    "display_summary": "That still leaves plenty of devices stuck on older versions, though.",
    "translation_title": "",
@@ -3848,7 +4049,9 @@
    "published_at": "2026-11-25T16:30:56+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/5bf559c72da43f04bd4554db82a8f81b7cf0090dd83e541b7415e1435f13b49b?s=96&d=mm&r=g"
+   },
    "display_title": "Gemini Notebook’s flashcards just got a lot better for studies with three new features",
    "display_summary": "Your flashcards now have a better sense of time than you.",
    "translation_title": "",
@@ -3890,7 +4093,9 @@
    "published_at": "2026-11-25T16:13:40+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/15f29d52dfaf5ef5c66fba946d21cbd21b13515a91154e00d035315ddf66298a?s=96&d=mm&r=g"
+   },
    "display_title": "Gemini’s floating overlay now helps you compare prices, check warranty terms across shopping apps",
    "display_summary": "Gemini overlay uses screen context and recommends actions while using shopping apps on Android.",
    "translation_title": "",
@@ -3966,7 +4171,9 @@
    "published_at": "2026-11-25T16:09:59+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/058e8e6b631e57744dd9123c899b3e20af8d4935a921278e81df78bdcecb83ca?s=96&d=mm&r=g"
+   },
    "display_title": "Samsung promises One UI 9.5 will fix rapidly declining battery health on Galaxy phones",
    "display_summary": "Premature battery wear or a software error?",
    "translation_title": "",
@@ -4256,7 +4463,9 @@
    "published_at": "2026-11-25T15:28:49+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/a53ed6b4751896a56a03afdec7f9758c9b2f811e944ea66f22afa8c1bed4514c?s=96&d=mm&r=g"
+   },
    "display_title": "OnePlus Nord 7 leaks with an RGB light strip and a downgraded display",
    "display_summary": "Is it a simple light bar, or something more like the Pixel HiLight feature? Guess we'll have to wait and see.",
    "translation_title": "",
@@ -4401,7 +4610,9 @@
    "published_at": "2026-11-25T14:58:17+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/5bf559c72da43f04bd4554db82a8f81b7cf0090dd83e541b7415e1435f13b49b?s=96&d=mm&r=g"
+   },
    "display_title": "Google Messages gets Gemini Tasks integration for delivery updates, price alerts, and more",
    "display_summary": "Finally, someone who texts you first and brings good news.",
    "translation_title": "",
@@ -4601,7 +4812,9 @@
    "published_at": "2026-11-25T14:11:27+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/058e8e6b631e57744dd9123c899b3e20af8d4935a921278e81df78bdcecb83ca?s=96&d=mm&r=g"
+   },
    "display_title": "Motorola Signature 27 demand pushes US delivery dates into December",
    "display_summary": "A good problem to have for a $1,600 smartphone.",
    "translation_title": "",
@@ -4854,7 +5067,9 @@
    "published_at": "2026-11-25T12:46:44+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/7f183d01a058c294b48d10ff4fd0aae344ee3f997bb1f586abb187695f5112a4?s=96&d=mm&r=g"
+   },
    "display_title": "T-Mobile announces Black Friday 2026 deals: Free Pixel 11 Pro, Galaxy S26 Plus, and more",
    "display_summary": "T-Mobile's Black Friday deals also include a free Razr Fold or Razr Plus with trade-ins or a new line.",
    "translation_title": "",
@@ -4993,7 +5208,9 @@
    "published_at": "2026-11-25T12:02:04+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/7f183d01a058c294b48d10ff4fd0aae344ee3f997bb1f586abb187695f5112a4?s=96&d=mm&r=g"
+   },
    "display_title": "HUAWEI found guilty of conspiracy to steal trade secrets in the US",
    "display_summary": "HUAWEI's latest guilty verdict could spell trouble for its smartphones well beyond the US.",
    "translation_title": "",
@@ -5184,7 +5401,9 @@
    "published_at": "2026-11-25T11:28:28+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/7f183d01a058c294b48d10ff4fd0aae344ee3f997bb1f586abb187695f5112a4?s=96&d=mm&r=g"
+   },
    "display_title": "Google explains why your Nest camera is missing some features in the Home app",
    "display_summary": "No, Google Home's limited Nest camera controls aren't a bug.",
    "translation_title": "",
@@ -6309,27 +6528,6 @@
    "original_summary": ""
   },
   {
-   "id": "bbc-world:https://www.bbc.co.uk/news/articles/c893r9ke5p97o#0",
-   "kind": "news",
-   "channel": "world",
-   "source_id": "bbc-world",
-   "source_name": "BBC World",
-   "title": "US preparing to unveil plan for new tariffs on global trading partners",
-   "summary": "The new levies would hit many of America's biggest trading partners, including China and the EU.",
-   "published_at": "2026-11-25T08:38:01+08:00",
-   "lang": "en",
-   "translated": false,
-   "image": {
-    "url": "https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/511d/live/da29c130-e860-11f1-a330-6153c8fb2fad.jpg"
-   },
-   "display_title": "US preparing to unveil plan for new tariffs on global trading partners",
-   "display_summary": "The new levies would hit many of America's biggest trading partners, including China and the EU.",
-   "translation_title": "",
-   "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
-  },
-  {
    "id": "xhqcankao:33325",
    "kind": "news",
    "channel": "tech-ai",
@@ -6805,7 +7003,9 @@
    "published_at": "2026-11-25T06:22:44+08:00",
    "lang": "en",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/6fd2c1bc0909db20b789bd00a8260741d02a95e051f35a0d6f0ccc5c90e35c58?s=96&d=mm&r=g"
+   },
    "display_title": "Android Auto is rolling out a new app navigation layout perfect for wide displays",
    "display_summary": "Android Auto 18.2 shows new side navigation in Spotify, YouTube Music, and more.",
    "translation_title": "",
