@@ -5014,8 +5014,40 @@
     },
     {
       "id": "xhqcankao",
-      "last_update": "2026-11-25T12:02:14+08:00",
+      "last_update": "2026-11-25T13:00:33+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-25",
+          "hot": false,
+          "hour": "2026-11-25 13:00",
+          "id": "169664844999f4a336f0",
+          "image": "",
+          "link": "https://t.me/xhqcankao/33334",
+          "source": "xhqcankao",
+          "source_name": "风向旗参考快讯",
+          "summary": "Anthropic宣布Claude推出 “安装为应用”功能测试版，允许用户将AI生成的Artifacts直接安装为Mac或Windows桌面应用，无需手动打包、签名，也无需单独申请API密钥。\n\n安装后的应用拥有独立图标和运行窗口，用户无需在Claude对话界面内操作，即可像使用普通桌面软件一样打开应用。这些应用能够调用Claude模型以及用户已连接的外部服务，支持与他人共享，并在底层Artifacts内容被修改后自动更新。\n\n目前，该功能正面向Claude所有订阅套餐用户逐步开放测试。这些应用仍需联网并登录Claude账号才能打开，调用Claude模型也将消耗用户现有套餐的使用额度。\n\n—— 凤凰网科技",
+          "text": "Anthropic宣布Claude推出 “安装为应用”功能测试版，允许用户将AI生成的Artifacts直接安装为Mac或Windows桌面应用，无需手动打包、签名，也无需单独申请API密钥。\n\n安装后的应用拥有独立图标和运行窗口，用户无需在Claude对话界面内操作，即可像使用普通桌面软件一样打开应用。这些应用能够调用Claude模型以及用户已连接的外部服务，支持与他人共享，并在底层Artifacts内容被修改后自动更新。\n\n目前，该功能正面向Claude所有订阅套餐用户逐步开放测试。这些应用仍需联网并登录Claude账号才能打开，调用Claude模型也将消耗用户现有套餐的使用额度。\n\n—— 凤凰网科技",
+          "time": "2026-11-25T13:00:33+08:00",
+          "title": "Claude桌面新功能：生成内容可安装为应用",
+          "type": "telegram"
+        },
+        {
+          "category": "国际",
+          "day": "2026-11-25",
+          "hot": false,
+          "hour": "2026-11-25 12:00",
+          "id": "bbcf1d2f8b11003c0d24",
+          "image": "",
+          "link": "https://t.me/xhqcankao/33333",
+          "source": "xhqcankao",
+          "source_name": "风向旗参考快讯",
+          "summary": "美国总统特朗普在接受媒体采访、谈到黄仁勋即将赴国会作证时说，“我想，我希望他能说实话。当然，他的律师得给他建议，但在我看来，他一直都是百分之百光明磊落的人，而且，你知道，他是个非常聪明的人”。\n\n当被问及，如果黄仁勋可能涉及任何犯罪行为，特朗普是否会予以赦免。特朗普表示：“我想，这始终是一个选项，但我认为没有这个必要。”\n\n特朗普表示：“我不认为他需要援引第五修正案拒绝作证。我认为，对大家来说，这是一个很有意思的故事。”\n\n—— 新浪财经、纽约邮报",
+          "text": "美国总统特朗普在接受媒体采访、谈到黄仁勋即将赴国会作证时说，“我想，我希望他能说实话。当然，他的律师得给他建议，但在我看来，他一直都是百分之百光明磊落的人，而且，你知道，他是个非常聪明的人”。\n\n当被问及，如果黄仁勋可能涉及任何犯罪行为，特朗普是否会予以赦免。特朗普表示：“我想，这始终是一个选项，但我认为没有这个必要。”\n\n特朗普表示：“我不认为他需要援引第五修正案拒绝作证。我认为，对大家来说，这是一个很有意思的故事。”\n\n—— 新浪财经、纽约邮报",
+          "time": "2026-11-25T12:30:25+08:00",
+          "title": "特朗普称黄仁勋应向国会“说实话” 赦免他是一个选项",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-25",
@@ -14907,7 +14939,7 @@
         {
           "category": "数码",
           "day": "2026-10-26",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-26 14:00",
           "id": "5ff94cdfe1ab70a9183f",
           "image": "",
@@ -21818,10 +21850,10 @@
         }
       ],
       "name": "风向旗参考快讯",
-      "seven_day_count": 129,
+      "seven_day_count": 131,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 11,
+      "today_count": 13,
       "type": "telegram",
       "url": "https://t.me/xhqcankao"
     },
@@ -22936,7 +22968,7 @@
         {
           "category": "其他",
           "day": "2026-10-26",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-26 13:00",
           "id": "d65407df15b811aea44e",
           "image": "",
@@ -24096,8 +24128,40 @@
     },
     {
       "id": "FinanceNewsDaily",
-      "last_update": "2026-11-25T11:35:11+08:00",
+      "last_update": "2026-11-25T12:35:12+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-25",
+          "hot": false,
+          "hour": "2026-11-25 12:00",
+          "id": "6736b49b45313ddbcc42",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497118",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "A股三大指数均跌超1%，医药、消费股逆势走强。\n\n港股冲高回落，恒指、恒生科技 指数半日涨0.2%，哔哩哔哩盘中一度涨超14%。\n\n台股盘中大跌8%，韩国股市跌6%，日经225指数跌超3%，三星电子大跌9%，软银重挫16%。\n\n小米盘中一度涨超8%，花旗称业绩符预期且手机业务毛利率料稳定。\n\n希音：公司与美国FTC订立协议，公司将向美国财政部支付1亿美元。\n\n报道：贝莱德与IFM考虑下调对Stack数据中心的收购报价。\n\n报道：星巴克聘请银行为可能出售日本业务做准备。",
+          "text": "A股三大指数均跌超1%，医药、消费股逆势走强。\n\n港股冲高回落，恒指、恒生科技 指数半日涨0.2%，哔哩哔哩盘中一度涨超14%。\n\n台股盘中大跌8%，韩国股市跌6%，日经225指数跌超3%，三星电子大跌9%，软银重挫16%。\n\n小米盘中一度涨超8%，花旗称业绩符预期且手机业务毛利率料稳定。\n\n希音：公司与美国FTC订立协议，公司将向美国财政部支付1亿美元。\n\n报道：贝莱德与IFM考虑下调对Stack数据中心的收购报价。\n\n报道：星巴克聘请银行为可能出售日本业务做准备。",
+          "time": "2026-11-25T12:35:12+08:00",
+          "title": "早间要闻汇总",
+          "type": "telegram"
+        },
+        {
+          "category": "国际",
+          "day": "2026-11-25",
+          "hot": false,
+          "hour": "2026-11-25 12:00",
+          "id": "e532de68f7cf9c12d68b",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497117",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "希音在港交所公告，本公司宣布，为符合本集团之客户、员工及业务的最佳利益，已于 2026 年 11 月 24 日与 FTC 就该调查订立一份协议。该协议将于有关法院批准后生效。 根据该协议，本公司将向美国财政部支付 1 亿美元的款项。该款项将于该协议生效后 30 日内支付。该协议并不构成本公司对 FTC 相关指控的承认，本公司对 FTC 就本集团的业务和合规实践所作的描述仍持不同意见。",
+          "text": "希音在港交所公告，本公司宣布，为符合本集团之客户、员工及业务的最佳利益，已于 2026 年 11 月 24 日与 FTC 就该调查订立一份协议。该协议将于有关法院批准后生效。 根据该协议，本公司将向美国财政部支付 1 亿美元的款项。该款项将于该协议生效后 30 日内支付。该协议并不构成本公司对 FTC 相关指控的承认，本公司对 FTC 就本集团的业务和合规实践所作的描述仍持不同意见。",
+          "time": "2026-11-25T12:20:05+08:00",
+          "title": "希音-W：公司与美国FTC订立协议，公司将向美国财政部支付1亿美元",
+          "type": "telegram"
+        },
         {
           "category": "财经",
           "day": "2026-11-25",
@@ -59620,10 +59684,10 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 319,
+      "seven_day_count": 321,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 30,
+      "today_count": 32,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
@@ -64722,7 +64786,7 @@
         {
           "category": "科技",
           "day": "2026-10-26",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-26 12:00",
           "id": "2cb5b1825bc0c3b0c3ab",
           "image": "",
@@ -67695,7 +67759,7 @@
         {
           "category": "国际",
           "day": "2026-11-25",
-          "hot": false,
+          "hot": true,
           "hour": "2026-11-25 07:00",
           "id": "9ce9ebde6ef28af5cd8e",
           "image": "media/freechinese/113563_1.webp",
@@ -71026,7 +71090,7 @@
           "hot": false,
           "hour": "2026-11-11 12:00",
           "id": "76ee5b02c428911be573",
-          "image": "media/freechinese/113287_1.webp",
+          "image": "",
           "link": "https://t.me/freechinese/113287",
           "source": "freechinese",
           "source_name": "FREE 中文",
@@ -75119,7 +75183,7 @@
         {
           "category": "国际",
           "day": "2026-10-26",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-26 12:00",
           "id": "a4f8e357a67b0ccd0c58",
           "image": "",
@@ -91353,7 +91417,7 @@
         {
           "category": "其他",
           "day": "2026-10-26",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-26 16:00",
           "id": "2dad76a34b420f2f8f11",
           "image": "",
@@ -91465,7 +91529,7 @@
         {
           "category": "其他",
           "day": "2026-10-26",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-26 12:00",
           "id": "a00481a040f9b8c336dc",
           "image": "",
@@ -104936,8 +105000,24 @@
     },
     {
       "id": "zaihuapd",
-      "last_update": "2026-11-25T10:50:04+08:00",
+      "last_update": "2026-11-25T12:51:39+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-25",
+          "hot": false,
+          "hour": "2026-11-25 12:00",
+          "id": "d44589959c829db1a95e",
+          "image": "",
+          "link": "https://t.me/zaihuapd/45356",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "该模型驱动了昨日公布的 Linux 内核研究，Mozilla、Palo Alto Networks、Cisco 等公司的安全团队已在使用。 目前该模型仅向部分 Daybreak Red 客户开放，OpenAI 表示将逐步扩大访问范围。 OpenAI(@OpenAI) 🌸 科技圈· 茶馆 · 投稿",
+          "text": "该模型驱动了昨日公布的 Linux 内核研究，Mozilla、Palo Alto Networks、Cisco 等公司的安全团队已在使用。 目前该模型仅向部分 Daybreak Red 客户开放，OpenAI 表示将逐步扩大访问范围。 OpenAI(@OpenAI) 🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-25T12:51:39+08:00",
+          "title": "🤖 OpenAI 发布 GPT-6 Cyber 安全模型 OpenAI 发布 GPT-6 Cyber，称其在安全研究领域取得重大进展，能力更强且模型对齐更好",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-25",
@@ -114573,7 +114653,7 @@
         {
           "category": "科技",
           "day": "2026-10-26",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-26 17:00",
           "id": "2ad0e01e77b359394b1e",
           "image": "",
@@ -114717,7 +114797,7 @@
         {
           "category": "数码",
           "day": "2026-10-26",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-26 12:00",
           "id": "89d8665743f6b1109498",
           "image": "",
@@ -120428,10 +120508,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 125,
+      "seven_day_count": 126,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 5,
+      "today_count": 6,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -124348,8 +124428,24 @@
     },
     {
       "id": "OneMillion_AI",
-      "last_update": "2026-11-25T11:19:25+08:00",
+      "last_update": "2026-11-25T12:18:09+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-25",
+          "hot": false,
+          "hour": "2026-11-25 12:00",
+          "id": "c04e4e31aba1e502bf0e",
+          "image": "media/OneMillion_AI/6136_1.webp",
+          "link": "https://t.me/OneMillion_AI/6136",
+          "source": "OneMillion_AI",
+          "source_name": "动察Beating AI News",
+          "summary": "xAI 三位联合创始人张国栋（Guodong Zhang）、戴子航（Zihang Dai）和 Manuel Kroiss 创立了新公司 Epochal，目标是做出预测能力超越人类的 AI。张国栋个人出资 1 亿美元，团队还吸纳了来自 OpenAI、Anthropic 和 Google DeepMind 的前员工。\n\nAI 预测其实有两条技术路线。比较成熟的是时间序列模型，代表产品有 Nixtla 的 TimeGPT 和 Google 的 TimesFM，主要用于预测销量、电力负荷等具有历史数值规律的指标。但现实世界充满突发变量，一场战争、一项新政策，都可能让过去的规律失效。\n\n近年来，FutureSearch、Mantic 等初创公司开始尝试用大模型做预测。它们让 AI 像专业分析师一样，自己查新闻、读财报、搜集证据，再判断一件事发生的概率。Mantic 今年 9 月还拿到了 2500 万美元融资。\n\n训练这类 AI 有个天然的难题：数学题做完就能验算，代码写完就能运行，但预测未来可能要等几年才能知道对错。拿历史事件来训练，AI 又很容易提前看到答案。\n\nEpochal 花了 90 天",
+          "text": "xAI 三位联合创始人张国栋（Guodong Zhang）、戴子航（Zihang Dai）和 Manuel Kroiss 创立了新公司 Epochal，目标是做出预测能力超越人类的 AI。张国栋个人出资 1 亿美元，团队还吸纳了来自 OpenAI、Anthropic 和 Google DeepMind 的前员工。\n\nAI 预测其实有两条技术路线。比较成熟的是时间序列模型，代表产品有 Nixtla 的 TimeGPT 和 Google 的 TimesFM，主要用于预测销量、电力负荷等具有历史数值规律的指标。但现实世界充满突发变量，一场战争、一项新政策，都可能让过去的规律失效。\n\n近年来，FutureSearch、Mantic 等初创公司开始尝试用大模型做预测。它们让 AI 像专业分析师一样，自己查新闻、读财报、搜集证据，再判断一件事发生的概率。Mantic 今年 9 月还拿到了 2500 万美元融资。\n\n训练这类 AI 有个天然的难题：数学题做完就能验算，代码写完就能运行，但预测未来可能要等几年才能知道对错。拿历史事件来训练，AI 又很容易提前看到答案。\n\nEpochal 花了 90 天搭建 Time Portal，收录过去 30 多年间超过 1 万亿个网页，部分网页甚至可以回溯到分钟级别。除了搜索和浏览网页，AI 所处的虚拟机、系统时钟、软件包仓库和网络访问也被限制在指定的历史时间。\n\n团队选取了 Kalshi 和 Polymarket 上的 347 道真实预测题，先让 AI 在结果揭晓前作答，几周后再利用 Time Portal 回到当时重做。两次预测的误差高度一致，初步验证了利用历史互联网模拟真实预测环境的可行性。\n\n当前大模型强化学习的一大瓶颈，是缺少高质量、可自动验证的训练任务。编程模型已经可以利用 GitHub 上真实发生的软件故障进行训练，通过运行测试获得奖励。\n\nEpochal 想把这种训练方式扩展到整个真实世界。过去几十年的企业兴衰、金融危机、技术革命和政策变化，都有可能被转化为强化学习任务。AI 可以根据当时的信息作出预测，再用真实的历史结局给自己的判断打分。原本需要等待数年的反馈，现在可以立即获得。\n\n不过，即使把互联网恢复到 2008 年，一个读过金融史的大模型也可能早就知道雷曼兄弟会破产。预测对了，究竟是学会了分析经济形势，还是记住了历史课本里的答案？如何解决模型预训练阶段已经记住历史结局的问题，仍是这套训练方法的一大难关。\n\n目前 Epochal 已开放 Time Portal 的 API，并提供企业级服务，其他 AI 实验室也可以接入这套环境。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "time": "2026-11-25T12:18:09+08:00",
+          "title": "xAI三位联创再创业：重建30年互联网，让AI穿越回过去学习预测未来",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-25",
@@ -128548,7 +128644,7 @@
           "hot": false,
           "hour": "2026-11-11 12:00",
           "id": "b154c7f09830cbaf35a0",
-          "image": "media/OneMillion_AI/5853_1.webp",
+          "image": "",
           "link": "https://t.me/OneMillion_AI/5853",
           "source": "OneMillion_AI",
           "source_name": "动察Beating AI News",
@@ -134416,10 +134512,10 @@
         }
       ],
       "name": "动察Beating AI News",
-      "seven_day_count": 107,
+      "seven_day_count": 108,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 2,
+      "today_count": 3,
       "type": "telegram",
       "url": "https://t.me/OneMillion_AI"
     },
