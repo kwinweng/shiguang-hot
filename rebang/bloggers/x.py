@@ -20,10 +20,9 @@ METRIC_MAP = {
 MAX_COMMENTS = 10
 REF_PREFIXES = ('quotes', 'replies', 'refs')
 _TCO = re.compile(r'\s*https://t\.co/\w+\s*$')
-# Include object starts cut off even before the first key or colon.
-_BLOB_START = re.compile(r'\{\s*(?="|$)')
-# A top-level array of responses starts with "[" followed by an object or its end.
-_VALUE_START = re.compile(r'\[\s*(?=\{|\]|$)|\{\s*(?="|$)')
+# 日志里的 JSON 只认两种起点：行首，或行首的 `output:` 之后。其他前缀的行（如 debug:）
+# 是日志正文，不当响应读。
+_VALUE_START = re.compile(r'^[ \t]*(?:output:[ \t]*)?(?=[\[{])', re.M | re.I)
 
 
 def _object(value):
@@ -58,10 +57,10 @@ def _decode_blobs(text, *, json_file):
     broken = json_file or text.lstrip().startswith('[')
     while match := _VALUE_START.search(text, pos):
         try:
-            obj, pos = dec.raw_decode(text, match.start())
+            obj, pos = dec.raw_decode(text, match.end())
         except (ValueError, RecursionError):
             broken = True
-            pos = match.end()
+            pos = match.end() + 1
         else:
             out.extend(obj if isinstance(obj, list) else [obj])
     return out, broken
@@ -109,11 +108,22 @@ def _failed_handles(file, errors, handles, users):
     return failed
 
 
+def _when(value):
+    """可展示的时间（北京时间 ISO）；解析不了或超出范围返回 None。"""
+    moment = parse_time(value)
+    if moment is None:
+        return None
+    try:
+        return iso(moment)
+    except (OverflowError, ValueError):
+        return None
+
+
 def _valid_post(row, users):
     row = _object(row)
     author = row.get('author_id')
     return (_nonempty(row.get('id')) and _nonempty(author) and author in users
-            and parse_time(row.get('created_at')) is not None and bool(_full_text(row)))
+            and _when(row.get('created_at')) is not None and bool(_full_text(row)))
 
 
 def read_export(path, account_handles):
@@ -301,7 +311,7 @@ def _quote(post, posts, users):
             return None  # 拿不全就不画引用框
         return {'handle': author['username'], 'display_name': _display_name(author, author['username']),
                 'text': _TCO.sub('', text) or text, 'url': f'https://x.com/{author["username"]}/status/{q["id"]}',
-                'published_at': iso(parse_time(q['created_at'])) if parse_time(q.get('created_at')) else None}
+                'published_at': _when(q.get('created_at'))}
     return None
 
 
@@ -317,12 +327,12 @@ def _comments(post, posts, users):
     out = []
     for r in replies[:MAX_COMMENTS]:
         author = _author(r, users)
-        moment = parse_time(r.get('created_at'))
+        published = _when(r.get('created_at'))
         text = re.sub(r'^(?:@\w+\s+)+', '', _full_text(r)).strip()
-        if not (author.get('username') and text and moment):
+        if not (author.get('username') and text and published):
             continue
         row = {'handle': author['username'], 'display_name': _display_name(author, author['username']),
-               'avatar': _avatar(author), 'text': text, 'published_at': iso(moment),
+               'avatar': _avatar(author), 'text': text, 'published_at': published,
                'url': f'https://x.com/{author["username"]}/status/{r["id"]}'}
         like = _metrics(r).get('like')
         if isinstance(like, int) and like >= 0:
@@ -346,8 +356,9 @@ def x_posts(dump, platform, fetched_at, limit=10):
                    and not any(r.get('type') in ('retweeted', 'replied_to') for r in _references(p))]
             for p in own:
                 moment = parse_time(p.get('created_at'))
+                published = _when(p.get('created_at'))
                 text = _full_text(p)
-                if not moment or not text:
+                if not published or not text:
                     continue
                 media_list = _media(p, media)
                 display = _TCO.sub('', text) if media_list or p.get('referenced_tweets') else text
@@ -385,7 +396,7 @@ def x_posts(dump, platform, fetched_at, limit=10):
                     'source_id': sid, 'source_name': blogger['display_name'],
                     'title': '', 'summary': summary_of(display), 'body': clip(display, BODY_CHARS),
                     'url': f'https://x.com/{user["username"]}/status/{p["id"]}',
-                    'image': image, 'published_at': iso(moment), 'fetched_at': fetched_at,
+                    'image': image, 'published_at': published, 'fetched_at': fetched_at,
                     'lang': lang, 'blogger': blogger,
                 }))
         items.sort(key=lambda pair: pair[0], reverse=True)

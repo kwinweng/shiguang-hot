@@ -265,6 +265,8 @@ def run_x_export(tmp_path, text, *, suffix='.json', direct_dir=False, previous=N
     ('.json', '{"meta":{"result_count":0}}\n{ "data": ['),
     ('.txt', 'output: {"meta":{"result_count":0}}\n{ "da'),
     ('.txt', 'output: [{"meta":{"result_count":0}}'),
+    ('.txt', 'output: [null, {"meta":{"result_count":0}}'),
+    ('.txt', '[{"meta":{"result_count":0}}'),
     ('.json', '{"data":[{"id":"1"}],"meta":{"result_count":1}}'),
     ('.json', '{"data":[{"id":"1","author_id":"2","text":"ok","created_at":"2026-11-15T10:00:00Z"}]}'),
 ])
@@ -307,6 +309,29 @@ def test_x_auxiliary_rows_fill_quote_and_full_text(tmp_path):
     assert item['body'] == 'short but the full long text'
     assert item['blogger']['quote']['text'] == 'quoted body'
     assert item['blogger']['quote']['published_at'] is None
+
+
+def test_x_ignores_lists_in_other_log_lines(tmp_path):
+    text = 'output: {"meta":{"result_count":0}}\ndebug: [{\'kind\':\'debug\'}]\nnote {"x": 1'
+    rows = run_x_export(tmp_path, text, suffix='.txt')
+    assert all(a['status'] == 'empty' and a['last_ok_at'] == NOW.isoformat() for a in rows.values())
+
+
+def test_x_out_of_range_quote_time_keeps_main_post(tmp_path):
+    main = {'id': '10', 'author_id': '1', 'text': 'main', 'created_at': '2026-11-15T10:00:00Z',
+            'conversation_id': '10', 'referenced_tweets': [{'type': 'quoted', 'id': '20'}]}
+    reply = {'id': '30', 'author_id': '2', 'text': 'reply', 'created_at': '9999-12-31T23:59:59Z', 'conversation_id': '10'}
+    (tmp_path / 'posts.json').write_text(json.dumps({
+        'data': [main], 'meta': {'result_count': 1},
+        'includes': {'users': [{'id': '1', 'username': 'karpathy'}, {'id': '2', 'username': 'other'}],
+                     'tweets': [{'id': '20', 'author_id': '2', 'created_at': '9999-12-31T23:59:59Z'},
+                                {'id': '20', 'text': 'quote'}, reply]},
+    }))
+    platform = {'id': 'x', 'accounts': [{'handle': 'karpathy', 'name': 'K'}]}
+    item, = x_posts(load_dump(tmp_path), platform, '2026-11-15T18:00:00+08:00')['karpathy']
+    assert item['blogger']['quote']['text'] == 'quote'
+    assert item['blogger']['quote']['published_at'] is None
+    assert 'comments' not in item['blogger']
 
 
 def test_x_accepts_txt_only_export_directory(tmp_path):

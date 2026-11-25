@@ -85,3 +85,13 @@ test('health skips malformed sources and accounts while showing one warning', ()
   assert.equal([...html.matchAll(/部分数据缺损/g)].length, 1);
   assert.match(H.healthHTML([null], base), /部分数据缺损/);
 });
+
+test('snapshot time must be a real calendar moment with a timezone', () => {
+  const now = Date.parse('2026-03-02T12:01:00Z');
+  for (const value of ['2026-02-30T12:00:00Z', '2026-03-02T12:00:00', '2026-13-01T00:00:00Z',
+    '2026-03-02T24:00:00Z', {toString: null}, null]) {
+    assert.equal(H.snapshotFreshness(value, now), 'unknown', String(JSON.stringify(value)));
+  }
+  assert.equal(H.snapshotFreshness('2026-03-02T20:00:00+08:00', now), 'fresh');
+  assert.equal(H.snapshotFreshness('2024-02-29T00:00:00Z', Date.parse('2024-02-29T01:00:00Z')), 'fresh');
+});
