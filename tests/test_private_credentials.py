@@ -32,6 +32,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import threading
 import urllib.request
 
@@ -42,6 +43,7 @@ from rebang.bloggers import run as runmod
 from rebang.bloggers import weibo, weread
 
 NOW = datetime(2026, 11, 25, 12, 0, tzinfo=timezone.utc)
+_REAL_SUBPROCESS_RUN = subprocess.run
 
 
 @pytest.fixture(autouse=True)
@@ -721,6 +723,7 @@ def test_save_cookie_pbpaste_success_saves_owner_only(home, monkeypatch, capsys)
     ('{"data": {"errCode": "-2012"}}', 'login_expired'),
     ('{"errCode": 0, "data": {"errCode": -2013}}', 'api_-2013'),
     ('{"errCode": "-2013"}', 'api_-2013'),
+    ('{"errCode": "' + '9' * 5000 + '"}', 'api_error'),
     ('{"errCode": false}', 'api_error'),
     ('{"errCode": true}', 'api_error'),
 ])
@@ -738,24 +741,53 @@ def test_weread_numeric_string_zero_is_accepted():
     assert weread.http_text('https://weread.qq.com/a', SESSION, run=curl) == '{"ok": 1, "errCode": "0"}'
 
 
+def test_save_cookie_pbpaste_stalled_stdout_times_out_and_preserves_old_cookie(home):
+    import time
+    cookie = home / '.config' / 'rebang' / 'weibo-cookie.txt'
+    put(cookie, SECRET)
+    before = (cookie.stat().st_ino, cookie.read_text())
+
+    def slow_popen(cmd, **kwargs):
+        return subprocess.Popen([sys.executable, '-c',
+                                 'import sys, time; sys.stdout.write("SUB=a"); sys.stdout.flush(); time.sleep(5)'],
+                                **kwargs)
+
+    t0 = time.monotonic()
+    with pytest.raises(weibo.WeiboError) as exc:
+        weibo.read_pbpaste(popen=slow_popen, timeout=0.1)
+    assert exc.value.code == 'clipboard_failed'
+    assert time.monotonic() - t0 < 2.0
+    assert (cookie.stat().st_ino, cookie.read_text()) == before
+
+
 # ---------- Blocker 4: weread status handles non-UTF-8 and deeply nested JSON without traceback ----------
 
-def test_weread_status_handles_non_utf8_response(folder, monkeypatch, capsys):
-    def bad_utf8(*args, **kwargs):
-        raise UnicodeDecodeError('utf-8', b'\xff\xfe', 0, 1, 'invalid start byte')
+def test_weread_status_handles_non_utf8_response_even_under_latin1_locale(folder, monkeypatch, capsys):
+    def non_utf8_run(cmd, **kwargs):
+        assert kwargs.get('encoding') == 'utf-8' and kwargs.get('errors') == 'strict'
+        return _REAL_SUBPROCESS_RUN([sys.executable, '-c',
+                                     'import sys; sys.stdout.buffer.write(b\'{"userVid": 1, "name": "\\xff"}\\n200 \')'],
+                                    capture_output=True, text=True, encoding=kwargs['encoding'], errors=kwargs['errors'])
 
-    rc, out = status_with(folder, monkeypatch, capsys, bad_utf8)
+    rc, out = status_with(folder, monkeypatch, capsys, non_utf8_run)
     assert rc == 1 and out['session'] is True and out['valid'] is False and out['error'] == 'bad_encoding'
 
 
 def test_weread_status_handles_deep_json_response(folder, monkeypatch, capsys):
     url = 'https://weread.qq.com/api/userInfo?userVid=1'
-    deep = '[' * 2000 + ']' * 2000
-    rc, out = status_with(folder, monkeypatch, capsys, FakeCurl({url: ('200', '', deep)}))
+    real_loads = weread.json.loads
+
+    def boom(text, *a, **k):
+        if text == '{"deep": 1}':
+            raise RecursionError('maximum recursion depth exceeded')
+        return real_loads(text, *a, **k)
+
+    monkeypatch.setattr(weread.json, 'loads', boom)
+    rc, out = status_with(folder, monkeypatch, capsys, FakeCurl({url: ('200', '', '{"deep": 1}')}))
     assert rc == 1 and out['session'] is True and out['valid'] is False and out['error'] == 'http_200_not_json'
 
 
-def test_weread_status_handles_non_utf8_and_deep_json_session_file(folder, capsys):
+def test_weread_status_handles_non_utf8_and_deep_json_session_file(folder, monkeypatch, capsys):
     session = folder / 'weread-session.json'
     session.write_bytes(b'\xff\xfe\x00')
     session.chmod(0o600)
@@ -763,9 +795,11 @@ def test_weread_status_handles_non_utf8_and_deep_json_session_file(folder, capsy
     out = json.loads(capsys.readouterr().out)
     assert out['session'] is False
 
-    session.write_text('[' * 2000 + ']' * 2000)
+    session.write_text('{"deep": 1}')
     session.chmod(0o600)
+    real_loads = weread.json.loads
+    monkeypatch.setattr(weread.json, 'loads', lambda text, *a, **k: (_ for _ in ()).throw(RecursionError('deep'))
+                        if text == '{"deep": 1}' else real_loads(text, *a, **k))
     assert weread.main(['status', '--session', str(session)]) == 1
-    out = json.loads(capsys.readouterr().out)
+    out = real_loads(capsys.readouterr().out)
     assert out['session'] is False and out['error'] == 'session_invalid'
-

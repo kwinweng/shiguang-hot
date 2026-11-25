@@ -13,8 +13,10 @@ import argparse
 import json
 import os
 import re
+import select
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 from datetime import datetime
@@ -358,21 +360,53 @@ def read_stdin_limited(stream):
 
 
 def read_pbpaste(popen=None, timeout=10):
-    """直接调用 pbpaste 读入内存（最多 MAX_BYTES+1 字节），确认退出码为 0 后才返回；失败不碰旧 Cookie。"""
+    """直接调用 pbpaste 读入内存（最多 MAX_BYTES+1 字节），总超时覆盖读取和等待；确认退出码为 0 后才返回，失败不碰旧 Cookie。"""
     try:
         proc = (popen or subprocess.Popen)(['pbpaste'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     except OSError:
         raise WeiboError('clipboard_failed') from None
+    deadline = time.monotonic() + timeout
+    limit = private_file.MAX_BYTES + 1
     try:
-        raw = proc.stdout.read(private_file.MAX_BYTES + 1) if proc.stdout is not None else b''
+        stream = proc.stdout
+        if stream is None:
+            raw = b''
+        else:
+            try:
+                fd = stream.fileno()
+            except (AttributeError, OSError):
+                fd = None
+            if fd is not None:
+                chunks, size = [], 0
+                while size < limit:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise subprocess.TimeoutExpired('pbpaste', timeout)
+                    ready, _, _ = select.select([fd], [], [], remaining)
+                    if not ready:
+                        raise subprocess.TimeoutExpired('pbpaste', timeout)
+                    chunk = os.read(fd, limit - size)
+                    if not chunk:
+                        break
+                    chunks.append(chunk)
+                    size += len(chunk)
+                raw = b''.join(chunks)
+            else:
+                raw = stream.read(limit)
         if len(raw) > private_file.MAX_BYTES:
             proc.kill()
-            proc.wait(timeout=timeout)
+            proc.wait(timeout=max(0.1, deadline - time.monotonic()))
             raise WeiboError('too_large')
-        rc = proc.wait(timeout=timeout)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise subprocess.TimeoutExpired('pbpaste', timeout)
+        rc = proc.wait(timeout=remaining)
     except subprocess.TimeoutExpired:
         proc.kill()
-        proc.wait()
+        try:
+            proc.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            pass
         raise WeiboError('clipboard_failed') from None
     except OSError:
         raise WeiboError('clipboard_failed') from None

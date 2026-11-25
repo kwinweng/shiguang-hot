@@ -97,7 +97,8 @@ def _curl(url, session, timeout, accept, extra=(), run=None):
         config.append(f'cookie = "wr_vid={session["vid"]}; wr_skey={session["skey"]}"')
     try:
         r = (run or subprocess.run)(['curl', '-q', '-K', '-', '-w', '\n%{http_code} %{redirect_url}'],
-                                    input='\n'.join(config) + '\n', capture_output=True, text=True, timeout=timeout + 15)
+                                    input='\n'.join(config) + '\n', capture_output=True, text=True,
+                                    encoding='utf-8', errors='strict', timeout=timeout + 15)
     except (OSError, subprocess.TimeoutExpired):
         raise WereadError('network') from None
     except UnicodeDecodeError:
@@ -116,7 +117,7 @@ def _parse_err_code(value):
         num = value
     elif isinstance(value, str):
         text = value.strip()
-        if re.fullmatch(r'[+-]?\d+', text):
+        if re.fullmatch(r'[+-]?\d{1,18}', text):
             num = int(text)
         else:
             return 'api_error'
