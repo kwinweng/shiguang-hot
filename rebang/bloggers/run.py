@@ -7,7 +7,9 @@ from datetime import timedelta
 from pathlib import Path
 
 from rebang.contract.schema import ITEMS_SCHEMA, load_bloggers, validate_items_envelope
+from rebang.health_time import observation_time
 
+from . import X_STALE_HOURS
 from . import jike as jike_mod
 from . import weibo as weibo_mod
 from . import youtube as yt_mod
@@ -19,12 +21,11 @@ from .feed import FeedError, feed_posts
 PRODUCER = 'bloggers'
 ALL_PLATFORMS = ('blog', 'x', 'jike', 'weibo', 'wechat', 'youtube', 'zhihu')
 YOUTUBE_CACHE = Path(__file__).resolve().parents[2] / 'var' / 'rebang' / 'cache' / 'youtube-watch.json'
-X_STALE_HOURS = 36
 
 REASONS = {
     'jike_rsshub_unset': '即刻的公共 RSSHub 地址未配置',
     'jike_mirrors_down': '公共 RSSHub 实例这次都没取到即刻',
-    'weibo_cookie_unset': '微博要副号 Cookie：~/.config/rebang/weibo-cookie.txt 还没放（或是空文件）',
+    'weibo_cookie_unset': '微博登录尚未配置',
     'weibo_cookie_expired': '微博 Cookie 已失效（接口不再返回 ok=1 或跳到登录页），站上保留上次内容；需重新登录副号换 Cookie',
     'weibo_fetch_failed': '微博接口这次没取到（网络或接口错误），站上保留上次内容',
     'wechat_weread_qr': '需要微信读书扫码登录，已准备好、等扫码',
@@ -32,6 +33,8 @@ REASONS = {
     'wechat_book_not_found': '微信读书里没搜到这个公众号',
     'x_dump_missing': '这次没有收到 X 博主的原始数据',
     'x_dump_stale': '公开 X 读取数据超过 36 小时未更新',
+    'x_dump_error': 'X 导出响应报告错误',
+    'x_dump_time_invalid': 'X 导出时间无效或缺失',
     'no_accounts': '本期名单为空',
     'youtube_pending_confirm': '频道名单待确认，确认前不抓',
     'youtube_unreachable': 'YouTube 订阅和频道页这次都没取到',
@@ -251,37 +254,56 @@ def _platform_x(platform, http, fetched_at, opts, sleep, now):
     dump = None
     if opts.x_dump:
         path = Path(opts.x_dump)
-        dump = path if path.is_file() or (path.is_dir() and any(path.glob('*.json'))) else x_mod.latest_dump(path)
+        dump = path if path.is_file() or (path.is_dir() and x_mod.dump_files(path)) else x_mod.latest_dump(path)
     if dump is None:
         return [_account(platform, a, 'not_configured', error='x_dump_missing')[0] for a in platform['accounts']], []
-    made = x_mod.dump_time(dump)
-    if made is None or now - made > timedelta(hours=X_STALE_HOURS):
-        return [_account(platform, a, 'error', error='x_dump_stale')[0] for a in platform['accounts']], []
+    made = observation_time(x_mod.dump_time(dump), now)
+    accounts = platform['accounts']
+    if made is None:
+        return [_account(platform, a, 'error', error='x_dump_time_invalid')[0] for a in accounts], []
+    if now - made > timedelta(hours=X_STALE_HOURS):
+        rows = [_account(platform, a, 'error', error='x_dump_stale')[0] for a in accounts]
+        for row in rows:
+            row['dump_at'] = iso(made)
+        return rows, []
+    handles = [a['handle'] for a in accounts]
+    failures = {}
     try:
-        by_handle = x_mod.x_posts(x_mod.load_dump(dump), platform, fetched_at, opts.limit)
-    except (ValueError, OSError, KeyError, TypeError):
-        return [_account(platform, a, 'error', error='parse')[0] for a in platform['accounts']], []
+        data, failures = x_mod.read_export(dump, handles)
+        by_handle = x_mod.x_posts(data, platform, fetched_at, opts.limit)
+    except (ValueError, OSError, KeyError, TypeError, AttributeError, OverflowError):
+        failures = {handle: failures.get(handle, 'parse') for handle in handles}
+        by_handle = {}
     # 同目录下其它已写完、未过期的旧 dump 也读进来补：例程每 2 小时只搜最近 24 小时，旧 dump 里还有一天前的帖
     root = dump.parent if opts.x_dump and Path(opts.x_dump).is_dir() and dump != Path(opts.x_dump) else None
     for older in sorted(root.iterdir()) if root else []:
         if older == dump or not older.is_dir() or not (older / '_dump.json').exists():
             continue
-        made_old = x_mod.dump_time(older)
+        made_old = observation_time(x_mod.dump_time(older), now)
         if made_old is None or now - made_old > timedelta(hours=X_STALE_HOURS):
             continue
         try:
-            extra = x_mod.x_posts(x_mod.load_dump(older), platform, fetched_at, opts.limit)
-        except (ValueError, OSError, KeyError, TypeError):
+            data, old_failures = x_mod.read_export(older, handles)
+            extra = x_mod.x_posts(data, platform, fetched_at, opts.limit)
+        except (ValueError, OSError, KeyError, TypeError, AttributeError, OverflowError):
             continue
         for handle, posts in extra.items():
+            if handle in old_failures:
+                continue
             have = {i['id'] for i in by_handle.get(handle, [])}
             by_handle[handle] = by_handle.get(handle, []) + [i for i in posts if i['id'] not in have]
     for handle, posts in by_handle.items():
         by_handle[handle] = sorted(posts, key=lambda i: i.get('published_at') or '', reverse=True)[:opts.limit]
     rows, items = [], []
-    for account in platform['accounts']:
-        got = by_handle.get(account['handle'], [])
-        row, got = _account(platform, account, 'ok' if got else 'empty', got)
+    for account in accounts:
+        handle = account['handle']
+        error = failures.get(handle)
+        if error:
+            row, got = _account(platform, account, 'error', error=error)
+        else:
+            got = by_handle.get(handle, [])
+            row, got = _account(platform, account, 'ok' if got else 'empty', got)
+        row['dump_at'] = iso(made)
         rows.append(row)
         items += got
     return rows, items
@@ -341,6 +363,7 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
         for a in p.get('accounts') or []:
             prev_accounts[(p['id'], a['handle'])] = a
     platforms, items = [], []
+    weibo_attempted = False
     for platform in config['platforms']:
         pid = platform['id']
         if pid not in platform_ids:
@@ -362,6 +385,8 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
             got = _keep_recent(pid, rows, got, prev_items, opts.limit)
         else:
             rows, got = handler(platform, http, fetched_at, opts, sleep)
+            if pid == 'weibo':
+                weibo_attempted = any(row['status'] != 'not_configured' for row in rows)
             if pid in ('youtube', 'wechat', 'weibo'):   # 微博只取第一页；YouTube 公开页一轮只补得出几条；公众号 cover 兜底每次只有最新一篇：上次的留着
                 got = _keep_recent(pid, rows, got, prev_items, opts.limit)
         got_by_source = {}
@@ -374,8 +399,7 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
                 row['last_ok_at'] = fetched_at
             else:
                 row['last_ok_at'] = prev.get('last_ok_at')
-                # A missing X export is an upstream outage, not an instruction to remove existing posts.
-                keep = row['status'] in ('error', 'login_expired') or (pid == 'x' and row.get('error') == 'x_dump_missing')
+                keep = row['status'] in ('error', 'login_expired') or row.get('error') in ('x_dump_missing', 'weibo_cookie_unset')
                 kept = prev_items.get(sid, []) if keep else []
                 if kept:
                     row['stale'] = True  # 站上保留上次成功内容，并按 last_ok_at 标日期
@@ -397,7 +421,7 @@ def run(platform_ids=ALL_PLATFORMS, http=None, now=None, previous=None, opts=Non
         opts.media_stats = media_mod.localize(fresh, getattr(opts, 'media_dir', None) or media_mod.MEDIA_DIR,
                                               **({'get': opts.media_get} if getattr(opts, 'media_get', None) else {}))
         media_mod.prune(items, getattr(opts, 'media_dir', None) or media_mod.MEDIA_DIR)
-    if 'weibo' in platform_ids and getattr(opts, 'localize_media', False):
+    if weibo_attempted and getattr(opts, 'localize_media', False):
         from . import media as media_mod
         weibo_items = [i for i in items if i['blogger']['platform'] == 'weibo']
         if weibo_items:   # 一条都没有（如 Cookie 没配）就不动已有文件

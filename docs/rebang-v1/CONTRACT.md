@@ -79,6 +79,10 @@
   - `channel/<slug>/page-<n>.json`（`rebang.page/1`）：每页 30 条，`has_more` 到最后一页为 false；「查看更多」整页按页往下加载到「没有更多了」。
   - `hotsearch.json`（当前）、`hotsearch/index.json`（`rebang.hotsearch-index/1`：`today`、`current_at`、`dates[{date,generated_at}]`）+ `hotsearch/<date>.json`（往日最后一份）。
   - `bloggers.json`（`rebang.site-bloggers/1`）：`platforms[{id,name,login,curated,icon,connected,count,status,reason,last_ok_at,accounts[{handle,name,key,total}]}]` + `items`（每平台、每人各取最新 10 条做预览）；`blogger/<platform>/<all|key>/page-<n>.json` 是每平台、每人的全部帖子分页（`key = "h-" + sha1(handle)[:10]`）。
+  - `meta.json` 的 `health_summary` 含 `total`（来源数）和 `issues`（健康以外的来源数），均按 `health.json` 的顶层来源计数。入口按 `built_at`、看板按自己的 `generated_at` 与当前时间比较，超过 3 小时提示快照已过期。
+  - `health.json`（`rebang.source-health/1`）记录 `generated_at` 和 `sources[]`。来源包括六个频道的每个新闻源（含 TG）和博主名单中的各平台，平台附 `accounts[]`。各行包括 `id`、`name`、`group`、`status`、`last_ok_at`、`count`、`run_count`、`reason` 和 `issue_since`。`count` 为最近可用条数（新闻是采集窗口内条数），`run_count` 为本轮从来源得到的条数，未知时为 `null`。`issue_since` 是异常时用于显示间隔的时间锚点，通常是上次成功时间，X 断更时用导出时间，部分账号异常时用受影响账号中最早的锚点。
+    - `ok` 正常。采集顺利但没有条目也属正常。`stale` 断更。复用 X 36 小时的导出过期规则，其余成功结果超过 48 小时判为断更。`login_expired` 沿用采集器显式判定。`failed` 为最近一轮采集失败或采集时间无效。`not_configured` 无名单、缺少配置或尚无采集记录。`unknown` 为无法识别的状态。博主平台按账号中最严重的状态展示，依次为登录失效、失败、断更、未配置、状态未知、正常。
+    - 时间带时区，未知用 `null`，超出当前时间 5 分钟的采集时间不计作成功。`reason` 只从固定文案生成；采集成功但缓存写入失败时只给出提示，不丢弃已采集的条目。原始错误、配置路径、接口地址、响应内容和凭证不进入该产物。
   - `id-index.json`：`id → 所在分页文件`，深链 `#/item/<id>` 冷启动用。
   - `search-index.json`：搜索用。
   - `<site>/media/`：本地图；`<site>/icons/`：平台官方图标（来源与许可见 `web-v11/icons/README.md`）。

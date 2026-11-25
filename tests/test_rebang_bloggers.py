@@ -1,7 +1,9 @@
 """博主分支单测：全部用 tests/fixtures/rebang/bloggers 下的真实节选样本，不联网。"""
 import json
 import os
-from datetime import datetime
+import shutil
+import subprocess
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -191,6 +193,48 @@ def test_x_accounts_without_posts_are_empty_not_invented(tmp_path):
     assert not [i for i in env['items'] if i['source_id'] == 'x-karpathy']
 
 
+@pytest.mark.parametrize(('body', 'code'), [
+    ('this is not JSON', 'parse'),
+    ('{"errors": [{"message": "private upstream details"}]}', 'x_dump_error'),
+])
+def test_x_unusable_export_keeps_last_success_and_posts(tmp_path, body, code):
+    good = runmod.run(('x',), http=fake_http(), now=NOW, opts=opts(tmp_path))
+    dump = tmp_path / 'x-export.txt'
+    dump.write_text(body)
+    later = NOW + timedelta(hours=1)
+    os.utime(dump, (later.timestamp(), later.timestamp()))
+    result = runmod.run(('x',), http=fake_http(), now=later, previous=good, opts=opts(tmp_path, x_dump=dump))
+    assert result['items'] == good['items']
+    assert all((a['status'], a.get('error'), a['last_ok_at']) == ('error', code, NOW.isoformat())
+               for a in result['platforms'][0]['accounts'])
+    assert 'private upstream details' not in json.dumps(result)
+
+
+def test_x_mixed_export_preserves_identified_failure_and_accepts_valid_zero(tmp_path):
+    good = runmod.run(('x',), http=fake_http(), now=NOW, opts=opts(tmp_path))
+    later = NOW + timedelta(hours=1)
+    dump = tmp_path / 'export'
+    dump.mkdir()
+    (dump / '_dump.json').write_text(json.dumps({'generated_at': later.isoformat()}))
+    (dump / 'search.json').write_text('{"meta": {"result_count": 0}}')
+    (dump / 'search-errors.txt').write_text('''output: { "errors": [{"resource_type":"user", "parameter":"username", "value":"LXFATER"}]}''')
+    result = runmod.run(('x',), http=fake_http(), now=later, previous=good, opts=opts(tmp_path, x_dump=dump))
+    rows = {a['handle']: a for a in result['platforms'][0]['accounts']}
+    assert (rows['lxfater']['status'], rows['lxfater'].get('error'), rows['lxfater']['last_ok_at']) == (
+        'error', 'x_dump_error', NOW.isoformat())
+    assert (rows['karpathy']['status'], rows['karpathy']['last_ok_at']) == ('empty', later.isoformat())
+
+
+@pytest.mark.parametrize('timestamp', ['2026-11-17T21:00:00+08:00', '9999-12-31T23:00:00+00:00', 'invalid'])
+def test_x_rejects_invalid_or_future_export_timestamp(tmp_path, timestamp):
+    (tmp_path / '_dump.json').write_text(json.dumps({'generated_at': timestamp}))
+    (tmp_path / 'posts.json').write_text('{"data": []}')
+    os.utime(tmp_path / 'posts.json', (NOW.timestamp(), NOW.timestamp()))
+    result = runmod.run(('x',), http=fake_http(), now=NOW, opts=opts(tmp_path, x_dump=tmp_path))
+    assert all((a['status'], a.get('error'), a['last_ok_at']) == ('error', 'x_dump_time_invalid', None)
+               for a in result['platforms'][0]['accounts'])
+
+
 def test_x_missing_dump_is_not_configured_and_keeps_last_good(tmp_path):
     missing = str(tmp_path / 'nope')
     env = run_all(tmp_path, x_dump=missing)
@@ -206,6 +250,95 @@ def test_x_missing_dump_is_not_configured_and_keeps_last_good(tmp_path):
     assert x['last_ok_at'] == good['generated_at']
 
 
+def run_x_export(tmp_path, text, *, suffix='.json', direct_dir=False, previous=None):
+    dump = tmp_path / 'export'
+    dump.mkdir()
+    file = dump / f'posts{suffix}'
+    file.write_text(text)
+    os.utime(file, (NOW.timestamp(), NOW.timestamp()))
+    path = dump if direct_dir else file
+    env = runmod.run(('x',), now=NOW, previous=previous, opts=opts(tmp_path, x_dump=str(path)))
+    return {a['handle']: a for a in env['platforms'][0]['accounts']}
+
+
+@pytest.mark.parametrize(('suffix', 'text'), [
+    ('.json', '{"meta":{"result_count":0}}\n{ "data": ['),
+    ('.txt', 'output: {"meta":{"result_count":0}}\n{ "da'),
+    ('.txt', 'output: [{"meta":{"result_count":0}}'),
+    ('.txt', 'output: [null, {"meta":{"result_count":0}}'),
+    ('.txt', '[{"meta":{"result_count":0}}'),
+    ('.json', '{"data":[{"id":"1"}],"meta":{"result_count":1}}'),
+    ('.json', '{"data":[{"id":"1","author_id":"2","text":"ok","created_at":"2026-11-15T10:00:00Z"}]}'),
+])
+def test_x_damaged_export_never_advances_success(tmp_path, suffix, text):
+    previous = runmod.run(('x',), now=NOW - timedelta(minutes=5), opts=opts(tmp_path))
+    rows = run_x_export(tmp_path, text, suffix=suffix, previous=previous)
+    assert all(a['status'] == 'error' and a['error'] == 'parse' for a in rows.values())
+    assert all(a['last_ok_at'] == previous['generated_at'] for a in rows.values())
+
+
+@pytest.mark.parametrize('broken', [False, True])
+def test_x_keeps_account_errors_with_damaged_auxiliary_rows(tmp_path, broken):
+    text = json.dumps([
+        {'errors': [{'username': 'karpathy'}], 'includes': {'users': [None, {'id': [], 'username': 'bad'}, {'id': '2', 'username': {}}],
+         'media': [None], 'posts': [None]}},
+        {'meta': {'result_count': 0}},
+    ])
+    if broken:
+        text += '\n{"data": ['
+    rows = run_x_export(tmp_path, text, suffix='.txt' if broken else '.json')
+    assert rows['karpathy']['error'] == 'x_dump_error'
+    assert rows['karpathy']['last_ok_at'] is None
+    others = [row for handle, row in rows.items() if handle != 'karpathy']
+    assert all(row['status'] == ('error' if broken else 'empty') for row in others)
+    assert all(row['last_ok_at'] == (None if broken else NOW.isoformat()) for row in others)
+
+
+def test_x_auxiliary_rows_fill_quote_and_full_text(tmp_path):
+    main = {'id': '10', 'author_id': '1', 'text': 'short', 'created_at': '2026-11-15T10:00:00Z',
+            'conversation_id': '10', 'referenced_tweets': [{'type': 'quoted', 'id': '20'}]}
+    (tmp_path / 'posts.json').write_text(json.dumps({
+        'data': [main], 'meta': {'result_count': 1},
+        'includes': {'users': [{'id': '1', 'username': 'karpathy', 'name': 'K'},
+                               {'id': '2', 'username': 'other', 'name': 'O'}],
+                     'tweets': [{'id': '20', 'author_id': '2', 'text': 'quoted body'},
+                                {'id': '10', 'note_tweet': {'text': 'short but the full long text'}}]},
+    }))
+    platform = {'id': 'x', 'accounts': [{'handle': 'karpathy', 'name': 'K'}]}
+    item, = x_posts(load_dump(tmp_path), platform, '2026-11-15T18:00:00+08:00')['karpathy']
+    assert item['body'] == 'short but the full long text'
+    assert item['blogger']['quote']['text'] == 'quoted body'
+    assert item['blogger']['quote']['published_at'] is None
+
+
+def test_x_ignores_lists_in_other_log_lines(tmp_path):
+    text = 'output: {"meta":{"result_count":0}}\ndebug: [{\'kind\':\'debug\'}]\nnote {"x": 1'
+    rows = run_x_export(tmp_path, text, suffix='.txt')
+    assert all(a['status'] == 'empty' and a['last_ok_at'] == NOW.isoformat() for a in rows.values())
+
+
+def test_x_out_of_range_quote_time_keeps_main_post(tmp_path):
+    main = {'id': '10', 'author_id': '1', 'text': 'main', 'created_at': '2026-11-15T10:00:00Z',
+            'conversation_id': '10', 'referenced_tweets': [{'type': 'quoted', 'id': '20'}]}
+    reply = {'id': '30', 'author_id': '2', 'text': 'reply', 'created_at': '9999-12-31T23:59:59Z', 'conversation_id': '10'}
+    (tmp_path / 'posts.json').write_text(json.dumps({
+        'data': [main], 'meta': {'result_count': 1},
+        'includes': {'users': [{'id': '1', 'username': 'karpathy'}, {'id': '2', 'username': 'other'}],
+                     'tweets': [{'id': '20', 'author_id': '2', 'created_at': '9999-12-31T23:59:59Z'},
+                                {'id': '20', 'text': 'quote'}, reply]},
+    }))
+    platform = {'id': 'x', 'accounts': [{'handle': 'karpathy', 'name': 'K'}]}
+    item, = x_posts(load_dump(tmp_path), platform, '2026-11-15T18:00:00+08:00')['karpathy']
+    assert item['blogger']['quote']['text'] == 'quote'
+    assert item['blogger']['quote']['published_at'] is None
+    assert 'comments' not in item['blogger']
+
+
+def test_x_accepts_txt_only_export_directory(tmp_path):
+    rows = run_x_export(tmp_path, 'output: {"meta": {"result_count": 0}}', suffix='.txt', direct_dir=True)
+    assert all(a['status'] == 'empty' and a['last_ok_at'] == NOW.isoformat() for a in rows.values())
+
+
 def test_x_stale_dump_is_error_and_keeps_last_good(tmp_path):
     good = run_all(tmp_path)
     later = datetime.fromisoformat('2026-11-18T09:00:00+08:00')
@@ -216,6 +349,8 @@ def test_x_stale_dump_is_error_and_keeps_last_good(tmp_path):
     assert kept and all(i['fetched_at'] == good['generated_at'] for i in kept)
     row = next(a for a in x['accounts'] if a['handle'] == 'lxfater')
     assert row['stale'] is True and row['last_ok_at'] == good['generated_at']
+    first = next(p for p in good['platforms'] if p['id'] == 'x')['accounts'][0]
+    assert row['dump_at'] == first['dump_at'] != row['last_ok_at']
 
 
 # ---------- 编排 / 登录类平台 ----------
@@ -810,7 +945,6 @@ def test_x_latest_dump_skips_dump_still_being_written(tmp_path):
 
 
 def test_x_reads_older_complete_dumps_in_window(tmp_path):
-    import shutil
     root = tmp_path / 'x-dump'
     shutil.copytree(FX / 'x_dump', root / '20261116T0752')
     newest = root / '20261116T1353'
@@ -934,3 +1068,55 @@ def test_weibo_default_cookie_path_not_present_is_not_configured(tmp_path, monke
     wb = next(p for p in env['platforms'] if p['id'] == 'weibo')
     assert wb['status'] == 'not_configured'
     assert not [i for i in env['items'] if i['blogger']['platform'] == 'weibo']
+
+
+def test_weibo_missing_cookie_refresh_keeps_content_and_reports_not_configured(tmp_path, monkeypatch):
+    from rebang.bloggers import weibo
+    from rebang.site.health import build_health
+
+    good = runmod.run(('weibo',), http=fake_http(), now=NOW, opts=weibo_opts(tmp_path, weibo_get()), sleep=lambda _: None)
+    assert good['items']
+
+    def unexpected(*args, **kwargs):
+        pytest.fail('missing configuration must not read a cookie or request media')
+
+    monkeypatch.setattr(weibo, 'read_cookie', unexpected)
+    later = NOW + timedelta(hours=1)
+    o = opts(tmp_path, weibo_cookie_file=tmp_path / 'missing-cookie')
+    o.localize_media = True
+    o.weibo_media_get = unexpected
+    o.media_dir = tmp_path / 'media'
+    result = runmod.run(('weibo',), http=unexpected, now=later, previous=good, opts=o)
+    assert result['platforms'][0]['status'] == 'not_configured'
+    assert result['items'] == good['items']
+    snapshot = build_health([('bloggers.json', result)], result['items'], later)
+    row = next(r for r in snapshot['sources'] if r['id'] == 'weibo')
+    assert (row['status'], row['last_ok_at'], row['reason']) == ('not_configured', NOW.isoformat(), '微博登录尚未配置')
+
+
+def test_refresh_dispatches_weibo_even_without_cookie_file(tmp_path, monkeypatch):
+    tools = tmp_path / 'tools'
+    tools.mkdir()
+    refresh = tools / 'rebang_refresh.sh'
+    shutil.copyfile(Path(__file__).resolve().parents[1] / 'tools/rebang_refresh.sh', refresh)
+    # A temporary root and stand-ins exercise argument selection without running collection or publication.
+    fake_python = tools / 'fake-python'
+    fake_python.write_text('''#!/bin/sh
+case "$2" in
+    rebang.bloggers) printf '%s\n' "$*" > bloggers-args ;;
+    rebang.ingest) touch var/rebang/in/ingest.json.tmp ;;
+    rebang.site) mkdir -p "$6/data" && touch "$6/index.html" "$6/data/meta.json" ;;
+esac
+''')
+    fake_flock = tools / 'flock'
+    fake_flock.write_text('#!/bin/sh\nexit 0\n')
+    for path in (fake_python, fake_flock):
+        path.chmod(0o700)
+    monkeypatch.setenv('PATH', str(tools) + os.pathsep + os.environ['PATH'])
+    monkeypatch.setenv('BOX_PYTHON', str(fake_python))
+    monkeypatch.setenv('REBANG_WEIBO_COOKIE', str(tmp_path / 'missing-cookie'))
+    monkeypatch.setenv('REBANG_WEIBO_OUTPUT', str(tmp_path / 'weibo-output'))
+    subprocess.run(['sh', str(refresh), '--no-publish'], cwd=tmp_path, check=True, capture_output=True)
+    arguments = (tmp_path / 'bloggers-args').read_text().split()
+    assert 'weibo' in arguments[arguments.index('--platform') + 1].split(',')
+    assert not (tmp_path / 'weibo-output').exists()

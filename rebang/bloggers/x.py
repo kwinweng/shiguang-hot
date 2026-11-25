@@ -20,69 +20,182 @@ METRIC_MAP = {
 MAX_COMMENTS = 10
 REF_PREFIXES = ('quotes', 'replies', 'refs')
 _TCO = re.compile(r'\s*https://t\.co/\w+\s*$')
+# 日志里的 JSON 只认两种起点：行首，或行首的 `output:` 之后。其他前缀的行（如 debug:）
+# 是日志正文，不当响应读。
+_VALUE_START = re.compile(r'^[ \t]*(?:output:[ \t]*)?(?=[\[{])', re.M | re.I)
 
 
-def _decode_blobs(text):
-    """从一段文本里取出所有顶层 X 响应 JSON 对象。"""
+def _object(value):
+    return value if isinstance(value, dict) else {}
+
+
+def _array(value):
+    return value if isinstance(value, list) else []
+
+
+def _nonempty(value):
+    return isinstance(value, str) and bool(value.strip())
+
+
+def dump_files(path):
+    return sorted(f for pattern in ('*.json', '*.txt') for f in path.glob(pattern)
+                  if f.is_file() and f.name != '_dump.json')
+
+
+def _decode_blobs(text, *, json_file):
+    """Find export responses in logs and keep track of decoding failures."""
+    try:
+        value = json.loads(text)
+    except (ValueError, RecursionError):
+        pass
+    else:
+        return (value if isinstance(value, list) else [value]), False
+    # 日志里只按顶层值解码：数组或对象从开头解到闭合为止，跳过其内部；任何一段解不完整，
+    # 整份就算坏，绝不把截断数组里的内层对象当成一份完整响应。
     dec = json.JSONDecoder()
     out, pos = [], 0
-    while True:
-        starts = [i for i in (text.find('{"data"', pos), text.find('{"meta"', pos), text.find('{"includes"', pos)) if i >= 0]
-        if not starts:
-            return out
-        start = min(starts)
+    broken = json_file or text.lstrip().startswith('[')
+    while match := _VALUE_START.search(text, pos):
         try:
-            obj, end = dec.raw_decode(text[start:])
-        except ValueError:
-            pos = start + 1
-            continue
-        if isinstance(obj, dict):
-            out.append(obj)
-        pos = start + end
-
-
-def load_dump(path):
-    """合并一个 dump 目录（或单个文件）里的所有响应 → (posts, users, media)。"""
-    path = Path(path)
-    files = (sorted(f for f in path.glob('*.json') if f.name != '_dump.json') + sorted(path.glob('*.txt'))) if path.is_dir() else [path]
-    posts, users, media = {}, {}, {}
-    main_ids = set()
-    for f in files:
-        reference_only = f.name.startswith(REF_PREFIXES)
-        text = f.read_text(encoding='utf-8', errors='replace')
-        blobs = []
-        if f.suffix == '.json':
-            try:
-                data = json.loads(text)
-                blobs = data if isinstance(data, list) else [data]
-            except ValueError:
-                blobs = _decode_blobs(text)
+            obj, pos = dec.raw_decode(text, match.end())
+        except (ValueError, RecursionError):
+            broken = True
+            pos = match.end() + 1
         else:
-            blobs = _decode_blobs(text)
+            out.extend(obj if isinstance(obj, list) else [obj])
+    return out, broken
+
+
+def _merge_rows(target, rows, key):
+    for row in _array(rows):
+        if isinstance(row, dict) and _nonempty(row.get(key)):
+            target.setdefault(row[key], {}).update(row)
+
+
+def _merge_posts(posts, rows):
+    for row in _array(rows):
+        if not (isinstance(row, dict) and _nonempty(row.get('id'))):
+            continue
+        merged = posts.setdefault(row['id'], {})
+        for key, value in row.items():
+            if key == 'text':
+                if isinstance(value, str) and len(value) > len(merged.get(key, '')):
+                    merged[key] = value
+            else:
+                merged.setdefault(key, value)
+
+
+def _merge_users(users, rows):
+    _merge_rows(users, [u for u in _array(rows) if _nonempty(_object(u).get('username'))], 'id')
+
+
+def _failed_handles(file, errors, handles, users):
+    def known(value):
+        return handles.get(value.strip().lstrip('@').lower()) if isinstance(value, str) else None
+
+    file_handle = known(file.stem.lower().removeprefix('search-').removeprefix('posts-'))
+    failed = set()
+    for error in _array(errors) or [{}]:
+        error = _object(error)
+        handle = known(error.get('username')) or known(error.get('handle')) or file_handle
+        if error.get('parameter') == 'username':
+            handle = known(error.get('value')) or handle
+        if error.get('resource_type') == 'user':
+            handle = known(users.get(str(error.get('resource_id')), {}).get('username')) or handle
+        if not handle:
+            return set(handles.values())
+        failed.add(handle)
+    return failed
+
+
+def _when(value):
+    """可展示的时间（北京时间 ISO）；解析不了或超出范围返回 None。"""
+    moment = parse_time(value)
+    if moment is None:
+        return None
+    try:
+        return iso(moment)
+    except (OverflowError, ValueError):
+        return None
+
+
+def _valid_post(row, users):
+    row = _object(row)
+    author = row.get('author_id')
+    return (_nonempty(row.get('id')) and _nonempty(author) and author in users
+            and _when(row.get('created_at')) is not None and bool(_full_text(row)))
+
+
+def read_export(path, account_handles):
+    """Read a complete export and preserve recognized account errors on parse failure."""
+    path = Path(path)
+    files = dump_files(path) if path.is_dir() else [path]
+    posts, users, media = {}, {}, {}
+    responses, errors = [], []
+    broken = not files
+    for file in files:
+        try:
+            blobs, malformed = _decode_blobs(file.read_text(encoding='utf-8'), json_file=file.suffix == '.json')
+        except (OSError, UnicodeError):
+            blobs, malformed = [], True
+        broken |= malformed or not blobs
         for blob in blobs:
             if not isinstance(blob, dict):
+                broken = True
                 continue
-            inc = blob.get('includes') or {}
-            for u in inc.get('users') or []:
-                users.setdefault(u['id'], {}).update(u)
-            for m in inc.get('media') or []:
-                media.setdefault(m['media_key'], {}).update(m)
-            data = [p for p in blob.get('data') or [] if isinstance(p, dict)]
-            if not reference_only:
-                main_ids.update(p['id'] for p in data if p.get('id'))
-            for p in data + list(inc.get('posts') or []) + list(inc.get('tweets') or []):
-                if isinstance(p, dict) and p.get('id'):
-                    # 后读到的字段补齐先读到的（例如搜索结果缺 note_tweet，按 id 详情补上）
-                    merged = posts.setdefault(p['id'], {})
-                    for k, v in p.items():
-                        if k not in merged or (k == 'text' and len(v) > len(merged.get(k, ''))):
-                            merged[k] = v
+            if blob.get('errors'):
+                errors.append((file, blob['errors']))
+            responses.append((file, blob))
+
+    for _, blob in responses:
+        includes = _object(blob.get('includes'))
+        _merge_users(users, includes.get('users'))
+        _merge_rows(media, includes.get('media'), 'media_key')
+
+    handles = {handle.lower(): handle for handle in account_handles}
+    failures = {handle: 'x_dump_error' for file, rows in errors
+                for handle in _failed_handles(file, rows, handles, users)}
+    main_ids, valid_main = set(), False
+    for file, blob in responses:
+        data = blob.get('data')
+        meta = _object(blob.get('meta'))
+        count = meta.get('result_count')
+        if data is None and type(count) is int and count == 0:
+            data = []
+        if data is None and ('data' not in blob and 'meta' not in blob) and ('includes' in blob or blob.get('errors')):
+            continue
+        if (('meta' in blob and not isinstance(blob['meta'], dict)) or not isinstance(data, list)
+                or not all(_valid_post(row, users) for row in data)
+                or ('result_count' in meta and (type(count) is not int or count != len(data)))):
+            broken = True
+            continue
+        if not file.name.startswith(REF_PREFIXES):
+            valid_main |= bool(data) or not blob.get('errors')
+            main_ids.update(row['id'] for row in data)
+        _merge_posts(posts, data)
+
+    if broken or not valid_main:
+        for handle in handles.values():
+            failures.setdefault(handle, 'parse')
+        return ({}, {}, {}), failures
+    for _, blob in responses:
+        includes = _object(blob.get('includes'))
+        for key in ('posts', 'tweets'):
+            # 辅助记录只按 id 补字段（引用缺日期、只有 note_tweet 的全文补充都要留下）；
+            # 引用框和评论各自校验需要的内容。
+            _merge_posts(posts, includes.get(key))
     for pid in main_ids:
         posts[pid]['_main'] = True
     store = reply_store_near(path)
     if store:
         merge_reply_store(posts, users, store)
-    return posts, users, media
+    return (posts, users, media), failures
+
+
+def load_dump(path):
+    """Read posts, users and media from a dump directory or a single file."""
+    dump, _ = read_export(path, ())
+    return dump
 
 
 def reply_store_near(dump):
@@ -104,7 +217,7 @@ def merge_reply_store(posts, users, path):
         return posts, users
     try:
         data = json.loads(path.read_text(encoding='utf-8'))
-    except (OSError, ValueError):
+    except (OSError, ValueError, RecursionError):
         return posts, users
     blobs = []
     if isinstance(data, dict) and isinstance(data.get('posts'), dict):
@@ -116,45 +229,40 @@ def merge_reply_store(posts, users, path):
     elif isinstance(data, dict) and ('data' in data or 'includes' in data):
         blobs = [data]
     for blob in blobs:
-        inc = blob.get('includes') or {}
-        for u in inc.get('users') or []:
-            if isinstance(u, dict) and u.get('id'):
-                users.setdefault(u['id'], {}).update(u)
-        rows = list(blob.get('data') or []) + list(inc.get('posts') or []) + list(inc.get('tweets') or [])
-        for post in rows:
-            if not (isinstance(post, dict) and post.get('id')):
-                continue
-            merged = posts.setdefault(post['id'], {})
-            for k, v in post.items():
-                if k not in merged or (k == 'text' and len(str(v)) > len(str(merged.get(k) or ''))):
-                    merged[k] = v
+        inc = _object(blob.get('includes'))
+        _merge_users(users, inc.get('users'))
+        for rows in (blob.get('data'), inc.get('posts'), inc.get('tweets')):
+            _merge_posts(posts, rows)
     return posts, users
 
 
 def _full_text(post):
-    note = post.get('note_tweet') or post.get('note_post') or {}
-    text = note.get('text') or post.get('text') or ''
-    return normalize_text(html.unescape(text))
+    note = _object(post.get('note_tweet')) or _object(post.get('note_post'))
+    text = note.get('text')
+    if not _nonempty(text):
+        text = post.get('text')
+    return normalize_text(html.unescape(text)) if _nonempty(text) else ''
 
 
 def _avatar(user):
     url = user.get('profile_image_url')
-    if not url or not url.startswith('https://'):
+    if not isinstance(url, str) or not url.startswith('https://'):
         return None
     return re.sub(r'_normal(\.\w+)$', r'_400x400\1', url)
 
 
 def _media(post, media):
     out = []
-    for key in (post.get('attachments') or {}).get('media_keys') or []:
-        m = media.get(key)
+    for key in _array(_object(post.get('attachments')).get('media_keys')):
+        m = media.get(key) if isinstance(key, str) else None
         if not m:
             continue
-        if m.get('type') == 'photo' and m.get('url'):
+        if m.get('type') == 'photo' and _nonempty(m.get('url')):
             entry = {'type': 'image', 'url': m['url']}
-        elif m.get('type') in ('video', 'animated_gif') and m.get('preview_image_url'):
-            mp4 = sorted((v for v in m.get('variants') or [] if v.get('content_type') == 'video/mp4' and v.get('url')),
-                         key=lambda v: v.get('bit_rate') or 0)
+        elif m.get('type') in ('video', 'animated_gif') and _nonempty(m.get('preview_image_url')):
+            mp4 = sorted((v for v in _array(m.get('variants')) if isinstance(v, dict)
+                          and v.get('content_type') == 'video/mp4' and _nonempty(v.get('url'))),
+                         key=lambda v: v.get('bit_rate') if isinstance(v.get('bit_rate'), int) else 0)
             entry = {'type': 'video' if m['type'] == 'video' else 'gif',
                      'url': mp4[-1]['url'] if mp4 else m['preview_image_url'],
                      'preview_url': m['preview_image_url']}
@@ -165,7 +273,7 @@ def _media(post, media):
         for dim in ('width', 'height'):
             if isinstance(m.get(dim), int) and m[dim] > 0:
                 entry[dim] = m[dim]
-        if m.get('alt_text'):
+        if _nonempty(m.get('alt_text')):
             entry['alt'] = m['alt_text']
         out.append(entry)
     return out
@@ -173,24 +281,37 @@ def _media(post, media):
 
 def _metrics(post):
     out = {}
-    for key, value in (post.get('public_metrics') or {}).items():
+    for key, value in _object(post.get('public_metrics')).items():
         if key in METRIC_MAP and isinstance(value, int) and value >= 0:
             out[METRIC_MAP[key]] = value
     return out
 
 
+def _references(post):
+    return [r for r in _array(post.get('referenced_tweets')) if isinstance(r, dict) and _nonempty(r.get('id'))]
+
+
+def _author(post, users):
+    author = _object(post).get('author_id')
+    return users.get(author, {}) if isinstance(author, str) else {}
+
+
+def _display_name(user, fallback):
+    return user['name'] if _nonempty(user.get('name')) else fallback
+
+
 def _quote(post, posts, users):
-    for ref in post.get('referenced_tweets') or []:
+    for ref in _references(post):
         if ref.get('type') != 'quoted':
             continue
         q = posts.get(ref.get('id'))
-        author = users.get((q or {}).get('author_id')) or {}
+        author = _author(q, users)
         text = _full_text(q) if q else ''
         if not (q and author.get('username') and text):
             return None  # 拿不全就不画引用框
-        return {'handle': author['username'], 'display_name': author.get('name', author['username']),
+        return {'handle': author['username'], 'display_name': _display_name(author, author['username']),
                 'text': _TCO.sub('', text) or text, 'url': f'https://x.com/{author["username"]}/status/{q["id"]}',
-                'published_at': iso(parse_time(q['created_at'])) if parse_time(q.get('created_at')) else None}
+                'published_at': _when(q.get('created_at'))}
     return None
 
 
@@ -200,20 +321,20 @@ def _comments(post, posts, users):
             return False
         if p.get('conversation_id') == post['id']:
             return True
-        return any(r.get('type') == 'replied_to' and r.get('id') == post['id'] for r in p.get('referenced_tweets') or [])
+        return any(r.get('type') == 'replied_to' and r.get('id') == post['id'] for r in _references(p))
     replies = [p for p in posts.values() if is_reply(p)]
-    replies.sort(key=lambda p: -((p.get('public_metrics') or {}).get('like_count') or 0))
+    replies.sort(key=lambda p: -_metrics(p).get('like', 0))
     out = []
     for r in replies[:MAX_COMMENTS]:
-        author = users.get(r.get('author_id')) or {}
-        moment = parse_time(r.get('created_at'))
+        author = _author(r, users)
+        published = _when(r.get('created_at'))
         text = re.sub(r'^(?:@\w+\s+)+', '', _full_text(r)).strip()
-        if not (author.get('username') and text and moment):
+        if not (author.get('username') and text and published):
             continue
-        row = {'handle': author['username'], 'display_name': author.get('name', author['username']),
-               'avatar': _avatar(author), 'text': text, 'published_at': iso(moment),
+        row = {'handle': author['username'], 'display_name': _display_name(author, author['username']),
+               'avatar': _avatar(author), 'text': text, 'published_at': published,
                'url': f'https://x.com/{author["username"]}/status/{r["id"]}'}
-        like = (r.get('public_metrics') or {}).get('like_count')
+        like = _metrics(r).get('like')
         if isinstance(like, int) and like >= 0:
             row['like'] = like
         out.append(row)
@@ -232,11 +353,12 @@ def x_posts(dump, platform, fetched_at, limit=10):
         if user:
             own = [p for p in posts.values() if p.get('_main') and p.get('author_id') == user['id']
                    and p.get('conversation_id', p['id']) == p['id']
-                   and not any(r.get('type') in ('retweeted', 'replied_to') for r in p.get('referenced_tweets') or [])]
+                   and not any(r.get('type') in ('retweeted', 'replied_to') for r in _references(p))]
             for p in own:
                 moment = parse_time(p.get('created_at'))
+                published = _when(p.get('created_at'))
                 text = _full_text(p)
-                if not moment or not text:
+                if not published or not text:
                     continue
                 media_list = _media(p, media)
                 display = _TCO.sub('', text) if media_list or p.get('referenced_tweets') else text
@@ -245,7 +367,7 @@ def x_posts(dump, platform, fetched_at, limit=10):
                 sid = source_id(platform['id'], handle)
                 blogger = {
                     'platform': platform['id'], 'handle': user['username'],
-                    'display_name': user.get('name') or account['name'],
+                    'display_name': _display_name(user, account['name']),
                     'media': [{k: v for k, v in m.items() if k in ('type', 'url', 'preview_url', 'duration_ms')} for m in media_list],
                     'quote': _quote(p, posts, users),
                 }
@@ -274,7 +396,7 @@ def x_posts(dump, platform, fetched_at, limit=10):
                     'source_id': sid, 'source_name': blogger['display_name'],
                     'title': '', 'summary': summary_of(display), 'body': clip(display, BODY_CHARS),
                     'url': f'https://x.com/{user["username"]}/status/{p["id"]}',
-                    'image': image, 'published_at': iso(moment), 'fetched_at': fetched_at,
+                    'image': image, 'published_at': published, 'fetched_at': fetched_at,
                     'lang': lang, 'blogger': blogger,
                 }))
         items.sort(key=lambda pair: pair[0], reverse=True)
@@ -287,7 +409,7 @@ def latest_dump(root):
     root = Path(root)
     if not root.is_dir():
         return None
-    subdirs = sorted(d for d in root.iterdir() if d.is_dir() and (any(d.glob('*.json')) or any(d.glob('*.txt'))))
+    subdirs = sorted(d for d in root.iterdir() if d.is_dir() and dump_files(d))
     # 例程最后一步才写 _dump.json：有它的才算写完。正在写的目录（比如只有 search-p1.json）不用，免得半份数据把博主刷空
     done = [d for d in subdirs if (d / '_dump.json').exists()]
     return (done or subdirs)[-1] if subdirs else None
@@ -298,13 +420,15 @@ def dump_time(path):
     from datetime import datetime, timezone
     path = Path(path)
     meta = path / '_dump.json' if path.is_dir() else None
-    if meta and meta.exists():
-        try:
-            moment = parse_time(json.loads(meta.read_text(encoding='utf-8')).get('generated_at'))
-            if moment:
-                return moment
-        except ValueError:
-            pass
-    files = list(path.glob('*')) if path.is_dir() else [path]
-    newest = max((f.stat().st_mtime for f in files if f.is_file()), default=None)
-    return datetime.fromtimestamp(newest, timezone.utc) if newest else None
+    try:
+        if meta and meta.exists():
+            metadata = json.loads(meta.read_text(encoding='utf-8'))
+            if not isinstance(metadata, dict):
+                return None
+            if 'generated_at' in metadata:
+                return parse_time(metadata['generated_at'])
+        files = path.iterdir() if path.is_dir() else [path]
+        newest = max((f.stat().st_mtime for f in files if f.is_file()), default=None)
+        return datetime.fromtimestamp(newest, timezone.utc) if newest is not None else None
+    except (OSError, ValueError, OverflowError):
+        return None

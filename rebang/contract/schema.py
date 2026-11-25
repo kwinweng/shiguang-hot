@@ -8,6 +8,7 @@ from urllib.parse import urlsplit
 HERE = Path(__file__).resolve().parent
 ITEMS_SCHEMA = 'rebang.items/1'
 HOTSEARCH_SCHEMA = 'rebang.hotsearch/1'
+HEALTH_SCHEMA = 'rebang.source-health/1'
 KINDS = ('news', 'post')
 PROVIDER_STATUS = ('ok', 'empty', 'error')
 MEDIA_TYPES = ('image', 'video', 'gif', 'youtube')   # youtube：url 是 youtube-nocookie 嵌入地址，preview_url 是封面

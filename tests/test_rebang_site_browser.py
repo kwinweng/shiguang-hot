@@ -8,12 +8,13 @@ import json
 import mimetypes
 import tempfile
 import unittest
+from datetime import timedelta
 from pathlib import Path
 from unittest import mock
 from urllib.parse import unquote, urlsplit
 
 from rebang.site import builder as site
-from tests.rebang_site_testdata import NOW, envelope, hotsearch, site_items
+from tests.rebang_site_testdata import NOW, envelope, health_inputs, hotsearch, site_items
 
 try:
     from playwright.sync_api import sync_playwright
@@ -44,6 +45,13 @@ class SiteBrowserTests(unittest.TestCase):
         cls.out = root / 'site'
         with mock.patch.object(site, '_run_archive', lambda items, out, report: None):
             site.build(cls.out, root / 'in', now=NOW, hot_archive_dir=root / 'hot')
+        sources, platforms = health_inputs()
+        health_in = root / 'health-in'
+        health_in.mkdir()
+        (health_in / 'ingest.json').write_text(json.dumps(dict(envelope(site_items(), 'ingest'), sources=sources)), encoding='utf-8')
+        (health_in / 'bloggers.json').write_text(json.dumps(dict(envelope([], 'bloggers'), platforms=platforms)), encoding='utf-8')
+        cls.health_out = root / 'health-site'
+        site.build(cls.health_out, health_in, now=NOW, hot_archive_dir=root / 'hot')
         cls.pw = sync_playwright().start()
         cls.browser = cls.pw.chromium.launch()
 
@@ -57,6 +65,8 @@ class SiteBrowserTests(unittest.TestCase):
         self.context = self.browser.new_context(viewport={'width': 390, 'height': 844}, is_mobile=True, has_touch=True)
         self.addCleanup(self.context.close)
         self.page = self.context.new_page()
+        if self._testMethodName.startswith('test_health_'):
+            self.page.clock.set_fixed_time(NOW)
         self.errors = []
         self.page.on('pageerror', lambda e: self.errors.append(str(e)))
         self.addCleanup(lambda: self.assertEqual(self.errors, []))
@@ -71,7 +81,8 @@ class SiteBrowserTests(unittest.TestCase):
                 return route.fulfill(status=200, body=VIDEO, content_type='video/webm')
             if url.netloc != 'rebang.test':
                 return route.abort()
-            path = self.out / (unquote(url.path).lstrip('/') or 'index.html')
+            folder = self.health_out if self._testMethodName.startswith('test_health_') else self.out
+            path = folder / (unquote(url.path).lstrip('/') or 'index.html')
             if getattr(self, 'stub_features', False) and unquote(url.path).startswith('/features/'):
                 return route.fulfill(status=200, body=b'', content_type='application/javascript')  # 只测桩，不让真模块覆盖
             route.fulfill(status=200 if path.is_file() else 404, body=path.read_bytes() if path.is_file() else b'missing',
@@ -122,10 +133,284 @@ class SiteBrowserTests(unittest.TestCase):
         cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
         self.page.wait_for_timeout(350)   # 松手后 250ms 内的补发点击会被吞掉
 
-    def test_top_bar_tabs_and_six_channels(self):
+    def test_health_deep_link_renders_sorted_sources_at_mobile_width(self):
+        with self.page.expect_request('**/data/health.json*'):
+            self.open('#/health')
+        dialog = self.page.get_by_role('dialog', name='来源健康')
+        dialog.get_by_role('button', name='5 个来源需处理', exact=False).wait_for()
+        self.assertEqual(dialog.locator('.health-name').all_text_contents()[:4], ['微博', '竹新社', 'X', '卫报 World'])
+        self.assertEqual(dialog.locator('.health-age').first.inner_text(), '2 天前')
+        self.assertIn('2026年11月13日 15:00', dialog.locator('.health-age').first.get_attribute('title'))
+        self.assertLessEqual(dialog.evaluate('e => e.scrollWidth'), 390)
+        dialog.get_by_text('查看 6 个账号', exact=True).first.click()
+        self.assertTrue(dialog.locator('.health-accounts[open] .health-account').first.is_visible())
+        dialog.get_by_role('button', name='返回').click()
+        dialog.wait_for(state='hidden')
+        self.assertEqual(self.page.locator('.tabbar button').count(), 4)
+        self.assertEqual(urlsplit(self.page.url).fragment, '')
+        self.page.go_forward()
+        dialog.wait_for()
+        self.page.keyboard.press('Escape')
+        dialog.wait_for(state='hidden')
+
+    def test_health_channel_entry_opens_counted_groups_and_filters_sources(self):
+        requested = []
+        self.page.on('request', lambda request: requested.append(request.url))
         self.open()
-        # v16：顶栏只有「频道名 + 下拉」，没有 logo、没有日期；刷新时间收进下拉
-        self.assertEqual(self.page.locator('#chName').inner_text(), '时事')
+        entry = self.page.get_by_role('link', name='来源状态，5 个来源需处理')
+        self.assertTrue(entry.is_visible())
+        self.assertEqual(entry.get_attribute('href'), '#/health')
+        self.assertFalse(any('/data/health.json' in url for url in requested))
+        self.assertEqual(self.page.locator('.tabbar button').count(), 4)
+        entry.tap()
+        dialog = self.page.get_by_role('dialog', name='来源健康')
+        filters = dialog.get_by_role('group', name='按来源状态筛选')
+        filters.wait_for()
+        self.assertTrue(filters.evaluate('e => e.scrollWidth === e.clientWidth'))
+        snapshot = json.loads((self.health_out / 'data/health.json').read_text())
+        total = len(snapshot['sources'])
+        self.assertEqual(filters.get_by_role('button').all_text_contents(),
+                         ['登录失效 1', '失败 1', '断更 2', '未配置 1', f'正常 {total - 5}'])
+        self.assertEqual(dialog.locator('.health-overview').inner_text(), f'5 个来源需处理 · {total - 5} 正常')
+        overview = dialog.locator('.health-overview button')
+        self.assertEqual(overview.get_attribute('aria-pressed'), 'true')
+        self.assertFalse(dialog.locator('[data-health-group="ok"]').evaluate('e => e.open'))
+        self.assertEqual(dialog.locator('details.health-section[open]').count(), 4)
+        filters.get_by_role('button', name='断更 2').tap()
+        self.assertEqual(filters.get_by_role('button', pressed=True).inner_text(), '断更 2')
+        self.assertEqual(dialog.locator('.health-name:visible').all_text_contents(), ['X', '卫报 World'])
+        self.assertTrue(dialog.get_by_text('检查原始转储', exact=False).is_visible())
+        self.assertEqual(dialog.locator('.health-section-head:visible').count(), 0)
+        filters.get_by_role('button', name='未配置 1').tap()
+        self.assertEqual(dialog.locator('.health-name:visible').all_text_contents(), ['知乎'])
+        self.assertTrue(dialog.get_by_text('需要时再接入', exact=False).is_visible())
+        filters.get_by_role('button', name=f'正常 {total - 5}').tap()
+        self.assertEqual(dialog.locator('.health-name:visible').count(), total - 5)
+        overview.tap()
+        self.assertFalse(dialog.locator('[data-health-group="ok"]').evaluate('e => e.open'))
+        failed = dialog.locator('[data-health-group="failed"]')
+        self.assertTrue(failed.is_visible())
+        failed.locator('summary').tap()
+        self.assertFalse(failed.evaluate('e => e.open'))
+        self.assertFalse(failed.get_by_text('下轮重试', exact=False).is_visible())
+        dialog.get_by_role('button', name='返回').tap()
+        dialog.wait_for(state='hidden')
+        self.assertTrue(entry.is_visible())
+
+    def test_health_entry_remains_available_when_summary_is_missing_or_all_healthy(self):
+        for summary in (None, {'total': 8, 'issues': 0}):
+            with self.subTest(summary=summary):
+                def serve_meta(route):
+                    meta = json.loads((self.health_out / 'data/meta.json').read_text())
+                    meta['health_summary'] = summary
+                    route.fulfill(json=meta)
+
+                self.page.route('**/data/meta.json*', serve_meta)
+                self.open()
+                entry = self.page.get_by_role('link', name='来源状态' if summary is None else '来源状态，全部健康', exact=True)
+                self.assertTrue(entry.is_visible())
+                self.assertNotIn('0', entry.inner_text())
+                self.page.unroute('**/data/meta.json*', serve_meta)
+
+    def test_health_all_normal_shows_only_normal_sources(self):
+        snapshot = json.loads((self.health_out / 'data/health.json').read_text())
+        snapshot['sources'] = [row for row in snapshot['sources'] if row['status'] == 'ok']
+        self.page.route('**/data/health.json*', lambda route: route.fulfill(json=snapshot))
+        self.open('#/health')
+        dialog = self.page.get_by_role('dialog', name='来源健康')
+        total = len(snapshot['sources'])
+        self.assertEqual(dialog.locator('.health-overview').inner_text(), f'{total} 个来源全部正常')
+        filters = dialog.get_by_role('group', name='按来源状态筛选')
+        self.assertEqual(filters.get_by_role('button').all_text_contents(), [f'正常 {total}'])
+        self.assertEqual(filters.get_by_role('button', pressed=True).inner_text(), f'正常 {total}')
+        self.assertEqual(dialog.locator('.health-section-head:visible').count(), 0)
+        self.assertEqual(dialog.locator('.health-name:visible').count(), total)
+
+    def test_health_stale_snapshot_uses_wall_clock_in_entry_and_dialog(self):
+        def serve_meta(route):
+            meta = json.loads((self.health_out / 'data/meta.json').read_text())
+            meta['health_summary']['issues'] = 0
+            route.fulfill(json=meta)
+
+        self.page.route('**/data/meta.json*', serve_meta)
+        payload = json.loads((self.health_out / 'data/health.json').read_text())
+        payload['sources'] = [row for row in payload['sources'] if row['status'] == 'ok']
+        self.page.route('**/data/health.json*', lambda route: route.fulfill(json=payload))
+        self.page.clock.set_fixed_time(NOW + timedelta(hours=3))
+        self.open()
+        self.page.get_by_role('link', name='来源状态，全部健康').wait_for()
+        self.page.clock.set_fixed_time(NOW + timedelta(hours=4))
+        self.open()
+        entry = self.page.get_by_role('link', name='来源状态，数据已过期')
+        entry.wait_for(timeout=3000)
+        self.assertIn('数据已过期', entry.inner_text())
+        self.assertTrue(entry.evaluate('e => e.classList.contains("has-issues")'))
+        entry.tap()
+        dialog = self.page.get_by_role('dialog', name='来源健康')
+        dialog.get_by_text('数据已过期', exact=False).first.wait_for()
+        self.assertIn('5 小时前', dialog.inner_text())
+        self.assertNotIn('全部正常', dialog.inner_text())
+        self.assertIn('北京时间', dialog.locator('#healthStamp').inner_text())
+
+    def test_health_damaged_snapshot_keeps_visible_rows(self):
+        payload = json.loads((self.health_out / 'data/health.json').read_text())
+        payload['sources'].append(None)
+        weibo = next(row for row in payload['sources'] if row['id'] == 'weibo')
+        weibo['accounts'].append(None)
+        x = next(row for row in payload['sources'] if row['id'] == 'x')
+        x['accounts'] = 'damaged'
+        self.page.route('**/data/health.json*', lambda route: route.fulfill(json=payload))
+        self.open('#/health')
+        dialog = self.page.get_by_role('dialog', name='来源健康')
+        dialog.get_by_text('部分数据缺损', exact=False).wait_for(timeout=3000)
+        self.assertEqual(dialog.locator('.health-name').all_text_contents()[:4], ['微博', '竹新社', 'X', '卫报 World'])
+        self.assertNotIn('查看 7 个账号', dialog.inner_text())
+        self.assertIn('查看 6 个账号', dialog.inner_text())
+
+    def test_health_exact_time_is_visible_on_focus_and_tap(self):
+        self.open('#/health')
+        time = self.page.locator('.health-age:visible').first
+        time.wait_for()
+        time.focus()
+        content = lambda: time.evaluate("e => getComputedStyle(e, '::after').content")
+        self.assertIn('2026年11月13日 15:00', content())
+        time.blur()
+        self.assertEqual(content(), 'none')
+        time.tap()
+        self.assertIn('北京时间', content())
+
+    def test_health_dialog_respects_standalone_app_height(self):
+        self.open('#/health')
+        dialog = self.page.locator('#healthView')
+        dialog.wait_for()
+        self.page.evaluate("""() => {
+          document.documentElement.classList.add('app-fullscreen');
+          document.documentElement.style.setProperty('--app-h', '900px');
+        }""")
+        self.assertEqual(dialog.evaluate('el => el.getBoundingClientRect().height'), 900)
+
+    def test_health_open_dashboard_and_entry_age_past_three_hours(self):
+        self.page.clock.install(time=NOW)
+        def serve_meta(route):
+            meta = json.loads((self.health_out / 'data/meta.json').read_text())
+            meta['health_summary']['issues'] = 0
+            route.fulfill(json=meta)
+
+        snapshot = json.loads((self.health_out / 'data/health.json').read_text())
+        snapshot['sources'] = [row for row in snapshot['sources'] if row['status'] == 'ok']
+        self.page.route('**/data/meta.json*', serve_meta)
+        self.page.route('**/data/health.json*', lambda route: route.fulfill(json=snapshot))
+        self.open()
+        entry = self.page.locator('#healthEntry')
+        entry.click()
+        stamp = self.page.locator('#healthStamp')
+        stamp.wait_for(timeout=2500)
+        self.assertIn('数据更新于', stamp.inner_text())
+        overview = self.page.locator('.health-overview')
+        self.assertIn('全部正常', overview.inner_text())
+        self.assertNotIn('已过期', entry.inner_text())
+        self.page.clock.fast_forward(3 * 3600 * 1000 + 1000)
+        self.page.wait_for_function("document.querySelector('#healthEntry').textContent.includes('已过期')", timeout=2500)
+        self.assertIn('已过期', stamp.inner_text())
+        self.assertNotIn('全部正常', overview.inner_text())
+
+    def test_health_same_build_refresh_and_visibility_recompute_freshness(self):
+        self.open()
+        entry = self.page.locator('#healthEntry')
+        self.assertNotIn('已过期', entry.inner_text())
+        self.page.clock.set_fixed_time(NOW + timedelta(hours=4))
+        self.page.locator('#btnRefresh').click()
+        entry.get_by_text('已过期').wait_for(timeout=2500)
+        self.page.clock.set_fixed_time(NOW)
+        self.page.evaluate("document.dispatchEvent(new Event('visibilitychange'))")
+        self.assertNotIn('已过期', entry.inner_text())
+
+    def test_health_invalid_timestamp_never_claims_everything_is_healthy(self):
+        def serve_meta(route):
+            meta = json.loads((self.health_out / 'data/meta.json').read_text())
+            meta['built_at'] = 'invalid'
+            meta['health_summary'] = {'total': 1, 'issues': 0}
+            route.fulfill(json=meta)
+
+        snapshot = json.loads((self.health_out / 'data/health.json').read_text())
+        snapshot['generated_at'] = {'toString': None}
+        snapshot['sources'] = [row for row in snapshot['sources'] if row['status'] == 'ok']
+        self.page.route('**/data/meta.json*', serve_meta)
+        self.page.route('**/data/health.json*', lambda route: route.fulfill(json=snapshot))
+        self.open()
+        entry = self.page.locator('#healthEntry')
+        self.assertIn('时间未知', entry.inner_text())
+        self.assertNotIn('全部健康', entry.get_attribute('aria-label'))
+        entry.click()
+        self.page.locator('#healthStamp').get_by_text('数据时间未知').wait_for(timeout=2500)
+        self.assertNotIn('全部正常', self.page.locator('#healthView').inner_text())
+
+    def test_health_bad_built_at_does_not_break_boot_or_claim_healthy(self):
+        # 坏对象会让 new Date() 抛错；缺时区的字符串不能当作新鲜。
+        for built_at in ({'toString': None}, '2026-11-15T10:00:00'):
+            with self.subTest(built_at=built_at):
+                meta = json.loads((self.health_out / 'data/meta.json').read_text())
+                meta['built_at'] = built_at
+                meta['health_summary'] = {'total': 1, 'issues': 0}
+                self.page.route('**/data/meta.json*', (lambda body: lambda route: route.fulfill(json=body))(meta))
+                self.open()
+                self.assertTrue(self.page.locator('#channelRoot > .ch-sec').count())
+                entry = self.page.locator('#healthEntry')
+                self.assertIn('时间未知', entry.inner_text())
+                self.assertNotIn('全部健康', entry.get_attribute('aria-label') or '')
+                self.assertEqual(self.page.locator('#refreshed').inner_text(), '刷新时间未知')
+
+    def test_health_keeps_valid_rows_when_source_and_account_fields_are_damaged(self):
+        snapshot = json.loads((self.health_out / 'data/health.json').read_text())
+        platform = next(row for row in snapshot['sources'] if row.get('accounts'))
+        platform['accounts'].append({'name': '损坏账号', 'status': 'ok', 'reason': {'toString': None}})
+        snapshot['sources'].append({'name': '损坏来源', 'status': 'ok', 'group': 1, 'reason': {'toString': None}})
+        self.page.route('**/data/health.json*', lambda route: route.fulfill(json=snapshot))
+        self.open('#/health')
+        dialog = self.page.locator('#healthView')
+        dialog.get_by_text('部分数据缺损。', exact=True).wait_for(timeout=2500)
+        self.assertEqual(dialog.get_by_text('部分数据缺损。', exact=True).count(), 1)
+        self.assertIn(platform['name'], dialog.locator('.health-name').all_text_contents())
+        self.assertIn(platform['accounts'][0]['name'], dialog.locator('.health-account-name').all_text_contents())
+        self.assertNotIn('损坏来源', dialog.locator('.health-name').all_text_contents())
+        self.assertNotIn('损坏账号', dialog.locator('.health-account-name').all_text_contents())
+
+    def test_health_diagnostics_link_is_lazy_and_handles_fetch_failure(self):
+        requested = []
+        self.page.on('request', lambda request: requested.append(request.url))
+        self.open()
+        self.assertFalse(any('/data/health.json' in url for url in requested))
+        self.page.route('**/data/health.json*', lambda route: route.fulfill(status=404))
+        self.page.locator('#channelRoot').evaluate('el => el.scrollTop = 240')
+        self.page.wait_for_selector('#top.channel-compact')
+        title = self.page.locator('#chBtn').bounding_box()
+        cdp = self.context.new_cdp_session(self.page)
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [
+            {'x': title['x'] + title['width'] / 2, 'y': title['y'] + title['height'] / 2}]})
+        link = self.page.get_by_role('link', name='来源健康')
+        self.page.wait_for_timeout(2000)
+        link.wait_for()
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+        button = self.page.locator('#chBtn')
+        button.dispatch_event('click', {'detail': 1})
+        self.assertEqual(button.get_attribute('aria-expanded'), 'false')
+        self.page.wait_for_timeout(250)
+        button.tap()
+        self.assertEqual(button.get_attribute('aria-expanded'), 'true')
+        self.page.keyboard.press('Escape')
+        self.assertEqual(button.get_attribute('aria-expanded'), 'false')
+        link.click()
+        self.page.get_by_text('健康数据暂时加载不出来。').wait_for()
+        self.assertEqual(urlsplit(self.page.url).fragment, '/health')
+        self.assertEqual(self.page.locator('meta[name="robots"]').get_attribute('content'), 'noindex,nofollow')
+
+
+    def test_channel_title_switcher_and_navigation(self):
+        self.open()
+        # 顶栏只有「频道名 + 下拉」，没有 logo、没有日期；刷新时间收进下拉
+        self.assertEqual(self.page.get_by_role('heading', name='时事', exact=True).count(), 1)
+        self.assertEqual(self.page.locator('#top, #channelRoot').get_by_text('时事', exact=True).count(), 1)
+        self.assertEqual(self.page.locator('.ch-sec[data-ch=current] .desc').inner_text(), '国内外正在发生的事 · 70 条')
         self.assertEqual(self.page.locator('#when, .logo, .brand img').count(), 0)
         self.page.locator('#chBtn').click()
         self.assertTrue(self.page.locator('#drop.on').is_visible())
@@ -134,12 +419,31 @@ class SiteBrowserTests(unittest.TestCase):
         expect = self.page.evaluate("'刷新于 ' + RebangLib.fmtRefreshed('2026-11-15T12:00:00Z', new Date())")
         self.assertIn(expect, ('刷新于 20:00', '刷新于 11月15日 20:00'))
         self.assertEqual(self.page.locator('#refreshed').inner_text(), expect)
-        self.assertEqual(self.page.locator('#channelRoot > .ch-sec h2.ch').evaluate_all('es => es.map(e => e.textContent)'), ['时事', '环球', '财经', '科技与 AI', '数码', '工具与项目'])
+        self.page.get_by_role('option', name='环球', exact=False).tap()
+        self.assertEqual(self.page.locator('#chName').inner_text(), '环球')
+        self.assertEqual(self.page.locator('#top, #channelRoot').get_by_text('环球', exact=True).count(), 1)
         self.assertEqual(self.page.locator('.see-more, [data-see], #moreView').count(), 0, '「查看更多」入口和整页都去掉了')
         self.assertEqual([t.strip() for t in self.page.locator('.tabbar button').all_inner_texts()], ['频道', '博主', '热搜', '收藏'])
         self.assertEqual(self.page.locator('#view-history').count(), 0, '历史页已改为热搜页')
         for mount in ('#view-hot', '#view-favorites', '#search-panel'):
             self.assertEqual(self.page.locator(mount).count(), 1)
+
+    def test_channel_title_shrinks_on_scroll_and_remains_interactive(self):
+        self.open()
+        title = self.page.locator('#chName')
+        from playwright.sync_api import expect
+
+        expect(title).to_have_css('font-size', '30px')
+        root = self.page.locator('#channelRoot')
+        root.evaluate('el => el.scrollTop = 240')
+        expect(title).to_have_css('font-size', '20px')
+        self.assertEqual(self.page.locator('#top, #channelRoot').get_by_text('时事', exact=True).count(), 1)
+        self.page.locator('#chBtn').tap()
+        self.assertEqual(self.page.locator('#chBtn').get_attribute('aria-expanded'), 'true')
+        self.page.keyboard.press('Escape')
+        self.assertEqual(self.page.locator('#chBtn').get_attribute('aria-expanded'), 'false')
+        root.evaluate('el => el.scrollTop = 0')
+        expect(title).to_have_css('font-size', '30px')
 
     def test_swipe_changes_channel_but_banner_swipe_does_not(self):
         self.open()
@@ -193,12 +497,11 @@ class SiteBrowserTests(unittest.TestCase):
     def test_header_follows_scrolled_channel(self):
         self.open()
         self.scroll_to_end('#channelRoot')
-        for slug in ('world', 'finance', 'current'):
+        for slug, name in (('world', '环球'), ('finance', '财经'), ('current', '时事')):
             self.page.evaluate(f"""(() => {{ const r = document.querySelector('#channelRoot'), s = r.querySelector('.ch-sec[data-ch="{slug}"]');
               r.scrollTop += s.getBoundingClientRect().top - r.getBoundingClientRect().top + 40; }})()""")
             self.page.wait_for_timeout(150)
             self.assertEqual(self.page.locator('#channelRoot').get_attribute('data-cur'), slug)
-            name = self.page.locator(f'.ch-sec[data-ch="{slug}"] h2.ch').inner_text()
             self.assertEqual(self.page.locator('#chName').inner_text(), name, 'v16：顶栏频道名跟着当前这一段变')
 
     def test_article_full_page_and_back_restores_channel_and_scroll(self):

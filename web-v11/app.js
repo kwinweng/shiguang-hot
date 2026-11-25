@@ -59,8 +59,14 @@
   let diagTimer = 0;
   function diagRender() {
     let box = document.getElementById('diagBox');
-    if (!box) { box = document.createElement('pre'); box.id = 'diagBox'; box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:99;margin:0;padding:8px;font:11px/1.4 ui-monospace,monospace;background:#000d;color:#0f0;border-radius:8px;white-space:pre-wrap;word-break:break-all;pointer-events:none'; document.body.appendChild(box); }
-    box.textContent = JSON.stringify(diagData(), null, 1);
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'diagBox';
+      box.innerHTML = '<a href="#/health">来源健康</a><pre></pre>';
+      box.querySelector('a').addEventListener('click', e => { e.preventDefault(); openHealth(); });
+      document.body.appendChild(box);
+    }
+    box.querySelector('pre').textContent = JSON.stringify(diagData(), null, 1);
   }
   function diagSet(on) {
     try { on ? localStorage.setItem(DIAG_KEY, '1') : localStorage.removeItem(DIAG_KEY); } catch (e) { /* 隐私模式 */ }
@@ -73,12 +79,24 @@
   window.__rebangDiag = {data: diagData, set: diagSet};
   function bindDiagLongPress(el, onToggle) {
     if (!el) return;
-    let t = 0, x = 0, y = 0;
+    let t = 0, x = 0, y = 0, longPressed = false;
     const cancel = () => { clearTimeout(t); t = 0; };
-    el.addEventListener('pointerdown', e => { x = e.clientX; y = e.clientY; cancel(); t = setTimeout(() => { t = 0; onToggle(); }, 1000); });
+    el.addEventListener('pointerdown', e => {
+      if (!e.isPrimary || e.button !== 0) return;
+      longPressed = false;
+      x = e.clientX; y = e.clientY;
+      cancel();
+      t = setTimeout(() => { t = 0; longPressed = true; onToggle(); }, 1000);
+    });
     el.addEventListener('pointermove', e => { if (t && Math.hypot(e.clientX - x, e.clientY - y) > 10) cancel(); });
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => el.addEventListener(ev, cancel));
     el.addEventListener('contextmenu', e => e.preventDefault());
+    // 松手后补发的 click 归这次手势，下一次按下或键盘激活照常处理。
+    el.addEventListener('click', e => {
+      if (!longPressed || e.detail === 0) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }, true);
   }
   const DATA = 'data';
   const MKEY = 'rebang-v11-mode';
@@ -140,8 +158,7 @@
   }
   function remember(list) { (list || []).forEach(it => it && it.id && items.set(it.id, it)); return list || []; }
   function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('on'), 3200); }
-  let diagSwallow = 0;   // 长按开/关诊断后，松手那一下点击不要再打开下拉
-  bindDiagLongPress(document.querySelector('#chBtn'), () => { const on = !diagOn(); diagSet(on); diagSwallow = performance.now() + 800; toast(on ? '诊断已打开（再长按左上角标题关闭）' : '诊断已关闭'); });
+  bindDiagLongPress(document.querySelector('#chBtn'), () => { const on = !diagOn(); diagSet(on); toast(on ? '诊断已打开（再长按左上角标题关闭）' : '诊断已关闭'); });
   function channels() { return (meta && meta.channels) || []; }
 
   /* ---------- 已读（v16）：点开过的条目在所有列表里变灰，只记在这台设备 ---------- */
@@ -169,7 +186,7 @@
   }
   function updateTopName() {
     const v = currentView();
-    if (v === 'channels') setTopName(nameOf((channels()[curCh] || {}).slug) || '频道');
+    if (v === 'channels') setTopName(channels()[curCh]?.name || '频道');
     else if (v === 'blogger') { const s = blSegs[Number($('#bloggerList').dataset.cur || 0)]; const p = s && platOf(s.plat); setTopName(p ? p.name : '博主'); }
     else if (v === 'hot') setTopName('热搜');
     else setTopName('收藏');
@@ -220,6 +237,7 @@
   }
   async function loadAll(fresh) {
     meta = await getJSON('meta.json', fresh);
+    updateHealthFreshness();
     channels().forEach(c => {
       remember(c.banner);
       ch[c.slug] = {list: [], page: 0, pages: c.pages || 1, total: c.feed_total || 0, loading: false, error: null};
@@ -321,18 +339,11 @@
     const cs = channels(), i = cs.findIndex(c => c.slug === slug);
     return chainFoot(cs[i + 1] && cs[i + 1].name);
   }
-  function nameOf(slug) { const c = channels().find(x => x.slug === slug); return c ? c.name : slug; }
-  function chHint(i) {
-    const last = i === channels().length - 1;
-    if (mode === 'ud') return last ? '最后一个频道' : '下滑接着看下一个频道';
-    return last ? '最后一个频道 · 右滑回上一个' : '左右滑换频道 · 下滑接着看';
-  }
-  function channelInner(c, i) {
+  function channelInner(c) {
     const st = ch[c.slug];
     const empty = !c.banner.length && !st.total ? '<p class="muted">这一频道暂时还没有内容。</p>' : '';
-    return `<div class="ch-head"><div class="ch-kicker"><span class="idx">${i + 1} / ${channels().length}</span><span class="hint">${chHint(i)}</span></div>
-      <div class="ch-row"><h2 class="ch">${L.esc(c.name)}</h2>${c.total ? `<span class="ch-count">共 ${L.esc(c.total)} 条</span>` : ''}</div></div>
-      <p class="desc">${L.esc(c.desc || '')}</p>
+    const description = [c.desc, `${c.total ?? st.total} 条`].filter(Boolean).join(' · ');
+    return `<p class="desc">${L.esc(description)}</p>
       ${unavailableNote(c)}
       ${L.bannerHTML(c.slug, c.banner)}
       <div class="feed" data-ch="${c.slug}">${empty}<div class="feed-list">${chunkHTML(st.list.map(L.feedRowHTML))}</div><div class="feed-foot">${feedFooter(c.slug)}</div></div>`;
@@ -351,12 +362,11 @@
     $('#modeUD').setAttribute('aria-pressed', String(mode === 'ud'));
     const root = $('#channelRoot');
     root.classList.toggle('lr', mode === 'lr'); root.classList.toggle('ud', mode === 'ud');
-    chSections().forEach((sec, i) => { const h = sec.querySelector('.ch-kicker .hint'); if (h) h.textContent = chHint(i); });
   }
   function renderChannels() {
     const root = $('#channelRoot');
     root.className = 'feed-root';
-    root.innerHTML = channels().map((c, i) => `<section class="ch-sec" data-ch="${c.slug}" data-i="${i}">${channelInner(c, i)}</section>`).join('');
+    root.innerHTML = channels().map((c, i) => `<section class="ch-sec" data-ch="${c.slug}" data-i="${i}">${channelInner(c)}</section>`).join('');
     applyMode(); gateChannels();
     bindLoaders(); bindGestures(); fixBrokenThumbs(root); settleChunks(root); markRead(root);
     if (!root._spy) { root._spy = true; root.addEventListener('scroll', spyChannels, {passive: true}); }
@@ -393,23 +403,30 @@
     observeSentinels();
   }
   function observeSentinels() { if (chObs) $$('#channelRoot .sentinel').forEach(el => { if (!el._obs) { el._obs = true; chObs.observe(el); } }); }
-  /* 吸顶：每段的 .ch-head 自己 sticky，标题/条数天然跟着当前段走；这里只记下当前是哪一段（换频道、刷新、测试用） */
+  /* 顶栏标题跟随当前段；收缩只改字号，滚动容器的位置保持稳定。 */
   let curCh = 0, spyRaf = 0;
   function spyChannels() {
     if (spyRaf) return;
     spyRaf = requestAnimationFrame(() => {
       spyRaf = 0;
-      const root = $('#channelRoot'); if (!root) return;
-      const top = root.getBoundingClientRect().top + 8;
-      if (pin && pin.scroller === root && performance.now() < pin.until) return;   // 刚跳过去：以跳到的那段为准
-      let at = 0;
-      chSections().forEach((sec, i) => { if (!sec.hidden && sec.getBoundingClientRect().top <= top) at = i; });
-      if (root.scrollTop + root.clientHeight >= root.scrollHeight - 4) chSections().forEach((sec, i) => { if (!sec.hidden) at = i; });   // 到底了：最后一段算当前
-      if (at !== curCh || root.dataset.cur === undefined) {
-        curCh = at; root.dataset.cur = (channels()[at] || {}).slug || '';
-        chSections().forEach((sec, i) => sec.classList.toggle('cur', i === at));
-        if (currentView() === 'channels') updateTopName();
+      const root = $('#channelRoot');
+      if (currentView() !== 'channels') return;
+      const top = root.getBoundingClientRect().top;
+      const sections = chSections();
+      if (!(pin && pin.scroller === root && performance.now() < pin.until)) {
+        let at = 0;
+        const atBottom = root.scrollTop > 0 && root.scrollTop + root.clientHeight >= root.scrollHeight - 4;
+        sections.forEach((sec, i) => {
+          if (!sec.hidden && (atBottom || sec.getBoundingClientRect().top <= top + 8)) at = i;
+        });
+        if (at !== curCh || root.dataset.cur === undefined) {
+          curCh = at;
+          root.dataset.cur = channels()[at]?.slug || '';
+          updateTopName();
+        }
       }
+      const section = sections[curCh];
+      $('#top').classList.toggle('channel-compact', !!section && top - section.getBoundingClientRect().top >= 24);
     });
   }
   function jumpChannel(i, dir) {
@@ -418,8 +435,8 @@
     chRevealed.add(cs[i].slug); gateChannels();
     const sec = hostOf(cs[i].slug);
     pinTo(root, sec, 0);
-    curCh = i; root.dataset.cur = cs[i].slug; chSections().forEach((s, k) => s.classList.toggle('cur', k === i));
-    updateTopName();
+    curCh = i; root.dataset.cur = cs[i].slug;
+    updateTopName(); spyChannels();
     slideIn(root, dir);
     return true;
   }
@@ -429,8 +446,10 @@
   function posts() { return (bloggers && bloggers.items) || []; }
   function platOf(id) { return ((bloggers && bloggers.platforms) || []).find(p => p.id === id); }
   function recentCount(id) {
-    const since = new Date(meta.built_at).getTime() - 24 * 3600e3;
-    return posts().filter(p => p.blogger.platform === id && new Date(p.published_at).getTime() >= since).length;
+    const built = builtAtMs();
+    if (!Number.isFinite(built)) return 0;
+    const since = built - 24 * 3600e3;
+    return posts().filter(p => p.blogger.platform === id && window.RebangHealth.timeMs(p.published_at) >= since).length;
   }
   let blSegs = [];            // [{plat, pkey, handle, name, total, list, page, pages, loading, error, revealed}]
   function emptyText(p, acc) {
@@ -720,6 +739,7 @@
     $$('.tabbar button').forEach(b => { b.classList.toggle('on', b.dataset.view === name); b.setAttribute('aria-current', b.dataset.view === name ? 'page' : 'false'); });
     $('#app').dataset.tab = name;
     closeDrop(); updateTopName(); syncBlTop();
+    if (name === 'channels') spyChannels();
     if (name === 'blogger') ensureBloggers();
     if (name === 'hot') renderHot();
     if (name === 'favorites') mountFeature(name);
@@ -959,7 +979,92 @@
     restoreScroll(returnState);
     if (!opts.fromPop && history.state && history.state.article) history.back();
   }
+  const HEALTH_HASH = '#/health';
+  let healthLoad = 0, healthSnapshot = null;
+  function updateHealthFreshness() {
+    const now = Date.now();
+    const freshness = window.RebangHealth.snapshotFreshness;
+    const warningFor = state => state === 'unknown' ? '数据时间未知' : state === 'stale' ? '数据已过期' : '';
+    const openSnapshot = healthSnapshot && $('#healthView').open;
+    const snapshotState = openSnapshot ? freshness(healthSnapshot.generated_at, now) : null;
+    if (meta) {
+      const entry = $('#healthEntry');
+      const count = entry.querySelector('.health-entry-count');
+      const {total, issues} = meta.health_summary || {};
+      const known = Number.isInteger(total) && Number.isInteger(issues) && total > 0 && issues >= 0 && issues <= total;
+      const state = freshness(meta.built_at, now);
+      const warning = warningFor(state) || warningFor(snapshotState);
+      const needsAttention = Boolean(warning) || (known && issues > 0);
+      entry.classList.toggle('has-issues', needsAttention);
+      count.textContent = warning || (needsAttention ? issues : '');
+      count.hidden = !needsAttention;
+      if (warning) entry.setAttribute('aria-label', `来源状态，${warning}`);
+      else if (known) entry.setAttribute('aria-label', needsAttention ? `来源状态，${issues} 个来源需处理` : '来源状态，全部健康');
+      else entry.removeAttribute('aria-label');
+    }
+    if (openSnapshot) {
+      const timestamp = healthSnapshot.generated_at;
+      const state = snapshotState;
+      const stamp = $('#healthStamp');
+      stamp.textContent = state === 'unknown' ? '数据时间未知' :
+        `${state === 'stale' ? '数据已过期 · ' : ''}数据更新于 ${L.fmtFull(timestamp)}（北京时间）`;
+      stamp.hidden = false;
+      const overview = $('#healthBody .health-overview[data-healthy-count]');
+      if (overview) {
+        const warning = state !== 'fresh' || Boolean($('#healthBody .health-data-warning'));
+        overview.dataset.overview = warning ? 'warning' : 'ok';
+        overview.firstElementChild.textContent = `${overview.dataset.healthyCount} 个${warning ? '可用来源记录为正常' : '来源全部正常'}`;
+      }
+    }
+  }
+  function filterHealth(event) {
+    event.target.closest('.health-age')?.focus();
+    const selected = event.target.closest('[data-health-filter]');
+    if (!selected) return;
+    const body = event.currentTarget;
+    const status = selected.dataset.healthFilter;
+    if (selected.getAttribute('aria-pressed') === 'true') return;
+    const showIssues = status === 'issues';
+    $$('[data-health-filter]', body).forEach(button => button.setAttribute('aria-pressed', button === selected));
+    $$('[data-health-group]', body).forEach(group => {
+      group.hidden = !showIssues && group.dataset.healthGroup !== status;
+      group.querySelector('summary').hidden = !showIssues;
+      group.open = !showIssues || group.dataset.healthGroup !== 'ok';
+    });
+    body.scrollTop = 0;
+  }
+  async function openHealth(fromPop = false) {
+    const dialog = $('#healthView');
+    if (dialog.open) return;
+    if (!fromPop) history.pushState({health: true}, '', HEALTH_HASH);
+    const body = $('#healthBody'), stamp = $('#healthStamp');
+    const load = ++healthLoad;
+    healthSnapshot = null;
+    stamp.hidden = true;
+    body.innerHTML = '<p class="muted" role="status">正在加载来源健康…</p>';
+    dialog.showModal();
+    body.scrollTop = 0;
+    try {
+      const data = await getJSON('health.json');
+      if (load !== healthLoad || !dialog.open) return;
+      if (data.schema !== 'rebang.source-health/1' || !Array.isArray(data.sources)) throw new Error('Invalid health snapshot');
+      const now = Date.now();
+      body.innerHTML = window.RebangHealth.healthHTML(data.sources, now,
+        window.RebangHealth.snapshotFreshness(data.generated_at, now) !== 'fresh');
+      healthSnapshot = data;
+      updateHealthFreshness();
+    } catch (e) {
+      if (load === healthLoad && dialog.open) body.innerHTML = '<p class="muted" role="status">健康数据暂时加载不出来。</p>';
+    }
+  }
+  function leaveHealth() {
+    if (history.state && history.state.health) history.back();
+    else location.hash = '';
+  }
   window.addEventListener('popstate', e => {
+    if (location.hash === HEALTH_HASH) { openHealth(true); return; }
+    const health = $('#healthView');
+    if (health.open) { health.close(); updateHealthFreshness(); }
     const st = e.state || {};
     const hashId = !e.state ? L.parseItemHash(location.hash) : null;
     if (st.article) openItem(st.article, {fromPop: true});
@@ -978,14 +1083,19 @@
   });
 
   /* ---------- 刷新 ---------- */
-  function stampRefresh(d) { $('#refreshed').textContent = `刷新于 ${L.fmtRefreshed(d)}`; }
+  // meta.built_at 统一在这里校验：坏值、缺时区都当作未知，不交给 new Date()。
+  function builtAtMs() { return meta ? window.RebangHealth.timeMs(meta.built_at) : NaN; }
+  function stampRefresh(d) {
+    const ms = d instanceof Date ? d.getTime() : NaN;
+    $('#refreshed').textContent = Number.isFinite(ms) ? `刷新于 ${L.fmtRefreshed(d)}` : '刷新时间未知';
+  }
   async function doRefresh() {
     const btn = $('#btnRefresh');
     btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin'); setTimeout(() => btn.classList.remove('spin'), MOTION.slow + 50);
     const NOTE = '刷新拿到的是最近一次发布的数据。';
     const old = meta && meta.built_at;
     let fresh;
-    try { fresh = await getJSON('meta.json', true); } catch (e) { toast('刷新失败，网络或站点暂时连不上。'); hidePtr(); return; }
+    try { fresh = await getJSON('meta.json', true); } catch (e) { updateHealthFreshness(); toast('刷新失败，网络或站点暂时连不上。'); hidePtr(); return; }
     stampRefresh(new Date());
     if (fresh.built_at !== old) {
       const idx = curCh, blAt = Number($('#bloggerList').dataset.cur || 0);
@@ -996,7 +1106,11 @@
       if (idx > 0) jumpChannel(Math.min(idx, channels().length - 1));
       if (currentView() === 'blogger') { await ensureBloggers(); if (blAt > 0 && blSegs[blAt]) jumpSeg(Math.min(blAt, blSegs.length - 1)); }
       toast('有新内容，已更新。' + NOTE);
-    } else toast('没有新内容，已是最新。' + NOTE);
+    } else {
+      meta = fresh;
+      updateHealthFreshness();
+      toast('没有新内容，已是最新。' + NOTE);
+    }
     hidePtr();
   }
   function hidePtr() { const p = $('#ptr'); p.classList.remove('spin', 'show'); p.hidden = true; }
@@ -1431,7 +1545,7 @@
     $('#cardMenu').addEventListener('click', onMenu);
     $('#actSheet').addEventListener('click', onSheet);
     // 顶栏：点标题开/关下拉（频道 / 平台 / 日期）；点遮罩关
-    $('#chBtn').addEventListener('click', () => { if (performance.now() < diagSwallow) return; if (dropOpen()) closeDrop(); else openDrop(); });
+    $('#chBtn').addEventListener('click', () => { if (dropOpen()) closeDrop(); else openDrop(); });
     $('#dropMask').addEventListener('click', closeDrop);
     $('#dropList').addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
@@ -1462,14 +1576,29 @@
     $('#btnRefresh').onclick = doRefresh;
     $('#btnBack').onclick = () => closeArticle();
     document.querySelector('.app').addEventListener('click', onClick);
+    $('#healthEntry').addEventListener('click', e => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      openHealth();
+    });
+    $('#healthBody').addEventListener('click', filterHealth);
+    $('#healthBack').onclick = leaveHealth;
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) updateHealthFreshness(); });
+    setInterval(updateHealthFreshness, 60_000);
+    $('#healthView').addEventListener('cancel', e => { e.preventDefault(); leaveHealth(); });
+    const deepHealth = location.hash === HEALTH_HASH;
     const deep = L.parseItemHash(location.hash);
     const deepMore = (location.hash.match(/^#\/more\/(.+)$/) || [])[1];
-    if (!history.state || !history.state.home) history.replaceState({home: true}, '', location.pathname + location.search);
+    if (deepHealth && history.state && history.state.health) openHealth(true);
+    else {
+      if (!history.state || !history.state.home) history.replaceState({home: true}, '', location.pathname + location.search);
+      if (deepHealth) openHealth();
+    }
     try { await loadAll(false); } catch (e) {
       $('#channelRoot').innerHTML = `<p class="muted" style="padding:16px">数据没加载出来（${L.esc(e.message)}）。稍后点右上角刷新再试。</p>`;
       $('#app').removeAttribute('aria-busy'); return;
     }
-    stampRefresh(meta.built_at);
+    stampRefresh(new Date(builtAtMs()));
     const note = meta.note || (meta.fixture ? '这是用测试样例数据构建的页面，不是真实内容。' : '');
     if (note && sessionStorage.getItem(NOTE_KEY) !== note) {
       const box = $('#previewNote'); box.querySelector('span').textContent = note; box.hidden = false;

@@ -11,7 +11,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from rebang.cache import save_cache
 from rebang.contract import ITEMS_SCHEMA, load_channels
+from rebang.health_time import observation_time
 
 ROOT = Path(__file__).resolve().parents[2]
 BEIJING = ZoneInfo('Asia/Shanghai')
@@ -36,7 +38,7 @@ def _iso(moment):
 def _parse_when(value):
     try:
         return _aware(datetime.fromisoformat(str(value or '').strip().replace('Z', '+00:00'))).astimezone(BEIJING)
-    except ValueError:
+    except (ValueError, OverflowError):
         return None
 
 
@@ -237,8 +239,11 @@ def telegram_items(db_path, media_root, sources, now, floor, tgmeta=None):
                 count += 1
             ok, err, at = last_status.get(handle, (None, None, None))
             status = 'ok' if count else 'empty'
-            statuses.append(_status(cfg, channel, status, count,
-                                    error=(f'上次采集：{err}' if ok == 0 and err else None), fetched_at=at))
+            status_row = _status(cfg, channel, status, count,
+                                 error=(f'上次采集：{err}' if ok == 0 and err else None), fetched_at=at)
+            if ok in (0, 1):
+                status_row['collection_ok'] = bool(ok)
+            statuses.append(status_row)
     finally:
         con.close()
     return items, statuses
@@ -306,20 +311,42 @@ def _write_json(path, data):
     os.replace(tmp, path)
 
 
+def _preserve_tg_success(rows, cache, now):
+    # The legacy DB keeps a single attempt per channel. Keep the last observed success with the ingest cache.
+    key = 'telegram-health'
+    saved = _read_cache(cache, key)
+    saved = saved if isinstance(saved, dict) else {}
+    updated = {}
+    for row in rows:
+        source_id = row['id']
+        previous = observation_time(_parse_when(saved.get(source_id)), now)
+        reported = observation_time(_parse_when(row.get('fetched_at')), now) if row.get('collection_ok') else None
+        last_ok = max(filter(None, (previous, reported)), default=None)
+        row['last_ok_at'] = _iso(last_ok) if last_ok else None
+        if last_ok:
+            updated[source_id] = row['last_ok_at']
+    if updated != saved:
+        save_cache(_write_json, _cache_path(cache, key), updated)
+
+
 def remote_items(sources, now, floor, *, fetch, cache, http_get):
     items, statuses = [], []
     for channel, cfg in sources:
         sid, entries, state, error, fetched_at = cfg['id'], None, None, None, None
+        cache_warning = None
         if fetch:
             try:
                 raw = http_get(cfg['url'], now)
-                entries = parse_trending(raw.decode('utf-8', 'replace'), now) if cfg['type'] == 'page' else parse_feed(raw)
-                fetched_at = _iso(now)
-                _write_json(_cache_path(cache, sid), {'fetched_at': fetched_at, 'url': cfg['url'], 'entries': entries})
-                state = 'ok' if entries else 'empty'
+                parsed = parse_trending(raw.decode('utf-8', 'replace'), now) if cfg['type'] == 'page' else parse_feed(raw)
             except Exception as ex:  # 一家失败不影响其它家；错误只记代码，不带响应体
                 code = getattr(ex, 'code', None) or ('invalid_content' if isinstance(ex, (ET.ParseError, ValueError)) else type(ex).__name__)
                 state, error = 'error', str(code)
+            else:
+                entries, fetched_at = parsed, _iso(now)
+                state = 'ok' if entries else 'empty'
+                if not save_cache(_write_json, _cache_path(cache, sid),
+                                  {'fetched_at': fetched_at, 'url': cfg['url'], 'entries': entries}):
+                    cache_warning = 'write_failed'
         if entries is None:
             cached = _read_cache(cache, sid)
             if cached:
@@ -347,9 +374,13 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
                 item['fetched_at'] = fetched_at
             items.append(item)
             count += 1
+        run_count = (0 if state == 'error' else count) if fetch else None
         if state in ('ok', 'cached') and not count:
             state = 'empty'
-        statuses.append(_status(cfg, channel, state, count, error=error, fetched_at=fetched_at))
+        row = dict(_status(cfg, channel, state, count, error=error, fetched_at=fetched_at), run_count=run_count)
+        if cache_warning:
+            row['cache_warning'] = cache_warning
+        statuses.append(row)
     return items, statuses
 
 
@@ -592,9 +623,9 @@ def apply_translation(items, translator, cache=None):
         item['translation'] = trans
         done += 1
     if changed and store_path:
-        _write_json(store_path, store)
+        save_cache(_write_json, store_path, store)
     if len(translator) > 2 and callable(translator[2]):
-        translator[2]()
+        save_cache(translator[2])
     return done
 
 
@@ -615,6 +646,7 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
         from rebang.tgmeta import load_store
         tgmeta = load_store(tgmeta).get('messages', {})
     got, st = telegram_items(db or ROOT / 'tg.db', media_root, by_type.get('telegram', []), now, floor, tgmeta)
+    _preserve_tg_success(st, cache, now)
     items += got; statuses += st
     got, st = remote_items(by_type.get('feed', []) + by_type.get('page', []), now, floor, fetch=fetch, cache=cache,
                            http_get=http_get or default_http_get)

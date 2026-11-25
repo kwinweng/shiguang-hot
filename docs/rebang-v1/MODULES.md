@@ -68,6 +68,7 @@ t.me 公开页 → tgmeta ──┼→ ingest → var/rebang/in/ingest.json ─�
 - 纯 Python 标准库，前端零依赖（`web-v11/`，手势、banner 从 v10 设计稿移植）。按频道分页（每页 30），写 `data/meta.json`（含 `public_base`）、`data/id-index.json`（深链找条目）、`data/search-index.json`。
 - 调 `rebang.archive.build`：条目按北京日期并入 `var/rebang/archive/YYYY-MM-DD.json`（按 id 去重），供搜索和 8:30 稿补漏。
 - 深链 `#/item/<urlencoded id>`：冷启动和已打开页面都能直接开。
+- 来源健康：频道顶栏的「来源状态」随 `meta.json` 显示待处理数量，点开 `#/health` 才加载 `data/health.json`。看板按状态计数、筛选和折叠，平台按一个来源计数，账号明细可展开。也可长按左上角频道标题，从诊断面板进入。TG 在 ingest 缓存里保留最后观察到的成功时间，不改数据库；X 复用导出时间和已有 36 小时规则。只展示，不发送提醒。
 - 与 v10 的已确认偏差：上下模式每个频道先放 6 条，用「继续看」按钮加载，不自动无限加载。
 - 前端功能模块 `web-v11/features/favorites.js`（localStorage，只在详情页收藏，换设备会消失）、`search.js`（纯前端匹配标题、摘要、来源、译文和原文；索引没加载完时先提示，加载完自动重搜）。
 
