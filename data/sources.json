@@ -14955,7 +14955,7 @@
         {
           "category": "科技",
           "day": "2026-10-27",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-27 15:00",
           "id": "f61afaa841534965d53c",
           "image": "",
@@ -22138,17 +22138,49 @@
         }
       ],
       "name": "风向旗参考快讯",
-      "seven_day_count": 149,
+      "seven_day_count": 115,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 31,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/xhqcankao"
     },
     {
       "id": "tnews365",
-      "last_update": "2026-11-24T19:36:31+08:00",
+      "last_update": "2026-11-26T00:01:41+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 00:00",
+          "id": "cb754009d00655d3ca2e",
+          "image": "",
+          "link": "https://t.me/tnews365/35809",
+          "source": "tnews365",
+          "source_name": "竹新社",
+          "summary": "目前尚不清楚政府是否会提出上诉。 最高法院2月20日认定特朗普政府的“对等关税”逾越总统职权。特朗普随后发布行政令，临时施加10%全球进口关税，为期150天。随后华盛顿州政府和两家企业提起诉讼。 （美联社）",
+          "text": "目前尚不清楚政府是否会提出上诉。 最高法院2月20日认定特朗普政府的“对等关税”逾越总统职权。特朗普随后发布行政令，临时施加10%全球进口关税，为期150天。随后华盛顿州政府和两家企业提起诉讼。 （美联社）",
+          "time": "2026-11-26T00:01:41+08:00",
+          "title": "美国国际贸易法院5月7日裁定，特朗普政府征收10%全球进口关税是非法的，超出国会赋予总统的关税权力",
+          "type": "telegram"
+        },
+        {
+          "category": "国际",
+          "day": "2026-11-25",
+          "hot": false,
+          "hour": "2026-11-25 23:00",
+          "id": "186dba4d92562f406217",
+          "image": "",
+          "link": "https://t.me/tnews365/35808",
+          "source": "tnews365",
+          "source_name": "竹新社",
+          "summary": "利比亚官员称，乌军根据西方认可的秘密协议在利比亚西部行动，其中大多人是无人机专家。 克里姆林宫拒绝对此事置评，仅表示俄国防部将在适当情况下提供更多信息。 （美联社）",
+          "text": "利比亚官员称，乌军根据西方认可的秘密协议在利比亚西部行动，其中大多人是无人机专家。 克里姆林宫拒绝对此事置评，仅表示俄国防部将在适当情况下提供更多信息。 （美联社）",
+          "time": "2026-11-25T23:47:07+08:00",
+          "title": "乌克兰11月22日使用7艘无人艇在利比亚沿海袭击了俄罗斯“水星”号护卫舰和一艘据称运输武器的干货船，并摧毁一架俄军卡-27直升机",
+          "type": "telegram"
+        },
         {
           "category": "其他",
           "day": "2026-11-24",
@@ -24407,10 +24439,10 @@
         }
       ],
       "name": "竹新社",
-      "seven_day_count": 12,
+      "seven_day_count": 11,
       "stale_hours": 24.0,
-      "status": "stale",
-      "today_count": 0,
+      "status": "ok",
+      "today_count": 1,
       "type": "telegram",
       "url": "https://t.me/tnews365"
     },
@@ -60404,10 +60436,10 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 348,
+      "seven_day_count": 277,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 59,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
@@ -68449,10 +68481,10 @@
         }
       ],
       "name": "每日消费电子观察",
-      "seven_day_count": 65,
+      "seven_day_count": 57,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 5,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/CE_Observe"
     },
@@ -82398,10 +82430,10 @@
         }
       ],
       "name": "FREE 中文",
-      "seven_day_count": 95,
+      "seven_day_count": 83,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 12,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/freechinese"
     },
@@ -84411,10 +84443,10 @@
         }
       ],
       "name": "Time经济观察",
-      "seven_day_count": 21,
+      "seven_day_count": 16,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 1,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/TimeHorizonX"
     },
@@ -96408,10 +96440,10 @@
         }
       ],
       "name": "敏感经济信息分享",
-      "seven_day_count": 118,
+      "seven_day_count": 92,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 17,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/pelosi3"
     },
@@ -106034,10 +106066,10 @@
         }
       ],
       "name": "看新闻 学英语 双语新闻",
-      "seven_day_count": 31,
+      "seven_day_count": 24,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 6,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/shuangyunews_rss"
     },
@@ -106097,15 +106129,31 @@
       "name": "我的一张大字报",
       "seven_day_count": 1,
       "stale_hours": 24.0,
-      "status": "ok",
+      "status": "stale",
       "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/myBigCharacterPoster"
     },
     {
       "id": "zaihuapd",
-      "last_update": "2026-11-25T22:33:27+08:00",
+      "last_update": "2026-11-25T23:19:00+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-25",
+          "hot": false,
+          "hour": "2026-11-25 23:00",
+          "id": "e2ac8eba1e02d271c965",
+          "image": "media/zaihuapd/45366_1.webp",
+          "link": "https://t.me/zaihuapd/45366",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "英国全国性态度与生活方式调查 Natsal 第四轮结果首次询问普通人群的网络性行为：16 至 24 岁人群中，一半人过去一年在手机上发送或收到过性图片，约一半女性、86% 的男性看过色情内容。该年龄段约三分之一从未有过性行为，2 年前的上一轮约为五分之一。研究发表于《柳叶刀》，调查在 2022 至 2024 年随机抽取 6700 名 16 至 59 岁的英国人。\n\n45 岁以下成年人平均每月性生活两次，1990 年为每周一次；16 至 44 岁女性不想要孩子的比例十年间从 8%升至 17%。\n\nBBC\n\n🌸 科技圈· 茶馆 · 投稿",
+          "text": "英国全国性态度与生活方式调查 Natsal 第四轮结果首次询问普通人群的网络性行为：16 至 24 岁人群中，一半人过去一年在手机上发送或收到过性图片，约一半女性、86% 的男性看过色情内容。该年龄段约三分之一从未有过性行为，2 年前的上一轮约为五分之一。研究发表于《柳叶刀》，调查在 2022 至 2024 年随机抽取 6700 名 16 至 59 岁的英国人。\n\n45 岁以下成年人平均每月性生活两次，1990 年为每周一次；16 至 44 岁女性不想要孩子的比例十年间从 8%升至 17%。\n\nBBC\n\n🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-25T23:19:00+08:00",
+          "title": "英国调查：16 至 24 岁青年有三分之一从未有过性经历",
+          "type": "telegram"
+        },
         {
           "category": "数码",
           "day": "2026-11-25",
@@ -115709,7 +115757,7 @@
         {
           "category": "科技",
           "day": "2026-10-27",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-27 10:00",
           "id": "b429592aa986503e2e6d",
           "image": "",
@@ -115789,7 +115837,7 @@
         {
           "category": "数码",
           "day": "2026-10-26",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-26 23:00",
           "id": "79fc0616b204cdc916e6",
           "image": "",
@@ -121756,10 +121804,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 135,
+      "seven_day_count": 114,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 15,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -124038,10 +124086,10 @@
         }
       ],
       "name": "Newlearnerの自留地",
-      "seven_day_count": 22,
+      "seven_day_count": 18,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 4,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/NewlearnerChannel"
     },
@@ -125731,10 +125779,10 @@
         }
       ],
       "name": "严选君综合福利社",
-      "seven_day_count": 19,
+      "seven_day_count": 16,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 2,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/yxzbp"
     },
@@ -136064,10 +136112,10 @@
         }
       ],
       "name": "动察Beating AI News",
-      "seven_day_count": 123,
+      "seven_day_count": 93,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 18,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/OneMillion_AI"
     },
@@ -137837,10 +137885,10 @@
         }
       ],
       "name": "Reorx’s Forge",
-      "seven_day_count": 24,
+      "seven_day_count": 18,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 4,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/reorx_share"
     },
