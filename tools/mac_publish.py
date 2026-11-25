@@ -52,8 +52,10 @@ def write_atomic(path, text):
         os.close(directory)
 
 
-def clean_rejection(output, refs):
-    """True only if porcelain output shows every ref refused client-side, at least one by the lease."""
+def main_only_rejection(output, candidates):
+    """True only for the one retryable receipt: main refused client-side by its lease, gh-pages
+    refused only as a consequence of --atomic, each line naming our exact candidate, ending in Done.
+    Anything else (gh-pages stale, a server-side refusal, a missing, extra or truncated line) is False."""
     lines = output.splitlines()
     if not lines or lines[-1] != 'Done':
         return False
@@ -61,15 +63,12 @@ def clean_rejection(output, refs):
     for line in lines:
         fields = line.split('\t')
         if len(fields) == 3 and ':' in fields[1]:
-            destination = fields[1].rsplit(':', 1)[1]
+            source, destination = fields[1].rsplit(':', 1)
             if destination in status:
                 return False
-            status[destination] = (fields[0], fields[2])
-    if set(status) != set(refs):
-        return False
-    if not all(flag == '!' and summary in (LEASE_REJECTED, ATOMIC_REJECTED) for flag, summary in status.values()):
-        return False
-    return any(summary == LEASE_REJECTED for _, summary in status.values())
+            status[destination] = (fields[0], source, fields[2])
+    expected = {REFS[0]: ('!', candidates[0], LEASE_REJECTED), REFS[1]: ('!', candidates[1], ATOMIC_REJECTED)}
+    return status == expected
 
 
 def run_cycle(code_sha, state, lock):
@@ -128,26 +127,56 @@ def run_cycle(code_sha, state, lock):
             *(f'+{source}:{dest}' for source, dest in zip(REFS, SNAPSHOTS)))
         return tuple(git('rev-parse', f'{ref}^{{commit}}') for ref in SNAPSHOTS)
 
+    def ls_remote():
+        """The two remote refs as advertised right now (missing refs are simply absent)."""
+        listed = git('ls-remote', '--refs', 'origin', *REFS, extra_env={'LC_ALL': 'C'})
+        return dict(line.split('\t')[::-1] for line in listed.splitlines())
+
     def normal_advance(old_main, new_main):
         """Someone else fast-forwarded main (e.g. a merge) without touching tg.db's mode, type or blob."""
         old_entry = database_entry(old_main)
         return (new_main != old_main and is_ancestor(old_main, new_main)
                 and old_entry != '' and database_entry(new_main) == old_entry)
 
-    def only_main_advanced(main_parent, pages_parent):
-        """Re-read the remote: gh-pages exactly as we built on, main only normally ahead of it."""
+    def only_main_advanced(main_parent, pages_parent, main_seen=None):
+        """Re-read the remote: gh-pages exactly as we built on, main only normally ahead of it.
+        main_seen is a main value an earlier check already observed; it must sit on the same
+        normal path (main_parent -> main_seen -> now). A re-read never overrides an earlier anomaly:
+        callers only get here after gh-pages was seen at its baseline in every observation."""
         try:
             main_now, pages_now = fetch()
-            return pages_now == pages_parent and normal_advance(main_parent, main_now)
+            if pages_now != pages_parent:
+                return False
+            if main_seen is None:
+                return normal_advance(main_parent, main_now)
+            return normal_advance(main_parent, main_seen) and (
+                main_now == main_seen or normal_advance(main_seen, main_now))
         except (OSError, RuntimeError, subprocess.SubprocessError):
             return False
 
-    observed = fetch()
+    try:
+        observed = fetch()
+    except subprocess.CalledProcessError:
+        # Tell a missing branch (state problem: stop) from an unreachable remote (retry next round).
+        listed = subprocess.run(['git', 'ls-remote', '--refs', 'origin', *REFS], cwd=ROOT,
+                                env=dict(env, LC_ALL='C'), pass_fds=(lock,), stdout=subprocess.PIPE)
+        if listed.returncode:
+            raise
+        present = {line.split('\t')[-1] for line in listed.stdout.decode(errors='replace').splitlines()}
+        missing = [ref for ref in REFS if ref not in present]
+        if missing:
+            halt_now(f'remote is reachable but lacks {missing}; reconcile the remote branches before resuming')
+        raise
     main_parent, pages_parent = observed
     record = state / 'refs.json'
 
     def remember(refs):
         write_atomic(record, json.dumps(dict(zip(REFS, refs))) + '\n')
+
+    def is_commit(sha):
+        found = subprocess.run(['git', 'rev-parse', '--verify', '--quiet', f'{sha}^{{commit}}'], cwd=ROOT,
+                               env=env, pass_fds=(lock,), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        return found.returncode == 0 and found.stdout.decode().strip() == sha
 
     if os.path.lexists(record):
         try:
@@ -155,7 +184,10 @@ def run_cycle(code_sha, state, lock):
             if (not isinstance(recorded, dict) or set(recorded) != set(REFS)
                     or not all(isinstance(value, str) and SHA.fullmatch(value) for value in recorded.values())):
                 raise ValueError('unexpected structure')
-        except (OSError, ValueError) as error:
+            invalid = [value for value in recorded.values() if not is_commit(value)]
+            if invalid:
+                raise ValueError(f'not a usable local commit: {invalid}')
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
             halt_now(f'local checkpoint {record} is unreadable ({error}); preserved for inspection')
         if recorded != dict(zip(REFS, observed)):
             if recorded[REFS[1]] == pages_parent and normal_advance(recorded[REFS[0]], main_parent):
@@ -225,7 +257,11 @@ def run_cycle(code_sha, state, lock):
         changes = git('diff-tree', '--no-commit-id', '--name-only', '-r', main_parent, data_tree)
         if changes not in ('', 'tg.db'):
             raise RuntimeError('data tree changes files other than tg.db')
-        main_next = git('commit-tree', data_tree, '-p', main_parent, '-m', 'Refresh public collection data') if changes else main_parent
+        # Always a new data commit, empty when tg.db is unchanged: then main is a real update too,
+        # so the server checks both old values inside one atomic transaction (an unchanged ref
+        # would not be sent at all and could move unnoticed). The checkpoint records this commit,
+        # which is how the next round recognises it as ours, empty or not.
+        main_next = git('commit-tree', data_tree, '-p', main_parent, '-m', 'Refresh public collection data')
 
         output = run('sh', 'tools/publish_pages.sh', '--dry-run', '--already-built', capture=True).decode()
         print(output, end='', flush=True)
@@ -251,18 +287,22 @@ def run_cycle(code_sha, state, lock):
             raise RuntimeError('archive build metadata differs from this cycle')
 
         upcoming = (main_next, pages_next)
-        if not all(is_ancestor(old, new) for old, new in zip(observed, upcoming)):
-            raise RuntimeError('candidates are not fast-forwards of the observed refs')
-        skip = (f'main advanced normally during this round; nothing published, no HALT; the next round '
-                f'builds on the new main. Built on {observed}')
-        # Catch rewinds or unrelated writes already visible before the push.
-        advertised = dict(line.split('\t')[::-1] for line in git('ls-remote', '--refs', 'origin', *REFS).splitlines())
+        if not all(new != old and is_ancestor(old, new) for old, new in zip(observed, upcoming)):
+            raise RuntimeError('candidates are not new fast-forwards of the observed refs')
+        skip = (f'main advanced normally during this round; nothing published, no HALT, checkpoint unchanged; '
+                f'the next round builds on the new main. Built on {observed}')
+        # Catch rewinds or unrelated writes already visible before the push. Skipping needs gh-pages
+        # at its baseline here and again on re-read, and main on one normal path through both reads.
+        advertised = ls_remote()
         if advertised != dict(zip(REFS, observed)):
-            if only_main_advanced(*observed):
+            if (set(advertised) == set(REFS) and advertised[REFS[1]] == pages_parent
+                    and only_main_advanced(main_parent, pages_parent, advertised[REFS[0]])):
                 raise Skipped(skip)
-            halt_now(f'remote refs moved during collection; observed={observed}, candidate={upcoming}; no push attempted')
-        # One atomic push names both refs, even an unchanged main, each with the exact old value it
-        # was built on: any later move of either ref (including a rewind to an ancestor) is refused.
+            halt_now(f'remote refs moved during collection; observed={observed}, advertised={advertised}, '
+                     f'candidate={upcoming}; no push attempted')
+        # One atomic push with two real updates, each leased to the exact old value it was built on:
+        # the client refuses a ref that already moved, and the server checks both old values in
+        # one transaction, so a later move of either ref (including a rewind) refuses the whole push.
         leases = [f'--force-with-lease={ref}:{old}' for ref, old in zip(REFS, observed)]
         refspecs = [f'{new}:{ref}' for ref, new in zip(REFS, upcoming)]
         # Leave this marker on rejection, ambiguous network result or interruption.
@@ -271,14 +311,17 @@ def run_cycle(code_sha, state, lock):
             stream.flush()
             os.fsync(stream.fileno())
         pushed = subprocess.run(['git', 'push', '--atomic', '--porcelain', '--no-follow-tags', *leases,
-                                 'origin', *refspecs], cwd=ROOT, env=env, pass_fds=(lock,),
+                                 'origin', *refspecs], cwd=ROOT, env=dict(env, LC_ALL='C'), pass_fds=(lock,),
                                 stdout=subprocess.PIPE, timeout=PUSH_TIMEOUT)
         output = pushed.stdout.decode(errors='replace')
         print(output, end='', flush=True)
         if pushed.returncode:
-            # Only a definite client-side refusal followed by a confirmed normal merge is safe to
-            # retry; HALT stays for anything else (disconnect, timeout, hook, unclear result).
-            if pushed.returncode == 1 and clean_rejection(output, REFS) and only_main_advanced(*observed):
+            # Only main refused by its lease (gh-pages merely carried along by --atomic), then a
+            # re-read showing gh-pages still at baseline and a normal merge on main, is safe to
+            # retry. HALT stays for anything else: gh-pages stale, server-side refusal (including
+            # `atomic transaction failed`), disconnect, timeout, hook, truncated or unclear receipt.
+            if (pushed.returncode == 1 and main_only_rejection(output, upcoming)
+                    and only_main_advanced(main_parent, pages_parent)):
                 halt.unlink()
                 raise Skipped(skip)
             raise RuntimeError(f'push failed (exit {pushed.returncode}); HALT kept: {halt}')
