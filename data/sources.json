@@ -5014,8 +5014,24 @@
     },
     {
       "id": "xhqcankao",
-      "last_update": "2026-11-25T22:16:41+08:00",
+      "last_update": "2026-11-26T07:00:18+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 07:00",
+          "id": "a0bf8dddd29b9d0192e8",
+          "image": "",
+          "link": "https://t.me/xhqcankao/33353",
+          "source": "xhqcankao",
+          "source_name": "风向旗参考快讯",
+          "summary": "Anthropic首席执行官达里奥·阿莫代伊当地时间11月25日在社交平台X发布长文，回应外界关于“Anthropic主张将人类自由意志让渡给AI”的指责，直斥这一说法“荒谬”。\n\n“我们绝不应该在效率或安全的祭坛上牺牲正当性与自决权，”他写道，“这条反对专制的论证，一字不差地适用于由AI治理。我也同样强烈地认为，把治理权交给AI是个坏主意……任何仔细读过我文章和采访的人，都不会合理地得出我持相反观点的结论。”\n\n此前，Anthropic的同行们接连发声，警告称若AI被不负责任地开发，人类的能动性恐将受损。OpenAI CEO萨姆·阿尔特曼本月初表示，要确保人类对未来保有“能动性”。\n\n—— 凤凰网科技、TechCrunch",
+          "text": "Anthropic首席执行官达里奥·阿莫代伊当地时间11月25日在社交平台X发布长文，回应外界关于“Anthropic主张将人类自由意志让渡给AI”的指责，直斥这一说法“荒谬”。\n\n“我们绝不应该在效率或安全的祭坛上牺牲正当性与自决权，”他写道，“这条反对专制的论证，一字不差地适用于由AI治理。我也同样强烈地认为，把治理权交给AI是个坏主意……任何仔细读过我文章和采访的人，都不会合理地得出我持相反观点的结论。”\n\n此前，Anthropic的同行们接连发声，警告称若AI被不负责任地开发，人类的能动性恐将受损。OpenAI CEO萨姆·阿尔特曼本月初表示，要确保人类对未来保有“能动性”。\n\n—— 凤凰网科技、TechCrunch",
+          "time": "2026-11-26T07:00:18+08:00",
+          "title": "Anthropic CEO怒斥“让AI接管人类意志”说法荒谬",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-25",
@@ -22138,10 +22154,10 @@
         }
       ],
       "name": "风向旗参考快讯",
-      "seven_day_count": 115,
+      "seven_day_count": 116,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 0,
+      "today_count": 1,
       "type": "telegram",
       "url": "https://t.me/xhqcankao"
     },
@@ -92409,7 +92425,7 @@
         {
           "category": "国际",
           "day": "2026-10-27",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-27 06:00",
           "id": "c42252e772fb7893fcc3",
           "image": "",
@@ -92425,7 +92441,7 @@
         {
           "category": "国际",
           "day": "2026-10-27",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-27 06:00",
           "id": "913786b959c314bcd5ed",
           "image": "",
