@@ -152,7 +152,7 @@
     dataBase: DATA,
     get now() { return new Date(); },
     openItem: (it) => { const list = pendingList; pendingList = null; return openItem(it, {list}); },
-    cancelOpen: () => { openSeq++; },
+    cancelOpen: () => { openSeq++; navSeq++; },
     toast: (t) => toast(t),
     fetch: (u, o) => fetch(u, o),
     searchButton: null,
@@ -593,14 +593,22 @@
   async function loadSeg(i) {
     const s = blSegs[i];
     if (!s || s.loading || s.page >= s.pages) return;
+    const epoch = dataEpoch;
     s.loading = true; s.error = null;
     let fresh = [];
     try {
-      const page = await getJSON(`blogger/${s.plat}/${s.pkey}/page-${s.page + 1}.json`);
+      const page = await getJSON(`blogger/${s.plat}/${s.pkey}/page-${s.page + 1}.json`, epoch > 0);
+      if (epoch !== dataEpoch) return;
       const seen = new Set(s.list.map(x => x.id));
       fresh = remember(page.items).filter(x => !seen.has(x.id));
       s.list.push(...fresh); s.page = page.page; s.pages = page.pages;
-    } catch (e) { s.error = String(e.message || e); } finally { s.loading = false; }
+    } catch (e) {
+      if (epoch !== dataEpoch) return;
+      s.error = String(e.message || e);
+    } finally {
+      if (epoch === dataEpoch) s.loading = false;
+    }
+    if (epoch !== dataEpoch) return;
     const at = blSegs.indexOf(s); if (at < 0) return;   // 期间长流重建过：数据已进缓存，下次显示时带上
     i = at;
     const sec = $(`#bloggerList .bl-seg[data-seg="${i}"]`); if (!sec) return;
@@ -678,7 +686,12 @@
   }
   async function ensureBloggers() {
     if (bloggers) return false;
-    try { bloggers = await getJSON('bloggers.json'); remember(bloggers.items); } catch (e) { bloggers = {platforms: [], items: []}; }
+    const epoch = dataEpoch;
+    let data;
+    try { data = await getJSON('bloggers.json', epoch > 0); } catch (e) { data = {platforms: [], items: []}; }
+    if (epoch !== dataEpoch || bloggers) return false;
+    bloggers = data;
+    remember(bloggers.items);
     if (!platOf(plat) && bloggers.platforms[0]) plat = bloggers.platforms[0].id;
     renderBloggers();
     const i = blSegs.findIndex(s => s.plat === plat);
@@ -689,7 +702,11 @@
   /* ---------- 热搜（底栏，替换原历史页） ---------- */
   async function ensureHotIndex() {
     if (hotIndex) return hotIndex;
-    try { hotIndex = await getJSON('hotsearch/index.json'); } catch (e) { hotIndex = {dates: []}; }
+    const epoch = dataEpoch;
+    let data;
+    try { data = await getJSON('hotsearch/index.json', epoch > 0); } catch (e) { data = {dates: []}; }
+    if (epoch !== dataEpoch) return hotIndex || {dates: []};
+    hotIndex = data;
     return hotIndex;
   }
   function hotPayload() { return hotDay ? hotDays[hotDay] : hot; }
@@ -979,16 +996,25 @@
   // 作废令牌：每次打开详情、关闭详情（返回按钮、右滑、切页）、来源状态、搜索、浏览器前进后退都递增；
   // 异步读完发现已不是最新一次，就丢弃结果（不打开详情、不改地址栏），包括正文还没显示的情况
   let openSeq = 0;
+  let navSeq = 0;       // 仅用户导航递增，刷新不递增；用于区分刷新取消的深链与更新的用户导航
+  let articleGen = 0;   // 每次实际打开/关闭正文时递增，给右滑关闭动画绑定当前正文实例
   async function openItem(ref, opts = {}) {
     const id = typeof ref === 'string' ? ref : ref && ref.id;
     if (!id) return;
     const seq = ++openSeq;
+    const myNav = ++navSeq;
     // 进入 await 之前先记下返回位置：调用方（如搜索）可能紧接着就把自己的层收起来
     const ret = !opts.fromPop && !(articleOpen && articleId === id) ? (articleOpen ? returnState : captureScroll()) : null;
     // 先按 id 经 id-index 读本次发布的完整条目（被折叠的条目在 merged.json 里，带正文和「今日重点」标）；
     // 读不到（或超时）再用收藏/搜索传进来的快照兜底
     let it = await findItem(id) || (typeof ref === 'object' ? ref : null);
-    if (seq !== openSeq) return;
+    if (seq !== openSeq) {
+      if ((opts.fromPop || opts.replaceHash) && myNav === navSeq && L.parseItemHash(location.hash) === id) {
+        if (articleOpen) closeArticle({fromPop: true});
+        history.replaceState({home: true}, '', location.pathname + location.search);
+      }
+      return;
+    }
     if (!it) {
       const fav = window.RebangFavorites && window.RebangFavorites.load ? window.RebangFavorites.load().find(x => x.id === id) : null;
       const hit = mounted.search && typeof mounted.search.getItem === 'function' ? mounted.search.getItem(id) : null;
@@ -1016,7 +1042,7 @@
     av.style.transition = ''; av.style.transform = '';
     av.classList.add('on');
     body.scrollTop = 0; $('#artBar').classList.remove('solid');
-    articleOpen = true; articleId = id; artItem = it;
+    articleOpen = true; articleId = id; artItem = it; articleGen++;
     const n = cmtCount(it); $('#dCmtN').textContent = n ? L.fmtN(n) : '评论';
     syncArtFav(); setRead(id);
     renderNav();
@@ -1024,16 +1050,17 @@
     else if (!opts.fromPop) history.pushState({article: id}, '', L.itemHash(id));
   }
   function closeArticle(opts = {}) {
-    openSeq++;                         // 离开详情：在途的打开（如「下一条」、慢深链）一律作废
+    openSeq++; navSeq++;               // 离开详情：在途的打开（如「下一条」、慢深链）一律作废
     if (!articleOpen) {
       if (!opts.fromPop && (L.parseItemHash(location.hash) || (history.state && history.state.article))) {
         history.replaceState({home: true}, '', location.pathname + location.search);
       }
       return;
     }
-    articleOpen = false; articleId = null; artItem = null;
+    articleOpen = false; articleId = null; artItem = null; articleGen++;
     closeSheet();
     $('#articleView').classList.remove('on');
+    $('#articleView').style.transition = '';
     $('#articleView').style.transform = '';
     restoreScroll(returnState);
     if (!opts.fromPop) {
@@ -1096,7 +1123,7 @@
     body.scrollTop = 0;
   }
   async function openHealth(fromPop = false) {
-    openSeq++;
+    openSeq++; navSeq++;
     const dialog = $('#healthView');
     if (dialog.open) return;
     if (!fromPop) history.pushState({health: true}, '', HEALTH_HASH);
@@ -1125,7 +1152,7 @@
     else location.hash = '';
   }
   window.addEventListener('popstate', e => {
-    openSeq++;                         // 浏览器前进/后退：先作废在途的详情打开；要打开详情的分支下面会重新开
+    openSeq++; navSeq++;               // 浏览器前进/后退：先作废在途的详情打开；要打开详情的分支下面会重新开
     if (location.hash === HEALTH_HASH) { openHealth(true); return; }
     const health = $('#healthView');
     if (health.open) { health.close(); updateHealthFreshness(); }
@@ -1354,13 +1381,18 @@
     if (s0.kind === 'menu') { suppressClickUntil = performance.now() + 250; return; }   // 只吞掉松手时补发的那一下点击
     if (s0.kind === 'back') {
       const av = $('#articleView');
+      const gen = articleGen;
       if (dx > 80) {
-        const closingSeq = ++openSeq;
+        openSeq++; navSeq++;
         av.style.transition = MOTION.tr('transform', MOTION.fast);
         av.style.transform = 'translateX(100%)';
-        setTimeout(() => { av.style.transition = ''; if (openSeq === closingSeq) closeArticle(); }, MOTION.fast);
+        setTimeout(() => {
+          if (articleGen !== gen) return;
+          av.style.transition = '';
+          if (articleOpen) closeArticle();
+        }, MOTION.fast);
       }
-      else { av.style.transition = MOTION.tr('transform', MOTION.base); av.style.transform = ''; setTimeout(() => { av.style.transition = ''; }, MOTION.base); }
+      else { av.style.transition = MOTION.tr('transform', MOTION.base); av.style.transform = ''; setTimeout(() => { if (articleGen === gen) av.style.transition = ''; }, MOTION.base); }
     } else if (s0.kind === 'step') {
       const body = $('#articleBody'); body.style.transform = '';
       if (Math.abs(dx) > 60) step(dx < 0 ? 1 : -1);

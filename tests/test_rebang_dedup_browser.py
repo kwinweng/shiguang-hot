@@ -388,5 +388,136 @@ class DedupBrowserTests(unittest.TestCase):
         self.assertTrue(new_merged_hits)
         self.assertIn('新版正文标记', self.page.locator('#articleBody').inner_text())
 
+    def _trigger_version_refresh(self, built_at='2026-11-26T00:00:00+08:00'):
+        meta_body = json.dumps({**json.loads((self.out / 'data' / 'meta.json').read_text(encoding='utf-8')),
+                                'built_at': built_at})
+        self.page.route('**/data/meta.json*', lambda route: route.fulfill(
+            status=200, content_type='application/json', body=meta_body))
+        self.page.evaluate("() => document.querySelector('#btnRefresh').click()")
+
+    def _dispatch_right_swipe_back(self):
+        self.page.evaluate("""() => {
+          const av = document.querySelector('#articleView');
+          const mk = (type, x) => {
+            const touch = new Touch({identifier: 1, target: av, clientX: x, clientY: 200, pageX: x, pageY: 200});
+            const touches = type === 'touchend' ? [] : [touch];
+            return new TouchEvent(type, {bubbles: true, cancelable: true, touches, targetTouches: touches, changedTouches: [touch]});
+          };
+          av.dispatchEvent(mk('touchstart', 10));
+          av.dispatchEvent(mk('touchmove', 30));
+          av.dispatchEvent(mk('touchmove', 150));
+          av.dispatchEvent(mk('touchend', 150));
+        }""")
+
+    def test_right_swipe_back_still_closes_if_refresh_runs_during_animation(self):
+        self.open_home()
+        self.page.evaluate("() => { window.Rebang.openItem('tnews365:900'); }")
+        self.page.wait_for_selector('#articleView.on')
+        self._dispatch_right_swipe_back()
+        # 动画未结束前触发新版本刷新（会递增 openSeq）：旧正文仍应正常关闭，不能留在屏外
+        self._trigger_version_refresh()
+        self.page.wait_for_timeout(500)
+        self.assert_detail_closed()
+        self.assertEqual(self.page.locator('#articleView').evaluate('e => e.style.transform'), '')
+        self.assertEqual(self.page.evaluate('location.hash'), '')
+
+    def test_right_swipe_timer_does_not_close_newly_opened_article(self):
+        self.open_home()
+        self.page.evaluate("() => { window.Rebang.openItem('tnews365:900'); }")
+        self.page.wait_for_selector('#articleView.on')
+        self._dispatch_right_swipe_back()
+        # 动画未结束前立刻打开另一篇新正文：旧定时器不能把新正文关掉
+        self.page.evaluate("() => { window.Rebang.openItem('myBigCharacterPoster:961'); }")
+        self.page.wait_for_timeout(500)
+        self.assertTrue(self.page.locator('#articleView').evaluate('e => e.classList.contains("on")'))
+        self.assertIn('大图卡折叠测试', self.page.locator('#articleTitle').inner_text())
+        self.assertEqual(self.page.locator('#articleView').evaluate('e => e.style.transform'), '')
+
+    def test_hot_deep_link_cancelled_by_refresh_cleans_up_article_and_hash(self):
+        self.open_home()
+        self.page.evaluate("() => { window.Rebang.openItem('tnews365:900'); }")
+        self.page.wait_for_selector('#articleView.on')
+        self.hold_paths.add('/data/id-index.json')
+        # 正文 A 打开时，通过热深链改到 B；B 等待期间触发新版本刷新
+        self.page.evaluate("() => { location.hash = '#/item/freechinese%3A901'; }")
+        self.wait_held()
+        self._trigger_version_refresh()
+        self.release()
+        self.page.wait_for_timeout(600)
+        # 不能残留 A 的正文 + B 的地址栏
+        self.assert_detail_closed()
+        self.assertEqual(self.page.evaluate('location.hash'), '')
+
+    def test_stale_blogger_responses_after_refresh_do_not_pollute_cache(self):
+        bloggers_payload = json.loads((self.out / 'data' / 'bloggers.json').read_text(encoding='utf-8'))
+        first_post = bloggers_payload['items'][0]
+        first_id = first_post['id']
+        first_plat = first_post['blogger']['platform']
+        seg_path = f'/data/blogger/{first_plat}/all/page-1.json'
+        seg_payload = json.loads((self.out / 'data' / 'blogger' / first_plat / 'all' / 'page-1.json').read_text(encoding='utf-8'))
+
+        def mark_post(payload, text):
+            copy = json.loads(json.dumps(payload))
+            copy['items'][0]['summary'] = text
+            copy['items'][0]['body'] = text
+            return copy
+
+        # 场景 1：旧 bloggers.json 晚于新版本刷新返回，不能污染 items 缓存
+        self.open_home()
+        self.hold_paths.add('/data/bloggers.json')
+        self.page.locator('.tabbar button[data-view="blogger"]').click()
+        self.wait_held()
+        stale_bloggers = mark_post(bloggers_payload, '旧版博主索引脏数据')
+        fresh_bloggers = mark_post(bloggers_payload, '新版博主索引正文')
+        fresh_seg = mark_post(seg_payload, '新版博主分页正文')
+        self.hold_paths.discard('/data/bloggers.json')
+        self.page.route('**/data/bloggers.json*', lambda route: route.fulfill(
+            status=200, content_type='application/json', body=json.dumps(fresh_bloggers)))
+        self.page.route(f'**{seg_path}*', lambda route: route.fulfill(
+            status=200, content_type='application/json', body=json.dumps(fresh_seg)))
+        self._trigger_version_refresh('2026-11-26T00:00:00+08:00')
+        self.page.wait_for_timeout(400)
+        # 把挂起的旧 bloggers.json 放行（返回旧版脏数据）
+        for r in self.held[:]:
+            if urlsplit(r.request.url).path == '/data/bloggers.json':
+                r.fulfill(status=200, content_type='application/json', body=json.dumps(stale_bloggers))
+                self.held.remove(r)
+        self.page.wait_for_timeout(400)
+        self.page.evaluate("id => window.Rebang.openItem(id)", first_id)
+        self.page.wait_for_selector('#articleView.on')
+        body_txt = self.page.locator('#articleBody').inner_text()
+        self.assertTrue('新版博主索引正文' in body_txt or '新版博主分页正文' in body_txt, body_txt)
+        self.assertNotIn('旧版博主索引脏数据', body_txt)
+        self.page.locator('#btnBack').click()
+        self.page.wait_for_timeout(200)
+
+        # 场景 2：旧 blogger 分页响应晚于新版本刷新返回，不能污染 items 缓存
+        stale_seg = mark_post(seg_payload, '旧版博主分页脏数据')
+        fresh_seg_v3 = mark_post(seg_payload, '新版博主分页v3')
+        fresh_bloggers_v2 = mark_post(bloggers_payload, '新版博主索引v2')
+        self.page.unroute('**/data/bloggers.json*')
+        self.page.unroute(f'**{seg_path}*')
+        self.page.route('**/data/bloggers.json*', lambda route: route.fulfill(
+            status=200, content_type='application/json', body=json.dumps(fresh_bloggers_v2)))
+        self.hold_paths.add(seg_path)
+        self._trigger_version_refresh('2026-11-26T01:00:00+08:00')
+        self.wait_held()
+        # 此时 seg_path (v2) 已发出并挂起；再触发一次 v3 刷新，先让 v3 完成，再放行 v2 的旧分页
+        self.hold_paths.discard(seg_path)
+        self.page.route(f'**{seg_path}*', lambda route: route.fulfill(
+            status=200, content_type='application/json', body=json.dumps(fresh_seg_v3)))
+        self._trigger_version_refresh('2026-11-26T02:00:00+08:00')
+        self.page.wait_for_timeout(400)
+        for r in self.held[:]:
+            if urlsplit(r.request.url).path == seg_path:
+                r.fulfill(status=200, content_type='application/json', body=json.dumps(stale_seg))
+                self.held.remove(r)
+        self.page.wait_for_timeout(400)
+        self.page.evaluate("id => window.Rebang.openItem(id)", first_id)
+        self.page.wait_for_selector('#articleView.on')
+        body_txt2 = self.page.locator('#articleBody').inner_text()
+        self.assertIn('新版博主分页v3', body_txt2)
+        self.assertNotIn('旧版博主分页脏数据', body_txt2)
+
 if __name__ == '__main__':
     unittest.main()
