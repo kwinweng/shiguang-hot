@@ -118,14 +118,14 @@ def guess_lang(*texts):
     return 'zh' if _CJK.search(' '.join(t or '' for t in texts)) else 'en'
 
 
-_BARE_URL = re.compile(r'https?://\S+')
+_BARE_URL = re.compile(r'https?://[^\s《》「」“”‘’，。、；：！？（）【】<>]+')
 _QUOTED = re.compile(r'《[^》]*》|「[^」]*」|“[^”]*”')
 
 
 def mostly_chinese(title):
-    """英文订阅按条判断，只看标题：去掉裸链接和《》「」“”里的内容（引用的中文作品名/原话），
-    剩下的只要有汉字就是 zh，否则 en。摘要不参与。"""
-    rest = _QUOTED.sub('', _BARE_URL.sub('', str(title or '')))
+    """英文订阅按条判断，只看标题：先去掉《》「」“”里的内容（引用的中文作品名/原话），
+    再去掉裸链接（遇中文标点或括号停止），剩下的只要有汉字就是 zh，否则 en。摘要不参与。"""
+    rest = _BARE_URL.sub('', _QUOTED.sub('', str(title or '')))
     return bool(_CJK.search(rest))
 
 
