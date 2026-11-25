@@ -345,6 +345,21 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.locator('#healthStamp').get_by_text('数据时间未知').wait_for(timeout=2500)
         self.assertNotIn('全部正常', self.page.locator('#healthView').inner_text())
 
+    def test_health_bad_built_at_does_not_break_boot_or_claim_healthy(self):
+        # 坏对象会让 new Date() 抛错；缺时区的字符串不能当作新鲜。
+        for built_at in ({'toString': None}, '2026-11-15T10:00:00'):
+            with self.subTest(built_at=built_at):
+                meta = json.loads((self.health_out / 'data/meta.json').read_text())
+                meta['built_at'] = built_at
+                meta['health_summary'] = {'total': 1, 'issues': 0}
+                self.page.route('**/data/meta.json*', (lambda body: lambda route: route.fulfill(json=body))(meta))
+                self.open()
+                self.assertTrue(self.page.locator('#channelRoot > .ch-sec').count())
+                entry = self.page.locator('#healthEntry')
+                self.assertIn('时间未知', entry.inner_text())
+                self.assertNotIn('全部健康', entry.get_attribute('aria-label') or '')
+                self.assertEqual(self.page.locator('#refreshed').inner_text(), '刷新时间未知')
+
     def test_health_keeps_valid_rows_when_source_and_account_fields_are_damaged(self):
         snapshot = json.loads((self.health_out / 'data/health.json').read_text())
         platform = next(row for row in snapshot['sources'] if row.get('accounts'))

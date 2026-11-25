@@ -446,8 +446,10 @@
   function posts() { return (bloggers && bloggers.items) || []; }
   function platOf(id) { return ((bloggers && bloggers.platforms) || []).find(p => p.id === id); }
   function recentCount(id) {
-    const since = new Date(meta.built_at).getTime() - 24 * 3600e3;
-    return posts().filter(p => p.blogger.platform === id && new Date(p.published_at).getTime() >= since).length;
+    const built = builtAtMs();
+    if (!Number.isFinite(built)) return 0;
+    const since = built - 24 * 3600e3;
+    return posts().filter(p => p.blogger.platform === id && window.RebangHealth.timeMs(p.published_at) >= since).length;
   }
   let blSegs = [];            // [{plat, pkey, handle, name, total, list, page, pages, loading, error, revealed}]
   function emptyText(p, acc) {
@@ -1081,7 +1083,12 @@
   });
 
   /* ---------- 刷新 ---------- */
-  function stampRefresh(d) { $('#refreshed').textContent = `刷新于 ${L.fmtRefreshed(d)}`; }
+  // meta.built_at 统一在这里校验：坏值、缺时区都当作未知，不交给 new Date()。
+  function builtAtMs() { return meta ? window.RebangHealth.timeMs(meta.built_at) : NaN; }
+  function stampRefresh(d) {
+    const ms = d instanceof Date ? d.getTime() : NaN;
+    $('#refreshed').textContent = Number.isFinite(ms) ? `刷新于 ${L.fmtRefreshed(d)}` : '刷新时间未知';
+  }
   async function doRefresh() {
     const btn = $('#btnRefresh');
     btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin'); setTimeout(() => btn.classList.remove('spin'), MOTION.slow + 50);
@@ -1591,7 +1598,7 @@
       $('#channelRoot').innerHTML = `<p class="muted" style="padding:16px">数据没加载出来（${L.esc(e.message)}）。稍后点右上角刷新再试。</p>`;
       $('#app').removeAttribute('aria-busy'); return;
     }
-    stampRefresh(meta.built_at);
+    stampRefresh(new Date(builtAtMs()));
     const note = meta.note || (meta.fixture ? '这是用测试样例数据构建的页面，不是真实内容。' : '');
     if (note && sessionStorage.getItem(NOTE_KEY) !== note) {
       const box = $('#previewNote'); box.querySelector('span').textContent = note; box.hidden = false;

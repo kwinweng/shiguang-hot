@@ -22,6 +22,8 @@ REF_PREFIXES = ('quotes', 'replies', 'refs')
 _TCO = re.compile(r'\s*https://t\.co/\w+\s*$')
 # Include object starts cut off even before the first key or colon.
 _BLOB_START = re.compile(r'\{\s*(?="|$)')
+# A top-level array of responses starts with "[" followed by an object or its end.
+_VALUE_START = re.compile(r'\[\s*(?=\{|\]|$)|\{\s*(?="|$)')
 
 
 def _object(value):
@@ -49,17 +51,19 @@ def _decode_blobs(text, *, json_file):
         pass
     else:
         return (value if isinstance(value, list) else [value]), False
+    # 日志里只按顶层值解码：数组或对象从开头解到闭合为止，跳过其内部；任何一段解不完整，
+    # 整份就算坏，绝不把截断数组里的内层对象当成一份完整响应。
     dec = json.JSONDecoder()
     out, pos = [], 0
     broken = json_file or text.lstrip().startswith('[')
-    while match := _BLOB_START.search(text, pos):
+    while match := _VALUE_START.search(text, pos):
         try:
             obj, pos = dec.raw_decode(text, match.start())
         except (ValueError, RecursionError):
             broken = True
             pos = match.end()
         else:
-            out.append(obj)
+            out.extend(obj if isinstance(obj, list) else [obj])
     return out, broken
 
 
@@ -167,7 +171,9 @@ def read_export(path, account_handles):
     for _, blob in responses:
         includes = _object(blob.get('includes'))
         for key in ('posts', 'tweets'):
-            _merge_posts(posts, [row for row in _array(includes.get(key)) if _valid_post(row, users)])
+            # 辅助记录只按 id 补字段（引用缺日期、只有 note_tweet 的全文补充都要留下）；
+            # 引用框和评论各自校验需要的内容。
+            _merge_posts(posts, includes.get(key))
     for pid in main_ids:
         posts[pid]['_main'] = True
     store = reply_store_near(path)

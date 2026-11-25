@@ -264,6 +264,7 @@ def run_x_export(tmp_path, text, *, suffix='.json', direct_dir=False, previous=N
 @pytest.mark.parametrize(('suffix', 'text'), [
     ('.json', '{"meta":{"result_count":0}}\n{ "data": ['),
     ('.txt', 'output: {"meta":{"result_count":0}}\n{ "da'),
+    ('.txt', 'output: [{"meta":{"result_count":0}}'),
     ('.json', '{"data":[{"id":"1"}],"meta":{"result_count":1}}'),
     ('.json', '{"data":[{"id":"1","author_id":"2","text":"ok","created_at":"2026-11-15T10:00:00Z"}]}'),
 ])
@@ -289,6 +290,23 @@ def test_x_keeps_account_errors_with_damaged_auxiliary_rows(tmp_path, broken):
     others = [row for handle, row in rows.items() if handle != 'karpathy']
     assert all(row['status'] == ('error' if broken else 'empty') for row in others)
     assert all(row['last_ok_at'] == (None if broken else NOW.isoformat()) for row in others)
+
+
+def test_x_auxiliary_rows_fill_quote_and_full_text(tmp_path):
+    main = {'id': '10', 'author_id': '1', 'text': 'short', 'created_at': '2026-11-15T10:00:00Z',
+            'conversation_id': '10', 'referenced_tweets': [{'type': 'quoted', 'id': '20'}]}
+    (tmp_path / 'posts.json').write_text(json.dumps({
+        'data': [main], 'meta': {'result_count': 1},
+        'includes': {'users': [{'id': '1', 'username': 'karpathy', 'name': 'K'},
+                               {'id': '2', 'username': 'other', 'name': 'O'}],
+                     'tweets': [{'id': '20', 'author_id': '2', 'text': 'quoted body'},
+                                {'id': '10', 'note_tweet': {'text': 'short but the full long text'}}]},
+    }))
+    platform = {'id': 'x', 'accounts': [{'handle': 'karpathy', 'name': 'K'}]}
+    item, = x_posts(load_dump(tmp_path), platform, '2026-11-15T18:00:00+08:00')['karpathy']
+    assert item['body'] == 'short but the full long text'
+    assert item['blogger']['quote']['text'] == 'quoted body'
+    assert item['blogger']['quote']['published_at'] is None
 
 
 def test_x_accepts_txt_only_export_directory(tmp_path):

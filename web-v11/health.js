@@ -19,7 +19,9 @@
     not_configured: ['尚未配置账号'],
   };
   const STALE_SNAPSHOT_MS = 3 * 60 * 60 * 1000; // 每小时发布，给连续延迟留出余量
-  const date = value => typeof value === 'string' ? Date.parse(value) : NaN;
+  // 只认带时区的 ISO 时间；缺时区的字符串各浏览器解读不一，按未知处理。
+  const ISO_WITH_ZONE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/;
+  const date = value => typeof value === 'string' && ISO_WITH_ZONE.test(value) ? Date.parse(value) : NaN;
   const byAge = value => Number.isFinite(date(value)) ? date(value) : Infinity;
   const isCount = value => Number.isInteger(value) && value >= 0;
   const statusKey = status => ORDER.includes(status) ? status : 'unknown';
@@ -120,7 +122,7 @@
     ${Object.entries(groups).map(([status, sources]) => section(status, sources, initial)).join('')}`;
   }
 
-  const api = {healthSections, elapsed, snapshotFreshness, healthHTML};
+  const api = {healthSections, elapsed, snapshotFreshness, healthHTML, timeMs: date};
   if (node) module.exports = api;
   else root.RebangHealth = api;
 })(typeof window !== 'undefined' ? window : globalThis);
