@@ -14,6 +14,7 @@ from zoneinfo import ZoneInfo
 
 from rebang.cache import save_cache
 from rebang.contract import ITEMS_SCHEMA, load_channels
+from rebang.contract.schema import is_aware_iso
 from rebang.health_time import observation_time
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -50,13 +51,6 @@ def _plain(text, cap=None):
 
 def _sha(value):
     return hashlib.sha1(value.encode('utf-8')).hexdigest()[:16]
-
-
-def _norm_url(url):
-    url = str(url or '').strip()
-    url = re.sub(r'^http://', 'https://', url)
-    url = re.sub(r'^https://t\.me/s/', 'https://t.me/', url)
-    return url.split('#')[0].rstrip('/')
 
 
 def _http_url(url):
@@ -332,12 +326,14 @@ def parse_feed(xml, feed_url=None):
     from shiguang.ingest import web
     bases = _atom_link_bases(xml, feed_url)
     out = []
-    for e in web.parse(xml):
+    for e in web.parse(xml, with_publication=True):
         raw = e['url'] or ''
         base = bases.get((e['id'] or raw, raw), feed_url)
         out.append({'id': e['id'] or _sha(raw or e['title']), 'ts': _iso(e['ts']), 'title': e['title'] or '',
                     'summary': e['body'] or '', 'url': _resolve_link(raw, base),
-                    'image': next((u for u in e.get('images') or [] if _valid_http(u, ('https',))), None)})
+                    'image': next((u for u in e.get('images') or [] if _valid_http(u, ('https',))), None),
+                    'published_at_verified': e.get('published_at_verified', False),
+                    'feed_attribution': e.get('feed_attribution', True)})
     return out
 
 
@@ -430,7 +426,11 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
                 state = state or 'not_fetched'
         count = 0
         for e in entries:
-            published = _parse_when(e.get('ts')) or now
+            timestamp = e.get('ts')
+            published = _parse_when(timestamp)
+            verified = (cfg['type'] == 'feed' and e.get('published_at_verified') is True
+                        and is_aware_iso(timestamp) and published is not None)
+            published = published or now
             if cfg['type'] != 'page' and published < floor:
                 continue
             title = _plain(e.get('title'))
@@ -450,6 +450,9 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
             native = e['id'] if cfg['type'] == 'page' else str(e.get('id') or _sha(e.get('url') or title))
             item = _news(cfg, channel, native, title, _plain(full, SUMMARY_CHARS), link, published, now,
                          lang=lang, body=body, image=image)
+            item['published_at_verified'] = verified
+            if cfg['type'] == 'feed':
+                item['feed_attribution'] = e.get('feed_attribution') is not False  # 旧缓存未保留署名信息，不投票
             if fetched_at:
                 item['fetched_at'] = fetched_at
             items.append(item)
@@ -464,55 +467,45 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
     return items, statuses
 
 
-# ---------- 现有每日成品（x / world / github / hot-daily） ----------
-
-def _legacy_sources():
-    return {s['id']: s for s in json.loads((ROOT / 'sources.json').read_text(encoding='utf-8'))['sources']}
-
+# ---------- 旧 #88 主条优先级（本地整理稿只参与折叠） ----------
 
 def default_inbox_loader(source_id):
-    """盒子上原始投递目录优先，其次仓库 public-feeds。返回 [(feed, base_dir)]，新→旧。"""
     from shiguang.ingest.feeds import load_issues
+
+    sources = json.loads((ROOT / 'sources.json').read_text(encoding='utf-8'))['sources']
+    source = next(s for s in sources if s['id'] == source_id)
     with contextlib.redirect_stdout(sys.stderr):
-        return load_issues(_legacy_sources()[source_id], local=True)
+        return load_issues(source, local=True)
 
 
-def apply_highlights(items, floor, loader):
-    """今日重点不单独成条，只给频道里同链接的条目打标。"""
-    rule = load_channels()['highlights']
-    hid = rule['source_id']
-    cfg = {'id': hid, 'name': rule['name'], 'type': 'inbox'}
+def _legacy_link(url):
+    url = re.sub(r'^http://', 'https://', url.strip())
+    url = re.sub(r'^https://t\.me/s/', 'https://t.me/', url)
+    return url.split('#', 1)[0].rstrip('/')
+
+
+def _remember_fold_preference(items, floor, loader):
+    if not items:
+        return
     try:
-        issues = loader(hid)
-    except Exception as ex:
-        return _status(cfg, None, 'error', error=type(ex).__name__)
+        issues = loader(load_channels()['highlights']['source_id'])
+    except Exception:  # 与旧入口一样，整理稿不可用时仍能采集新闻
+        return
     by_url = {}
     for item in items:
         if item['kind'] == 'news' and item['url']:
-            by_url.setdefault(_norm_url(item['url']), item)
-    marked = unmatched = 0
+            by_url.setdefault(_legacy_link(item['url']), item)
     cut = floor.replace(hour=0, minute=0, second=0, microsecond=0)
     for feed, _ in issues:
-        day = feed.get('date')
-        start = _parse_when(day)
-        if start is None or start < cut:
+        day = _parse_when(feed.get('date'))
+        if day is None or day < cut:
             continue
         for section in feed.get('sections') or []:
             for entry in section.get('items') or []:
-                if not isinstance(entry, dict):
-                    continue
-                url = _http_url(entry.get('link'))
-                target = by_url.get(_norm_url(url)) if url else None
-                if target is None:
-                    unmatched += 1
-                    continue
-                if not target.get('highlight'):
-                    marked += 1
-                target['highlight'] = True
-                target['highlight_date'] = max(day, target.get('highlight_date') or day)
-    latest = issues[0][0].get('date') if issues else None
-    return dict(_status(cfg, None, 'ok' if marked else 'empty', 0), marked=marked, unmatched=unmatched,
-                latest_issue=latest, role='highlight-marks')
+                url = _http_url(entry.get('link')) if isinstance(entry, dict) else ''
+                target = by_url.get(_legacy_link(url)) if url else None
+                if target is not None:
+                    target['fold_preferred'] = True
 
 
 # ---------- 翻译（rebang/translate 由 bloggers 分支提供；没有就留 translated=false） ----------
@@ -720,7 +713,6 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
     by_type = {}
     for sid, (slug, cfg) in table.items():
         by_type.setdefault(cfg['type'], []).append((slug, cfg))
-    loader = inbox_loader or default_inbox_loader
     items, statuses = [], []
     if isinstance(tgmeta, (str, Path)):
         from rebang.tgmeta import load_store
@@ -731,7 +723,7 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
     got, st = remote_items(by_type.get('feed', []) + by_type.get('page', []), now, floor, fetch=fetch, cache=cache,
                            http_get=http_get or default_http_get)
     items += got; statuses += st
-    statuses.append(apply_highlights(items, floor, loader))
+    _remember_fold_preference(items, floor, inbox_loader or default_inbox_loader)
     if translator == 'default':
         translator = default_translator()
     from rebang.extract import apply_extraction

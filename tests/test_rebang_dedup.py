@@ -241,7 +241,7 @@ class SiteFoldTests(unittest.TestCase):
         self.assertEqual(meta['counts']['news'], 4)        # 总条数不因折叠变少
         self.assertEqual(report['channels']['tech-ai']['merged'], 1)
 
-    def test_same_raw_url_keeps_every_id_reachable_and_highlight_only_marks(self):
+    def test_same_raw_url_keeps_every_news_id_reachable_and_ignores_legacy_mark(self):
         url = 'https://news.test/same-article'
         items = [item('zaihuapd', 1, '同一篇文章的原标题', url=url, minutes=10, body='甲的正文'),
                  item('xhqcankao', 2, '同一篇文章的原标题', url=url, minutes=40, body='乙的正文'),
@@ -252,11 +252,11 @@ class SiteFoldTests(unittest.TestCase):
             data, _ = self.build(items)
         self.assertEqual(sorted(seen), ['xhqcankao:2', 'zaihuapd:1', 'zaihuapd:3'])   # 搜索索引收到每个 id
         index = json.loads((data / 'id-index.json').read_text(encoding='utf-8'))
-        self.assertNotIn('hot-daily:4', index)                                           # 今日重点仍只打标
+        self.assertNotIn('hot-daily:4', index)  # 同链接的旧整理稿仍去重
         page = json.loads((data / 'channel' / 'tech-ai' / 'page-1.json').read_text(encoding='utf-8'))
         # 同链接不同标题不合；同链接同标题的两条合成一组，最早那条（xhqcankao:2）当主条
         self.assertEqual([i['id'] for i in page['items']], ['zaihuapd:3', 'xhqcankao:2'])
-        self.assertTrue(page['items'][0].get('highlight'))               # 今日重点标打在最新那条上
+        self.assertFalse(any(i.get('highlight') for i in page['items']))
         self.assertNotIn('merged', page['items'][0])
         self.assertEqual([m['id'] for m in page['items'][1]['merged']], ['zaihuapd:1'])
         for ident in ('xhqcankao:2', 'zaihuapd:1', 'zaihuapd:3'):                      # 每个 id 都能按 id-index 打开
@@ -282,18 +282,19 @@ class SiteFoldTests(unittest.TestCase):
                  item('xhqcankao', 2, '同标题', url=u_fe, minutes=15)]
         self.assertEqual(len(dedup.cluster(items)), 2)
 
-    def test_highlight_tie_break_is_independent_of_input_order(self):
+    def test_fold_tie_break_is_independent_of_input_order_with_legacy_marks(self):
         url = 'https://news.test/same-ts'
-        a = item('alpha', 1, '同时间新闻', url=url, minutes=10)
-        b = item('beta', 2, '同时间新闻', url=url, minutes=10)
+        a = item('xhqcankao', 1, '同时间新闻', url=url, minutes=10)
+        b = item('zaihuapd', 2, '同时间新闻', url=url, minutes=10, highlight=True)
         hl = item('hot-daily', 9, '重点标题', url=url, minutes=10, highlight=True, highlight_date='2026-11-25')
         data1, _ = self.build([a, b, hl])
         data2, _ = self.build([b, a, hl])
         p1 = json.loads((data1 / 'channel' / 'tech-ai' / 'page-1.json').read_text(encoding='utf-8'))
         p2 = json.loads((data2 / 'channel' / 'tech-ai' / 'page-1.json').read_text(encoding='utf-8'))
-        self.assertEqual(p1['items'][0]['id'], p2['items'][0]['id'])
-        self.assertEqual(p1['items'][0].get('highlight'), p2['items'][0].get('highlight'))
-        self.assertTrue(p1['items'][0].get('highlight'))
+        self.assertEqual(p1, p2)
+        self.assertEqual([i['id'] for i in p1['items']], ['xhqcankao:1'])
+        self.assertEqual([i['id'] for i in p1['items'][0]['merged']], ['zaihuapd:2'])
+        self.assertNotIn('highlight', p1['items'][0])
 
 
 if __name__ == '__main__':

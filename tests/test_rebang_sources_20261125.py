@@ -185,7 +185,6 @@ class IngestCliEdgeTests(unittest.TestCase):
         out = tmp / 'ingest.json'
         env = {'REBANG_TRANSLATE_CACHE': str(tmp / 'translate' / 'cache.json')}
         with patch.object(core, 'default_http_get', http_get), \
-                patch.object(core, 'default_inbox_loader', lambda sid: []), \
                 patch.dict('os.environ', env), redirect_stdout(io.StringIO()):
             code = cli.main(['--db', str(tmp / 'missing-tg.db'), '--out', str(out), '--cache', str(tmp / 'cache'),
                              '--no-tgmeta', '--now', NOW.isoformat(), *extra])

@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest import mock
 from urllib.parse import unquote, urlsplit
 
+from rebang.archive import build as build_archive
 from rebang.site import builder as site
 from tests.rebang_site_testdata import NOW, envelope, hotsearch, img, news, site_items
 
@@ -30,14 +31,10 @@ def snapshot(ident, title):
             'lang': 'zh', 'translated': False, 'translation': None, 'image': None}
 
 
-SEARCH_ENTRIES = [snapshot('tnews365:900', 'DeepSeek 开放全家桶应用 API 合成测试'),
-                  snapshot('freechinese:901', 'DeepSeek 开放全家桶应用 API 合成测试')]
-
-
 def dup_items():
     # 只有同链接且原标题相同、不同来源才合并
     return [news('freechinese', 'current', 901, minutes=0, title='DeepSeek 开放全家桶应用 API 合成测试',
-                 url=DUP_URL, body='被折叠那条的正文', **HL),
+                 url=DUP_URL, summary='这条搜索快照的合成摘要', body='被折叠那条的正文', **HL),
             news('tnews365', 'current', 900, minutes=1, title='DeepSeek 开放全家桶应用 API 合成测试', url=DUP_URL, **HL),
             # 顶部大图卡上的主条（比时事其它条都新，排在 banner 第 1 屏）
             news('myBigCharacterPoster', 'current', 961, minutes=-3, title='大图卡折叠测试：谷歌发布新一代开源模型 面向开发者',
@@ -59,7 +56,10 @@ class DedupBrowserTests(unittest.TestCase):
         (root / 'in' / 'ingest.json').write_text(json.dumps(envelope(site_items() + dup_items())), encoding='utf-8')
         (root / 'in' / 'hotsearch.json').write_text(json.dumps(hotsearch()), encoding='utf-8')
         cls.out = root / 'site'
-        with mock.patch.object(site, '_run_archive', lambda items, out, report: None):
+        def archive(items, out, report):
+            build_archive(items, out, archive_dir=root / 'archive', generated_at=NOW)
+
+        with mock.patch.object(site, '_run_archive', archive):
             site.build(cls.out, root / 'in', now=NOW, hot_archive_dir=root / 'hot')
         cls.pw = sync_playwright().start()
         cls.browser = cls.pw.chromium.launch()
@@ -92,8 +92,6 @@ class DedupBrowserTests(unittest.TestCase):
 
     def fulfill(self, route):
         url = urlsplit(route.request.url)
-        if url.path == '/data/search-index.json':
-            return route.fulfill(status=200, content_type='application/json', body=json.dumps({'entries': SEARCH_ENTRIES}))
         path = self.out / (unquote(url.path).lstrip('/') or 'index.html')
         route.fulfill(status=200 if path.is_file() else 404, body=path.read_bytes() if path.is_file() else b'missing',
                       content_type=mimetypes.guess_type(str(path))[0] or 'application/octet-stream')
@@ -200,7 +198,7 @@ class DedupBrowserTests(unittest.TestCase):
         self.page.wait_for_selector('#articleView.on')
         self.assertIn('/data/channel/current/merged.json', requested)
         self.assertIn('被折叠那条的正文', self.page.locator('#articleBody').inner_text())
-        self.assertTrue(self.page.locator('#articleBody .hlb').is_visible())        # 今日重点标
+        self.assertFalse(self.page.locator('#articleBody .hlb').is_visible())  # 旧标不随折叠详情上站
 
     def test_both_ids_with_identical_raw_url_open(self):
         for ident, body in (('myBigCharacterPoster:970', '同链接甲的正文'), ('shuangyunews_rss:971', '同链接乙的正文')):
@@ -355,7 +353,9 @@ class DedupBrowserTests(unittest.TestCase):
         direction = '1' if ids.index('freechinese:901') > ids.index('tnews365:900') else '-1'
         self.page.locator(f'#artNav [data-nav="{direction}"]').click()
         self.page.wait_for_function("() => location.hash.includes('freechinese%3A901')")
-        self.assertIn('合成测试', self.page.locator('#articleBody').inner_text())
+        self.assertIn('这条搜索快照的合成摘要', self.page.locator('#articleBody').inner_text())
+        self.assertNotIn('被折叠那条的正文', self.page.locator('#articleBody').inner_text())
+        self.assertFalse(self.page.locator('#articleBody .hlb').is_visible())
 
     def test_stale_merged_response_after_refresh_does_not_pollute_cache(self):
         self.open_home()
