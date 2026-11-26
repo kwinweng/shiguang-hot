@@ -33,7 +33,7 @@ test('译文优先并标「机器翻译」，原文保留可展开', () => {
   assert.deepEqual([d.title, d.summary, d.translated, d.orig.title], ['你好', '世界', true, 'Hello']);
   assert.match(L.feedRowHTML(it), /<h3>你好<\/h3>.*<span class="tag mt-badge" title="机器翻译">译<\/span>/);
   const post = {...it, kind: 'post', blogger: {platform: 'x', handle: 'a', display_name: 'A', media: [], quote: null}};
-  assert.match(L.tweetCardHTML(post, true), /<h3 class="b-title">你好<\/h3>.*<span class="tag mt-badge" title="机器翻译">译<\/span>/);
+  assert.match(L.tweetCardHTML(post, true), /<h3 class="b-title">.*你好<\/a><\/h3>.*<span class="tag mt-badge" title="机器翻译">译<\/span>/s);
   const card = L.tweetCardHTML(post, false);
   assert.match(card, /<span class="t-badge">机器翻译<\/span><button type="button" class="orig-btn"/);
   assert.match(card, /<div class="orig" [^>]*>World<\/div>/);
@@ -239,9 +239,13 @@ test('v16：缩略图一律在右边（正文在前、图在后）', () => {
   const post = {...base, kind: 'post', title: '', blogger: {platform: 'x', handle: 'a', display_name: 'A', avatar: 'https://i/av.jpg',
     media: [{type: 'image', url: 'https://i/1.jpg'}, {type: 'image', url: 'https://i/2.jpg'}], quote: null}};
   const b = L.postRowHTML(post);
-  assert.ok(b.indexOf('class="b-main"') < b.indexOf('class="thumb"'));
+  // 样页 A：帖子媒体在正文下面多格显示，每格可直接点开对应那一张
+  assert.doesNotMatch(b, /class="thumb"/);
   assert.match(b, /<p class="b-text">/);
-  assert.match(b, /<i class="cnt">2 图<\/i>/);
+  assert.ok(b.indexOf('class="b-text"') < b.indexOf('class="media-grid n2"'));
+  assert.match(b, /data-media-i="0"[\s\S]*data-media-i="1"/);
+  const article = L.postRowHTML({...post, blogger: {...post.blogger, media: []}, image: {url: 'https://i/cover.jpg'}});
+  assert.ok(article.indexOf('class="b-main"') < article.indexOf('class="thumb"'), '文章封面仍在右边');
   assert.match(L.postRowHTML({...post, blogger: {...post.blogger, media: []}}), /class="tweet brow noimg"/);
 });
 
@@ -284,4 +288,13 @@ test('同类事件合并：「另有 N 个来源」按 source_id 数，大图卡
   const hero = L.heroHTML({...it, image: {url: 'https://img.test/h.png', width: 1200, height: 675}});
   assert.match(hero, /<article class="hero"[^>]*>.*<div class="dup" data-dup><button type="button" class="dup-btn" data-dup-toggle aria-expanded="false">另有 2 个来源<\/button>/);
   assert.doesNotMatch(L.heroHTML({...base, image: {url: 'https://img.test/h.png'}}), /data-dup/);
+});
+
+test('博主合流沿用建站顺序，不把同一毫秒内不同微秒当成同刻按 ID 排', () => {
+  const posts = [
+    {id: 'a', published_at: '2026-11-16T12:00:00.000001+08:00', feed_order: 1},
+    {id: 'z', published_at: '2026-11-16T04:00:00.000002Z', feed_order: 0},
+    {id: 'b', published_at: '2026-11-16T04:00:00.000001Z', feed_order: 2},
+  ];
+  assert.deepEqual(posts.sort(L.comparePosts).map(x => x.id), ['z', 'a', 'b']);
 });

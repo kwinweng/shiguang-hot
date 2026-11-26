@@ -17,6 +17,7 @@ import os
 import shutil
 import sys
 from datetime import datetime, timedelta, timezone
+from itertools import chain
 from pathlib import Path
 
 from rebang.contract import schema
@@ -454,15 +455,23 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
     build_hot_archive(current_hot, hotsearch if not report['hotsearch']['errors'] else None, data, report,
                       None if use_fixture else hot_archive_dir, now.date().isoformat())
     blogger_status = [p for _, e in envelopes for p in (e.get('platforms') or [])]
-    bloggers, blogger_pages = build_bloggers(posts, blogger_status)
+    # merge_items 已排好全局顺序。只给公开博主副本加序号，不改采集/归档条目。
+    feed_posts = [dict(post, feed_order=i) for i, post in enumerate(posts)]
+    bloggers, blogger_pages = build_bloggers(feed_posts, blogger_status)
+    # 不只用秒级建站时间认版：同一秒重建、甚至只改深分页正文字段都要能分开。
+    digest = hashlib.sha256()
+    for part in chain(([PAGE_SIZE, bloggers],), feed_posts):
+        digest.update(json.dumps(part, sort_keys=True, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+        digest.update(b'\n')
+    stamp = {'built_at': now.isoformat(timespec='seconds'), 'blogger_revision': digest.hexdigest()}
     for (platform_id, key), mine in blogger_pages.items():
         for page in paginate(mine):
             rel = f'blogger/{platform_id}/{key}/page-{page["page"]}.json'
             if key == 'all':
                 for item in page['items']:
                     id_index.setdefault(item['id'], rel)
-            _write(data / rel, {'schema': 'rebang.page/1', 'platform': platform_id, 'key': key, **page})
-    _write(data / 'bloggers.json', bloggers)
+            _write(data / rel, {'schema': 'rebang.page/1', 'platform': platform_id, 'key': key, **stamp, **page})
+    _write(data / 'bloggers.json', {**bloggers, **stamp})
     for item in bloggers['items']:
         id_index[item['id']] = 'bloggers.json'
     _write(data / 'id-index.json', id_index)
@@ -474,7 +483,7 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
     input_times = [t for t in input_times if t]
     meta = {
         'schema': 'rebang.site-meta/1',
-        'built_at': now.isoformat(timespec='seconds'),
+        **stamp,
         'data_at': max(input_times).astimezone(BEIJING).isoformat(timespec='seconds') if input_times else None,
         'today': now.date().isoformat(),
         'page_size': PAGE_SIZE,

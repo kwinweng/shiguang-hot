@@ -133,8 +133,8 @@
   let hotIndex = null;
   const hotDays = {};
   let bloggers = null;
-  let plat = 'x';
-  let person = 'all';
+  let plat = 'all';
+  let person = null;
   let mode = localStorage.getItem(MKEY) === 'ud' ? 'ud' : 'lr';
   const items = new Map();        // id → 完整条目
   const ch = {};                  // slug → {list, page, pages, total, loading, error}
@@ -207,7 +207,7 @@
   function updateTopName() {
     const v = currentView();
     if (v === 'channels') setTopName(channels()[curCh]?.name || '频道');
-    else if (v === 'blogger') { const s = blSegs[Number($('#bloggerList').dataset.cur || 0)]; const p = s && platOf(s.plat); setTopName(p ? p.name : '博主'); }
+    else if (v === 'blogger') setTopName('博主');
     else if (v === 'hot') setTopName('热搜');
     else setTopName('收藏');
   }
@@ -228,9 +228,8 @@
       note = mode === 'lr' ? '左右滑动也能换频道；一直往下刷会自动接到下一个频道。' : '一直往下刷会自动接到下一个频道。';
     } else if (v === 'blogger') {
       await ensureBloggers();
-      const cur = blSegs[Number($('#bloggerList').dataset.cur || 0)];
-      rows = ((bloggers && bloggers.platforms) || []).map(p => dropRow(`data-drop-plat="${L.esc(p.id)}"`, cur ? cur.plat === p.id : p.id === plat, p.name, '', p.count ? `${p.count} 条` : '', platIcon(p))).join('');
-      note = '一直往下刷会自动接到下一个平台。';
+      if (currentView() !== v) return;
+      rows = bloggerFilters().map(p => dropRow(`data-drop-plat="${L.esc(p.id)}"`, p.id === plat, p.name, '', '', p.icon ? platIcon(p) : '')).join('');
     } else if (v === 'hot') {
       rows = hotDayChips().map(c => dropRow(`data-hot-day="${c.date || ''}"`, (c.date || null) === hotDay, c.label, c.date ? '那天最后一次抓到的榜单' : '现在的热搜', '')).join('');
     }
@@ -257,8 +256,9 @@
       return false;
     } finally { if (epoch === dataEpoch) st.loading = false; }
   }
-  async function loadAll(fresh) {
-    meta = await getJSON('meta.json', fresh);
+  async function loadAll(snapshot, fresh) {
+    const epoch = dataEpoch;
+    meta = snapshot;
     updateHealthFreshness();
     channels().forEach(c => {
       remember(c.banner);
@@ -266,7 +266,7 @@
     });
     await Promise.all([
       ...channels().map(c => loadPage(c.slug)),
-      getJSON('hotsearch.json', fresh).then(h => { hot = h; }).catch(() => { hot = null; }),
+      getJSON('hotsearch.json', fresh).then(h => { if (epoch === dataEpoch) hot = h; }).catch(() => { if (epoch === dataEpoch) hot = null; }),
     ]);
   }
   const FIND_TIMEOUT = 5000;   // 详情按 id 读 id-index / merged.json 的限时；超时回退收藏/搜索快照
@@ -282,7 +282,9 @@
       }
       const file = idx[id];
       if (!file) return null;
-      const data = await getJSON(file, epoch > 0, FIND_TIMEOUT, true);
+      const data = file === 'bloggers.json' || file.startsWith('blogger/')
+        ? await readBloggerJSON(file, epoch, FIND_TIMEOUT, true)
+        : await getJSON(file, epoch > 0, FIND_TIMEOUT, true);
       if (epoch !== dataEpoch) return null;
       remember(data.items); remember((data.channels || []).flatMap(c => c.banner || []));
       return items.get(id) || null;
@@ -473,19 +475,12 @@
 
   /* ---------- 博主（一条长流：平台按顶部图标从左到右；点某个人 = 这个平台按人分段，从这个人开始） ---------- */
   function platIcon(p) { return `<img class="plat-ico" src="${L.esc(p.icon || `icons/${p.id}.svg`)}" alt="" width="22" height="22">`; }
-  function posts() { return (bloggers && bloggers.items) || []; }
-  function platOf(id) { return ((bloggers && bloggers.platforms) || []).find(p => p.id === id); }
-  function recentCount(id) {
-    const built = builtAtMs();
-    if (!Number.isFinite(built)) return 0;
-    const since = built - 24 * 3600e3;
-    return posts().filter(p => p.blogger.platform === id && window.RebangHealth.timeMs(p.published_at) >= since).length;
-  }
-  let blSegs = [];            // [{plat, pkey, handle, name, total, list, page, pages, loading, error, revealed}]
+  function platOf(id) { return bloggers?.platforms.find(p => p.id === id); }
+  function bloggerFilters() { return [{id: 'all', name: '全部'}, ...(bloggers?.platforms || [])]; }
   function emptyText(p, acc) {
     const last = (x) => x && x.last_ok_at ? `上次成功抓取：${L.fmtTime(x.last_ok_at)}。` : '还没有成功抓取过。';
     let t;
-    if (p && !p.accounts.length) t = `${p.name}：${p.reason || '本期名单为空'}。`;
+    if (p && !p.accounts?.length && !p.count) t = `${p.name}：${p.reason || '本期名单为空'}。`;
     else if (p && !p.connected && p.status && p.status !== 'ok') t = `${p.name}暂时没有内容：${p.reason || p.status}。${last(p)}`;
     else if (p && !p.connected) t = `${p.name}的内容还没接上。${last(p)}`;
     else if (acc && acc.status && !['ok', 'empty'].includes(acc.status)) t = `${acc.name}暂时没有内容（${acc.reason || (acc.status === 'not_configured' ? '需要登录，还没接' : '这次没抓到')}）。${last(acc)}`;
@@ -493,210 +488,172 @@
     else t = '这一栏暂时还没有帖子。';
     return t.replace(/。。/g, '。');
   }
-  const segCache = new Map();  // 「平台:人」→ 段（已加载的条目、页码）；点人物/全部重建长流时沿用，不重新加载
-  function buildBlSegs() {
-    blSegs = [];
-    ((bloggers && bloggers.platforms) || []).forEach(p => {
-      const seg = (acc) => { const k = `${p.id}:${acc ? acc.key : 'all'}`; if (!segCache.has(k)) segCache.set(k, mkSeg(acc)); const s = segCache.get(k); s.revealed = false; return s; };
-      const mkSeg = (acc) => ({plat: p.id, pkey: acc ? acc.key : 'all', handle: acc ? acc.handle : 'all', name: acc ? acc.name : p.name,
-        total: acc ? (acc.total || 0) : (p.count || 0), list: [], page: 0, pages: 1, loading: false, error: null, revealed: false});
-      if (p.id === plat && person !== 'all' && p.accounts.length) p.accounts.forEach(a => blSegs.push(seg(a)));
-      else blSegs.push(seg(null));
-    });
-    blSegs.forEach(s => { if (!s.total) s.pages = 0; if (s.error) s.error = null; });   // 没帖子的段不发请求，直接显示空态再接下一段
+  const bloggerFeeds = new Map();
+  const BL_BATCH = 30;
+  let blFeed = null, blObs = null, blRequest = null, blProfileBack = null;
+  function bloggerFeed() {
+    const key = JSON.stringify([plat, person]);
+    if (!bloggerFeeds.has(key)) {
+      const p = platOf(plat);
+      const account = person && p?.accounts?.find(a => a.handle === person);
+      const platforms = p ? [p] : bloggers.platforms;
+      const streams = platforms.filter(x => account ? account.total : x.count).map(x => ({
+        plat: x.id, key: account?.key || 'all', page: 0, pages: 1, queue: [],
+      }));
+      bloggerFeeds.set(key, {streams, rows: [], seen: new Set(), account, person, loading: false, error: false});
+    }
+    return bloggerFeeds.get(key);
   }
-  function segExhausted(s) { return !s.error && !s.loading && s.page >= s.pages; }
-  function segDisplayName(s) { const p = platOf(s.plat); return s.pkey === 'all' ? (p ? p.name : s.plat) : `${s.name}（${p ? p.name : s.plat}）`; }
-  function peopleRowHTML(p, sel) {
-    if (!p || !p.accounts.length) return '';
-    const mine = posts().filter(x => x.blogger.platform === p.id);
-    const avatarOf = h => (mine.find(x => x.blogger.handle === h && x.blogger.avatar) || {blogger: {}}).blogger.avatar;
-    return `<div class="people" data-people="${L.esc(p.id)}"><button type="button" class="ppl${sel === 'all' ? ' on' : ''}" data-plat-of="${L.esc(p.id)}" data-person="all"><span class="ph-av letter">全</span><span>全部</span></button>` +
-      p.accounts.map(a => { const av = avatarOf(a.handle); return `<button type="button" class="ppl${sel === a.handle ? ' on' : ''}" data-plat-of="${L.esc(p.id)}" data-person="${L.esc(a.handle)}">${av ? `<img src="${L.esc(av)}" alt="">` : `<span class="ph-av letter">${L.esc((a.name || a.handle)[0])}</span>`}<span>${L.esc(a.name)}</span></button>`; }).join('') + '</div>';
+  function pendingBlPage(s) { return !s.queue.length && s.page < s.pages; }
+  function blErrorHTML(stale) {
+    const message = stale ? '博主数据版本不一致。' : '没加载出来。<button type="button" data-bl-retry>再试一次</button>';
+    return `<div class="load-err">${message}<button type="button" data-bl-refresh>刷新列表</button></div>`;
   }
-  function segFoot(i) {
-    const s = blSegs[i];
-    if (s.error) return `<div class="load-err">没加载出来。<button type="button" data-seg-retry="${i}">再试一次</button></div>`;
-    if (s.page < s.pages) return `<div class="sentinel" data-seg="${i}"></div><div class="load-hint">正在加载…</div>`;
-    const empty = !s.list.length ? (() => { const p = platOf(s.plat); const acc = p && s.pkey !== 'all' ? p.accounts.find(a => a.key === s.pkey) : null; return `<div class="empty-plat">${L.esc(emptyText(p, acc))}</div>`; })() : '';
-    return empty + chainFoot(blSegs[i + 1] && segDisplayName(blSegs[i + 1]));
+  function updateBlFoot(feed) {
+    const foot = $('#blFoot');
+    blObs?.disconnect();
+    if (feed.stale || feed.error) foot.innerHTML = blErrorHTML(feed.stale);
+    else if (feed.streams.some(s => s.queue.length || pendingBlPage(s))) {
+      foot.innerHTML = '<div class="sentinel"></div><div class="load-hint" role="status">正在加载…</div>';
+      blObs = makeLoader($('#view-blogger .sub'), el => {
+        if (el.isConnected && feed === blFeed && currentView() === 'blogger') loadSeg(feed);
+      }, () => $('#platChips').offsetHeight);
+      blObs.observe(foot.firstElementChild);
+    } else if (feed.rows.length) foot.innerHTML = chainFoot();
+    else foot.innerHTML = `<div class="empty-plat">${L.esc(emptyText(platOf(plat), feed.account))}</div>`;
   }
-  /** 一个平台一组：组头（平台名 + 人物行）+ 这个平台的段（「全部」一段，或点了某人后按人分段） */
-  function groupsHTML() {
-    let html = '';
-    blSegs.forEach((s, i) => {
-      if (i === 0 || blSegs[i - 1].plat !== s.plat) {
-        const p = platOf(s.plat) || {name: s.plat, accounts: []};
-        if (i) html += '</div>';
-        const who = (p.accounts || []).length ? `${p.accounts.length} 位博主 · ` : '';
-        html += `<div class="bl-group" data-group="${L.esc(s.plat)}"><div class="bl-plat-hd">${platIcon(p)}<h3>${L.esc(p.name)}</h3>${p.count || who ? `<span class="meta">${L.esc(who)}${p.count ? `共 ${L.esc(p.count)} 条` : ''}</span>` : ''}</div>${peopleRowHTML(p, s.pkey === 'all' ? 'all' : person)}`;
-      }
-      html += segHTML(s, i);
-    });
-    return html + (blSegs.length ? '</div>' : '');
+  function appendBlRows(rows) {
+    const box = $('#blRows');
+    for (let i = 0; i < rows.length; i += BL_BATCH) {
+      const batch = remember(rows.slice(i, i + BL_BATCH));
+      box.insertAdjacentHTML('beforeend', chunkHTML(batch.map(it => L.postRowHTML(it, platOf(it.blogger.platform)?.name))));
+      const chunk = box.lastElementChild;
+      fixBrokenThumbs(chunk); markRead(chunk);
+    }
+    settleChunks(box);
   }
-  function blSecs() { return $$('#bloggerList .bl-seg'); }
-  function segHTML(s, i) {
-    const accHd = s.pkey !== 'all' ? `<div class="bl-acc-hd">${L.esc(s.name)}${s.total ? ` <span class="meta">共 ${L.esc(s.total)} 条</span>` : ''}</div>` : '';
-    return `<section class="bl-seg" data-seg="${i}" data-plat="${L.esc(s.plat)}" data-pkey="${L.esc(s.pkey)}" data-handle="${L.esc(s.handle)}">${accHd}<div class="bl-list list">${chunkHTML(segRows(s, 0))}</div><div class="bl-foot">${segFoot(i)}</div></section>`;
-  }
-  /** 一段里从第 from 条起的行；北京日期一变就插一条「11.16 今天　更新 N 篇」（N = 这一段那天的全部帖子数，来自 bloggers.json 全量清单） */
-  function segRows(s, from) {
-    const rows = [];
-    let last = from > 0 && s.list[from - 1] ? L.beijingDate(s.list[from - 1].published_at) : null;
-    const today = (meta && meta.today) || L.beijingDate(new Date());
-    s.list.slice(from).forEach(x => {
-      const d = L.beijingDate(x.published_at);
-      if (d && d !== last) {
-        last = d;
-        if (!s.dayN) { s.dayN = {}; posts().forEach(p => { if (p.blogger.platform === s.plat && (s.pkey === 'all' || p.blogger.handle === s.handle)) { const k = L.beijingDate(p.published_at); s.dayN[k] = (s.dayN[k] || 0) + 1; } }); }
-        const n = s.dayN[d] || 0;
-        rows.push(`<div class="dayh" data-day="${d}"><b>${L.esc(L.dayLabel(d, today))}</b>${n ? `<span class="dpill">更新 ${n} 篇</span>` : ''}</div>`);
-      }
-      rows.push(L.postRowHTML(x));
-    });
-    return rows;
-  }
-  function gateBloggers() {
-    const vis = gateList(blSegs.length, i => segExhausted(blSegs[i]), i => blSegs[i].revealed);
-    blSecs().forEach((sec, i) => { if (sec.hidden === vis[i]) { sec.hidden = !vis[i]; if (vis[i]) settleChunks(sec); } });
-    $$('#bloggerList > .bl-group').forEach(gr => { const h = !gr.querySelector('.bl-seg:not([hidden])'); if (gr.hidden !== h) gr.hidden = h; });
-  }
-  let blObs = null;
-  function observeBlSentinels() { if (blObs) $$('#bloggerList .sentinel').forEach(el => { if (!el._obs) { el._obs = true; blObs.observe(el); } }); }
-  function renderBloggers() {
-    if (!bloggers) { $('#bloggerList').innerHTML = '<p class="muted">正在加载…</p>'; return; }
-    $('#platChips').innerHTML = bloggers.platforms.map(p => {
-      const n = recentCount(p.id);
-      return `<button type="button" class="avb${p.id === plat ? ' on' : ''}" data-plat="${p.id}" aria-label="${L.esc(p.name)}" title="${L.esc(p.name)}"><span class="avc">${platIcon(p)}${n ? `<span class="unread" aria-label="${n} 条 24 小时内的新帖">${n}</span>` : ''}</span><b>${L.esc(p.name)}</b></button>`;
+  function renderBloggers(scrollTop = 0) {
+    if (!bloggers) return;
+    const chips = $('#platChips'), chipX = chips.scrollLeft;
+    chips.innerHTML = bloggerFilters().map(p => {
+      const on = p.id === plat;
+      return `<button type="button" class="bl-chip${on ? ' on' : ''}" data-plat="${L.esc(p.id)}" aria-pressed="${on}">${p.icon ? platIcon(p) : ''}${L.esc(p.name)}</button>`;
     }).join('');
-    const nAcc = bloggers.platforms.reduce((a, p) => a + (p.accounts || []).length, 0);
-    $('#blStat').textContent = `${nAcc} 位博主 · ${bloggers.platforms.length} 个平台的最新动态`;
-    buildBlSegs();
-    const list = $('#bloggerList');
-    list.innerHTML = groupsHTML();
-    delete list.dataset.cur;
-    fixBrokenThumbs(list); markRead(list);
-    if (blObs) blObs.disconnect();
-    blObs = makeLoader($('#view-blogger .sub'), el => loadSeg(Number(el.dataset.seg)), blStickyH);
-    gateBloggers(); observeBlSentinels();
-    const sub = $('#view-blogger .sub');
-    if (!sub._spy) { sub._spy = true; sub.addEventListener('scroll', spyBloggers, {passive: true}); }
-    syncBlTop();
+    chips.scrollLeft = chipX;
+    const selected = chips.querySelector('.on');
+    if (selected && selected.offsetLeft + selected.offsetWidth > chips.scrollLeft + chips.clientWidth) {
+      chips.scrollLeft = selected.offsetLeft - 12;
+    } else if (selected && selected.offsetLeft < chips.scrollLeft) chips.scrollLeft = selected.offsetLeft - 12;
+    const feed = blFeed = bloggerFeed();
+    const profile = $('#blProfile');
+    profile.hidden = !person;
+    if (person) {
+      const p = platOf(plat);
+      const matches = it => it.blogger?.platform === plat && it.blogger.handle === person;
+      const b = (feed.rows.find(matches) || bloggers.items.find(matches))?.blogger;
+      const name = b?.display_name || feed.account?.name || person;
+      profile.innerHTML = `<button type="button" class="icon-btn" data-bl-back aria-label="返回博主列表">${L.icon('chevron-left')}</button>${L.bloggerAvatar(b?.avatar)}<div><h2>${L.esc(name)}</h2><div class="meta">${L.esc(p.name)}</div></div>`;
+    } else profile.innerHTML = '';
+    $('#blRows').replaceChildren();
+    appendBlRows(feed.rows);
+    updateBlFoot(feed);
+    $('#view-blogger .sub').scrollTop = scrollTop;
   }
-  /* 博主页顶上是一块色带（暗色青灰 / 亮色暖灰）：色带在的时候顶栏藏起来，滑过色带顶栏才出来，写当前平台名 */
-  function syncBlTop() {
-    const band = $('#blBand');
-    const show = currentView() === 'blogger' && !!band && band.getBoundingClientRect().bottom < $('#top').offsetHeight;
-    $('#app').classList.toggle('top-show', show);
+  class StaleBuild extends Error {}
+  // 索引、列表页、正文查找走同一道检查。在建立流或记入 items 之前认版；不明就停下。
+  async function readBloggerJSON(path, epoch, timeoutMs, trackFind) {
+    const snapshot = meta;
+    const data = await getJSON(path, epoch > 0, timeoutMs, trackFind);
+    if (epoch !== dataEpoch || !snapshot?.blogger_revision || !snapshot.built_at ||
+        data?.blogger_revision !== snapshot.blogger_revision || data.built_at !== snapshot.built_at) throw new StaleBuild();
+    return data;
   }
-  async function loadSeg(i) {
-    const s = blSegs[i];
-    if (!s || s.loading || s.page >= s.pages) return;
+  async function loadBlPage(stream, epoch, handle) {
+    const n = stream.page + 1;
+    const page = await readBloggerJSON(`blogger/${stream.plat}/${stream.key}/page-${n}.json`, epoch);
+    if (epoch !== dataEpoch) return;
+    if (page.platform !== stream.plat || page.key !== stream.key || page.page !== n || !Number.isInteger(page.pages) ||
+        page.pages < n || !Array.isArray(page.items) || page.items.some(it => !Number.isSafeInteger(it?.feed_order) || it.feed_order < 0)) throw new Error('Invalid blogger page');
+    stream.page = n;
+    stream.pages = page.pages;
+    stream.queue = page.items.filter(it => it.id && it.blogger?.platform === stream.plat && (!handle || it.blogger.handle === handle));
+  }
+  async function loadSeg(feed) {
+    if (!feed || feed.loading || feed.stale) return;
     const epoch = dataEpoch;
-    s.loading = true; s.error = null;
-    let fresh = [];
+    feed.loading = true; feed.error = false;
+    const fresh = [];
     try {
-      const page = await getJSON(`blogger/${s.plat}/${s.pkey}/page-${s.page + 1}.json`, epoch > 0);
-      if (epoch !== dataEpoch) return;
-      const seen = new Set(s.list.map(x => x.id));
-      fresh = remember(page.items).filter(x => !seen.has(x.id));
-      s.list.push(...fresh); s.page = page.page; s.pages = page.pages;
-    } catch (e) {
-      if (epoch !== dataEpoch) return;
-      s.error = String(e.message || e);
+      // 每条未读完的分页流都要有队首，才能知道跨平台的下一帖。
+      while (fresh.length < BL_BATCH && epoch === dataEpoch) {
+        const pending = feed.streams.filter(pendingBlPage);
+        if (pending.length) {
+          const results = await Promise.allSettled(pending.map(s => loadBlPage(s, epoch, feed.person)));
+          if (epoch !== dataEpoch) return;
+          if (results.some(r => r.status === 'rejected' && r.reason instanceof StaleBuild)) { feed.stale = true; break; }
+          if (results.some(r => r.status === 'rejected')) { feed.error = true; break; }
+          continue;
+        }
+        const next = feed.streams.reduce((best, s) => s.queue.length && (!best || L.comparePosts(s.queue[0], best.queue[0]) < 0) ? s : best, null);
+        if (!next) break;
+        const it = next.queue.shift();
+        if (feed.seen.has(it.id)) continue;
+        feed.seen.add(it.id);
+        fresh.push(it);
+      }
     } finally {
-      if (epoch === dataEpoch) s.loading = false;
+      feed.loading = false;
     }
     if (epoch !== dataEpoch) return;
-    const at = blSegs.indexOf(s); if (at < 0) return;   // 期间长流重建过：数据已进缓存，下次显示时带上
-    i = at;
-    const sec = $(`#bloggerList .bl-seg[data-seg="${i}"]`); if (!sec) return;
-    const box = sec.querySelector('.bl-list');
-    keepPlace($('#view-blogger .sub'), sec, blStickyH(), () => {
-      box.insertAdjacentHTML('beforeend', chunkHTML(segRows(s, s.list.length - fresh.length)));
-      sec.querySelector('.bl-foot').innerHTML = segFoot(i);
-      gateBloggers();
-    });
-    fixBrokenThumbs(box); settleChunks(box); markRead(box); repin(); observeBlSentinels();
+    feed.rows.push(...fresh);
+    if (feed === blFeed) {
+      appendBlRows(fresh);
+      updateBlFoot(feed);
+    }
   }
-  function blStickyH() { return $('#top').offsetHeight; }   // 博主页的顶栏浮在列表上面（滑过色带后出现），跳段时目标停在它下面
-  let blSpyRaf = 0;
-  function spyBloggers() {
-    if (blSpyRaf) return;
-    blSpyRaf = requestAnimationFrame(() => {
-      blSpyRaf = 0;
-      syncBlTop();
-      const sub = $('#view-blogger .sub'); if (!sub || !blSegs.length) return;
-      if (pin && pin.scroller === sub && performance.now() < pin.until) return;
-      const top = sub.getBoundingClientRect().top + blStickyH() + 8;
-      let at = 0;
-      blSecs().forEach((sec, i) => { if (!sec.hidden && sec.getBoundingClientRect().top <= top) at = i; });
-      if (sub.scrollTop + sub.clientHeight >= sub.scrollHeight - 4) blSecs().forEach((sec, i) => { if (!sec.hidden) at = i; });   // 到底了：最后一段算当前
-      markBlCurrent(at);
-    });
-  }
-  function markBlCurrent(at) {
-    const s = blSegs[at]; if (!s) return;
-    const list = $('#bloggerList');
-    if (list.dataset.cur === String(at)) return;
-    list.dataset.cur = String(at);
-    blSecs().forEach((sec, i) => sec.classList.toggle('cur', i === at));
-    if (s.plat !== plat) { plat = s.plat; if (person !== 'all' && !blSegs.some(x => x.plat === plat && x.pkey !== 'all')) person = 'all'; }
-    $$('#platChips [data-plat]').forEach(b => b.classList.toggle('on', b.dataset.plat === s.plat));
-    const chip = $(`#platChips [data-plat="${CSS.escape(s.plat)}"]`);
-    if (chip) { const r = chip.parentElement, cr = chip.getBoundingClientRect(), rr = r.getBoundingClientRect(); if (cr.left < rr.left || cr.right > rr.right) r.scrollLeft += cr.left - rr.left - 16; }   // 当前平台图标露出来
-    if (s.pkey !== 'all') $$(`#bloggerList .people[data-people="${CSS.escape(s.plat)}"] .ppl`).forEach(b => b.classList.toggle('on', b.dataset.person === s.handle));
-    if (currentView() === 'blogger') updateTopName();
-  }
-  function nextPlat() {
-    const cur = blSegs[Number($('#bloggerList').dataset.cur || 0)];
-    const i = cur ? blSegs.findIndex(s => s.plat !== cur.plat && blSegs.indexOf(cur) < blSegs.indexOf(s)) : 1;
-    if (i < 0) { toast('已经是最后一个平台。'); return; }
-    jumpSeg(i, 1);
-  }
-  /** 「全部」：所有平台和博主一览，点平台跳过去，点人 = 从这个人开始按人分段 */
-  async function openAllBloggers() {
-    await ensureBloggers();
-    const ps = (bloggers && bloggers.platforms) || [];
-    openSheet(`<div class="sh-title">全部博主<small>${ps.length} 个平台</small></div><div class="allb">${ps.map(p => `<div class="allp"><button type="button" class="allp-h" data-all-plat="${L.esc(p.id)}">${platIcon(p)}<b>${L.esc(p.name)}</b><span>${p.count ? `${L.esc(p.count)} 条` : ''}${L.icon('chevron-right')}</span></button>${(p.accounts || []).length ? `<div class="accs">${p.accounts.map(a => `<button type="button" class="${a.total ? '' : 'zero'}" data-plat-of="${L.esc(p.id)}" data-person="${L.esc(a.handle)}">${L.esc(a.name)}${a.total ? ` <i>${L.esc(a.total)}</i>` : ''}</button>`).join('')}</div>` : ''}</div>`).join('')}</div>`, {cls: 'tall'});
-  }
-  function jumpSeg(i, dir) {
-    const s = blSegs[i]; if (!s) return;
-    s.revealed = true; gateBloggers();
-    const sec = $(`#bloggerList .bl-seg[data-seg="${i}"]`); if (!sec) return;
-    const sub = $('#view-blogger .sub');
-    // 这一组里前面没有显示的段：从组头（平台名 + 人物行）开始；否则从这一段开头开始
-    const gr = sec.closest('.bl-group'), firstVis = gr && gr.querySelector('.bl-seg:not([hidden])');
-    pinTo(sub, firstVis === sec ? gr : sec, blStickyH());
-    if (!s.page && s.pages) loadSeg(i);
-    markBlCurrent(i);
-    slideIn($('#bloggerList'), dir);
-  }
-  function pickPlat(id) {
-    if (person !== 'all') { person = 'all'; plat = id; renderBloggers(); }
-    const i = blSegs.findIndex(s => s.plat === id);
-    if (i >= 0) jumpSeg(i);
+  function pickPlat(id, scrollTop = 0) {
+    if (id !== 'all' && !platOf(id)) return;
+    if (plat === id && !person) return;
+    openSeq++;   // 换筛选：在途的正文打开作废（不动 navSeq，深链的地址栏照常收回）
+    plat = id; person = null; blProfileBack = null;
+    renderBloggers(scrollTop);
   }
   function pickPerson(id, handle) {
+    if (!platOf(id)) return;
+    if (handle == null) { pickPlat(id); return; }
+    if (plat === id && person === handle) return;
+    openSeq++;
+    if (!person) blProfileBack = {plat, scrollTop: $('#view-blogger .sub').scrollTop};
     plat = id; person = handle;
     renderBloggers();
-    const i = blSegs.findIndex(s => s.plat === id && (handle === 'all' ? s.pkey === 'all' : s.handle === handle));
-    if (i >= 0) jumpSeg(i);
+  }
+  function leaveBlProfile() {
+    const back = blProfileBack || {plat, scrollTop: 0};
+    pickPlat(back.plat, back.scrollTop);
+    $('#platChips .on')?.focus({preventScroll: true});
   }
   async function ensureBloggers() {
-    if (bloggers) return false;
+    if (!meta || bloggers) return;
     const epoch = dataEpoch;
-    let data;
-    try { data = await getJSON('bloggers.json', epoch > 0); } catch (e) { data = {platforms: [], items: []}; }
-    if (epoch !== dataEpoch || bloggers) return false;
-    bloggers = data;
-    remember(bloggers.items);
-    if (!platOf(plat) && bloggers.platforms[0]) plat = bloggers.platforms[0].id;
-    renderBloggers();
-    const i = blSegs.findIndex(s => s.plat === plat);
-    if (i > 0) jumpSeg(i);
-    return true;
+    if (blRequest?.epoch === epoch) return blRequest.promise;
+    $('#blFoot').innerHTML = '<div class="load-hint" role="status">正在加载…</div>';
+    const promise = (async () => {
+      try {
+        const data = await readBloggerJSON('bloggers.json', epoch);
+        if (epoch !== dataEpoch) return;
+        if (!Array.isArray(data.platforms) || !Array.isArray(data.items)) throw new Error('Invalid blogger index');
+        bloggers = data;
+        remember(bloggers.items);
+        if (plat !== 'all' && !platOf(plat)) { plat = 'all'; person = null; blProfileBack = null; }
+        renderBloggers();
+      } catch (e) {
+        if (epoch === dataEpoch) $('#blFoot').innerHTML = blErrorHTML(e instanceof StaleBuild);
+      } finally {
+        if (blRequest?.epoch === epoch) blRequest = null;
+      }
+    })();
+    blRequest = {epoch, promise};
+    return promise;
   }
 
   /* ---------- 热搜（底栏，替换原历史页） ---------- */
@@ -760,8 +717,8 @@
       await ensureBloggers();
       const p = platOf(a);
       if (!p) return;
-      const acc = b && b !== 'all' ? p.accounts.find(x => x.key === b) : null;
-      pickPerson(p.id, acc ? acc.handle : 'all');
+      const acc = b && b !== 'all' ? p.accounts?.find(x => x.key === b) : null;
+      pickPerson(p.id, acc?.handle);
     }
   }
 
@@ -785,7 +742,7 @@
     $$('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + name));
     $$('.tabbar button').forEach(b => { b.classList.toggle('on', b.dataset.view === name); b.setAttribute('aria-current', b.dataset.view === name ? 'page' : 'false'); });
     $('#app').dataset.tab = name;
-    closeDrop(); updateTopName(); syncBlTop();
+    closeDrop(); updateTopName();
     if (name === 'channels') spyChannels();
     if (name === 'blogger') ensureBloggers();
     if (name === 'hot') renderHot();
@@ -941,10 +898,8 @@
   async function onSheet(e) {
     const sh = $('#actSheet');
     if (performance.now() < suppressClickUntil) return;
-    const b = e.target.closest('[data-act], [data-all-plat], [data-person]');
+    const b = e.target.closest('[data-act]');
     if (!b) { if (e.target === sh) closeSheet(); return; }
-    if (b.dataset.allPlat) { closeSheet(); pickPlat(b.dataset.allPlat); return; }
-    if (b.dataset.person) { closeSheet(); pickPerson(b.dataset.platOf || plat, b.dataset.person); return; }
     const act = b.dataset.act, it = curItem();
     if (act === 'font') { openFont(); return; }
     if (act === 'font-def') { const r = $('#fontRange'); if (r) { r.value = FONT_DEF; } $('#fontV').textContent = setFont(FONT_DEF) + 'px'; return; }
@@ -1178,24 +1133,37 @@
     const ms = d instanceof Date ? d.getTime() : NaN;
     $('#refreshed').textContent = Number.isFinite(ms) ? `刷新于 ${L.fmtRefreshed(d)}` : '刷新时间未知';
   }
+  let refreshSeq = 0;
   async function doRefresh() {
+    if ($('#app').hasAttribute('aria-busy')) return;
+    const seq = ++refreshSeq;
     const btn = $('#btnRefresh');
     btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin'); setTimeout(() => btn.classList.remove('spin'), MOTION.slow + 50);
     const NOTE = '刷新拿到的是最近一次发布的数据。';
-    const old = meta && meta.built_at;
     let fresh;
-    try { fresh = await getJSON('meta.json', true); } catch (e) { updateHealthFreshness(); toast('刷新失败，网络或站点暂时连不上。'); hidePtr(); return; }
+    try { fresh = await getJSON('meta.json', true); } catch (e) {
+      if (seq === refreshSeq) { updateHealthFreshness(); toast('刷新失败，网络或站点暂时连不上。'); hidePtr(); }
+      return;
+    }
+    if (seq !== refreshSeq) return;  // 更早发起的检查不能倒写 meta，也不能重置新列表
     stampRefresh(new Date());
-    if (fresh.built_at !== old) {
-      const idx = curCh, blAt = Number($('#bloggerList').dataset.cur || 0);
-      dataEpoch++; openSeq++; abortPendingFinds();
-      items.clear(); idIndex = null; bloggers = null; segCache.clear(); hotIndex = null; Object.keys(hotDays).forEach(k => delete hotDays[k]);
-      await loadAll(true);
+    const changed = !meta || fresh.built_at !== meta.built_at || fresh.blogger_revision !== meta.blogger_revision;
+    const recover = currentView() === 'blogger' && (!bloggers || blFeed?.stale || blFeed?.error);
+    if (changed || recover) {
+      const idx = curCh, epoch = ++dataEpoch;
+      openSeq++; abortPendingFinds();
+      items.clear(); idIndex = null; bloggers = null; bloggerFeeds.clear(); blFeed = null; blObs?.disconnect();
+      $('#blRows').replaceChildren(); $('#platChips').replaceChildren(); $('#blProfile').hidden = true; $('#blFoot').replaceChildren();
+      if (blProfileBack) blProfileBack.scrollTop = 0;
+      hotIndex = null; Object.keys(hotDays).forEach(k => delete hotDays[k]);
+      await loadAll(fresh, true);  // 只安装刚核对的这一份，不再请求第二份 meta
+      if (epoch !== dataEpoch) return;
       renderChannels();
       if (currentView() === 'hot') renderHot();
       if (idx > 0) jumpChannel(Math.min(idx, channels().length - 1));
-      if (currentView() === 'blogger') { await ensureBloggers(); if (blAt > 0 && blSegs[blAt]) jumpSeg(Math.min(blAt, blSegs.length - 1)); }
-      toast('有新内容，已更新。' + NOTE);
+      if (currentView() === 'blogger') await ensureBloggers();
+      if (seq !== refreshSeq) return;
+      toast((changed ? '有新内容，已更新。' : '已重新读取博主列表。') + NOTE);
     } else {
       meta = fresh;
       updateHealthFreshness();
@@ -1270,7 +1238,7 @@
        8. 底栏同一个按钮 0.35 秒内点两下 → 当前页回到顶部（点一下照常切页）。 */
   const EDGE = 24, LOCK = 8, CH_SWIPE = 64, PULL_GO = 56, LONG_MS = 500;
   const CARD_SEL = '.feed-row, .tweet, .row-item, .hero, .hot-list li';
-  const HSCROLL_SEL = '.chips, .dates, .people, .hot-tabs, .banner-rail, .banner-wrap, .accs, .drop, pre, .b-pre';
+  const HSCROLL_SEL = '.chips, .dates, .hot-tabs, .banner-rail, .banner-wrap, .drop, pre, .b-pre';
   const SCROLLER_SEL = '.feed-root, .sub, .article-body';
   let g = null, suppressClickUntil = 0;
   /** 热搜一行没有站内条目：用它的外链拼一个只读条目（收藏里点开显示标题 +「打开原文」，分享给外链） */
@@ -1343,7 +1311,7 @@
     const t = e.touches[0], target = e.target;
     const inArticle = !!target.closest('#articleView');
     // 「另有 N 个来源」折叠控件不算卡片：按住它不弹卡片菜单
-    const card = !inArticle && !target.closest('[data-dup]') ? target.closest(CARD_SEL) : null;
+    const card = !inArticle && !target.closest('[data-dup], #bloggerList button') ? target.closest(CARD_SEL) : null;
     g = {x0: t.clientX, y0: t.clientY, x: t.clientX, y: t.clientY, t0: performance.now(), axis: null, target, card,
       inArticle, edge: inArticle && t.clientX <= EDGE, hscroll: !!target.closest(HSCROLL_SEL),
       lrChannels: !!target.closest('.feed-root.lr'), scroller: target.closest(SCROLLER_SEL), kind: null, long: null};
@@ -1617,11 +1585,9 @@
       if (img && (img.dataset.zoom || img.src)) { e.preventDefault(); e.stopPropagation(); openZoom(img); return; }
     }
     const nav = t.closest('[data-nav]'); if (nav) { step(Number(nav.dataset.nav)); return; }
-    const bb = t.closest('[data-b]');
-    if (bb) { const k = bb.dataset.b; if (k === 'fav') onTab('favorites'); else if (k === 'filter') openDrop(); else if (k === 'next') nextPlat(); else if (k === 'all') openAllBloggers(); return; }
     const hotA = t.closest('.hot-list a'); if (hotA) { const li = hotA.closest('li'); if (li && li.dataset.hid) setRead(li.dataset.hid); return; }
     const orig = t.closest('[data-orig]');
-    if (orig) { e.stopPropagation(); const box = $(`[data-orig-box="${CSS.escape(orig.dataset.orig)}"]`); if (box) { const on = box.classList.toggle('on'); orig.textContent = on ? '收起原文' : '看原文'; } return; }
+    if (orig) { e.stopPropagation(); const box = $(`[data-orig-box="${CSS.escape(orig.dataset.orig)}"]`); if (box) { const on = box.classList.toggle('on'); orig.textContent = on ? '收起原文' : '看原文'; orig.setAttribute('aria-expanded', String(on)); } return; }
     const dupT = t.closest('[data-dup-toggle]');
     if (dupT) { e.stopPropagation(); const box = dupT.closest('[data-dup]'); const listEl = box && box.querySelector('.dup-list'); if (listEl) { listEl.hidden = !listEl.hidden; dupT.setAttribute('aria-expanded', String(!listEl.hidden)); box.classList.toggle('on', !listEl.hidden); } return; }
     const dupR = t.closest('[data-dup-id]');
@@ -1635,10 +1601,15 @@
     const day = t.closest('[data-hot-day]');
     if (day) { pickHotDay(day.dataset.hotDay); return; }
     const r = t.closest('[data-retry]'); if (r) { ch[r.dataset.retry].error = null; loadMore(r.dataset.retry); return; }
-    const sr = t.closest('[data-seg-retry]'); if (sr) { const i = Number(sr.dataset.segRetry); if (blSegs[i]) { blSegs[i].error = null; loadSeg(i); } return; }
+    if (t.closest('[data-bl-refresh]')) { doRefresh(); return; }
+    if (t.closest('[data-bl-retry]')) { if (blFeed) loadSeg(blFeed); else ensureBloggers(); return; }
+    if (t.closest('[data-bl-back]')) { leaveBlProfile(); return; }
+    const bm = t.closest('[data-bl-menu]'); if (bm) { openMenu(bm.closest('.tweet')); return; }
     const pl = t.closest('#platChips [data-plat]'); if (pl) { pickPlat(pl.dataset.plat); return; }
-    const pe = t.closest('[data-person]'); if (pe) { pickPerson(pe.dataset.platOf || plat, pe.dataset.person); return; }
-    if (t.closest('a,button')) return;
+    const pe = t.closest('#bloggerList [data-person]'); if (pe) { pickPerson(pe.dataset.platOf, pe.dataset.person); return; }
+    const blLink = t.closest('[data-bl-item]');
+    if (blLink && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) e.preventDefault();
+    else if (t.closest('a,button')) return;
     const card = t.closest('[data-id]');
     if (card && !card.closest('#articleBody')) openItem(card.dataset.id, {list: listContext(card)});
   }
@@ -1700,7 +1671,7 @@
       if (deepHealth) openHealth();
     }
     const bootSeq = openSeq;
-    try { await loadAll(false); } catch (e) {
+    try { await loadAll(await getJSON('meta.json'), false); } catch (e) {
       $('#channelRoot').innerHTML = `<p class="muted" style="padding:16px">数据没加载出来（${L.esc(e.message)}）。稍后点右上角刷新再试。</p>`;
       $('#app').removeAttribute('aria-busy'); return;
     }
@@ -1711,6 +1682,7 @@
       box.querySelector('button').onclick = () => { box.hidden = true; sessionStorage.setItem(NOTE_KEY, note); };
     }
     renderChannels();
+    if (currentView() === 'blogger') ensureBloggers();
     $('#app').dataset.tab = currentView(); updateTopName();
     booted = true;
     ctx.searchButton = $('#btnSearch');

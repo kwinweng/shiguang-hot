@@ -456,8 +456,10 @@ class DedupBrowserTests(unittest.TestCase):
         seg_path = f'/data/blogger/{first_plat}/all/page-1.json'
         seg_payload = json.loads((self.out / 'data' / 'blogger' / first_plat / 'all' / 'page-1.json').read_text(encoding='utf-8'))
 
-        def mark_post(payload, text):
+        def mark_post(payload, text, built_at=None):
             copy = json.loads(json.dumps(payload))
+            if built_at:
+                copy['built_at'] = built_at   # 新版分页带新版的发布时间
             copy['items'][0]['summary'] = text
             copy['items'][0]['body'] = text
             return copy
@@ -468,8 +470,8 @@ class DedupBrowserTests(unittest.TestCase):
         self.page.locator('.tabbar button[data-view="blogger"]').click()
         self.wait_held()
         stale_bloggers = mark_post(bloggers_payload, '旧版博主索引脏数据')
-        fresh_bloggers = mark_post(bloggers_payload, '新版博主索引正文')
-        fresh_seg = mark_post(seg_payload, '新版博主分页正文')
+        fresh_bloggers = mark_post(bloggers_payload, '新版博主索引正文', '2026-11-26T00:00:00+08:00')
+        fresh_seg = mark_post(seg_payload, '新版博主分页正文', '2026-11-26T00:00:00+08:00')
         self.hold_paths.discard('/data/bloggers.json')
         self.page.route('**/data/bloggers.json*', lambda route: route.fulfill(
             status=200, content_type='application/json', body=json.dumps(fresh_bloggers)))
@@ -493,8 +495,8 @@ class DedupBrowserTests(unittest.TestCase):
 
         # 场景 2：旧 blogger 分页响应晚于新版本刷新返回，不能污染 items 缓存
         stale_seg = mark_post(seg_payload, '旧版博主分页脏数据')
-        fresh_seg_v3 = mark_post(seg_payload, '新版博主分页v3')
-        fresh_bloggers_v2 = mark_post(bloggers_payload, '新版博主索引v2')
+        fresh_seg_v3 = mark_post(seg_payload, '新版博主分页v3', '2026-11-26T02:00:00+08:00')
+        fresh_bloggers_v2 = mark_post(bloggers_payload, '新版博主索引v2', '2026-11-26T01:00:00+08:00')
         self.page.unroute('**/data/bloggers.json*')
         self.page.unroute(f'**{seg_path}*')
         self.page.route('**/data/bloggers.json*', lambda route: route.fulfill(
@@ -504,6 +506,9 @@ class DedupBrowserTests(unittest.TestCase):
         self.wait_held()
         # 此时 seg_path (v2) 已发出并挂起；再触发一次 v3 刷新，先让 v3 完成，再放行 v2 的旧分页
         self.hold_paths.discard(seg_path)
+        self.page.unroute('**/data/bloggers.json*')
+        fresh_index_v3 = mark_post(bloggers_payload, '新版博主索引v3', '2026-11-26T02:00:00+08:00')
+        self.page.route('**/data/bloggers.json*', lambda route: route.fulfill(json=fresh_index_v3))
         self.page.route(f'**{seg_path}*', lambda route: route.fulfill(
             status=200, content_type='application/json', body=json.dumps(fresh_seg_v3)))
         self._trigger_version_refresh('2026-11-26T02:00:00+08:00')
