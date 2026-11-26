@@ -1,6 +1,48 @@
 {
   "messages": [
     {
+      "category": "苹果数码",
+      "day": "2026-11-26",
+      "id": "trial-34df9c60c5a4b9e7c759",
+      "image": "https://9to5mac.com/wp-content/uploads/sites/6/2026/03/macbook-neo-vs-air_df70c6.jpg?quality=82&strip=all&w=1600",
+      "link": "https://9to5mac.com/2026/11/26/macbook-air-vs-macbook-neo-buying-guide/",
+      "section": "buy",
+      "source": "9to5mac",
+      "source_name": "9to5Mac",
+      "summary": "Apple’s Mac lineup is stronger than ever this year, largely thanks to the new MacBook Neo. If you’re deciding between the MacBook Neo and the MacBook Air this holiday season, here’s everything you need to know. MacBook Neo 256GB: $599 (Reg. $699) MacBook Neo 512GB with Touch ID: $699 (Reg. $799) 13-inch M5 MacBook Air: Up to $400 off 15-inch M5 MacBook Air: Up to $400 off more…",
+      "text": "Apple’s Mac lineup is stronger than ever this year, largely thanks to the new MacBook Neo. If you’re deciding between the MacBook Neo and the MacBook Air this holiday season, here’s everything you need to know. MacBook Neo 256GB: $599 (Reg. $699) MacBook Neo 512GB with Touch ID: $699 (Reg. $799) 13-inch M5 MacBook Air: Up to $400 off 15-inch M5 MacBook Air: Up to $400 off more…",
+      "time": "2026-11-26T16:05:25+00:00",
+      "title": "MacBook Neo vs MacBook Air: Which should you buy right now?"
+    },
+    {
+      "category": "影视",
+      "day": "2026-11-26",
+      "id": "trial-df408f4faba3896b154f",
+      "image": "https://www.whats-on-netflix.com/wp-content/uploads/2026/11/every-rob-lowe-title-on-netflix-in-a-holidaze.jpg",
+      "link": "https://www.whats-on-netflix.com/what-to-watch/every-rob-lowe-netflix-original/",
+      "section": "play",
+      "source": "whats-on-netflix",
+      "source_name": "What's on Netflix",
+      "summary": "From Unstable with his son John Owen to the new Rob Lowe: The Outsider doc, here's every Netflix original Rob Lowe has made.",
+      "text": "From Unstable with his son John Owen to the new Rob Lowe: The Outsider doc, here's every Netflix original Rob Lowe has made.",
+      "time": "2026-11-26T15:14:09+00:00",
+      "title": "Every Rob Lowe Netflix Original: From ‘Holiday in the Wild’ to ‘In a Holidaze’"
+    },
+    {
+      "category": "影视",
+      "day": "2026-11-26",
+      "id": "trial-51b9c5194413ec566c18",
+      "image": "https://www.whats-on-netflix.com/wp-content/uploads/2026/11/fairytale-in-new-york-aaron-pierre-action-thriller-preview.jpg",
+      "link": "https://www.whats-on-netflix.com/news/fairytale-in-new-york-netflix-action-movie/",
+      "section": "play",
+      "source": "whats-on-netflix",
+      "source_name": "What's on Netflix",
+      "summary": "Netflix has secured the rights to 'Fairytale in New York,' an upcoming Christmas Eve thriller starring Aaron Pierre that reportedly begins filming in early 2027.",
+      "text": "Netflix has secured the rights to 'Fairytale in New York,' an upcoming Christmas Eve thriller starring Aaron Pierre that reportedly begins filming in early 2027.",
+      "time": "2026-11-26T15:04:19+00:00",
+      "title": "Netflix Action-Thriller ‘Fairytale in New York’ Starring Aaron Pierre: Everything We Know So Far"
+    },
+    {
       "category": "游戏",
       "day": "2026-11-26",
       "id": "trial-6d2dd2691508fd7a5d15",
@@ -13,6 +55,34 @@
       "text": "本期时间轴制作：西楼 上一期我们从宏观的角度：地理，历史，人文，城市风貌，各种机构设施，以及社会生活等等方面，为大家介绍了一下毁灭前的浣熊市，曾经的样子。并且还详细介绍了，在灾难爆发前的最后几个月里，事态的发展过程，如何一步步发展为导致十万人丧生，整个城市毁灭的。 这一期我们就紧接着上一期最后的内容，聚焦在爆发前的最后几天，通过一个在系列里很冷门的多媒体内容——广播剧——以浣熊市的普通市民视角，来重新体会一下这场灾难。",
       "time": "2026-11-26T15:00:00+00:00",
       "title": "生化危机 - 爆发夜"
+    },
+    {
+      "category": "影视",
+      "day": "2026-11-26",
+      "id": "trial-0eaa8ba1a641ba6ef477",
+      "image": "https://www.whats-on-netflix.com/wp-content/uploads/2026/11/the-hunting-wives-season-3-everything-we-know.jpg",
+      "link": "https://www.whats-on-netflix.com/news/the-hunting-wives-season-3-netflix-renewal-status-explained/",
+      "section": "play",
+      "source": "whats-on-netflix",
+      "source_name": "What's on Netflix",
+      "summary": "We break down the chaotic Season 2 finale of 'The Hunting Wives' and look at the chances of a Season 3 renewal at Netflix.",
+      "text": "We break down the chaotic Season 2 finale of 'The Hunting Wives' and look at the chances of a Season 3 renewal at Netflix.",
+      "time": "2026-11-26T14:54:22+00:00",
+      "title": "The Hunting Wives Season 2 Ending Explained & What To Expect from Season 3"
+    },
+    {
+      "category": "影视",
+      "day": "2026-11-26",
+      "id": "trial-e09a5fdca5c52100232c",
+      "image": "https://www.whats-on-netflix.com/wp-content/uploads/2026/11/rob-lowe-the-outsider-review.jpg",
+      "link": "https://www.whats-on-netflix.com/what-to-watch/rob-lowe-the-outsider-netflix-review/",
+      "section": "play",
+      "source": "whats-on-netflix",
+      "source_name": "What's on Netflix",
+      "summary": "Chris Smith’s breezy Netflix doc delivers plenty of juicy ’70s and ’80s Hollywood anecdotes, but stops short of genuine introspection into Rob Lowe’s life.",
+      "text": "Chris Smith’s breezy Netflix doc delivers plenty of juicy ’70s and ’80s Hollywood anecdotes, but stops short of genuine introspection into Rob Lowe’s life.",
+      "time": "2026-11-26T14:38:55+00:00",
+      "title": "‘Rob Lowe: The Outsider’ Review: Netflix’s Doc Spills Juicy Hollywood Tea, But Holds Back"
     },
     {
       "category": "软件与 App",

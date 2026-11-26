@@ -22586,10 +22586,10 @@
         }
       ],
       "name": "风向旗参考快讯",
-      "seven_day_count": 143,
+      "seven_day_count": 122,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 28,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/xhqcankao"
     },
@@ -24903,17 +24903,49 @@
         }
       ],
       "name": "竹新社",
-      "seven_day_count": 12,
+      "seven_day_count": 11,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 2,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/tnews365"
     },
     {
       "id": "FinanceNewsDaily",
-      "last_update": "2026-11-26T22:30:06+08:00",
+      "last_update": "2026-11-26T23:15:03+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 23:00",
+          "id": "2bc74c9964754f4fb46a",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497189",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "美国总统特朗普指责其自己的政府“蓄意”压低美国经济增长数据，他利用一次常规的数据修订，在毫无证据的情况下提出了干预选举的指控。\n\n特朗普指出，GDP数据显示经济在第三季度实现了4.3%的年化增长——较之前发布的3.4%的预估值进行了上修——并称这是一个“巨大的差异”。\n\n“刚刚披露，选前公布的经济‘真实数据’系伪造，”他在没有提供任何证据的情况下表示。\n\n“我要求立即对此事展开调查。这并非小错，而是重大且蓄意的错误，”这位总统在帖子中补充道。该帖子是美国感恩节假期早晨从他在西棕榈滩的高尔夫球场发出的。",
+          "text": "美国总统特朗普指责其自己的政府“蓄意”压低美国经济增长数据，他利用一次常规的数据修订，在毫无证据的情况下提出了干预选举的指控。\n\n特朗普指出，GDP数据显示经济在第三季度实现了4.3%的年化增长——较之前发布的3.4%的预估值进行了上修——并称这是一个“巨大的差异”。\n\n“刚刚披露，选前公布的经济‘真实数据’系伪造，”他在没有提供任何证据的情况下表示。\n\n“我要求立即对此事展开调查。这并非小错，而是重大且蓄意的错误，”这位总统在帖子中补充道。该帖子是美国感恩节假期早晨从他在西棕榈滩的高尔夫球场发出的。",
+          "time": "2026-11-26T23:15:03+08:00",
+          "title": "特朗普在高尔夫球场称：修订后的GDP数据是“伪造的”，呼吁展开调查",
+          "type": "telegram"
+        },
+        {
+          "category": "国际",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 23:00",
+          "id": "953f7561ac8609187cb6",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497188",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "当地时间26日，以色列正直党和以色列民主党发表联合声明，称两党已经就双边组阁协议达成共识。以色列民主党由此成为继“以色列是我们的家园”党之后，第二个与正直党敲定组阁协议的反对派阵营政党。（央视新闻）",
+          "text": "当地时间26日，以色列正直党和以色列民主党发表联合声明，称两党已经就双边组阁协议达成共识。以色列民主党由此成为继“以色列是我们的家园”党之后，第二个与正直党敲定组阁协议的反对派阵营政党。（央视新闻）",
+          "time": "2026-11-26T23:10:07+08:00",
+          "title": "以色列正直党与民主党就双边组阁协议达成一致",
+          "type": "telegram"
+        },
         {
           "category": "财经",
           "day": "2026-11-26",
@@ -61524,10 +61556,10 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 316,
+      "seven_day_count": 249,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 39,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
@@ -69713,10 +69745,10 @@
         }
       ],
       "name": "每日消费电子观察",
-      "seven_day_count": 66,
+      "seven_day_count": 53,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 5,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/CE_Observe"
     },
@@ -83854,10 +83886,10 @@
         }
       ],
       "name": "FREE 中文",
-      "seven_day_count": 95,
+      "seven_day_count": 81,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 12,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/freechinese"
     },
@@ -85947,10 +85979,10 @@
         }
       ],
       "name": "Time经济观察",
-      "seven_day_count": 21,
+      "seven_day_count": 17,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 5,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/TimeHorizonX"
     },
@@ -98168,10 +98200,10 @@
         }
       ],
       "name": "敏感经济信息分享",
-      "seven_day_count": 106,
+      "seven_day_count": 87,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 14,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/pelosi3"
     },
@@ -107906,10 +107938,10 @@
         }
       ],
       "name": "看新闻 学英语 双语新闻",
-      "seven_day_count": 31,
+      "seven_day_count": 25,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 7,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/shuangyunews_rss"
     },
@@ -107976,8 +108008,24 @@
     },
     {
       "id": "zaihuapd",
-      "last_update": "2026-11-26T22:56:10+08:00",
+      "last_update": "2026-11-26T23:14:39+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 23:00",
+          "id": "95d75db35ecffbbff455",
+          "image": "",
+          "link": "https://t.me/zaihuapd/45392",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "戴尔、美超微等把英伟达芯片组装成整机的厂商，已通知四国买家相关订单不能出厂。三名知情人士称，冻结与美方新一轮出口管制相关，是否为临时措施尚不清楚。 四国是中国 AI 公司获取英伟达最先进处理器的中转地，这些芯片不得直接出口中国大陆。美国商务部上周出台新规，要求区域云服务商在 90 天内取得出口许可，并核实客户不含受限的中国实体。 Financial Times 🌸 科技圈·…",
+          "text": "戴尔、美超微等把英伟达芯片组装成整机的厂商，已通知四国买家相关订单不能出厂。三名知情人士称，冻结与美方新一轮出口管制相关，是否为临时措施尚不清楚。 四国是中国 AI 公司获取英伟达最先进处理器的中转地，这些芯片不得直接出口中国大陆。美国商务部上周出台新规，要求区域云服务商在 90 天内取得出口许可，并核实客户不含受限的中国实体。 Financial Times 🌸 科技圈·…",
+          "time": "2026-11-26T23:14:39+08:00",
+          "title": "英伟达叫停对东南亚四国 AI 服务器出货 英伟达已要求主要制造伙伴暂停向马来西亚、新加坡、泰国和印度尼西亚发运 AI 服务器",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-26",
@@ -124044,10 +124092,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 139,
+      "seven_day_count": 116,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 25,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -126406,10 +126454,10 @@
         }
       ],
       "name": "Newlearnerの自留地",
-      "seven_day_count": 23,
+      "seven_day_count": 20,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 5,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/NewlearnerChannel"
     },
@@ -128131,10 +128179,10 @@
         }
       ],
       "name": "严选君综合福利社",
-      "seven_day_count": 18,
+      "seven_day_count": 14,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 2,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/yxzbp"
     },
@@ -138800,10 +138848,10 @@
         }
       ],
       "name": "动察Beating AI News",
-      "seven_day_count": 114,
+      "seven_day_count": 90,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 21,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/OneMillion_AI"
     },
@@ -140653,10 +140701,10 @@
         }
       ],
       "name": "Reorx’s Forge",
-      "seven_day_count": 23,
+      "seven_day_count": 18,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 4,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/reorx_share"
     },
@@ -140951,7 +140999,7 @@
       "seven_day_count": 2,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 1,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/AwesomeChatGPT"
     }
