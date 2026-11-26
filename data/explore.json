@@ -1,6 +1,62 @@
 {
   "messages": [
     {
+      "category": "看展活动",
+      "day": "",
+      "id": "trial-b7cb773464216c593228",
+      "image": "",
+      "link": "https://www.douban.com/event/38187716/",
+      "section": "play",
+      "source": "douban-events",
+      "source_name": "豆瓣同城·北京本周",
+      "summary": "",
+      "text": "",
+      "time": "",
+      "title": "大笑喜剧三里屯脱口秀｜天天｜综艺卡司｜吐槽爆笑大会｜开心互动｜即兴喜剧爆笑之夜精品秀"
+    },
+    {
+      "category": "苹果数码",
+      "day": "2026-11-26",
+      "id": "trial-9501254b49634706a519",
+      "image": "https://9to5mac.com/wp-content/uploads/sites/6/2026/11/Wallpaper-for-Apple-Kukatpally.jpeg?quality=82&strip=all&w=1600",
+      "link": "https://9to5mac.com/2026/11/26/check-out-this-beautiful-wallpaper-to-celebrate-the-opening-of-the-latest-apple-store/",
+      "section": "buy",
+      "source": "9to5mac",
+      "source_name": "9to5Mac",
+      "summary": "Apple has quietly announced the upcoming opening of its latest retail store in Hyderabad, India . Located at the Lakeshore Mall in Kukatpally, it opens at 5pm on Thursday, December 10. As is now usual, the company has created some exclusive wallpaper to mark the event, and you can download it for iPhone, iPad, and Mac … more…",
+      "text": "Apple has quietly announced the upcoming opening of its latest retail store in Hyderabad, India . Located at the Lakeshore Mall in Kukatpally, it opens at 5pm on Thursday, December 10. As is now usual, the company has created some exclusive wallpaper to mark the event, and you can download it for iPhone, iPad, and Mac … more…",
+      "time": "2026-11-26T12:03:10+00:00",
+      "title": "Check out this beautiful wallpaper to celebrate the opening of the latest Apple Store"
+    },
+    {
+      "category": "影视",
+      "day": "2026-11-26",
+      "id": "trial-c066311301063ff38bba",
+      "image": "https://www.whats-on-netflix.com/wp-content/uploads/2026/11/All-The-Love-Our-Hearts-Carry.jpg",
+      "link": "https://www.whats-on-netflix.com/news/jo-bachay-hain-sang-samait-lo-netflix-release-date-india-ban/",
+      "section": "play",
+      "source": "whats-on-netflix",
+      "source_name": "What's on Netflix",
+      "summary": "Fawad Khan and Mahira Khan lead Netflix's first Pakistani Original, which arrives December 4, but India's I&B Ministry has told the streamer not to release it there.",
+      "text": "Fawad Khan and Mahira Khan lead Netflix's first Pakistani Original, which arrives December 4, but India's I&B Ministry has told the streamer not to release it there.",
+      "time": "2026-11-26T11:53:06+00:00",
+      "title": "Netflix’s First Pakistani Original ‘All The Love Our Hearts Carry’ Sets December Premiere, But Won’t Stream in India"
+    },
+    {
+      "category": "影视",
+      "day": "2026-11-26",
+      "id": "trial-ca8f8c932be309d24569",
+      "image": "https://www.whats-on-netflix.com/wp-content/uploads/2026/11/Melanie-Mayron-The-Hunting-Wives-S2.jpg",
+      "link": "https://www.whats-on-netflix.com/interviews/the-hunting-wives-season-2-director-melanie-mayron-interview/",
+      "section": "play",
+      "source": "whats-on-netflix",
+      "source_name": "What's on Netflix",
+      "summary": "Melanie Mayron discusses directing the most demanding scenes of 'The Hunting Wives' Season 2 and the emotional future for Sophie and Margo.",
+      "text": "Melanie Mayron discusses directing the most demanding scenes of 'The Hunting Wives' Season 2 and the emotional future for Sophie and Margo.",
+      "time": "2026-11-26T11:34:19+00:00",
+      "title": "‘The Hunting Wives’ Season 2 Director Melanie Mayron on Sophie and Margo’s Story, Intimacy, & More"
+    },
+    {
       "category": "软件与 App",
       "day": "2026-11-26",
       "id": "trial-0de7eb4fdf3818d50ff8",
