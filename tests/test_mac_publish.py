@@ -654,3 +654,55 @@ exec '{GIT}' "$@"
         self.assertEqual((self.state / 'refs.json').read_text(), '{"refs/heads/main": ')
         self.assertEqual((self.checkout / 'tg.db').read_bytes(), database)
         self.assertEqual(self.heads(), heads)
+
+    # --- optional X inbox (REBANG_X_INBOX_REPO) ------------------------------------------------
+
+    def pin_inbox_code(self):
+        """Pin a code commit that also carries the receiver and the real X reader it validates with."""
+        for path in ('tools/x_inbox.py', 'rebang/bloggers/__init__.py', 'rebang/bloggers/x.py',
+                     'rebang/bloggers/common.py'):
+            shutil.copyfile(ROOT / path, self.checkout / path)
+        # The stub collector records which X batches it could see when it ran.
+        (self.checkout / 'rebang/bloggers/__main__.py').write_text(
+            "import os, pathlib\nroot = pathlib.Path('var/rebang/x-dump')\n"
+            "pathlib.Path('.git/bloggers-saw').write_text(' '.join(sorted(os.listdir(root))) if root.is_dir() else '')\n")
+        self.git('add', '.')
+        self.git('commit', '-m', 'Pin X inbox receiver')
+        self.code = self.git('rev-parse', 'HEAD')
+        self.git('push', 'origin', 'HEAD:refs/heads/main')
+        self.plist['ProgramArguments'][3] = self.code
+        self.before = self.heads()
+
+    def inbox_leftovers(self):
+        var = self.checkout / 'var/rebang'
+        return [p.name for p in var.iterdir() if p.name.startswith('.x-inbox')] if var.is_dir() else []
+
+    def test_x_inbox_unset_changes_nothing(self):
+        result = self.cycle()
+        self.assert_success(result)
+        self.assertNotIn('x_inbox', result.stdout + result.stderr)
+        self.assertFalse((self.checkout / 'var/rebang/x-dump').exists())
+        self.assertEqual(self.inbox_leftovers(), [])
+
+    def test_x_inbox_batch_is_installed_before_collection(self):
+        from tests.test_x_inbox import InboxRepo, batch
+        self.pin_inbox_code()
+        repo = InboxRepo(self.root)
+        dump_id, *_ = new = batch()
+        repo.publish(new)
+        result = self.cycle(dict(self.env, REBANG_X_INBOX_REPO=repo.url))
+        self.assert_success(result)
+        self.assertIn(f'x_inbox=ok installed={dump_id}', result.stdout)
+        self.assertNotIn(repo.url, result.stdout + result.stderr)
+        self.assertEqual((self.checkout / '.git/bloggers-saw').read_text(), dump_id)
+        self.assertEqual(self.inbox_leftovers(), [])
+        self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
+
+    def test_x_inbox_failure_still_publishes_without_halt(self):
+        self.pin_inbox_code()
+        missing = (self.root / 'missing-inbox.git').as_uri()
+        result = self.cycle(dict(self.env, REBANG_X_INBOX_REPO=missing))
+        self.assert_success(result)
+        self.assertIn('x_inbox=error code=x_inbox_fetch_failed installed=none', result.stdout)
+        self.assertNotIn('missing-inbox', result.stdout + result.stderr)
+        self.assertEqual(self.inbox_leftovers(), [])

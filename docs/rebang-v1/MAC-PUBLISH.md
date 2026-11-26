@@ -17,6 +17,13 @@
   - 只有 `ls-remote` 本身也失败（断网、认证）、且前面没看到任何明确异常 → 报 `remote unreachable` 退出 1，不写 HALT，下一轮自然重试。
 - 推送回执逐行核对：只认 Git 的 `To …` 抬头、恰好两条状态行、`Done`，多出任何行（含残缺状态行、空行）都按回执不明处理，HALT 保留。
 
+## X 收件（可选，`REBANG_X_INBOX_REPO`）
+
+- 发布器只从**自己的进程环境**（plist 的 `EnvironmentVariables`）读 `REBANG_X_INBOX_REPO`，不传给采集子进程。没设置或为空：和以前完全一样，不导入收件代码、不建目录、不打印 `x_inbox` 日志。
+- 设置后，每轮在 `pipeline.py` 之前做一次只读收件：临时浅克隆私库，校验通过的新批次原子放进 `var/rebang/x-dump/<dump_id>/`，最多 2 批、`x-dump` 只留收件器自己装的最近 24 批。格式、上限、错误码和启用步骤见 [X-INBOX.md](X-INBOX.md)。
+- 收件的任何问题（拉不到、超时、坏包、磁盘不足、代码意外）只打印一行 `x_inbox=error code=…`，**不写 HALT、不改退出码**，本轮其他来源照常建站发布。临时目录 `var/rebang/.x-inbox-work-*` 由发布器在 `finally` 里删；删不掉另记 `x_inbox_cleanup=failed …`，下一轮开头再删。收件 Git 进程不继承发布锁，不对私库做任何写操作，日志里不出现仓库地址。
+- 启用、回退都是改 plist，走下文「手动换代码版本」同样的持锁步骤，须阿欢批准。
+
 ## main 正常合并后继续发布（11/25 起）
 
 每轮开始 `fetch` 远端两条 ref，和 `refs.json`（上次成功推送后的两条 ref）比：
