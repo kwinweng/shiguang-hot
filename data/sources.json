@@ -24944,8 +24944,24 @@
     },
     {
       "id": "FinanceNewsDaily",
-      "last_update": "2026-11-26T23:15:03+08:00",
+      "last_update": "2026-11-27T02:00:09+08:00",
       "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-27",
+          "hot": false,
+          "hour": "2026-11-27 02:00",
+          "id": "694435e4dc17dbcc7c71",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497190",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "• LME期铜收涨222美元，报11872美元/吨。",
+          "text": "• LME期铜收涨222美元，报11872美元/吨。",
+          "time": "2026-11-27T02:00:09+08:00",
+          "title": "💱 外汇数据汇总",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-26",
@@ -61588,10 +61604,10 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 249,
+      "seven_day_count": 250,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 0,
+      "today_count": 1,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
