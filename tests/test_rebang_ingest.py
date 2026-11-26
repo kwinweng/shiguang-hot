@@ -247,14 +247,15 @@ class IngestTests(unittest.TestCase):
                     'github-trending'):
             self.assertEqual((status[sid]['status'], status[sid]['count']), ('not_fetched', 0))
 
-    def test_highlight_rule(self):
-        env = self.run_collect()
+    def test_collection_leaves_highlights_to_site_build(self):
+        with patch.object(self, 'loader') as loader:
+            env = self.run_collect()
+        loader.assert_called_once_with('hot-daily')
         items = {i['id']: i for i in env['items']}
-        self.assertTrue(items['tnews365:101']['highlight'])
-        self.assertEqual(items['tnews365:101']['highlight_date'], '2026-11-14')
-        self.assertFalse(any(i['source_id'] == 'hot-daily' for i in env['items']))
-        hot = next(s for s in env['sources'] if s['id'] == 'hot-daily' and s.get('role') == 'highlight-marks')
-        self.assertEqual((hot['marked'], hot['unmatched']), (1, 2))
+        self.assertIn('tnews365:101', items)
+        self.assertFalse(any('highlight' in i or 'highlight_date' in i for i in items.values()))
+        self.assertFalse(any(i['source_id'] == 'hot-daily' for i in items.values()))
+        self.assertFalse(any(s['id'] == 'hot-daily' for s in env['sources']))
 
     def test_leading_bare_urls_stripped_from_summary_only(self):
         from rebang.ingest.core import strip_leading_urls

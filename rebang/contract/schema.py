@@ -53,10 +53,16 @@ def source_channel(source_id):
 def _is_url(value, allow_empty=True):
     if value == '' and allow_empty:
         return True
-    return isinstance(value, str) and urlsplit(value).scheme in ('http', 'https') and bool(urlsplit(value).netloc)
+    if not isinstance(value, str):
+        return False
+    try:
+        parts = urlsplit(value)
+    except ValueError:
+        return False
+    return parts.scheme in ('http', 'https') and bool(parts.netloc)
 
 
-def _is_aware_iso(value):
+def is_aware_iso(value):
     if not isinstance(value, str):
         return False
     try:
@@ -217,9 +223,9 @@ def validate_item(item, where='item'):
         errors.append(f'{where}: id 必须是 "<source_id>:<native_id>"')
     if not _is_url(item['url']):
         errors.append(f'{where}: url 只允许 http(s) 或空串')
-    if not _is_aware_iso(item['published_at']):
+    if not is_aware_iso(item['published_at']):
         errors.append(f'{where}: published_at 必须是带时区的 ISO 8601')
-    if 'fetched_at' in item and not _is_aware_iso(item['fetched_at']):
+    if 'fetched_at' in item and not is_aware_iso(item['fetched_at']):
         errors.append(f'{where}: fetched_at 必须是带时区的 ISO 8601')
     if kind == 'news':
         if item.get('channel') not in channel_slugs():
@@ -258,8 +264,9 @@ def validate_item(item, where='item'):
             errors.append(f'{where}: translation.label 必须是「{MT_LABEL}」且写明 engine')
     elif translation is not None:
         errors.append(f'{where}: 未翻译时 translation 必须为 null 或不写')
-    if 'highlight' in item and not isinstance(item['highlight'], bool):
-        errors.append(f'{where}: highlight 必须是布尔')
+    for flag in ('highlight', 'published_at_verified', 'fold_preferred', 'feed_attribution'):
+        if flag in item and not isinstance(item[flag], bool):
+            errors.append(f'{where}: {flag} 必须是布尔')
     return errors
 
 
@@ -268,7 +275,7 @@ def validate_items_envelope(envelope):
         return [f'envelope: schema 必须是 {ITEMS_SCHEMA}']
     errors = []
     _str(envelope, 'producer', errors, 'envelope')
-    if not _is_aware_iso(envelope.get('generated_at')):
+    if not is_aware_iso(envelope.get('generated_at')):
         errors.append('envelope: generated_at 必须带时区')
     for key in ('sources', 'platforms'):
         rows = envelope.get(key)
@@ -293,7 +300,7 @@ def validate_hotsearch(payload):
     if not isinstance(payload, dict) or payload.get('schema') != HOTSEARCH_SCHEMA:
         return [f'hotsearch: schema 必须是 {HOTSEARCH_SCHEMA}']
     errors = []
-    if not _is_aware_iso(payload.get('generated_at')):
+    if not is_aware_iso(payload.get('generated_at')):
         errors.append('hotsearch: generated_at 必须带时区')
     known = {p['id'] for p in load_hotsearch()['providers']}
     cap = load_hotsearch()['max_items_per_provider']
@@ -313,7 +320,7 @@ def validate_hotsearch(payload):
             errors.append(f'{where}: 失败/空时 items 必须为空（不编排名，不留旧榜冒充今天）')
         if len(items) > cap:
             errors.append(f'{where}: 超过 {cap} 条')
-        if provider.get('fetched_at') is not None and not _is_aware_iso(provider['fetched_at']):
+        if provider.get('fetched_at') is not None and not is_aware_iso(provider['fetched_at']):
             errors.append(f'{where}: fetched_at 必须带时区')
         for ii, entry in enumerate(items):
             w = f'{where}.items[{ii}]'

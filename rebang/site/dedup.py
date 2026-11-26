@@ -127,7 +127,7 @@ def cluster(items):
             groups.append([it])
     out = []
     for members in groups:
-        primary = next((m for m in members if m.get('highlight')), members[0])
+        primary = next((m for m in members if m.get('highlight') or m.get('fold_preferred')), members[0])
         out.append([primary] + [m for m in members if m is not primary])
     out.sort(key=lambda g: (_when(g[0]), str(g[0].get('id'))), reverse=True)
     return out

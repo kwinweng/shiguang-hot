@@ -11,6 +11,7 @@
   data/id-index.json，以及 rebang.archive.build(items, out_dir) 产出的 search-index。
 """
 import argparse
+from collections import defaultdict
 import hashlib
 import json
 import os
@@ -23,6 +24,7 @@ from pathlib import Path
 from rebang.contract import schema
 from rebang.site.dedup import fold
 from rebang.site.health import build_health
+from rebang.site.highlights import corroborated_ids
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_IN = ROOT / 'var' / 'rebang' / 'in'
@@ -131,12 +133,15 @@ def load_inputs(in_dir, use_fixture=False):
     return envelopes, hotsearch, report
 
 
-def merge_items(envelopes, report):
+def merge_items(envelopes, report, *, disputed_news=None, unverified_news=None):
     """校验 + 合并去重。同 id 取 fetched_at 较新的。
     新闻：同链接的不同 id 全部保留（交给 rebang/site/dedup.fold 在频道内折叠，id-index、搜索都能找到每个 id）；
-    只有「今日重点」条目按同频道同 url 并进已有条目（只打 highlight 标），找不到才单独成条。
+    旧「今日重点」新闻同频道同 url 已有对应条目时仍去重，兼容旧输入的 id-index 行为。
     帖子（博主）：同 url 只留一条，规则不变。"""
     by_id = {}
+    unverified_candidates = set()
+    feed_sources = {s['id'] for channel in schema.load_channels()['channels']
+                    for s in channel['sources'] if s['type'] == 'feed'}
     for name, envelope in envelopes:
         entry = {'file': name, 'producer': envelope.get('producer'), 'generated_at': envelope.get('generated_at'),
                  'items': 0, 'dropped': 0, 'errors': []}
@@ -149,15 +154,33 @@ def merge_items(envelopes, report):
                     entry['errors'] += errors[:2]
                 continue
             entry['items'] += 1
+            if (unverified_news is not None and envelope.get('producer') == 'ingest'
+                    and item['source_id'] in feed_sources and item.get('published_at_verified') is not True):
+                unverified_candidates.add(id(item))
             old = by_id.get(item['id'])
-            if old is None or (parse_time(item.get('fetched_at')) or _sort_key(item)) >= \
-                    (parse_time(old.get('fetched_at')) or _sort_key(old)):
+            if old is None:
                 by_id[item['id']] = item
-    # 同发布时间按 id 升序决胜，保证输入顺序不影响「今日重点」打标和最终排序
+                continue
+            version = parse_time(item.get('fetched_at')) or _sort_key(item)
+            previous = parse_time(old.get('fetched_at')) or _sort_key(old)
+            if version == previous and item['kind'] == old['kind'] == 'news':
+                # 同一条、同一版本时间但内容冲突，固定取舍，不能用输入顺序作互证。
+                if item != old:
+                    if disputed_news is not None:
+                        disputed_news.add(item['id'])
+                    if json.dumps(item, sort_keys=True) > json.dumps(old, sort_keys=True):
+                        by_id[item['id']] = item
+            elif version >= previous:
+                by_id[item['id']] = item
+                if disputed_news is not None:
+                    disputed_news.discard(item['id'])
+    if unverified_news is not None:
+        unverified_news.update(i['id'] for i in by_id.values() if id(i) in unverified_candidates)
+    # 同发布时间按 id 升序决胜。
     items = sorted(sorted(by_id.values(), key=lambda i: str(i.get('id') or '')), key=_sort_key, reverse=True)
     highlight_src = schema.load_channels()['highlights']['source_id']
     by_url, out = {}, []
-    # 先放非「今日重点」条目，再让重点条目按 url 并进已有条目（只打标），找不到才单独成条。
+    # 旧重点尚有独立 id 时保留原深链。同链接的旧整理条目仍去重。
     for item in [i for i in items if i['source_id'] != highlight_src] + [i for i in items if i['source_id'] == highlight_src]:
         key = (item['kind'], item.get('channel'), item.get('url'))
         folds_by_url = item['kind'] != 'news' or item['source_id'] == highlight_src
@@ -401,6 +424,21 @@ def _run_archive(items, out_dir, report):
     report['archive'] = 'ok'
 
 
+def _archive_item(item):
+    private = ('fold_preferred', 'published_at_verified', 'feed_attribution')
+    if any(key in item for key in private):
+        return {key: value for key, value in item.items() if key not in private}
+    return item
+
+
+def _public_news(item, marked, day):
+    public = {key: value for key, value in _archive_item(item).items()
+              if key not in ('highlight', 'highlight_date')}
+    if item['id'] in marked:
+        public.update(highlight=True, highlight_date=day)
+    return public
+
+
 def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web_dir=WEB_DIR, public_base=None,
           hot_archive_dir=HOT_ARCHIVE_DIR):
     """构建到 out（先写临时目录再替换）。返回构建报告 dict。"""
@@ -409,7 +447,8 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
     if out.exists() and not (out / 'data' / 'meta.json').exists() and any(out.iterdir()):
         raise SystemExit(f'拒绝覆盖：{out} 已存在且不是 rebang.site 的构建产物')
     envelopes, hotsearch, report = load_inputs(in_dir, use_fixture)
-    items = merge_items(envelopes, report)
+    disputed_news, unverified_news = set(), set()
+    items = merge_items(envelopes, report, disputed_news=disputed_news, unverified_news=unverified_news)
     tmp = out.parent / f'{out.name}.tmp-{os.getpid()}'
     if tmp.exists():
         shutil.rmtree(tmp)
@@ -422,10 +461,21 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
     bad_sources = source_status(envelopes)
     news = [i for i in items if i['kind'] == 'news']
     posts = [i for i in items if i['kind'] == 'post']
+    legacy_source = schema.load_channels()['highlights']['source_id']
+    ineligible = disputed_news | unverified_news
+    candidates = (i for i in news if i['source_id'] != legacy_source and i['id'] not in ineligible)
+    marked = corroborated_ids(candidates, now, parse_time)
+    day = now.date().isoformat()
+    news_by_channel = defaultdict(list)
+    for item in news:
+        news_by_channel[item['channel']].append(item)
     channels_meta = []
     id_index = {}  # 条目 id → 所在数据文件；给 #/item/<id> 深链（8:30 私聊稿）直接打开详情用
     for channel in sorted(schema.load_channels()['channels'], key=lambda c: c['order']):
-        mine, folded = fold([i for i in news if i['channel'] == channel['slug']])
+        # Keep the old #88 tie-break, then replace the markers only on public copies.
+        mine, folded = fold(news_by_channel[channel['slug']])
+        mine = [_public_news(item, marked, day) for item in mine]
+        folded = [_public_news(item, marked, day) for item in folded]
         if folded:
             rel = f'channel/{channel["slug"]}/merged.json'
             _write(data / rel, {'schema': 'rebang.merged/1', 'channel': channel['slug'], 'items': folded})
@@ -498,7 +548,7 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
         'channels': channels_meta,
     }
     _write(data / 'meta.json', meta)
-    _run_archive(items, tmp, report)
+    _run_archive([_archive_item(item) for item in items], tmp, report)
     if out.exists():
         shutil.rmtree(out)
     tmp.rename(out)
