@@ -25,7 +25,7 @@ t.me 公开页 → tgmeta ──┼→ ingest → var/rebang/in/ingest.json ─�
 
 ## ingest：资讯来源 → `rebang.items/1`
 - `python3 -m rebang.ingest --db tg.db --media-root . --out var/rebang/in/ingest.json [--no-fetch | --live] [--days 14]`。
-- 来源（`rebang/contract/channels.json`，整源进一个频道）：18 个 TG（只读 `tg.db`，`mode=ro`）、6 个官方订阅（BBC、卫报、Google、OpenAI、GitHub Blog、Apple Newsroom，复用 `shiguang/ingest/web.py`）、GitHub Trending 公开页。
+- 来源（`rebang/contract/channels.json`，整源进一个频道）：18 个 TG（只读 `tg.db`，`mode=ro`）、14 个官方订阅（BBC、卫报、Google、OpenAI、GitHub Blog、Apple Newsroom；2026-11-25 加 CNA、France 24、DW、NPR、Android Authority、MacRumors、selfh.st、It's FOSS，见 `SOURCE-AUDIT.md`；复用 `shiguang/ingest/web.py`）、GitHub Trending 公开页。
 - 只收最近 14 天；TG 图片用 `tg.db` 旁的 `media/` 缓存，输出 `image_local`，建站时复制到 `site-v11/media/`。
 - `--no-fetch` 读 `var/rebang/cache/ingest/` 缓存，没缓存标 `not_fetched`，不编。
 - 今日重点（hot-daily）：链接命中已收条目只打 `highlight`，不另出条目。

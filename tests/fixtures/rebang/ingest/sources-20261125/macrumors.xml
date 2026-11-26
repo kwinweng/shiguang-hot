@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>MacRumors: Mac News and Rumors - All Stories</title>
+	<atom:link href="https://feeds.macrumors.com/MacRumors-All" rel="self" type="application/rss+xml" />
+	<link>https://www.macrumors.com</link>
+
+	<description>Apple, iPhone, iPad, Mac News and Rumors</description>
+	<lastBuildDate>Wed, 25 Nov 2026 09:46:02 +0000</lastBuildDate>
+
+	<language>en</language>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+	<generator>https://www.macrumors.com</generator>
+
+		<item>
+		<title>Missed That &#36;149 AirPods Pro 3 Deal? Amazon Just Brought It Back</title>
+		<link>https://www.macrumors.com/2026/11/24/amazon-airpods-pro-3-deal-back/</link>
+		<comments>https://forums.macrumors.com/threads/missed-that-149-airpods-pro-3-deal-amazon-just-brought-it-back.2495131/</comments>
+		<pubDate>Tue, 24 Nov 2026 23:45:00 +0000</pubDate>
+		<guid isPermaLink="false">https://www.macrumors.com/2026/11/24/amazon-airpods-pro-3-deal-back/</guid>
+		<dc:creator>Mitchel Broussard</dc:creator>
+		<category>Black Friday</category>
+		<category>Deals</category>
+		<category>Featured</category>
+
+
+		<description><![CDATA[Apple's AirPods Pro 3 have returned to their all-time low price of   &#36;149.00   on Amazon, down from &#36;249.00. This price appeared yesterday morning, then disappeared overnight, but it's back now and still one of the best deals this Black Friday season.
+
+
+
+   Note: MacRumors is an affiliate partner with Amazon. When you click a link and make a purchase, we may receive a small payment, whic]]></description>
+		</item>
+<item>
+		<title>Tidal Bans AI Music, While Apple Music Sticks to Labels</title>
+		<link>https://www.macrumors.com/2026/11/24/tidal-ai-music-ban/</link>
+		<comments>https://forums.macrumors.com/threads/tidal-bans-ai-music-while-apple-music-sticks-to-labels.2495175/</comments>
+		<pubDate>Tue, 24 Nov 2026 23:44:43 +0000</pubDate>
+		<guid isPermaLink="false">https://www.macrumors.com/2026/11/24/tidal-ai-music-ban/</guid>
+		<dc:creator>Juli Clover</dc:creator>
+		<category>Apple Music</category>
+		<category>Tidal</category>
+
+
+		<description><![CDATA[Streaming music service Tidal  today said  it plans to start blocking AI music on December 9. Any track generated entirely with AI will be removed from the platform, with Tidal rejecting AI songs in the future.
+
+
+
+
+
+Tidal lead Robert Andersen said 43 percent of tracks uploaded in the last 90 days have been flagged as AI-generated. Approximately 29 million songs will be deleted and Tidal expect]]></description>
+		</item>
+
+	</channel>
+</rss>

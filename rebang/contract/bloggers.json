@@ -1,6 +1,6 @@
 {
   "schema": "rebang.bloggers/1",
-  "note": "名单以 docs/bloggers-candidates-v2-20261114.md 与 SPEC v0.10 第 7.4 节为准，本期不扩。博主不进 6 个资讯频道。登录类平台抓不到就保持真实空状态，不编帖子。",
+  "note": "名单以 docs/bloggers-candidates-v2-20261114.md 与 SPEC v0.10 第 7.4 节为准，本期不扩。博主不进 6 个资讯频道。登录类平台抓不到就保持真实空状态，不编帖子。2026-11-25 阿欢确认撤掉没有名单的知乎占位。",
   "platforms": [
     {"id": "x", "name": "X", "method": "existing-public-reader", "login": false, "accounts": [
       {"handle": "karpathy", "name": "Andrej Karpathy"}, {"handle": "simonw", "name": "Simon Willison"},
@@ -62,7 +62,6 @@
       {"handle": "UCYNbYGl89UUowy8oXkipC-Q", "name": "Dr. Becky", "home": "https://www.youtube.com/@DrBecky"},
       {"handle": "UCn3npsPixgoi_xLdCg9J-LQ", "name": "AstroBackyard", "home": "https://www.youtube.com/@AstroBackyard"},
       {"handle": "UCh9IfI45mmk59eDvSWtuuhQ", "name": "Ryan George", "home": "https://www.youtube.com/@RyanGeorge"}
-    ]},
-    {"id": "zhihu", "name": "知乎", "method": "none", "login": false, "accounts": []}
+    ]}
   ]
 }

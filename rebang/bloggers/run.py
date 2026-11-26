@@ -19,7 +19,7 @@ from .common import apply_translation, iso, parse_time, translate_comments
 from .feed import FeedError, feed_posts
 
 PRODUCER = 'bloggers'
-ALL_PLATFORMS = ('blog', 'x', 'jike', 'weibo', 'wechat', 'youtube', 'zhihu')
+ALL_PLATFORMS = ('blog', 'x', 'jike', 'weibo', 'wechat', 'youtube')
 YOUTUBE_CACHE = Path(__file__).resolve().parents[2] / 'var' / 'rebang' / 'cache' / 'youtube-watch.json'
 
 REASONS = {

@@ -82,6 +82,8 @@ def health_inputs():
             row.update(collection_ok=False, last_ok_at=(NOW - timedelta(hours=29)).isoformat())
         if row['id'] == 'guardian-world':
             row['fetched_at'] = earlier
+        if row['id'] == 'selfhst':  # 新加的源还没抓过一轮
+            row.update(status='not_fetched', count=0, fetched_at=None)
     platforms = []
     for platform in load_bloggers()['platforms']:
         platform_id = platform['id']

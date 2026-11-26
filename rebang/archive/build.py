@@ -129,6 +129,22 @@ def _load_day(archive_dir: Path, date: str, cache: dict) -> dict:
     return cache[date]
 
 
+def _news_content(item):
+    """用于比较归档版本；采集时刻和旧角标不是报道内容，阅读数、译文等仍是。"""
+    content = {k: v for k, v in item.items() if k not in ('fetched_at', 'highlight', 'highlight_date')}
+    if isinstance(content.get('tg'), dict):
+        content['tg'] = {k: v for k, v in content['tg'].items() if k != 'fetched_at'}
+    return content
+
+
+def _latest_snapshot(previous, incoming):
+    if (incoming.get('kind') == 'news' and previous.get('highlight') is True
+            and 'highlight' not in incoming and 'highlight_date' not in incoming
+            and _news_content(previous) == _news_content(incoming)):
+        return previous
+    return incoming
+
+
 def _search_entry(item: dict) -> dict:
     translation = item.get('translation') if item.get('translated') else None
     entry = {
@@ -214,7 +230,7 @@ def build(items, out_dir, archive_dir=None, generated_at=None):
         else:
             records = _load_day(archive_dir, date, cache)
             if ident in records:
-                records[ident]['latest'] = item
+                records[ident]['latest'] = _latest_snapshot(records[ident]['latest'], item)
             else:
                 records[ident] = {'id': ident, 'first': item, 'latest': item}
         id_index[ident] = date

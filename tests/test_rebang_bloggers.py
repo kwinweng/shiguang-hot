@@ -360,7 +360,7 @@ def test_full_run_envelope_valid_and_login_platforms_not_configured(tmp_path):
     assert validate_items_envelope(env) == []
     status = {p['id']: p['status'] for p in env['platforms']}
     assert status == {'x': 'ok', 'blog': 'ok', 'jike': 'ok', 'weibo': 'not_configured',
-                      'wechat': 'ok', 'youtube': 'ok', 'zhihu': 'empty'}
+                      'wechat': 'ok', 'youtube': 'ok'}
     assert not [i for i in env['items'] if i['blogger']['platform'] == 'weibo']
     jike = next(p for p in env['platforms'] if p['id'] == 'jike')
     assert {a['status'] for a in jike['accounts']} == {'ok'} and len(jike['accounts']) == 9

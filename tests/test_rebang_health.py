@@ -65,7 +65,7 @@ def test_health_contract_covers_news_channels_and_blogger_platforms(health):
     assert {r['id']: len(r['accounts']) for r in health['sources'] if 'accounts' in r} == {
         p['id']: len(p['accounts']) for p in load_bloggers()['platforms']
     }
-    assert next(r for r in health['sources'] if r['id'] == 'zhihu')['status'] == 'not_configured'
+    assert 'zhihu' not in {r['id'] for r in health['sources']}
 
 
 def test_news_health_reuses_latest_run_and_retained_count(health):

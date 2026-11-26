@@ -53,7 +53,8 @@ class ChannelConfigTests(unittest.TestCase):
         channels = {c['slug']: [s['id'] for s in c['sources']] for c in load_channels()['channels']}
         self.assertEqual(channels['current'],
                          ['tnews365', 'myBigCharacterPoster', 'freechinese', 'shuangyunews_rss'])
-        self.assertEqual(channels['world'], ['bbc-world', 'guardian-world'])
+        # 2026-11-25：环球补 4 个免登录国际新闻订阅，BBC 与卫报仍在最前
+        self.assertEqual(channels['world'], ['bbc-world', 'guardian-world', 'cna-world', 'france24-en', 'dw-world', 'npr-world'])
         self.assertEqual(source_channel('freechinese'), 'current')
         self.assertEqual(source_channel('shuangyunews_rss'), 'current')
 
@@ -84,7 +85,7 @@ class HotsearchConfigTests(unittest.TestCase):
 class BloggerConfigTests(unittest.TestCase):
     def test_counts(self):
         counts = {p['id']: len(p['accounts']) for p in load_bloggers()['platforms']}
-        self.assertEqual(counts, {'x': 16, 'blog': 7, 'jike': 9, 'weibo': 6, 'wechat': 6, 'youtube': 13, 'zhihu': 0})
+        self.assertEqual(counts, {'x': 16, 'blog': 7, 'jike': 9, 'weibo': 6, 'wechat': 6, 'youtube': 13})
 
 
 class ItemTests(unittest.TestCase):

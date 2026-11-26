@@ -24,7 +24,7 @@ def _text(markup):
     return re.sub(r'\s+', ' ', text).strip()[:2000]
 
 
-def _when(value):
+def _when(value, *, require_timezone=False):
     value = (value or '').strip()
     if not value:
         return None
@@ -35,6 +35,8 @@ def _when(value):
             moment = parsedate_to_datetime(value)
         except (TypeError, ValueError):
             return None
+    if require_timezone and moment.tzinfo is None:
+        return None
     return (moment if moment.tzinfo else moment.replace(tzinfo=BEIJING)).astimezone(BEIJING)
 
 
@@ -43,7 +45,16 @@ def _first_img(markup):
     return tag['src'] if tag else None
 
 
-def parse(xml):
+_CREDIT_TAGS = {'source', 'author', '{%s}creator' % NS['dc'], '{%s}source' % NS['dc'],
+                *(f'{{{NS["atom"]}}}{tag}' for tag in ('source', 'author', 'contributor'))}
+
+
+def _has_credit(element):
+    # 只识别稿源或署名字段是否存在，不收集作者名、邮箱或链接；媒体图片署名不算稿源。
+    return element is not None and any(child.tag in _CREDIT_TAGS for child in element)
+
+
+def parse(xml, *, with_publication=False):
     """Entries of an RSS or Atom document: dict(id, ts, title, body, url, images), newest first."""
     root = ET.fromstring(xml)
     rdf = root.tag == '{%s}RDF' % NS['rdf']
@@ -52,6 +63,7 @@ def parse(xml):
             or (rdf and root.find('rss:channel', NS) is None)):
         raise ET.ParseError('not RSS/Atom')
     entries = []
+    inherited_credit = with_publication and _has_credit(root.find('channel') if root.tag == 'rss' else root)
     if root.tag == '{%s}feed' % NS['atom']:
         for e in root.findall('atom:entry', NS):
             link = next((l.get('href') for l in e.findall('atom:link', NS) if l.get('rel', 'alternate') == 'alternate'), '')
@@ -61,10 +73,14 @@ def parse(xml):
                 summary = group.findtext('media:description', '', NS)
             thumb = (group.find('media:thumbnail', NS) if group is not None else None)
             image = thumb.get('url') if thumb is not None else _first_img(summary)
+            published = e.findtext('atom:published', '', NS)
             entries.append(dict(id=e.findtext('atom:id', '', NS) or link, url=link,
-                                ts=_when(e.findtext('atom:published', '', NS) or e.findtext('atom:updated', '', NS)),
+                                ts=_when(published or e.findtext('atom:updated', '', NS)),
                                 title=_text(e.findtext('atom:title', '', NS)), body=_text(summary),
                                 images=[image] if image else []))
+            if with_publication:
+                entries[-1]['published_at_verified'] = _when(published, require_timezone=True) is not None
+                entries[-1]['feed_attribution'] = inherited_credit or _has_credit(e)
     elif rdf:
         for e in root.findall('rss:item', NS):
             link = e.findtext('rss:link', '', NS).strip()
@@ -81,9 +97,13 @@ def parse(xml):
             media = e.find('media:content', NS) if e.find('media:content', NS) is not None else e.find('media:thumbnail', NS)
             image = enclosure or (media.get('url') if media is not None else None) or _first_img(description)
             link = e.findtext('link', '').strip()
-            entries.append(dict(id=e.findtext('guid', '').strip() or link, url=link, ts=_when(e.findtext('pubDate', '')),
+            published = e.findtext('pubDate', '')
+            entries.append(dict(id=e.findtext('guid', '').strip() or link, url=link, ts=_when(published),
                                 title=_text(e.findtext('title', '')), body=_text(description),
                                 images=[image] if image else []))
+            if with_publication:
+                entries[-1]['published_at_verified'] = _when(published, require_timezone=True) is not None
+                entries[-1]['feed_attribution'] = inherited_credit or _has_credit(e)
     entries = [e for e in entries if e['ts'] and (e['title'] or e['body'])]
     return sorted(entries, key=lambda e: e['ts'], reverse=True)[:KEEP]
 

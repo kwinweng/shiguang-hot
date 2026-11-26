@@ -138,6 +138,7 @@ function mount(el, ctx) {
   }
 
   function open() {
+    if (ctx && typeof ctx.cancelOpen === 'function') ctx.cancelOpen();
     el.classList.add('on');
     render('', []);
     input.value = '';
@@ -145,12 +146,16 @@ function mount(el, ctx) {
   }
 
   function close() {
+    if (ctx && typeof ctx.cancelOpen === 'function') ctx.cancelOpen();
     el.classList.remove('on');
     input.value = '';
     render('', []);
   }
 
-  input.addEventListener('input', run);
+  input.addEventListener('input', () => {
+    if (ctx && typeof ctx.cancelOpen === 'function') ctx.cancelOpen();
+    run();
+  });
   closeBtn.addEventListener('click', close);
   listEl.addEventListener('click', (event) => {
     const row = event.target.closest('[data-item-id]');
@@ -176,7 +181,12 @@ function mount(el, ctx) {
     return entries;
   });
 
-  return { open, close, run, query: (text) => { input.value = text; return run(); }, ready, HINT, PLACEHOLDER };
+  return {
+    open, close, run,
+    query: (text) => { input.value = text; return run(); },
+    getItem: (id) => entries.find((it) => it.id === id) || null,
+    ready, HINT, PLACEHOLDER,
+  };
 }
 
 const api = { match, search, fieldsOf, normalize, mount, loadIndex, HINT, PLACEHOLDER, displayTitle };

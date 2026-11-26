@@ -128,16 +128,26 @@
     if (inDetail && q.url) return `<a class="q-card${fwd ? ' fwd' : ''}" href="${esc(q.url)}" target="_blank" rel="noopener" data-quote-link>${head}${text}<span class="q-open">打开原帖 ›</span></a>`;
     return `<div class="q-card${fwd ? ' fwd' : ''}">${head}${text}</div>`;
   }
+  /** 同类事件合并（第 5 步）：主条下折叠「另有 N 个来源」，点开列出其它来源，点某一条打开它的详情 */
+  function dupHTML(item) {
+    const list = Array.isArray(item.merged) ? item.merged.filter(m => m && m.id) : [];
+    if (!list.length) return '';
+    // 按 source_id 数来源（同名不同号的来源分开数）；只是同来源同链接的折叠不算「来源」
+    const others = new Set(list.map(m => m.source_id || m.source_name).filter(n => n && n !== (item.source_id || item.source_name)));
+    const label = others.size ? `另有 ${others.size} 个来源` : `另有 ${list.length} 条相同链接`;
+    const rows = list.map(m => `<button type="button" class="dup-row" data-dup-id="${esc(m.id)}"><span class="src">${esc(m.source_name || m.source_id || '')}</span><span class="t">${esc(m.title_zh || m.title || '')}</span></button>`).join('');
+    return `<div class="dup" data-dup><button type="button" class="dup-btn" data-dup-toggle aria-expanded="false">${label}</button><div class="dup-list" hidden>${rows}</div></div>`;
+  }
   function isBareForward(item) { return !!(item.quote && item.quote.kind === 'forward' && !String(item.summary || '').trim() && !String(item.body || '').trim()); }
   function feedRowHTML(item) {
     const d = display(item);
     let body;
     if (isBareForward(item)) {
-      body = `<div class="fwd-tag">转发</div>${quoteCardHTML(item, false)}${metaLine(item, d)}`;
+      body = `<div class="fwd-tag">转发</div>${quoteCardHTML(item, false)}${metaLine(item, d)}${dupHTML(item)}`;
     } else {
       const sum = d.summary.trim() ? `<p class="sum">${esc(d.summary)}</p>` :
         (item.quote || thumbOk(item.image) ? '' : `<p class="sum none">${NO_SUMMARY}</p>`);
-      body = `<h3>${esc(d.title)}</h3>${sum}${quoteCardHTML(item, false)}${metaLine(item, d)}`;
+      body = `<h3>${esc(d.title)}</h3>${sum}${quoteCardHTML(item, false)}${metaLine(item, d)}${dupHTML(item)}`;
     }
     if (thumbOk(item.image)) {
       return `<article class="feed-row" data-id="${esc(item.id)}"><div class="f-main">${body}</div><div class="thumb"><img src="${esc(item.image.url)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(item.image.url)}"></div></article>`;
@@ -163,7 +173,7 @@
   }
   function heroHTML(item) {
     const d = display(item);
-    return `<article class="hero" data-id="${esc(item.id)}"><img src="${esc(item.image.url)}" alt="" data-zoom="${esc(item.image.url)}"><div class="cap"><div class="src">${esc(item.source_name)}${d.translated ? ' · ' + esc(d.label) : ''}</div><h3>${esc(d.title)}</h3></div></article>`;
+    return `<article class="hero" data-id="${esc(item.id)}"><img src="${esc(item.image.url)}" alt="" data-zoom="${esc(item.image.url)}"><div class="cap"><div class="src">${esc(item.source_name)}${d.translated ? ' · ' + esc(d.label) : ''}</div><h3>${esc(d.title)}</h3>${dupHTML(item)}</div></article>`;
   }
   function bannerHTML(slug, items) {
     if (!items || !items.length) return '';
@@ -283,50 +293,62 @@
       return `<div class="comment">${avatar(c.avatar, 'av')}<div class="c-main"><div class="nm c-nm">${esc(c.display_name || c.handle)} <span class="meta">@${esc(c.handle)}${c.published_at ? ' · ' + esc(fmtTime(c.published_at)) : ''}</span>${like}${mt}</div><div class="t-body">${esc(text)}</div></div></div>`;
     }).join('')}</div>`;
   }
-  /** 博主列表里的一条缩略图（放在右边）：第一张图 / 视频封面；多张时角上写「N 图」。
-   *  data-media-list 带全部媒体，点开在全屏查看里从第一张开始左右滑；文章类帖子用封面图 */
+  /** 博主列表里文章类帖子的封面缩略图（放在右边）；带媒体的帖子改在正文下面用 mediaGrid 多格显示（样页 A） */
   function postThumbHTML(item) {
-    const b = item.blogger || {};
-    const list = (b.media || []).filter(m => m && (m.url || m.preview_url));
-    if (list.length) {
-      const grid = mediaGrid(list.slice(0, 1), item.url);   // 只拿第一格的标记
-      const items = list.map(m => { const vid = (m.type === 'video' || m.type === 'gif' || m.type === 'youtube') && m.url; return vid ? {t: m.type, u: m.url, p: m.preview_url || ''} : {t: 'image', u: m.preview_url || m.url}; });
-      const cell = grid.slice(grid.indexOf('<div class="cell'), grid.lastIndexOf('</div>'));
-      const cnt = list.length > 1 ? `<i class="cnt">${list.length} ${list.every(m => !m.type || m.type === 'image') ? '图' : '项'}</i>` : '';
-      return `<div class="thumb" data-zoom-list="${esc(list.map(m => m.preview_url || m.url).join('|'))}" data-media-list="${esc(JSON.stringify(items))}"${item.url ? ` data-origin="${esc(item.url)}"` : ''}>${cell}${cnt}</div>`;
-    }
     if (item.image && item.image.url) return `<div class="thumb"><img src="${esc(item.image.url)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(item.image.url)}"></div>`;
     return '';
   }
-  /** 博主列表一行（v16）：有标题 → 标题 + 最多 3 行摘要；没标题的帖子 → 正文最多 4 行。图在右边，账号名左对齐 */
-  function postRowHTML(item) {
+  // 全平台先在建站端统一排序再切页；浏览器只合并队首，不再按毫秒重新解释时间。
+  function comparePosts(a, b) { return a.feed_order - b.feed_order; }
+  function bloggerAvatar(src) {
+    return src ? `<img class="bl-avatar" src="${esc(src)}" alt="" loading="lazy">` : '<span class="bl-avatar" aria-hidden="true"></span>';
+  }
+  function postTranslation(d, key, badge) {
+    if (!d.translated) return '';
+    return `<div class="t-tools">${badge}<button type="button" class="orig-btn" aria-expanded="false" data-orig="${esc(key)}">看原文</button></div><div class="orig" data-orig-box="${esc(key)}">${esc(d.orig.body || d.orig.summary)}</div>`;
+  }
+  function postQuote(b, compact = false) {
+    const q = b.quote;
+    if (!q) return '';
+    const who = esc(q.display_name || q.handle);
+    const meta = [atHandle(b.platform, q.handle), q.published_at ? esc(fmtTime(q.published_at)) : ''].filter(Boolean).join(' · ');
+    const author = compact ? `<div class="nm">${who}${meta ? ` <span class="meta">${meta}</span>` : ''}</div>` : `<div class="hd">${avatar(q.avatar, 'av')}<div><div class="nm">${who}</div><div class="meta">${meta}</div></div></div>`;
+    return `<div class="quote">${author}<div class="t-body">${esc(q.text)}</div></div>`;
+  }
+  function postRowHTML(item, platformName) {
     const b = item.blogger || {};
     const d = display(item);
     const norm = x => String(x || '').replace(/[\s【】]/g, '');
     let text = cardText(d.summary || d.body || '').replace(/\s+/g, ' ').trim();
     if (d.title && text && norm(text).startsWith(norm(d.title))) text = text.slice(d.title.length).trim();
     if (d.title && norm(text) === norm(d.title)) text = '';
-    const main = d.title ? `<h3 class="b-title">${esc(d.title)}</h3>${text ? `<p class="b-sum">${esc(text.slice(0, 300))}</p>` : ''}` :
-      `<p class="b-text">${esc(text.slice(0, 400) || NO_SUMMARY)}</p>`;
+    const link = label => `<a href="${esc(itemHash(item.id))}" data-bl-item>${esc(label)}</a>`;
+    const main = d.title ? `<h3 class="b-title">${link(d.title)}</h3>${text ? `<p class="b-sum">${esc(text.slice(0, 300))}</p>` : ''}` :
+      `<p class="b-text">${link(text.slice(0, 400) || NO_SUMMARY)}</p>`;
     const m = b.metrics || {};
     const like = Number.isInteger(m.like) ? `<span class="n">${ICO.like}${fmtN(m.like)}</span>` : '';
     const reply = Number.isInteger(m.reply) ? `<span class="n">${ICO.reply}${fmtN(m.reply)}</span>` : '';
     const metrics = like || reply ? `<span class="metrics">${like}${reply}</span>` : '';
-    const av = b.avatar ? `<img class="mav" src="${esc(b.avatar)}" alt="" loading="lazy">` : '';
-    const mt = d.translated ? `<span class="tag mt-badge" title="${esc(d.label)}">译</span>` : '';
-    const th = postThumbHTML(item);
-    return `<article class="tweet brow${th ? '' : ' noimg'}" data-id="${esc(item.id)}"><div class="b-main">${main}<div class="f-meta">${av}<span class="src">${esc(b.display_name || b.handle || item.source_name)}</span>${b.verified ? `<span class="blue" title="认证">${ICO.check}</span>` : ''}<span>${esc(fmtWhen(item.published_at))}</span>${metrics}${mt}</div></div>${th}</article>`;
+    const name = b.display_name || b.handle || item.source_name;
+    const profile = b.platform && b.handle ? ` data-plat-of="${esc(b.platform)}" data-person="${esc(b.handle)}"` : '';
+    const av = bloggerAvatar(b.avatar);
+    const face = profile ? `<button type="button" class="bl-face"${profile} aria-label="查看${esc(name)}的帖子">${av}</button>` : av;
+    const who = profile ? `<button type="button" class="bl-name"${profile}>${esc(name)}</button>` : `<span class="bl-name">${esc(name)}</span>`;
+    const mt = postTranslation(d, `${item.id}-bl`, `<span class="tag mt-badge" title="${esc(d.label)}">译</span>`);
+    const grid = mediaGrid(b.media, item.url);
+    const th = grid ? '' : postThumbHTML(item);
+    return `<article class="tweet brow${th || grid ? '' : ' noimg'}" data-id="${esc(item.id)}">${face}<div class="b-main">
+      <div class="bl-who">${who}${b.verified ? `<span class="blue" title="认证">${ICO.check}</span>` : ''}${platformName ? `<span class="bl-platform">${esc(platformName)}</span>` : ''}<time datetime="${esc(item.published_at)}">${esc(fmtWhen(item.published_at))}</time><button type="button" class="bl-more" data-bl-menu aria-label="帖子菜单">${icon('ellipsis')}</button></div>
+      <div class="bl-content"><div>${main}</div>${th}</div>${grid}${mt}${postQuote(b, true)}${metrics}</div></article>`;
   }
-  /** 推文卡（v9/v10 样式）。clamp = 列表 → 走 v16 紧凑行；详情里是完整卡。拿不到的互动数不显示，不编数字 */
+  /** 详情用完整推文卡。拿不到的互动数不显示。 */
   function tweetCardHTML(item, clamp) {
     if (clamp) return postRowHTML(item);
     const b = item.blogger || {};
     const d = display(item);
     const text = d.body || d.summary;
-    const key = `${item.id}-d`;
-    const tools = d.translated ? `<div class="t-tools"><span class="t-badge">${esc(d.label)}</span><button type="button" class="orig-btn" data-orig="${esc(key)}">看原文</button></div><div class="orig" data-orig-box="${esc(key)}">${esc(d.orig.body || d.orig.summary)}</div>` : '';
-    const q = b.quote;
-    const quote = q ? `<div class="quote"><div class="hd">${avatar(q.avatar, 'av')}<div><div class="nm">${esc(q.display_name || q.handle)}</div><div class="meta">${[atHandle(b.platform, q.handle), q.published_at ? esc(fmtTime(q.published_at)) : ''].filter(Boolean).join(' · ')}</div></div></div><div class="t-body">${esc(q.text)}</div></div>` : '';
+    const tools = postTranslation(d, `${item.id}-d`, `<span class="t-badge">${esc(d.label)}</span>`);
+    const quote = postQuote(b);
     const cm = xCommentsHTML(item, false);
     const m = b.metrics || {};
     const metric = (k) => (Number.isInteger(m[k]) ? `<span>${ICO[k]}${fmtN(m[k])}<em>${({reply: '回复', repost: '转发', like: '点赞'})[k]}</em></span>` : '');
@@ -377,7 +399,7 @@
   }
 
   const Lib = {TZ, NO_SUMMARY, NO_BODY, BODY_PENDING, HOT_FAIL, esc, beijingDate, fmtTime, fmtWhen, fmtFull, dayLabel, fmtDay, fmtRefreshed, fmtN, display, thumbOk,
-    tgStatsHTML, quoteCardHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, hotShort, tweetCardHTML, postRowHTML, xCommentsHTML, rowHTML, parseItemHash, itemHash, ICO, icon, mediaGrid, fmtDur, standaloneGeometry};
+    tgStatsHTML, quoteCardHTML, dupHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, hotShort, tweetCardHTML, postRowHTML, bloggerAvatar, comparePosts, xCommentsHTML, rowHTML, parseItemHash, itemHash, ICO, icon, mediaGrid, fmtDur, standaloneGeometry};
   if (typeof module !== 'undefined' && module.exports) module.exports = Lib;
   else root.RebangLib = Lib;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,6 +1,6 @@
 {
   "schema": "rebang.channels/1",
-  "note": "2026-11-15 阿欢确认的 6 个频道与来源划分（热搜在底栏「热搜」页；2026-11-17 改：FREE 中文、看新闻 学英语 双语新闻从环球调进时事，环球只留 BBC World 与卫报 World；2026-11-22 修复分支移除博主页整理稿分组）。一个来源只进一个频道，第一期不按条拆源。改这里须回集成分支 feat/rebang-v1。",
+  "note": "2026-11-15 阿欢确认的 6 个频道与来源划分（热搜在底栏「热搜」页；2026-11-17 改：FREE 中文、看新闻 学英语 双语新闻从环球调进时事，环球只留 BBC World 与卫报 World；2026-11-25 阿欢确认加 8 个免登录官方订阅：环球加 CNA/France 24/DW/NPR，数码加 Android Authority/MacRumors，工具与项目加 selfh.st/It's FOSS；2026-11-22 修复分支移除博主页整理稿分组）。一个来源只进一个频道，第一期不按条拆源。改这里须回集成分支 feat/rebang-v1。",
   "channels": [
     {"slug": "current", "name": "时事", "order": 1, "sources": [
       {"id": "tnews365", "name": "竹新社", "type": "telegram", "handle": "tnews365", "stability": "mid"},
@@ -10,7 +10,11 @@
     ]},
     {"slug": "world", "name": "环球", "order": 2, "sources": [
       {"id": "bbc-world", "name": "BBC World", "type": "feed", "url": "https://feeds.bbci.co.uk/news/world/rss.xml", "stability": "stable"},
-      {"id": "guardian-world", "name": "卫报 World", "type": "feed", "url": "https://www.theguardian.com/world/rss", "stability": "stable"}
+      {"id": "guardian-world", "name": "卫报 World", "type": "feed", "url": "https://www.theguardian.com/world/rss", "stability": "stable"},
+      {"id": "cna-world", "name": "CNA International", "type": "feed", "url": "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6311", "stability": "stable"},
+      {"id": "france24-en", "name": "France 24 English", "type": "feed", "url": "https://www.france24.com/en/rss", "stability": "stable"},
+      {"id": "dw-world", "name": "DW World", "type": "feed", "url": "https://rss.dw.com/xml/rss-en-world", "stability": "stable"},
+      {"id": "npr-world", "name": "NPR World", "type": "feed", "url": "https://feeds.npr.org/1004/rss.xml", "stability": "stable"}
     ]},
     {"slug": "finance", "name": "财经", "order": 3, "sources": [
       {"id": "FinanceNewsDaily", "name": "华尔街见闻·财经时讯", "type": "telegram", "handle": "FinanceNewsDaily", "stability": "mid"},
@@ -32,18 +36,22 @@
     {"slug": "digital", "name": "数码", "order": 5, "sources": [
       {"id": "apple-newsroom", "name": "Apple Newsroom", "type": "feed", "url": "https://www.apple.com/newsroom/rss-feed.rss", "stability": "stable"},
       {"id": "CE_Observe", "name": "每日消费电子观察", "type": "telegram", "handle": "CE_Observe", "stability": "mid"},
-      {"id": "se7enw", "name": "All Is Well", "type": "telegram", "handle": "se7enw", "stability": "mid"}
+      {"id": "se7enw", "name": "All Is Well", "type": "telegram", "handle": "se7enw", "stability": "mid"},
+      {"id": "android-authority", "name": "Android Authority", "type": "feed", "url": "https://www.androidauthority.com/feed/", "stability": "stable"},
+      {"id": "macrumors", "name": "MacRumors", "type": "feed", "url": "https://feeds.macrumors.com/MacRumors-All", "stability": "stable"}
     ]},
     {"slug": "tools", "name": "工具与项目", "order": 6, "sources": [
       {"id": "github-trending", "name": "GitHub Trending", "type": "page", "url": "https://github.com/trending", "stability": "stable"},
       {"id": "dps_build", "name": "DPS Build", "type": "telegram", "handle": "dps_build", "stability": "mid"},
-      {"id": "yxzbp", "name": "严选君综合福利社", "type": "telegram", "handle": "yxzbp", "stability": "mid"}
+      {"id": "yxzbp", "name": "严选君综合福利社", "type": "telegram", "handle": "yxzbp", "stability": "mid"},
+      {"id": "selfhst", "name": "selfh.st", "type": "feed", "url": "https://selfh.st/rss/", "stability": "stable"},
+      {"id": "itsfoss", "name": "It's FOSS", "type": "feed", "url": "https://itsfoss.com/rss/", "stability": "stable"}
     ]}
   ],
   "excluded_sources": ["reorx_share", "mail", "liangjiahepost", "titan_pain"],
   "highlights": {
     "source_id": "hot-daily",
     "name": "今日重点",
-    "rule": "今日重点不单独成条；只给频道里与它同链接的条目打 highlight 标（卡片显示「今日重点」角标）。"
+    "rule": "建站只给过去 24 小时内获至少两家独立采编来源互证的频道新闻打标；source_id 仅用于兼容旧输入。"
   }
 }
