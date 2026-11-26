@@ -928,6 +928,34 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.locator('#blFoot [data-end=all], #blFoot .load-err').wait_for(timeout=3000)
         self.assertEqual(self.blogger_ids(), ['weibo:00', 'weibo:01'])
 
+    def test_blogger_pull_during_boot_does_not_leave_refreshing(self):
+        meta = json.loads((self.out / 'data/meta.json').read_text())
+        held = []
+        self.page.route('**/data/meta.json*', lambda route: held.append(route))
+        ptr = self.page.locator('#ptr')
+        for first_status in (200, 503):
+            with self.subTest(first_status=first_status):
+                held.clear()
+                with self.page.expect_request('**/data/meta.json'):
+                    self.page.goto('https://rebang.test/index.html', wait_until='domcontentloaded')
+                self.page.locator('.tabbar [data-view=blogger]').tap()
+                self.swipe(160, 200, 160, 420)
+                self.assertEqual(len(held), 1, '首屏未就绪，不发第二个请求')
+                shown_while_busy = ptr.is_visible()
+                held[0].fulfill(status=first_status, json=meta)
+                self.page.wait_for_selector('#app:not([aria-busy])')
+                self.assertTrue(ptr.is_hidden(), f'首屏结束后仍显示：{ptr.text_content()}')
+                self.assertFalse(shown_while_busy, '没开始刷新，不应显示正在刷新')
+
+                # 无论首读成功还是失败，下一次真正的下拉都应只刷新一次，结束后收起提示。
+                with self.page.expect_request('**/data/meta.json?*', timeout=3000):
+                    self.swipe(160, 200, 160, 420)
+                self.assertEqual(len(held), 2)
+                self.assertTrue(self.page.locator('#ptr.spin').is_visible())
+                held[1].fulfill(json=meta)
+                ptr.wait_for(state='hidden', timeout=3000)
+                self.page.locator('#bloggerList .tweet').first.wait_for(timeout=3000)
+
     def test_blogger_old_empty_index_cannot_hide_new_platform(self):
         # 同一秒重新建站也不能把旧索引的「0 条」当成新版本已结束。
         data = self.blogger_fixture(0, 2)

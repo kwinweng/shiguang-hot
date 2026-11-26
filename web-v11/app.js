@@ -1134,8 +1134,9 @@
     $('#refreshed').textContent = Number.isFinite(ms) ? `刷新于 ${L.fmtRefreshed(d)}` : '刷新时间未知';
   }
   let refreshSeq = 0;
+  function canRefresh() { return !$('#app').hasAttribute('aria-busy'); }
   async function doRefresh() {
-    if ($('#app').hasAttribute('aria-busy')) return;
+    if (!canRefresh()) return;
     const seq = ++refreshSeq;
     const btn = $('#btnRefresh');
     btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin'); setTimeout(() => btn.classList.remove('spin'), MOTION.slow + 50);
@@ -1330,7 +1331,9 @@
         if (g.inArticle) g.kind = g.edge && dx > 0 ? 'back' : (g.hscroll ? null : 'step');                       // 规则 1
         else if (g.hscroll) g.kind = null;                                                                         // 规则 2–3
         else if (g.lrChannels) g.kind = 'chswipe';                                                                 // 规则 4（规则 5：卡片不接横滑）
-      } else if (dy > 0 && g.scroller && g.scroller.scrollTop <= 0 && !g.inArticle) g.kind = 'pull';            // 规则 6
+      } else if (dy > 0 && g.scroller && g.scroller.scrollTop <= 0 && !g.inArticle && canRefresh()) {
+        g.kind = 'pull';  // 首屏还在加载时，不提示用户松开刷新
+      }
     }
     if (!g.kind || g.kind === 'menu') return;
     if (e.cancelable) e.preventDefault();
