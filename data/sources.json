@@ -5014,8 +5014,24 @@
     },
     {
       "id": "xhqcankao",
-      "last_update": "2026-11-26T21:19:16+08:00",
+      "last_update": "2026-11-27T00:52:44+08:00",
       "messages": [
+        {
+          "category": "其他",
+          "day": "2026-11-27",
+          "hot": false,
+          "hour": "2026-11-27 00:00",
+          "id": "9471ac496c12606409b6",
+          "image": "",
+          "link": "https://t.me/xhqcankao/33382",
+          "source": "xhqcankao",
+          "source_name": "风向旗参考快讯",
+          "summary": "Cloudflare官方服务状态站点显示，目前正在调查Cloudflare控制面板及相关API出现的访问故障。受此影响，用户使用控制面板或调用API时可能会遇到请求失败或显示报错。Cloudflare强调，此次故障不影响CDN缓存文件的分发及边缘侧安全功能。目前修复程序已部署，官方正在监控运行结果。\n\n—— Cloudflare Status",
+          "text": "Cloudflare官方服务状态站点显示，目前正在调查Cloudflare控制面板及相关API出现的访问故障。受此影响，用户使用控制面板或调用API时可能会遇到请求失败或显示报错。Cloudflare强调，此次故障不影响CDN缓存文件的分发及边缘侧安全功能。目前修复程序已部署，官方正在监控运行结果。\n\n—— Cloudflare Status",
+          "time": "2026-11-27T00:52:44+08:00",
+          "title": "Cloudflare控制面板及API出现故障",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-26",
@@ -22586,17 +22602,33 @@
         }
       ],
       "name": "风向旗参考快讯",
-      "seven_day_count": 122,
+      "seven_day_count": 123,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 0,
+      "today_count": 1,
       "type": "telegram",
       "url": "https://t.me/xhqcankao"
     },
     {
       "id": "tnews365",
-      "last_update": "2026-11-26T07:13:32+08:00",
+      "last_update": "2026-11-27T00:09:05+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-27",
+          "hot": false,
+          "hour": "2026-11-27 00:00",
+          "id": "c6727562bf6f77c0931e",
+          "image": "",
+          "link": "https://t.me/tnews365/35811",
+          "source": "tnews365",
+          "source_name": "竹新社",
+          "summary": "死者来自德国军工企业莱茵金属有限公司，当时正在科威特的一个防空设施上维护天线。数架伊朗无人机袭击，随后发生剧烈爆炸。\n伊朗尚未就此事表态。\n（CNN）",
+          "text": "死者来自德国军工企业莱茵金属有限公司，当时正在科威特的一个防空设施上维护天线。数架伊朗无人机袭击，随后发生剧烈爆炸。\n伊朗尚未就此事表态。\n（CNN）",
+          "time": "2026-11-27T00:09:05+08:00",
+          "title": "两名意大利公民11月26日在伊朗对科威特的袭击中死亡",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-26",
@@ -24903,10 +24935,10 @@
         }
       ],
       "name": "竹新社",
-      "seven_day_count": 11,
+      "seven_day_count": 12,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 0,
+      "today_count": 1,
       "type": "telegram",
       "url": "https://t.me/tnews365"
     },
@@ -34520,7 +34552,7 @@
           "hot": false,
           "hour": "2026-11-13 00:00",
           "id": "d3bd1301d19ddd672212",
-          "image": "media/FinanceNewsDaily/496568_1.webp",
+          "image": "",
           "link": "https://t.me/FinanceNewsDaily/496568",
           "source": "FinanceNewsDaily",
           "source_name": "华尔街见闻·财经时讯",
@@ -63685,7 +63717,7 @@
           "hot": false,
           "hour": "2026-11-13 00:00",
           "id": "82e1cdefaf336bfb7c48",
-          "image": "media/CE_Observe/44671_1.webp",
+          "image": "",
           "link": "https://t.me/CE_Observe/44671",
           "source": "CE_Observe",
           "source_name": "每日消费电子观察",
@@ -108008,8 +108040,24 @@
     },
     {
       "id": "zaihuapd",
-      "last_update": "2026-11-26T23:14:39+08:00",
+      "last_update": "2026-11-27T00:33:09+08:00",
       "messages": [
+        {
+          "category": "其他",
+          "day": "2026-11-27",
+          "hot": false,
+          "hour": "2026-11-27 00:00",
+          "id": "a579d9c7d2e5e2f7a7fd",
+          "image": "media/zaihuapd/45393_1.webp",
+          "link": "https://t.me/zaihuapd/45393",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "🍀在花频道 🍵茶馆 📮投稿新鲜事",
+          "text": "🍀在花频道 🍵茶馆 📮投稿新鲜事",
+          "time": "2026-11-27T00:33:09+08:00",
+          "title": "Cloudflare 再次发生故障 Cloudflare Cloudflare 在一个月内发生第5次故障，其中包括两次影响全球的重大网络故障",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-26",
@@ -108205,7 +108253,7 @@
         {
           "category": "科技",
           "day": "2026-11-26",
-          "hot": false,
+          "hot": true,
           "hour": "2026-11-26 15:00",
           "id": "726ff64a1c120ea6168f",
           "image": "media/zaihuapd/45380_1.webp",
@@ -112528,7 +112576,7 @@
           "hot": true,
           "hour": "2026-11-13 00:00",
           "id": "f66c7274e7afa8a6ef9d",
-          "image": "media/zaihuapd/45091_1.webp",
+          "image": "",
           "link": "https://t.me/zaihuapd/45091",
           "source": "zaihuapd",
           "source_name": "在花科技圈",
@@ -124092,10 +124140,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 116,
+      "seven_day_count": 117,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 0,
+      "today_count": 1,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -139681,7 +139729,7 @@
           "hot": false,
           "hour": "2026-11-13 00:00",
           "id": "d6e6ebea6ba0421774da",
-          "image": "media/reorx_share/7207_1.webp",
+          "image": "",
           "link": "https://t.me/reorx_share/7207",
           "source": "reorx_share",
           "source_name": "Reorx’s Forge",
