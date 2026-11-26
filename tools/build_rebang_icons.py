@@ -1,4 +1,4 @@
-"""Resize the approved kangaroo artwork into 拾光资讯 v11 favicon, PWA, splash and share images."""
+"""Resize the approved 拾光资讯 Light/Dark artwork into v11 favicon, PWA, splash and share images."""
 from __future__ import annotations
 
 import json
@@ -7,38 +7,27 @@ from pathlib import Path
 from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / 'web-v11/brand/kangaroo-source.png'
+SRC_LIGHT = ROOT / 'web-v11/brand/shiguang-logo-light-1024.png'
+SRC_DARK = ROOT / 'web-v11/brand/shiguang-logo-dark-1024.png'
 OUT = ROOT / 'web-v11'
 
+SPLASH_SIZES = (
+    (1170, 2532, '1170x2532'),
+    (1179, 2556, '1179x2556'),
+    (1290, 2796, '1290x2796'),
+)
 
-def _background_and_crop(im: Image.Image) -> tuple[Image.Image, tuple[int, int, int]]:
-    rgb = im.convert('RGB')
+
+def _load_with_bg(path: Path) -> tuple[Image.Image, tuple[int, int, int]]:
+    rgb = Image.open(path).convert('RGB')
     w, h = rgb.size
     samples: list[tuple[int, int, int]] = []
-    for box in ((0, 0, 30, 30), (w - 30, 0, w, 30), (0, h - 30, 30, h), (w - 30, h - 30, w, h)):
+    for box in ((0, 0, 20, 20), (w - 20, 0, w, 20), (0, h - 20, 20, h), (w - 20, h - 20, w, h)):
         corner = rgb.crop(box)
         samples.extend(corner.getpixel((x, y)) for y in range(corner.height) for x in range(corner.width))
     n = len(samples)
     bg = tuple(int(round(sum(c[i] for c in samples) / n)) for i in range(3))
-    px = rgb.load()
-    threshold = 25 * 25
-    minx, miny, maxx, maxy = w, h, 0, 0
-    for y in range(h):
-        for x in range(w):
-            r, g, b = px[x, y]
-            if (r - bg[0]) ** 2 + (g - bg[1]) ** 2 + (b - bg[2]) ** 2 > threshold:
-                if x < minx:
-                    minx = x
-                if y < miny:
-                    miny = y
-                if x > maxx:
-                    maxx = x
-                if y > maxy:
-                    maxy = y
-    cx, cy = (minx + maxx) / 2, (miny + maxy) / 2
-    half = min(cx, cy, w - 1 - cx, h - 1 - cy)
-    box = (int(round(cx - half)), int(round(cy - half)), int(round(cx + half)), int(round(cy + half)))
-    return rgb.crop(box), bg
+    return rgb, bg
 
 
 def _fit(src: Image.Image, size: int, scale: float, bg: tuple[int, int, int]) -> Image.Image:
@@ -61,8 +50,15 @@ def _save(im: Image.Image, path: Path) -> None:
     im.save(path, format='PNG', optimize=True)
 
 
+def _hex(bg: tuple[int, int, int]) -> str:
+    return '#{:02X}{:02X}{:02X}'.format(*bg)
+
+
 def main() -> None:
-    cropped, bg = _background_and_crop(Image.open(SRC))
+    light, light_bg = _load_with_bg(SRC_LIGHT)
+    dark, dark_bg = _load_with_bg(SRC_DARK)
+
+    # Default (Light) icons: home screen, PWA, share image, and light-mode favicons
     for name, size in {
         'favicon-16x16.png': 16,
         'favicon-32x32.png': 32,
@@ -71,26 +67,38 @@ def main() -> None:
         'icon-512.png': 512,
         'logo.png': 192,
     }.items():
-        _save(_sharpen(_fit(cropped, size, 1.0, bg), size), OUT / name)
-    ico = [_sharpen(_fit(cropped, s, 1.0, bg), s).convert('RGBA') for s in (16, 32, 48)]
+        _save(_sharpen(_fit(light, size, 1.0, light_bg), size), OUT / name)
+
+    # Dark-mode adaptive favicons
+    for name, size in {
+        'favicon-dark-16x16.png': 16,
+        'favicon-dark-32x32.png': 32,
+    }.items():
+        _save(_sharpen(_fit(dark, size, 1.0, dark_bg), size), OUT / name)
+
+    ico = [_sharpen(_fit(light, s, 1.0, light_bg), s).convert('RGBA') for s in (16, 32, 48)]
     ico[-1].save(OUT / 'favicon.ico', format='ICO', sizes=[(16, 16), (32, 32), (48, 48)])
+
     for size, name in ((192, 'icon-192-maskable.png'), (512, 'icon-512-maskable.png')):
-        _save(_fit(cropped, size, 0.72, bg), OUT / name)
-    og = Image.new('RGB', (1200, 630), bg)
+        _save(_fit(light, size, 0.78, light_bg), OUT / name)
+
+    og = Image.new('RGB', (1200, 630), light_bg)
     side = 520
-    k = cropped.resize((side, side), Image.Resampling.LANCZOS)
+    k = light.resize((side, side), Image.Resampling.LANCZOS)
     og.paste(k, ((1200 - side) // 2, (630 - side) // 2))
     _save(og, OUT / 'og-image.png')
-    for sw, sh, name in (
-        (1170, 2532, 'apple-splash-1170x2532.png'),
-        (1179, 2556, 'apple-splash-1179x2556.png'),
-        (1290, 2796, 'apple-splash-1290x2796.png'),
-    ):
-        canvas = Image.new('RGB', (sw, sh), bg)
-        side = int(round(min(sw, sh) * 0.46))
-        k = cropped.resize((side, side), Image.Resampling.LANCZOS)
-        canvas.paste(k, ((sw - side) // 2, (sh - side) // 2))
-        _save(canvas, OUT / name)
+
+    for sw, sh, tag in SPLASH_SIZES:
+        for prefix, src, bg in (
+            ('apple-splash-', light, light_bg),
+            ('apple-splash-dark-', dark, dark_bg),
+        ):
+            canvas = Image.new('RGB', (sw, sh), bg)
+            side = int(round(min(sw, sh) * 0.46))
+            k = src.resize((side, side), Image.Resampling.LANCZOS)
+            canvas.paste(k, ((sw - side) // 2, (sh - side) // 2))
+            _save(canvas, OUT / f'{prefix}{tag}.png')
+
     manifest = {
         'name': '拾光资讯',
         'short_name': '拾光资讯',
@@ -98,8 +106,8 @@ def main() -> None:
         'start_url': '/',
         'scope': '/',
         'display': 'standalone',
-        'background_color': '#101114',
-        'theme_color': '#101114',
+        'background_color': _hex(light_bg),
+        'theme_color': '#FFFFFF',
         'lang': 'zh-CN',
         'icons': [
             {'src': 'icon-192.png', 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},
