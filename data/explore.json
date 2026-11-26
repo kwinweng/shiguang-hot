@@ -1,6 +1,20 @@
 {
   "messages": [
     {
+      "category": "软件与 App",
+      "day": "2026-11-26",
+      "id": "trial-9e94766bf30a0026b66c",
+      "image": "",
+      "link": "https://www.appinn.com/modern-web-guidance/",
+      "section": "play",
+      "source": "appinn",
+      "source_name": "小众软件",
+      "summary": "如何让 AI 写网页的时候，不使用过时的技术？ 不知道你有没有遇到过：AI 帮你写网页，用的却是几年前的技术。明明浏览器已经原生支持的功能，它还要引入一堆第三方依赖，不仅增加了代码量，还可能带来额外的内存占用、性能损耗，甚至安全隐患。 说实话，青小蛙表示不知道 AI 用了什么技术。 Google C",
+      "text": "如何让 AI 写网页的时候，不使用过时的技术？ 不知道你有没有遇到过：AI 帮你写网页，用的却是几年前的技术。明明浏览器已经原生支持的功能，它还要引入一堆第三方依赖，不仅增加了代码量，还可能带来额外的内存占用、性能损耗，甚至安全隐患。 说实话，青小蛙表示不知道 AI 用了什么技术。 Google C",
+      "time": "2026-11-26T09:13:34+00:00",
+      "title": "别让 AI 用过时的技术写网页，Chrome 官方推出 Skills：Modern Web Guidance"
+    },
+    {
       "category": "游戏",
       "day": "2026-11-26",
       "id": "trial-33725c3216f1f805a0e5",
