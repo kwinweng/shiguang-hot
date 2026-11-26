@@ -81,13 +81,26 @@ class SiteBuildTests(unittest.TestCase):
         self.assertIn('https://news.kwinweng.com/og-image.png', html)
         self.assertNotIn('class="brand-logo"', html)
         self.assertNotIn('src="logo.png"', html)
-        for name in ('favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png',
+        for name in ('favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png',
+                     'favicon-dark-16x16.png', 'favicon-dark-32x32.png', 'apple-touch-icon.png',
                      'icon-192.png', 'icon-512.png', 'icon-192-maskable.png', 'icon-512-maskable.png',
                      'logo.png', 'og-image.png', 'manifest.webmanifest',
-                     'apple-splash-1170x2532.png', 'apple-splash-1179x2556.png', 'apple-splash-1290x2796.png'):
+                     'apple-splash-1170x2532.png', 'apple-splash-1179x2556.png', 'apple-splash-1290x2796.png',
+                     'apple-splash-dark-1170x2532.png', 'apple-splash-dark-1179x2556.png',
+                     'apple-splash-dark-1290x2796.png'):
             self.assertTrue((out / name).is_file(), name)
+        # 头部每个图标/启动图/清单链接（去掉 ?v= 缓存版本号）都指向构建产物里真实存在的文件
+        import re
+        hrefs = re.findall(r'<link rel="(?:icon|apple-touch-icon|manifest|apple-touch-startup-image)"[^>]*href="([^"]+)"', html)
+        self.assertGreaterEqual(len(hrefs), 13)
+        for href in hrefs:
+            self.assertTrue((out / href.split('?', 1)[0]).is_file(), href)
+        self.assertIn('apple-touch-icon.png?v=', html)
+        self.assertEqual(html.count('apple-touch-startup-image'), 6)
         from PIL import Image
         self.assertEqual(Image.open(out / 'favicon-32x32.png').size, (32, 32))
+        self.assertEqual(Image.open(out / 'favicon-dark-32x32.png').size, (32, 32))
+        self.assertEqual(Image.open(out / 'apple-splash-dark-1290x2796.png').size, (1290, 2796))
         self.assertEqual(Image.open(out / 'apple-touch-icon.png').size, (180, 180))
         self.assertEqual(Image.open(out / 'icon-192.png').size, (192, 192))
         self.assertEqual(Image.open(out / 'icon-512.png').size, (512, 512))
