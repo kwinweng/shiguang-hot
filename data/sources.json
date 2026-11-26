@@ -5014,8 +5014,24 @@
     },
     {
       "id": "xhqcankao",
-      "last_update": "2026-11-26T20:03:56+08:00",
+      "last_update": "2026-11-26T21:19:16+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 21:00",
+          "id": "aaf9a59574a43847eeb8",
+          "image": "",
+          "link": "https://t.me/xhqcankao/33381",
+          "source": "xhqcankao",
+          "source_name": "风向旗参考快讯",
+          "summary": "荷兰政府表示，将抵制美国政府进一步限制ASML Holding NV对华销售的计划，称拟议规则对欧洲最有价值的公司构成威胁。美国的《Match法案》旨在使半导体组件远离中国，将迫使荷兰和其他盟友加强对先进设备的出口管制，包括总部位于荷兰ASML的芯片制造设备。荷兰政府反对该法案的域外适用范围，贸易部长舒尔德·舍尔茨玛周四在议会说。“美国不是费尔德霍芬的老板，”舍尔茨玛说。“美国对荷兰和ASML在这里拥有的能力有一定程度的嫉妒 —— 他们真的很想在自己的国内拥有这种能力，但他们没有。在良好的伙伴关系中，我们两国双方都能从中获益，但现在这并不是平等的伙伴关系。”\n\n—— 彭博社",
+          "text": "荷兰政府表示，将抵制美国政府进一步限制ASML Holding NV对华销售的计划，称拟议规则对欧洲最有价值的公司构成威胁。美国的《Match法案》旨在使半导体组件远离中国，将迫使荷兰和其他盟友加强对先进设备的出口管制，包括总部位于荷兰ASML的芯片制造设备。荷兰政府反对该法案的域外适用范围，贸易部长舒尔德·舍尔茨玛周四在议会说。“美国不是费尔德霍芬的老板，”舍尔茨玛说。“美国对荷兰和ASML在这里拥有的能力有一定程度的嫉妒 —— 他们真的很想在自己的国内拥有这种能力，但他们没有。在良好的伙伴关系中，我们两国双方都能从中获益，但现在这并不是平等的伙伴关系。”\n\n—— 彭博社",
+          "time": "2026-11-26T21:19:16+08:00",
+          "title": "荷兰计划抵制美国拟议对ASML限制措施的推出",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-26",
@@ -5067,7 +5083,7 @@
         {
           "category": "其他",
           "day": "2026-11-26",
-          "hot": false,
+          "hot": true,
           "hour": "2026-11-26 18:00",
           "id": "f2ac108a4aaf974fa943",
           "image": "",
@@ -15275,7 +15291,7 @@
         {
           "category": "科技",
           "day": "2026-10-27",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-27 22:00",
           "id": "46c55f985c611003d052",
           "image": "",
@@ -22570,10 +22586,10 @@
         }
       ],
       "name": "风向旗参考快讯",
-      "seven_day_count": 142,
+      "seven_day_count": 143,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 27,
+      "today_count": 28,
       "type": "telegram",
       "url": "https://t.me/xhqcankao"
     },
@@ -23067,7 +23083,7 @@
           "hot": false,
           "hour": "2026-11-12 21:00",
           "id": "e270e6931da17df4f93f",
-          "image": "media/tnews365/35777_1.webp",
+          "image": "",
           "link": "https://t.me/tnews365/35777",
           "source": "tnews365",
           "source_name": "竹新社",
@@ -24896,8 +24912,24 @@
     },
     {
       "id": "FinanceNewsDaily",
-      "last_update": "2026-11-26T21:01:12+08:00",
+      "last_update": "2026-11-26T21:35:05+08:00",
       "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 21:00",
+          "id": "21d4ea6ace281f4a2fa4",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497186",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "（英国金融时报）",
+          "text": "（英国金融时报）",
+          "time": "2026-11-26T21:35:05+08:00",
+          "title": "Pablo Hernández de Cos将成为下一任欧洲央行行长",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-26",
@@ -61476,10 +61508,10 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 314,
+      "seven_day_count": 315,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 37,
+      "today_count": 38,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
@@ -69674,8 +69706,56 @@
     },
     {
       "id": "freechinese",
-      "last_update": "2026-11-26T21:01:07+08:00",
+      "last_update": "2026-11-26T21:17:01+08:00",
       "messages": [
+        {
+          "category": "其他",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 21:00",
+          "id": "f01cd9537f4b2f4044e1",
+          "image": "media/freechinese/113600_1.webp",
+          "link": "https://t.me/freechinese/113600",
+          "source": "freechinese",
+          "source_name": "FREE 中文",
+          "summary": "Lisa",
+          "text": "Lisa",
+          "time": "2026-11-26T21:17:01+08:00",
+          "title": "Lisa",
+          "type": "telegram"
+        },
+        {
+          "category": "其他",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 21:00",
+          "id": "95b5b855688e10bd8e2b",
+          "image": "media/freechinese/113599_1.webp",
+          "link": "https://t.me/freechinese/113599",
+          "source": "freechinese",
+          "source_name": "FREE 中文",
+          "summary": "外国人在中国不能用Google、YouTube、Instagram，所以他不希望中国成为大国",
+          "text": "外国人在中国不能用Google、YouTube、Instagram，所以他不希望中国成为大国",
+          "time": "2026-11-26T21:14:21+08:00",
+          "title": "外国人在中国不能用Google、YouTube、Instagram，所以他不希望中国成为大国",
+          "type": "telegram"
+        },
+        {
+          "category": "其他",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 21:00",
+          "id": "e65b00c2c5ed39e34fd0",
+          "image": "media/freechinese/113598_1.webp",
+          "link": "https://t.me/freechinese/113598",
+          "source": "freechinese",
+          "source_name": "FREE 中文",
+          "summary": "11月25日，越南芽庄市发生一起外籍男子从五星级酒店27楼坠楼身亡的事件",
+          "text": "11月25日，越南芽庄市发生一起外籍男子从五星级酒店27楼坠楼身亡的事件",
+          "time": "2026-11-26T21:11:12+08:00",
+          "title": "11月25日，越南芽庄市发生一起外籍男子从五星级酒店27楼坠楼身亡的事件",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-26",
@@ -83758,10 +83838,10 @@
         }
       ],
       "name": "FREE 中文",
-      "seven_day_count": 92,
+      "seven_day_count": 95,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 9,
+      "today_count": 12,
       "type": "telegram",
       "url": "https://t.me/freechinese"
     },
@@ -85844,8 +85924,40 @@
     },
     {
       "id": "pelosi3",
-      "last_update": "2026-11-26T17:15:25+08:00",
+      "last_update": "2026-11-26T22:00:47+08:00",
       "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 22:00",
+          "id": "7abd3d03f4612ab7e3c6",
+          "image": "",
+          "link": "https://t.me/pelosi3/30475",
+          "source": "pelosi3",
+          "source_name": "敏感经济信息分享",
+          "summary": "据一份截至11月26日的高盛欧洲工业板块路演纪要，市场基本情形已转向预期2027年将出现数据中心订单“空窗期”。纪要援引《金融时报》和彭博社报道称，英伟达已停止向东南亚发货芯片，芯片限制也导致数十亿美元数据中心交易停滞。受此影响，投资者情绪开始接受板块进一步走弱的可能。盘面上，电气设备板块持续承压，罗尔斯·罗伊斯也受AI交易冲击电力系统板块拖累。本周资金转向防御性板块和民用航空，同时关注受AI影响小、前期涨幅有限的高ROIC工业股（如GEBN、VOLVO、RAA、KBX）。欧洲汽车股大幅反弹，受欧盟配额确认、英国纳入及金属与内存成本缓解带动。不过纪要提示，欧洲汽车板块指数（SXAP）的季节性跑赢窗口已近尾声。国防板块新增资金则聚焦2027年“强劲执行”标的，对RHM、R3NK等落后股暂无兴趣。",
+          "text": "据一份截至11月26日的高盛欧洲工业板块路演纪要，市场基本情形已转向预期2027年将出现数据中心订单“空窗期”。纪要援引《金融时报》和彭博社报道称，英伟达已停止向东南亚发货芯片，芯片限制也导致数十亿美元数据中心交易停滞。受此影响，投资者情绪开始接受板块进一步走弱的可能。盘面上，电气设备板块持续承压，罗尔斯·罗伊斯也受AI交易冲击电力系统板块拖累。本周资金转向防御性板块和民用航空，同时关注受AI影响小、前期涨幅有限的高ROIC工业股（如GEBN、VOLVO、RAA、KBX）。欧洲汽车股大幅反弹，受欧盟配额确认、英国纳入及金属与内存成本缓解带动。不过纪要提示，欧洲汽车板块指数（SXAP）的季节性跑赢窗口已近尾声。国防板块新增资金则聚焦2027年“强劲执行”标的，对RHM、R3NK等落后股暂无兴趣。",
+          "time": "2026-11-26T22:00:47+08:00",
+          "title": "高盛交易台：2027年数据中心订单或现“空窗期”，资金转向非AI工业股",
+          "type": "telegram"
+        },
+        {
+          "category": "科技",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 21:00",
+          "id": "6d360b2bddc069952b69",
+          "image": "",
+          "link": "https://t.me/pelosi3/30474",
+          "source": "pelosi3",
+          "source_name": "敏感经济信息分享",
+          "summary": "黄仁勋回归英伟达（NVDA）首席执行官带来的股价提振“蜜月期仅持续约一天”，市场焦点已迅速转回增长隐患，该股未来1至2个季度可能持续处于承压区间。分析师认为短期存在5大风险：一是黄仁勋回归后对内外部的施压语气或趋于温和，短期可能令公司执行节奏略有放缓；二是美国近期加码先进AI芯片出口管制，预计将拖累英伟达2027日历年（CY27）营收2%至5%；三是美国选举产生9名在竞选中主张放缓数据中心建设的新任州长，带来地方政治阻力；四是数据中心扩建依赖的客户及外部投资者融资能否落地存在不确定性；五是黄仁勋将于12月1日及12月3日分别出席美国国会闭门听证会和参议院银行委员会公开听证会。尽管如此，分析师仍预计英伟达2027日历年营收增速将超过75%，高于华尔街72%的一致预期，2028日历年增速亦有望跑赢28%的市场预期，但高基数效应长期仍将压制其估值倍数。",
+          "text": "黄仁勋回归英伟达（NVDA）首席执行官带来的股价提振“蜜月期仅持续约一天”，市场焦点已迅速转回增长隐患，该股未来1至2个季度可能持续处于承压区间。分析师认为短期存在5大风险：一是黄仁勋回归后对内外部的施压语气或趋于温和，短期可能令公司执行节奏略有放缓；二是美国近期加码先进AI芯片出口管制，预计将拖累英伟达2027日历年（CY27）营收2%至5%；三是美国选举产生9名在竞选中主张放缓数据中心建设的新任州长，带来地方政治阻力；四是数据中心扩建依赖的客户及外部投资者融资能否落地存在不确定性；五是黄仁勋将于12月1日及12月3日分别出席美国国会闭门听证会和参议院银行委员会公开听证会。尽管如此，分析师仍预计英伟达2027日历年营收增速将超过75%，高于华尔街72%的一致预期，2028日历年增速亦有望跑赢28%的市场预期，但高基数效应长期仍将压制其估值倍数。",
+          "time": "2026-11-26T21:57:07+08:00",
+          "title": "黄仁勋回归蜜月期仅约一天，五大风险或令英伟达承压1至2季",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-26",
@@ -98024,10 +98136,10 @@
         }
       ],
       "name": "敏感经济信息分享",
-      "seven_day_count": 104,
+      "seven_day_count": 106,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 12,
+      "today_count": 14,
       "type": "telegram",
       "url": "https://t.me/pelosi3"
     },
@@ -107832,8 +107944,40 @@
     },
     {
       "id": "zaihuapd",
-      "last_update": "2026-11-26T20:19:41+08:00",
+      "last_update": "2026-11-26T21:58:57+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 21:00",
+          "id": "70544707bc57b6b11a76",
+          "image": "media/zaihuapd/45389_1.webp",
+          "link": "https://t.me/zaihuapd/45389",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "🌸 科技圈· 茶馆 · 投稿",
+          "text": "🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-26T21:58:57+08:00",
+          "title": "🤖DeepSeek 网页端和 App 出现本轮消耗额度查看入口",
+          "type": "telegram"
+        },
+        {
+          "category": "科技",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 21:00",
+          "id": "131eed3307801f472ce3",
+          "image": "",
+          "link": "https://t.me/zaihuapd/45388",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "X 已为 13 至 17 岁青少年账户推出首批六项家长监管功能，涵盖使用时长上限、新关注者审批、推荐内容限定、词汇过滤、私信控制，并可查看一对一聊天对象但不见内容。监管需家长发起、青少年同意，每名家长最多监管五名，青少年满 18 岁后自动解除。\n\n家长无法阅读私信，也看不到搜索和浏览记录，不能以青少年身份发帖或登录账户。青少年账户默认开启保护模式，限制敏感媒体并屏蔽定向广告。Engadget 指出，此次推出或为应对多州和多国监管要求，X 过去曾因仇恨言论、AI 生成儿童性虐待材料等问题受批评。\n\n9to5Mac | Engadget\n\n🌸 科技圈· 茶馆 · 投稿",
+          "text": "X 已为 13 至 17 岁青少年账户推出首批六项家长监管功能，涵盖使用时长上限、新关注者审批、推荐内容限定、词汇过滤、私信控制，并可查看一对一聊天对象但不见内容。监管需家长发起、青少年同意，每名家长最多监管五名，青少年满 18 岁后自动解除。\n\n家长无法阅读私信，也看不到搜索和浏览记录，不能以青少年身份发帖或登录账户。青少年账户默认开启保护模式，限制敏感媒体并屏蔽定向广告。Engadget 指出，此次推出或为应对多州和多国监管要求，X 过去曾因仇恨言论、AI 生成儿童性虐待材料等问题受批评。\n\n9to5Mac | Engadget\n\n🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-26T21:53:24+08:00",
+          "title": "X 为 13 至 17 岁青少年账户推出六项家长监管功能但需双方同意",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-26",
@@ -112288,7 +112432,7 @@
           "hot": false,
           "hour": "2026-11-12 21:00",
           "id": "f6a4f7dcd6c38e3ed286",
-          "image": "media/zaihuapd/45090_1.webp",
+          "image": "",
           "link": "https://t.me/zaihuapd/45090",
           "source": "zaihuapd",
           "source_name": "在花科技圈",
@@ -117485,7 +117629,7 @@
         {
           "category": "数码",
           "day": "2026-10-28",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-28 07:00",
           "id": "b99f71adca55ce19090e",
           "image": "",
@@ -123836,10 +123980,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 135,
+      "seven_day_count": 137,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 21,
+      "today_count": 23,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -124650,7 +124794,7 @@
           "hot": false,
           "hour": "2026-11-12 21:00",
           "id": "3871f5d3dca4384dac77",
-          "image": "media/NewlearnerChannel/16134_1.webp",
+          "image": "",
           "link": "https://t.me/NewlearnerChannel/16134",
           "source": "NewlearnerChannel",
           "source_name": "Newlearnerの自留地",
@@ -125527,7 +125671,7 @@
         {
           "category": "科技",
           "day": "2026-10-27",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-27 21:00",
           "id": "cb07ade6cfb8b4fc7855",
           "image": "",
@@ -128177,7 +128321,7 @@
         {
           "category": "国际",
           "day": "2026-11-26",
-          "hot": false,
+          "hot": true,
           "hour": "2026-11-26 11:00",
           "id": "a69128c33dcc380912e3",
           "image": "",
