@@ -278,12 +278,42 @@ class RevisionBuildTests(unittest.TestCase):
         p2 = json.loads((data / 'blogger/x' / dotey['key'] / 'page-2.json').read_text(encoding='utf-8'))
         self.assertEqual((len(p1['items']), p1['has_more'], len(p2['items']), p2['has_more']), (30, True, 15, False))
         allp = json.loads((data / 'blogger/x/all/page-2.json').read_text(encoding='utf-8'))
+        built = json.loads((data / 'meta.json').read_text(encoding='utf-8'))['built_at']
+        self.assertEqual({p1['built_at'], p2['built_at'], allp['built_at']}, {built}, '博主分页带本次发布的 built_at')
         self.assertEqual(allp['total'], 46)
         idx = json.loads((data / 'id-index.json').read_text(encoding='utf-8'))
         self.assertNotIn('world:1', idx)
         self.assertEqual(idx['dotey:0'], 'blogger/x/all/page-2.json', '不在预览里的帖子深链也能找到')
         meta = json.loads((data / 'meta.json').read_text(encoding='utf-8'))
         self.assertFalse(any('hotsearch' in c for c in meta['channels']))
+
+    def test_blogger_snapshot_identity_and_exact_feed_order(self):
+        # 同一时钟重建：条数、ID、顺序均不变，只修改一条正文，索引和分页也必须能区分两版。
+        rows = [self.post('x', 'dotey', '测试', 1, published_at='2026-11-15T10:00:00.000001+08:00'),
+                self.post('weibo', 'sample', '测试', 2, published_at='2026-11-15T02:00:00.000002Z'),
+                self.post('x', 'dotey', '测试', 3, published_at='2026-11-15T02:00:00.000001Z')]
+        out = self.dir / 'site'
+
+        def snapshot():
+            (self.inp / 'ingest.json').write_text(json.dumps(envelope(rows)), encoding='utf-8')
+            site.build(out, self.inp, now=NOW, hot_archive_dir=self.dir / 'hot', web_dir=None)
+            data = out / 'data'
+            read = lambda p: json.loads(p.read_text(encoding='utf-8'))
+            meta, index = (read(data / name) for name in ('meta.json', 'bloggers.json'))
+            expected = {'sample:2': 0, 'dotey:1': 1, 'dotey:3': 2}
+            self.assertEqual({r['id']: r.get('feed_order') for r in index['items']}, expected)
+            rev = meta.get('blogger_revision')
+            self.assertTrue(rev)
+            for doc in [index, *(read(p) for p in (data / 'blogger').rglob('page-*.json'))]:
+                self.assertEqual((doc.get('built_at'), doc.get('blogger_revision')), (meta['built_at'], rev))
+                self.assertTrue(all(r['feed_order'] == expected[r['id']] for r in doc['items']))
+            return rev
+
+        before = snapshot()
+        rows.reverse()
+        self.assertEqual(snapshot(), before, '相同内容和时间不因输入次序而换版')
+        rows[0]['body'] = '这一条在同一秒重新构建时有修订。'
+        self.assertNotEqual(snapshot(), before)
 
     def test_hotsearch_archive_written_per_day(self):
         (self.inp / 'ingest.json').write_text(json.dumps(envelope([news('tnews365', 'current', 1)])), encoding='utf-8')
