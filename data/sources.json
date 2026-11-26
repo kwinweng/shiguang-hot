@@ -5014,8 +5014,40 @@
     },
     {
       "id": "xhqcankao",
-      "last_update": "2026-11-26T09:03:29+08:00",
+      "last_update": "2026-11-26T10:04:49+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 10:00",
+          "id": "d2f904ebd1a760fbcdc7",
+          "image": "",
+          "link": "https://t.me/xhqcankao/33359",
+          "source": "xhqcankao",
+          "source_name": "风向旗参考快讯",
+          "summary": "知名密码管理工具1Password证实，其内部系统近日遭到黑客入侵，部分用户个人信息被窃取，但用户密码保险库及其他机密数据未被访问。1Password周三发布公告，公司于11月19日发现此次入侵事件。\n\n攻击者获得了一名员工的企业GitHub账户访问权限。1Password 使用 GitHub 共享和存储公司源代码。攻击者利用该员工的访问权限，将恶意代码推送至公司内部服务器，进而下载了部分用户数据。泄露的信息包括用户姓名、账户登录邮箱地址、账户创建时间以及最近登录时间。1Password强调存储用户密码的密码保险库在整个攻击过程中始终未向攻击者开放。公司本身也无法访问用户的账户密码及用于加密数据的秘密密钥。\n\n—— 凤凰网科技、TechCrunch",
+          "text": "知名密码管理工具1Password证实，其内部系统近日遭到黑客入侵，部分用户个人信息被窃取，但用户密码保险库及其他机密数据未被访问。1Password周三发布公告，公司于11月19日发现此次入侵事件。\n\n攻击者获得了一名员工的企业GitHub账户访问权限。1Password 使用 GitHub 共享和存储公司源代码。攻击者利用该员工的访问权限，将恶意代码推送至公司内部服务器，进而下载了部分用户数据。泄露的信息包括用户姓名、账户登录邮箱地址、账户创建时间以及最近登录时间。1Password强调存储用户密码的密码保险库在整个攻击过程中始终未向攻击者开放。公司本身也无法访问用户的账户密码及用于加密数据的秘密密钥。\n\n—— 凤凰网科技、TechCrunch",
+          "time": "2026-11-26T10:04:49+08:00",
+          "title": "知名密码管理工具1Password遭黑客入侵",
+          "type": "telegram"
+        },
+        {
+          "category": "数码",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 09:00",
+          "id": "4be114aceee067769182",
+          "image": "",
+          "link": "https://t.me/xhqcankao/33358",
+          "source": "xhqcankao",
+          "source_name": "风向旗参考快讯",
+          "summary": "，这是呼声最高的一项功能。用户可以在有想法时写下消息，然后在10分钟到14天后将其发送到一对一聊天或群聊。\n\n要定时发送消息，请长按发送按钮，然后选择你希望消息送达的日期和时间。此类消息送达收件人时，看起来与其他消息一样。用户可以查看日后所有已安排的消息，如果改变主意，可以提前将其删除。即使手机关机或电量耗尽，定时消息仍会在你选择的时间显示，并且会保持端到端加密状态。定时消息功能支持文字、照片和视频，并且会在接下来的数周内面向全球逐步推出。\n\n—— Whatsapp 博客",
+          "text": "，这是呼声最高的一项功能。用户可以在有想法时写下消息，然后在10分钟到14天后将其发送到一对一聊天或群聊。\n\n要定时发送消息，请长按发送按钮，然后选择你希望消息送达的日期和时间。此类消息送达收件人时，看起来与其他消息一样。用户可以查看日后所有已安排的消息，如果改变主意，可以提前将其删除。即使手机关机或电量耗尽，定时消息仍会在你选择的时间显示，并且会保持端到端加密状态。定时消息功能支持文字、照片和视频，并且会在接下来的数周内面向全球逐步推出。\n\n—— Whatsapp 博客",
+          "time": "2026-11-26T09:32:28+08:00",
+          "title": "WhatsApp宣布推出了定时消息功能",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-26",
@@ -15035,7 +15067,7 @@
         {
           "category": "科技",
           "day": "2026-10-27",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-27 15:00",
           "id": "f61afaa841534965d53c",
           "image": "",
@@ -15115,7 +15147,7 @@
         {
           "category": "数码",
           "day": "2026-10-27",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-27 10:00",
           "id": "10b3b0957db672df5cc2",
           "image": "",
@@ -15131,7 +15163,7 @@
         {
           "category": "科技",
           "day": "2026-10-27",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-27 10:00",
           "id": "382a524464092797428e",
           "image": "",
@@ -15147,7 +15179,7 @@
         {
           "category": "数码",
           "day": "2026-10-27",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-27 09:00",
           "id": "0d544c2bf0bb65476d62",
           "image": "",
@@ -22218,10 +22250,10 @@
         }
       ],
       "name": "风向旗参考快讯",
-      "seven_day_count": 120,
+      "seven_day_count": 122,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 5,
+      "today_count": 7,
       "type": "telegram",
       "url": "https://t.me/xhqcankao"
     },
@@ -24544,8 +24576,72 @@
     },
     {
       "id": "FinanceNewsDaily",
-      "last_update": "2026-11-26T08:55:09+08:00",
+      "last_update": "2026-11-26T09:30:03+08:00",
       "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 09:00",
+          "id": "5e06a7eb995b0750eb2f",
+          "image": "media/FinanceNewsDaily/497158_1.webp",
+          "link": "https://t.me/FinanceNewsDaily/497158",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "上证指数 开盘报3490.14点，涨0.39%。\n\n深证成指开盘报10184.94点，涨0.98%。\n\n创业板指开盘报2213.12点，涨1.35%。\n\n沪深300开盘报3918.02点，涨0.51%。\n\n科创50开盘报1201.06点，涨1.26%。\n\n中证500开盘报5948.93点，涨0.99%。\n\n中证1000开盘报5605.77点，涨1.16%。",
+          "text": "上证指数 开盘报3490.14点，涨0.39%。\n\n深证成指开盘报10184.94点，涨0.98%。\n\n创业板指开盘报2213.12点，涨1.35%。\n\n沪深300开盘报3918.02点，涨0.51%。\n\n科创50开盘报1201.06点，涨1.26%。\n\n中证500开盘报5948.93点，涨0.99%。\n\n中证1000开盘报5605.77点，涨1.16%。",
+          "time": "2026-11-26T09:30:03+08:00",
+          "title": "A股三大指数集体高开，创业板指涨1.35%",
+          "type": "telegram"
+        },
+        {
+          "category": "财经",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 09:00",
+          "id": "8ad3dc9120d6196bba9b",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497157",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "香港恒生指数开盘报22234.89点。理想汽车涨超8%，联想、智谱涨超5%，MINIMAX、蔚来、京东健康涨超4%。",
+          "text": "香港恒生指数开盘报22234.89点。理想汽车涨超8%，联想、智谱涨超5%，MINIMAX、蔚来、京东健康涨超4%。",
+          "time": "2026-11-26T09:25:03+08:00",
+          "title": "恒指高开1.22%，恒生科技 指数涨2.29%",
+          "type": "telegram"
+        },
+        {
+          "category": "财经",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 09:00",
+          "id": "a1d8a2d5d126b21c3f0c",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497156",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "欧股期货反弹，欧洲Stoxx 50指数期货涨2.1%，德国DAX指数期货涨1.8%，英国富时指数期货涨1.3%",
+          "text": "欧股期货反弹，欧洲Stoxx 50指数期货涨2.1%，德国DAX指数期货涨1.8%，英国富时指数期货涨1.3%",
+          "time": "2026-11-26T09:20:08+08:00",
+          "title": "欧股期货反弹，欧洲Stoxx 50指数期货涨2.1%，德国DAX指数期货涨1.8%，英国富时指数期货涨1.3%",
+          "type": "telegram"
+        },
+        {
+          "category": "财经",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 09:00",
+          "id": "328bb07caf415ae20691",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497155",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "台湾证交所加权股价指数上涨2.1%至38,991.65点",
+          "text": "台湾证交所加权股价指数上涨2.1%至38,991.65点",
+          "time": "2026-11-26T09:05:05+08:00",
+          "title": "台湾证交所加权股价指数上涨2.1%至38,991.65点",
+          "type": "telegram"
+        },
         {
           "category": "财经",
           "day": "2026-11-26",
@@ -46709,7 +46805,7 @@
         {
           "category": "财经",
           "day": "2026-10-27",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-27 09:00",
           "id": "a303e06b0a036f7604c4",
           "image": "",
@@ -60628,10 +60724,10 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 283,
+      "seven_day_count": 287,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 6,
+      "today_count": 10,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
@@ -62901,7 +62997,7 @@
           "hot": false,
           "hour": "2026-11-12 09:00",
           "id": "c0575c4fc43f2a31f187",
-          "image": "media/CE_Observe/44655_1.webp",
+          "image": "",
           "link": "https://t.me/CE_Observe/44655",
           "source": "CE_Observe",
           "source_name": "每日消费电子观察",
@@ -65666,7 +65762,7 @@
         {
           "category": "科技",
           "day": "2026-10-27",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-27 09:00",
           "id": "34d226bcef1b0685b0d5",
           "image": "",
@@ -68746,8 +68842,24 @@
     },
     {
       "id": "freechinese",
-      "last_update": "2026-11-26T07:28:31+08:00",
+      "last_update": "2026-11-26T09:35:07+08:00",
       "messages": [
+        {
+          "category": "其他",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 09:00",
+          "id": "26080459fa1ab3ea6a0d",
+          "image": "media/freechinese/113590_1.webp",
+          "link": "https://t.me/freechinese/113590",
+          "source": "freechinese",
+          "source_name": "FREE 中文",
+          "summary": "微信音乐上线",
+          "text": "微信音乐上线",
+          "time": "2026-11-26T09:35:07+08:00",
+          "title": "微信音乐上线",
+          "type": "telegram"
+        },
         {
           "category": "数码",
           "day": "2026-11-26",
@@ -82718,10 +82830,10 @@
         }
       ],
       "name": "FREE 中文",
-      "seven_day_count": 85,
+      "seven_day_count": 86,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 2,
+      "today_count": 3,
       "type": "telegram",
       "url": "https://t.me/freechinese"
     },
@@ -100918,7 +101030,7 @@
         {
           "category": "国际",
           "day": "2026-10-27",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-27 09:00",
           "id": "76180e08b5edbd341886",
           "image": "",
@@ -106552,8 +106664,40 @@
     },
     {
       "id": "zaihuapd",
-      "last_update": "2026-11-26T08:45:41+08:00",
+      "last_update": "2026-11-26T09:44:01+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 09:00",
+          "id": "275b49d9a8f74d1d3058",
+          "image": "",
+          "link": "https://t.me/zaihuapd/45370",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "萨姆·奥尔特曼在 X 上发文称，OpenAI 正在与少量客户测试私有推理（Private Inference），这是其 OpenAI Private Intelligence 系列的最新产品。发文称，更强的隐私保护将让前沿 AI 适用于更多工作场景，企业数据隐私对健康的产业生态也很重要。\n\n同一条帖子还称，在零数据保留（ZDR）方案中启用私有安全处理（Private Safety Processing）后，安全审查可以自动完成，且 OpenAI 人员无法接触底层内容。\n\nSam Altman(@sama)\n\n🌸 科技圈· 茶馆 · 投稿",
+          "text": "萨姆·奥尔特曼在 X 上发文称，OpenAI 正在与少量客户测试私有推理（Private Inference），这是其 OpenAI Private Intelligence 系列的最新产品。发文称，更强的隐私保护将让前沿 AI 适用于更多工作场景，企业数据隐私对健康的产业生态也很重要。\n\n同一条帖子还称，在零数据保留（ZDR）方案中启用私有安全处理（Private Safety Processing）后，安全审查可以自动完成，且 OpenAI 人员无法接触底层内容。\n\nSam Altman(@sama)\n\n🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-26T09:44:01+08:00",
+          "title": "OpenAI 测试私有推理服务 面向少量客户",
+          "type": "telegram"
+        },
+        {
+          "category": "科技",
+          "day": "2026-11-26",
+          "hot": true,
+          "hour": "2026-11-26 09:00",
+          "id": "137b8f9cfabfdf83c0b1",
+          "image": "",
+          "link": "https://t.me/zaihuapd/45369",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "1Password 确认发生安全事件，攻击者访问内部系统并窃取部分客户账户信息，涉及姓名、邮箱地址、账户标识及创建和最近登录时间等，客户保险库及其中内容未受影响。\n\n公司于 11 月 19 日开始调查员工企业 GitHub 账户被入侵的迹象，攻击者借该账户访问源代码并向后台服务推送恶意代码，导致信息被下载。公司未披露受影响用户数量，已停用涉事账户、轮换或撤销可能暴露的内部凭证，并加强邀请和恢复电邮验证码；用户无需更改账户，但应警惕钓鱼。\n\n9to5Mac ｜ 1Password\n\n🌸 科技圈· 茶馆 · 投稿",
+          "text": "1Password 确认发生安全事件，攻击者访问内部系统并窃取部分客户账户信息，涉及姓名、邮箱地址、账户标识及创建和最近登录时间等，客户保险库及其中内容未受影响。\n\n公司于 11 月 19 日开始调查员工企业 GitHub 账户被入侵的迹象，攻击者借该账户访问源代码并向后台服务推送恶意代码，导致信息被下载。公司未披露受影响用户数量，已停用涉事账户、轮换或撤销可能暴露的内部凭证，并加强邀请和恢复电邮验证码；用户无需更改账户，但应警惕钓鱼。\n\n9to5Mac ｜ 1Password\n\n🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-26T09:15:21+08:00",
+          "title": "1Password 确认安全事件，部分客户账户信息被窃",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-26",
@@ -110912,7 +111056,7 @@
           "hot": false,
           "hour": "2026-11-12 09:00",
           "id": "66f156146f51b5fdd2eb",
-          "image": "media/zaihuapd/45077_1.webp",
+          "image": "",
           "link": "https://t.me/zaihuapd/45077",
           "source": "zaihuapd",
           "source_name": "在花科技圈",
@@ -116205,7 +116349,7 @@
         {
           "category": "科技",
           "day": "2026-10-27",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-27 10:00",
           "id": "b429592aa986503e2e6d",
           "image": "",
@@ -122252,10 +122396,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 116,
+      "seven_day_count": 118,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 2,
+      "today_count": 4,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -126268,8 +126412,24 @@
     },
     {
       "id": "OneMillion_AI",
-      "last_update": "2026-11-26T08:48:31+08:00",
+      "last_update": "2026-11-26T09:06:44+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 09:00",
+          "id": "4d2e8a06b22944fbad74",
+          "image": "",
+          "link": "https://t.me/OneMillion_AI/6156",
+          "source": "OneMillion_AI",
+          "source_name": "动察Beating AI News",
+          "summary": "针对 Axios 一篇点名 Anthropic 的报道，Anthropic 首席执行官 Dario Amodei 罕见发文回应。他明确否认了「应向 AI 交出人类自由意志」的说法，直言这种暗示「十分荒谬」。Dario 强调，自己多年来一直在文章中倡导 AI 必须由正当的民主程序来治理，「数千年来，独裁的拥护者都宣称集权能带来更好、更快的决策，但即便这是真的，我们也绝不应为了效率或安全，牺牲合法性与自决权。」他将这一逻辑原封不动地应用于 AI，直言把治理权交给 AI 是个「糟糕的主意」，暗示人类应始终保留做出政治与治理决策的权力。\n\nDario 在文中澄清了外界常犯的概念混淆：将「向 AI 交出全球治理权」与「AI 在具体任务上实现自动化」混为一谈。他表示，对于 AI 在驾车、研发抗癌药物或端到端编写软件等特定任务上的自动化，他的态度是喜忧参半的。虽然这能带来巨大的经济价值和医疗突破，但在某些领域可能需要设限。例如，放任 AI 进行递归自我改进（RSI）可能导致其失控；过度端到端的自动化可能引发严重就业冲击，需要放慢脚步给人类适应时间；此外，人类有时就是希望亲力亲为以保持深度参与。他强调",
+          "text": "针对 Axios 一篇点名 Anthropic 的报道，Anthropic 首席执行官 Dario Amodei 罕见发文回应。他明确否认了「应向 AI 交出人类自由意志」的说法，直言这种暗示「十分荒谬」。Dario 强调，自己多年来一直在文章中倡导 AI 必须由正当的民主程序来治理，「数千年来，独裁的拥护者都宣称集权能带来更好、更快的决策，但即便这是真的，我们也绝不应为了效率或安全，牺牲合法性与自决权。」他将这一逻辑原封不动地应用于 AI，直言把治理权交给 AI 是个「糟糕的主意」，暗示人类应始终保留做出政治与治理决策的权力。\n\nDario 在文中澄清了外界常犯的概念混淆：将「向 AI 交出全球治理权」与「AI 在具体任务上实现自动化」混为一谈。他表示，对于 AI 在驾车、研发抗癌药物或端到端编写软件等特定任务上的自动化，他的态度是喜忧参半的。虽然这能带来巨大的经济价值和医疗突破，但在某些领域可能需要设限。例如，放任 AI 进行递归自我改进（RSI）可能导致其失控；过度端到端的自动化可能引发严重就业冲击，需要放慢脚步给人类适应时间；此外，人类有时就是希望亲力亲为以保持深度参与。他强调，这些复杂问题没有简单的答案，也不应由单一决策者定夺。\n\n在回击同行竞争时，Dario 指出，其他 AI 公司高管在「是否应自动化特定任务」上与他并没有本质分歧，大家都在发布自动化能力越来越强的产品。他批评目前的行业现状是：部分 CEO 只是在利用「人类控制」或「AI 只是工具」等口号进行基于情绪的商业和政治定位，产品上却没有任何实质性改变。他反击称，Anthropic 才是最积极承认并应对这些风险的，例如曾不惜冒着被制裁的风险，拒绝将其模型用于自主武器。值得注意的是，此次发声正值 Anthropic 股价近日跌破 IPO 发行价之际，在商业化与伦理争议的双重施压下，这位 CE…\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "time": "2026-11-26T09:06:44+08:00",
+          "title": "Anthropic创始人回应「应向AI交出人类自由意志」：AI绝不能凌驾于民主治理之上",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-26",
@@ -130468,7 +130628,7 @@
           "hot": false,
           "hour": "2026-11-12 09:00",
           "id": "f4b0190de875f98070b4",
-          "image": "media/OneMillion_AI/5871_1.webp",
+          "image": "",
           "link": "https://t.me/OneMillion_AI/5871",
           "source": "OneMillion_AI",
           "source_name": "动察Beating AI News",
@@ -135185,7 +135345,7 @@
         {
           "category": "科技",
           "day": "2026-10-27",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-27 19:00",
           "id": "91f1424c18bd17c51e88",
           "image": "",
@@ -135457,7 +135617,7 @@
         {
           "category": "科技",
           "day": "2026-10-27",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-27 11:00",
           "id": "a85d642f6b90b5ecb7d4",
           "image": "",
@@ -136608,10 +136768,10 @@
         }
       ],
       "name": "动察Beating AI News",
-      "seven_day_count": 94,
+      "seven_day_count": 95,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 1,
+      "today_count": 2,
       "type": "telegram",
       "url": "https://t.me/OneMillion_AI"
     },
@@ -138560,8 +138720,24 @@
     },
     {
       "id": "AwesomeChatGPT",
-      "last_update": "2026-11-24T09:34:36+08:00",
+      "last_update": "2026-11-26T09:32:56+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 09:00",
+          "id": "51ac3aeaf90fc3a8d86e",
+          "image": "media/AwesomeChatGPT/3276_1.webp",
+          "link": "https://t.me/AwesomeChatGPT/3276",
+          "source": "AwesomeChatGPT",
+          "source_name": "ChatGPT 精选",
+          "summary": "模型这次答对了，题目稍微改一改，还能每次都答对吗？\n\n这是 Google DeepMind 11 月 24 日发布的 Humanity’s First Exam 里的一道样题。这套评测用 544 道文字和图像题覆盖 20 项基础能力，专门看大模型在简单任务上答得稳不稳。官方也在 Kaggle 征集模型容易答错的日常问题，截止到 12 月 15 日。",
+          "text": "模型这次答对了，题目稍微改一改，还能每次都答对吗？\n\n这是 Google DeepMind 11 月 24 日发布的 Humanity’s First Exam 里的一道样题。这套评测用 544 道文字和图像题覆盖 20 项基础能力，专门看大模型在简单任务上答得稳不稳。官方也在 Kaggle 征集模型容易答错的日常问题，截止到 12 月 15 日。",
+          "time": "2026-11-26T09:32:56+08:00",
+          "title": "看一张霓虹灯招牌的照片，按顺序说出每个单词第三个字母的颜色",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-24",
@@ -138584,7 +138760,7 @@
           "hot": false,
           "hour": "2026-11-12 09:00",
           "id": "fd86dc05df2eef65a19f",
-          "image": "media/AwesomeChatGPT/3274_1.webp",
+          "image": "",
           "link": "https://t.me/AwesomeChatGPT/3274",
           "source": "AwesomeChatGPT",
           "source_name": "ChatGPT 精选",
@@ -138676,10 +138852,10 @@
         }
       ],
       "name": "ChatGPT 精选",
-      "seven_day_count": 1,
+      "seven_day_count": 2,
       "stale_hours": 24.0,
-      "status": "stale",
-      "today_count": 0,
+      "status": "ok",
+      "today_count": 1,
       "type": "telegram",
       "url": "https://t.me/AwesomeChatGPT"
     }
