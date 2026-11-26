@@ -15,7 +15,6 @@
   --destructive:#F0403C;--warning:#e1a05d;
   --bar:rgba(28,28,30,.72);--overlay:#000000f2;--dim:rgba(0,0,0,.55);--press:#ffffff14;--scrim:rgba(28,28,30,.72);
   --pill:#2a2a2d;--glass-line:rgba(255,255,255,.08);--sheet:#1c1c1e;--readc:#55555a;
-  --band1:#22343a;--band2:#0e171a;--bandfg:#fff;--bandsub:rgba(255,255,255,.72);--bandbtn:rgba(255,255,255,.16);--bandbtnfg:#fff;--dpill:#3a5059;
   --shadow-float:0 6px 24px rgba(0,0,0,.35);
   /* 圆角：基准 --radius = 12px，其余按 shadcn 公式派生 */
   --radius:12px;--radius-xs:4px;--radius-sm:calc(var(--radius) - 4px);--radius-md:calc(var(--radius) - 2px);--radius-lg:var(--radius);--radius-xl:calc(var(--radius) + 4px);--radius-full:999px;
@@ -47,7 +46,6 @@
   --destructive:#D71A1B;--warning:#b56a1a;
   --bar:rgba(255,255,255,.72);--overlay:#fffffff2;--dim:rgba(0,0,0,.32);--press:rgba(0,0,0,.06);--scrim:rgba(255,255,255,.72);
   --pill:#efeff2;--glass-line:rgba(0,0,0,.06);--sheet:#fff;--readc:#bdbdc2;
-  --band1:#f5f2ee;--band2:#ece8e2;--bandfg:#111;--bandsub:rgba(0,0,0,.55);--bandbtn:#1c1c1e;--bandbtnfg:#fff;--dpill:#1c1c1e;
   --shadow-float:0 6px 24px rgba(0,0,0,.08)
 }}
 @media (prefers-reduced-motion:reduce){:root{--duration-fast:0ms;--duration-base:0ms;--duration-slow:0ms}
@@ -137,13 +135,6 @@ h2.ch{margin:0 16px 4px;font-size:var(--text-display);letter-spacing:-.04em;line
 .toast{position:absolute;left:50%;bottom:calc(var(--tab) + var(--safe-bot) + 12px);transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);font-size:var(--text-sm);padding:8px 12px;border-radius:var(--radius-full);opacity:0;pointer-events:none;transition:opacity var(--duration-base) var(--ease-out),transform var(--duration-base) var(--ease-out);z-index:12;white-space:nowrap;max-width:90%}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
-.people{display:flex;gap:10px;overflow-x:auto;padding:2px 0 14px;scrollbar-width:none}
-.people::-webkit-scrollbar{display:none}
-.ppl{flex:0 0 auto;width:60px;border:0;background:none;color:var(--ink);cursor:pointer;text-align:center;padding:0}
-.ppl img,.ppl .ph-av{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid transparent;background:var(--inset);display:inline-block}
-.ppl.on img,.ppl.on .ph-av{border-color:var(--gold)}
-.ppl span{display:block;font-size:var(--text-2xs);color:var(--mute);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:60px}
-.ppl.on span{color:var(--gold)}
 .tweet{background:var(--panel);border-radius:var(--radius-xl);padding:12px 12px 8px;cursor:pointer}
 .tweet .hd{display:flex;gap:10px;align-items:center}
 .tweet .hd img,.av{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--inset);flex-shrink:0}
@@ -279,19 +270,9 @@ html,body{margin:0;height:100%;height:100dvh;background:var(--bg);color:var(--in
    之后再加 .cv（content-visibility:auto），离开视口的批就不画，占位高度用记下的真实值，往回滚不跳 */
 .chunk{display:flex;flex-direction:column;contain-intrinsic-size:auto 2400px}
 .chunk.cv{content-visibility:auto}
-.bl-list .chunk{gap:8px}
 .next-div{display:flex;align-items:center;gap:10px;margin:14px 0 4px;color:var(--gold);font-size:var(--text-sm);letter-spacing:.06em}
 .next-div::before,.next-div::after{content:"";flex:1;height:1px;background:var(--gold-line)}
 .end-all{padding:22px 8px 18px;color:var(--mute-2)}
-.bl-seg[hidden],.bl-group[hidden]{display:none}
-.bl-group + .bl-group{margin-top:4px}
-.bl-seg + .bl-seg{margin-top:4px}
-.bl-plat-hd{display:flex;align-items:center;gap:8px;margin:6px 0 10px}
-.bl-plat-hd .plat-ico{width:22px;height:22px;border-radius:var(--radius-xs)}
-.bl-plat-hd h3{margin:0;font-size:var(--text-lg);font-weight:650;letter-spacing:-.02em}
-.bl-plat-hd .meta,.bl-acc-hd .meta{font-size:var(--text-xs);color:var(--mute)}
-.bl-acc-hd{margin:4px 0 8px;font-size:var(--text-md);font-weight:600;color:var(--gold)}
-.bl-foot .empty-plat{margin-top:4px}
 .load-err{text-align:center;color:var(--warn);font-size:var(--text-sm);padding:12px 8px}
 .load-err button{border:0;background:none;color:var(--gold);cursor:pointer;font-size:var(--text-sm)}
 .mt-badge{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:var(--radius-full);border:1px solid var(--gold-line);color:var(--gold);font-size:var(--text-2xs);letter-spacing:.04em}
@@ -562,66 +543,39 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang S
 .feed-foot{padding:0}
 .feed-foot .load-err,.feed-foot .load-hint{padding-left:16px;padding-right:16px}
 
-/* 博主：顶上一块色带（暗色青灰、亮色暖灰黑字），色带在时顶栏藏起来 */
-.app[data-tab="blogger"] .top{position:absolute;left:0;right:0;top:0;transform:translateY(-110%);box-shadow:0 .5px 0 var(--line)}
-.app[data-tab="blogger"].top-show .top{transform:none}
-#view-blogger .sub{padding-top:0}
-#view-blogger .sub > *{padding-left:0;padding-right:0}
-.band{position:relative;overflow:hidden;padding:calc(var(--safe-top) + 70px) 20px 52px!important;color:var(--bandfg);background:linear-gradient(160deg,var(--band1),var(--band2))}
-.band-in{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
-.band h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.02em}
-.band p{margin:6px 0 0;font-size:12.5px;color:var(--bandsub)}
-.band-act{display:flex;gap:8px;flex:none}
-.bpill{height:38px;padding:0 14px;border:0;border-radius:19px;background:var(--bandbtn);color:var(--bandbtnfg);font-size:13.5px;font-weight:700;cursor:pointer}
-.bround{width:38px;height:38px;border:0;border-radius:50%;background:var(--bandbtn);color:var(--bandbtnfg);display:flex;align-items:center;justify-content:center;cursor:pointer}
-.bround svg{width:19px;height:19px}
-.bsheet{position:relative;margin-top:-26px;background:var(--bg);border-radius:24px 24px 0 0;padding-top:16px!important;min-height:60%}
-.avrow{display:flex;align-items:center;gap:4px;padding:0 0 4px 16px}
-.avs{flex:1;display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 6px}
-.avs::-webkit-scrollbar{display:none}
-.avb{flex:none;display:flex;flex-direction:column;align-items:center;gap:5px;width:58px;border:0;background:none;padding:0;cursor:pointer;color:var(--ink)}
-.avc{position:relative;width:52px;height:52px;border-radius:50%;background:var(--muted);display:flex;align-items:center;justify-content:center;transition:background var(--duration-base) var(--ease-out)}
-.avc .plat-ico{width:28px;height:28px;object-fit:contain;border-radius:6px}
-.avc .unread{position:absolute;top:-2px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:var(--radius-full);background:var(--primary);color:#fff;font-size:10px;line-height:16px;text-align:center;font-weight:700;box-shadow:0 0 0 2px var(--bg)}
-.avb b{font-size:11px;font-weight:600;color:var(--mute);white-space:nowrap;max-width:58px;overflow:hidden;text-overflow:ellipsis}
-/* 选中：名字变红、底色加深；图标本身不加红圈（阿欢：X 的头像不要红边） */
-.avb.on .avc{background:var(--pill)}
-.avb.on b{color:var(--primary)}
-.avall{flex:none;display:flex;align-items:center;gap:2px;padding:0 16px 18px 8px;border:0;background:none;font-size:14px;font-weight:700;color:var(--mute);cursor:pointer}
-.avall span{width:20px;height:20px;border-radius:50%;background:var(--muted);display:inline-flex;align-items:center;justify-content:center}
-.avall svg{width:13px;height:13px;stroke-width:2.6}
-#bloggerList{gap:0;display:block}
-.bl-group + .bl-group{margin-top:0}
-.bl-plat-hd{margin:0;padding:14px 16px 2px;gap:8px}
-.bl-plat-hd .plat-ico{width:22px;height:22px;border-radius:6px;object-fit:contain}
-.bl-plat-hd h3{font-size:20px;font-weight:800}
-.bl-plat-hd .meta{margin:0 0 0 auto;font-size:12.5px}
-.people{padding:8px 16px 6px;gap:12px}
-.ppl{width:52px}
-.ppl img,.ppl .ph-av{width:40px;height:40px;border:0;box-shadow:0 0 0 2px transparent;transition:box-shadow var(--duration-base) var(--ease-out)}
-.ppl.on img,.ppl.on .ph-av{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--ink-soft)}
-.ppl span{width:52px;font-size:10.5px}
-.ppl.on span{color:var(--primary);font-weight:600}
-.ppl .ph-av.letter{color:var(--ink-soft);font-weight:700}
-.bl-acc-hd{margin:0;padding:14px 16px 2px;color:var(--ink);font-size:17px;font-weight:800}
-.bl-list .chunk{gap:0}
-.dayh{display:flex;align-items:center;gap:10px;padding:16px 16px 6px}
-.dayh b{font-size:17px;font-weight:800;letter-spacing:-.01em}
-.dpill{font-size:11.5px;font-weight:700;color:#fff;background:var(--dpill);border-radius:10px;padding:2px 8px}
+/* 博主信息流 */
+.app[data-tab="blogger"] .chname{font-size:22px}
+.app[data-tab="blogger"] .modes{display:none}
+#view-blogger .sub > #bloggerList{padding:0}
+#platChips{position:sticky;top:0;z-index:4;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;background:var(--bg);padding:6px 16px 10px;border-bottom:1px solid var(--line)}
+.bl-chip{flex:none;display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:0 11px;border:0;border-radius:var(--radius-full);background:var(--muted);color:var(--ink-soft);font-size:13px;font-weight:600;cursor:pointer}
+.bl-chip .plat-ico{width:16px;height:16px;border-radius:4px;object-fit:contain}
+.bl-chip.on{background:var(--ink);color:var(--bg)}
+#blProfile:not([hidden]){display:flex;align-items:center;gap:10px;padding-top:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+#blProfile h2{margin:0;font-size:18px;overflow-wrap:anywhere}
+#blProfile .icon-btn{flex:none}
 .bl-foot .empty-plat{margin:8px 16px 0;background:var(--muted);border-radius:14px}
 .bl-foot .load-err,.bl-foot .load-hint{padding-left:16px;padding-right:16px}
-/* 博主一行：标题 + 最多 3 行摘要，或没标题的正文 4 行；图在右 */
-.tweet.brow{display:flex;gap:14px;background:none;border-radius:0;padding:12px 16px;cursor:pointer;transition:background var(--duration-fast) var(--ease-out),transform var(--duration-base) var(--ease-out)}
+.tweet.brow{display:flex;gap:10px;background:none;border-radius:0;border-bottom:1px solid var(--line);padding:10px 16px 12px;cursor:pointer}
 .tweet.brow::after{display:none}
 .tweet + .tweet{margin-top:0}
-.brow .b-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.bl-face,.bl-name,.bl-more{padding:0;border:0;background:none;color:inherit;cursor:pointer}
+.bl-face{align-self:flex-start;flex:none;border-radius:50%}
+.bl-avatar{display:block;width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--muted);flex:none}
+.brow .b-main{flex:1;min-width:0}
+.bl-who{display:flex;align-items:center;gap:5px;color:var(--mute);font-size:12px;line-height:1.35}
+.bl-who .bl-name{max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-size:14px;font-weight:700;text-align:left}
+.bl-platform,.bl-who time{white-space:nowrap;flex:none}
+.bl-more{display:grid;place-items:center;flex:none;width:28px;height:28px;margin-left:auto;border-radius:50%}
+.bl-more svg{width:17px;height:17px}
+.bl-content{display:flex;gap:10px}
+.bl-content > div:first-child{flex:1;min-width:0}
+.bl-content a{color:inherit;text-decoration:none}
+.brow .metrics{margin-top:6px}
+.brow .quote .t-body{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .brow .b-title{margin:0;font-size:16px;line-height:1.5;font-weight:700;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .brow .b-sum{margin:4px 0 0;font-size:14px;line-height:1.6;color:var(--ink-soft);opacity:.8;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .brow .b-text{margin:0;font-size:15.5px;line-height:1.6;font-weight:500;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
-.brow .f-meta{padding-top:6px}
-.brow .mav{width:16px;height:16px;border-radius:50%;object-fit:cover;flex:none;margin-right:6px;background:var(--muted)}
-.brow .mav + .src::before{content:none}
-.brow .blue{margin-left:4px}
 .brow .thumb{flex:none;position:relative;width:96px;height:68px;border-radius:10px;overflow:hidden;background:var(--muted);align-self:flex-start;margin-top:3px}
 .brow .thumb .cell{position:absolute;inset:0;min-height:0;aspect-ratio:auto}
 .brow .thumb img,.brow .thumb video{width:100%;height:100%;object-fit:cover;display:block}
@@ -630,19 +584,13 @@ html,body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang S
 .brow .thumb .vid-mark i svg{width:14px;height:14px}
 .brow .thumb .vid-dur,.brow .thumb .cnt{position:absolute;right:5px;bottom:5px;font-size:10.5px;font-style:normal;color:#fff;background:rgba(0,0,0,.5);border-radius:6px;padding:0 5px;line-height:16px}
 .brow .thumb .cnt{left:5px;right:auto}
-/* 「全部」半屏 */
-.allb{padding:0 16px 10px}
-.allp{border-bottom:.5px solid var(--line);padding:6px 0 12px}
-.allp-h{display:flex;align-items:center;gap:10px;width:100%;height:44px;border:0;background:none;cursor:pointer;color:var(--ink);padding:0}
-.allp-h .plat-ico{width:22px;height:22px;object-fit:contain;border-radius:6px}
-.allp-h b{font-size:16px;flex:1;text-align:left}
-.allp-h span{display:flex;align-items:center;gap:2px;color:var(--mute);font-size:13px}
-.allp-h svg{width:15px;height:15px}
-.accs{display:flex;flex-wrap:wrap;gap:6px}
-.accs button{font-size:12.5px;background:var(--muted);border:0;border-radius:12px;padding:5px 10px;color:var(--ink-soft);cursor:pointer}
-.accs button.zero{opacity:.5}
-.accs i{font-style:normal;color:var(--primary);font-weight:700}
-
+.brow .media-grid{max-width:300px;margin-top:8px;border-radius:12px}
+.brow .media-grid.n1,.brow .media-grid.n2{max-width:100%}
+.brow .media-grid.n1 .cell{aspect-ratio:4/3}
+.brow .media-grid.n3{grid-template-columns:repeat(3,1fr)}
+.brow .media-grid.n3 .cell:first-child{grid-column:auto;aspect-ratio:1}
+.brow .media-grid.n4,.brow .media-grid.n5{max-width:240px}
+.brow .media-grid .cell{min-height:0}
 /* 热搜：吸顶的日期 + 百度/知乎/B站 三栏 */
 #hotSub > *{padding-left:0;padding-right:0}
 #view-hot .hot{background:none;border-radius:0;padding:0;margin:0}

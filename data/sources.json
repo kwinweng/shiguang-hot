@@ -15291,7 +15291,7 @@
         {
           "category": "科技",
           "day": "2026-10-27",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-27 22:00",
           "id": "46c55f985c611003d052",
           "image": "",
@@ -23051,7 +23051,7 @@
           "hot": false,
           "hour": "2026-11-12 22:00",
           "id": "0fc540b002b3549dd056",
-          "image": "media/tnews365/35779_1.webp",
+          "image": "",
           "link": "https://t.me/tnews365/35779",
           "source": "tnews365",
           "source_name": "竹新社",
@@ -23067,7 +23067,7 @@
           "hot": false,
           "hour": "2026-11-12 22:00",
           "id": "249e7373f484a205da7e",
-          "image": "media/tnews365/35778_1.webp",
+          "image": "",
           "link": "https://t.me/tnews365/35778",
           "source": "tnews365",
           "source_name": "竹新社",
@@ -24912,8 +24912,24 @@
     },
     {
       "id": "FinanceNewsDaily",
-      "last_update": "2026-11-26T21:35:05+08:00",
+      "last_update": "2026-11-26T22:30:06+08:00",
       "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 22:00",
+          "id": "1557c423b9e88a0ece7e",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497187",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "从工商银行等商业银行了解到，在中国人民银行近日会同金融监管总局、中国证监会等部门明确将股票回购增持再贷款政策由阶段性安排转为长期制度性安排，并进一步下调再贷款利率之后，工商银行、农业银行、中国银行、建设银行等多家银行迅速落实有关部署，加大股票回购增持贷款投放力度。目前，四大商业银行已签订上市公司股票回购增持贷款合同超6000亿元。（央视）",
+          "text": "从工商银行等商业银行了解到，在中国人民银行近日会同金融监管总局、中国证监会等部门明确将股票回购增持再贷款政策由阶段性安排转为长期制度性安排，并进一步下调再贷款利率之后，工商银行、农业银行、中国银行、建设银行等多家银行迅速落实有关部署，加大股票回购增持贷款投放力度。目前，四大商业银行已签订上市公司股票回购增持贷款合同超6000亿元。（央视）",
+          "time": "2026-11-26T22:30:06+08:00",
+          "title": "四大商业银行已与上市公司签订股票回购增持贷款合同超6000亿元",
+          "type": "telegram"
+        },
         {
           "category": "财经",
           "day": "2026-11-26",
@@ -61508,10 +61524,10 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 315,
+      "seven_day_count": 316,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 38,
+      "today_count": 39,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
@@ -72994,7 +73010,7 @@
           "hot": false,
           "hour": "2026-11-12 22:00",
           "id": "575486ceda5eb2b84aef",
-          "image": "media/freechinese/113318_1.webp",
+          "image": "",
           "link": "https://t.me/freechinese/113318",
           "source": "freechinese",
           "source_name": "FREE 中文",
@@ -83847,8 +83863,24 @@
     },
     {
       "id": "TimeHorizonX",
-      "last_update": "2026-11-26T11:37:24+08:00",
+      "last_update": "2026-11-26T22:43:42+08:00",
       "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 22:00",
+          "id": "0651c4035267c8371433",
+          "image": "media/TimeHorizonX/2013_1.webp",
+          "link": "https://t.me/TimeHorizonX/2013",
+          "source": "TimeHorizonX",
+          "source_name": "Time经济观察",
+          "summary": "全球半导体年出口额首次超过了油气出口额，亚洲芯片顺差不再买美债而是买美股，从“石油→美债”变成“芯片→美股”，新的芯片美元循环正在形成并强化",
+          "text": "全球半导体年出口额首次超过了油气出口额，亚洲芯片顺差不再买美债而是买美股，从“石油→美债”变成“芯片→美股”，新的芯片美元循环正在形成并强化",
+          "time": "2026-11-26T22:43:42+08:00",
+          "title": "全球半导体年出口额首次超过了油气出口额，亚洲芯片顺差不再买美债而是买美股，从“石油→美债”变成“芯片→美股”，新的芯片美元循环正在形成并强化",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-26",
@@ -85915,10 +85947,10 @@
         }
       ],
       "name": "Time经济观察",
-      "seven_day_count": 20,
+      "seven_day_count": 21,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 4,
+      "today_count": 5,
       "type": "telegram",
       "url": "https://t.me/TimeHorizonX"
     },
@@ -107944,8 +107976,40 @@
     },
     {
       "id": "zaihuapd",
-      "last_update": "2026-11-26T21:58:57+08:00",
+      "last_update": "2026-11-26T22:56:10+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 22:00",
+          "id": "08efb5b2ff1974bedb07",
+          "image": "",
+          "link": "https://t.me/zaihuapd/45391",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "阿斯麦 CEO：全面断供中国，只会逼中国自己造 阿斯麦 CEO 富凯在 Semafor 的《Future Proof》节目中表示，出口管制应保护最先进的技术，但不能把中国完全排除在外，否则会促使中国在自研上“加倍甚至三倍投入”。他说，阿斯麦卖给中国的设备落后最先进制程十多年，维持这道代差，反而让中国继续依赖西方设备。 富凯称，近 30 年来阿斯麦在中国光刻机市场的份额接近 100%，中国因此接受了对其技术的依赖。美国正在推动 MATCH 法案，要把管制范围从 EUV 扩大到浸没式 DUV 和维护服务，荷兰政府和阿斯麦均表示反对。…",
+          "text": "阿斯麦 CEO：全面断供中国，只会逼中国自己造 阿斯麦 CEO 富凯在 Semafor 的《Future Proof》节目中表示，出口管制应保护最先进的技术，但不能把中国完全排除在外，否则会促使中国在自研上“加倍甚至三倍投入”。他说，阿斯麦卖给中国的设备落后最先进制程十多年，维持这道代差，反而让中国继续依赖西方设备。 富凯称，近 30 年来阿斯麦在中国光刻机市场的份额接近 100%，中国因此接受了对其技术的依赖。美国正在推动 MATCH 法案，要把管制范围从 EUV 扩大到浸没式 DUV 和维护服务，荷兰政府和阿斯麦均表示反对。…",
+          "time": "2026-11-26T22:56:10+08:00",
+          "title": "阿斯麦 CEO：全面断供中国，只会逼中国自己造 阿斯麦 CEO 富凯在 Semafor 的《Future Proof》节目中表示，出口管制应保护最先进的技术，但不能把中国完…",
+          "type": "telegram"
+        },
+        {
+          "category": "国际",
+          "day": "2026-11-26",
+          "hot": false,
+          "hour": "2026-11-26 22:00",
+          "id": "420e120e9d37102b37c3",
+          "image": "",
+          "link": "https://t.me/zaihuapd/45390",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "美国国土安全部（DHS）在社交平台 X 上发文称，移民及海关执法局（ICE）在发帖前一日，即 11 月 24 日，逮捕了恋童癖者、强奸犯、毒贩等公共安全威胁人员。该机构将这些行动定性为保护美国民众免受犯罪侵害的执法工作。\n\n该推文以感恩节前夕美国民众忙于假期准备为背景，称 ICE 人员全年无休地逮捕和遣送出境非法移民。\n\nHomeland Security\n\n🌸 科技圈· 茶馆 · 投稿",
+          "text": "美国国土安全部（DHS）在社交平台 X 上发文称，移民及海关执法局（ICE）在发帖前一日，即 11 月 24 日，逮捕了恋童癖者、强奸犯、毒贩等公共安全威胁人员。该机构将这些行动定性为保护美国民众免受犯罪侵害的执法工作。\n\n该推文以感恩节前夕美国民众忙于假期准备为背景，称 ICE 人员全年无休地逮捕和遣送出境非法移民。\n\nHomeland Security\n\n🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-26T22:25:20+08:00",
+          "title": "美国国土安全部称 ICE 在感恩节前逮捕恋童癖者、强奸犯和毒贩等人员",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-26",
@@ -117629,7 +117693,7 @@
         {
           "category": "数码",
           "day": "2026-10-28",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-28 07:00",
           "id": "b99f71adca55ce19090e",
           "image": "",
@@ -123980,10 +124044,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 137,
+      "seven_day_count": 139,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 23,
+      "today_count": 25,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -132276,7 +132340,7 @@
           "hot": false,
           "hour": "2026-11-12 22:00",
           "id": "ac27ceb0002319e39a1b",
-          "image": "media/OneMillion_AI/5897_1.webp",
+          "image": "",
           "link": "https://t.me/OneMillion_AI/5897",
           "source": "OneMillion_AI",
           "source_name": "动察Beating AI News",
