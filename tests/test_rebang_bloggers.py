@@ -586,15 +586,21 @@ def test_weibo_http_json_detects_login_redirect_and_non_json(monkeypatch):
             return self.url
         def read(self):
             return self.body
+
+    class Opener:   # 替换模块的同源跳转 opener：测试不联网
+        def __init__(self, url, body):
+            self.url, self.body = url, body
+        def open(self, req, timeout=0):
+            return Resp(self.url, self.body)
     cases = [('https://passport.weibo.com/visitor/visitor?entry=miniblog', b'<html>'),
              ('https://weibo.com/ajax/statuses/mymblog?uid=1', b'<html>login</html>'),
              ('https://weibo.com/ajax/statuses/mymblog?uid=1', b'{"ok": -100, "url": "https://passport.weibo.com/"}')]
     for final, body in cases:
-        monkeypatch.setattr(weibo_mod.urllib.request, 'urlopen', lambda req, timeout=0, f=final, b=body: Resp(f, b))
+        monkeypatch.setattr(weibo_mod, '_OPENER', Opener(final, body))
         with pytest.raises(weibo_mod.WeiboError) as exc:
             weibo_mod.http_json('https://weibo.com/ajax/statuses/mymblog?uid=1', WB_COOKIE)
         assert exc.value.code == 'login_expired' and 'FAKE' not in str(exc.value)
-    monkeypatch.setattr(weibo_mod.urllib.request, 'urlopen', lambda req, timeout=0: Resp('https://weibo.com/x', b'{"ok": 1, "data": {}}'))
+    monkeypatch.setattr(weibo_mod, '_OPENER', Opener('https://weibo.com/x', b'{"ok": 1, "data": {}}'))
     assert weibo_mod.http_json('https://weibo.com/x', WB_COOKIE)['ok'] == 1
 
 

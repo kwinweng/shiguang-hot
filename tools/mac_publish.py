@@ -6,6 +6,7 @@ the same pinned code. Anything else stops with HALT. Switching code is a manual 
 import argparse
 import fcntl
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -73,13 +74,54 @@ def main_only_rejection(output, candidates):
     return status == expected
 
 
+CREDENTIALS = (('REBANG_WEIBO_COOKIE', 'weibo-cookie.txt', 'weibo'),
+               ('REBANG_WEREAD_SESSION', 'weread-session.json', 'weread'))
+
+
+def _load_private_file():
+    # Stdlib-only helper shared with the collectors, loaded by path so the rebang package is not imported.
+    spec = importlib.util.spec_from_file_location('rebang_private_file', ROOT / 'rebang/private_file.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+private_file = _load_private_file()
+
+
+def source_credentials(state, home=None):
+    """Pass the fixed owner-only files in <account home>/.config/rebang to the collectors by path, never by content.
+
+    The home comes from the user database (not HOME); environment overrides are ignored on purpose.
+    This is only a preflight: the collectors open the files again with the same checks on the same
+    descriptor they read from. Anything missing, shared, linked or symlinked anywhere on the way sets
+    the collector's environment variable to '' (explicitly disabled, never a fallback path), so that
+    collector reports "not configured" instead of reading any other file.
+    """
+    if home is None:
+        try:
+            home = private_file.account_home()
+        except (KeyError, OSError):
+            home = None
+    folder = Path(home) / '.config/rebang' if home else None
+    env, enabled = {}, []
+    for key, name, slot in CREDENTIALS:
+        path = folder / name if folder else None
+        if path is not None and private_file.check_private(path):
+            env[key] = str(path)
+            enabled.append(slot)
+        else:
+            env[key] = ''
+    return env, enabled
+
+
 def run_cycle(code_sha, state, lock):
-    # Do not inherit build overrides, Git ref/index overrides or source credentials.
+    # Do not inherit build overrides, Git ref/index overrides or source credential overrides.
     env = {key: os.environ[key] for key in ('PATH', 'HOME', 'TMPDIR', 'SSH_AUTH_SOCK') if key in os.environ}
     env.update(BOX_PYTHON=sys.executable, TZ='Asia/Shanghai', SITE_MODE='public', MAIL_DIGEST='0',
-               GIT_TERMINAL_PROMPT='0', GIT_SSH_COMMAND='ssh -o BatchMode=yes', GIT_OPTIONAL_LOCKS='0',
-               REBANG_WEIBO_COOKIE=str(state / 'no-source-credentials/weibo'),
-               REBANG_WEREAD_SESSION=str(state / 'no-source-credentials/weread'))
+               GIT_TERMINAL_PROMPT='0', GIT_SSH_COMMAND='ssh -o BatchMode=yes', GIT_OPTIONAL_LOCKS='0')
+    # Until collection starts, the collectors' credential variables are explicitly disabled ('').
+    env.update({key: '' for key, _, _ in CREDENTIALS})
 
     def run(*args, capture=False, stdout=None, input=None, extra_env=None):
         result = subprocess.run(args, cwd=ROOT, env=dict(env, **(extra_env or {})), check=True,
@@ -117,8 +159,6 @@ def run_cycle(code_sha, state, lock):
             or git('diff', '--cached', '--name-only')
             or git('ls-files', '--others', '--exclude-standard')):
         raise RuntimeError('use a dedicated clean detached checkout at --code-sha (only unstaged tg.db may differ)')
-    if (state / 'no-source-credentials').exists():
-        raise RuntimeError('the reserved no-source-credentials path must not exist')
     origin = git('remote', 'get-url', 'origin')
     if git('remote', 'get-url', '--push', '--all', 'origin').splitlines() != [origin]:
         raise RuntimeError('origin must have exactly one push URL, identical to the fetch URL')
@@ -257,6 +297,10 @@ def run_cycle(code_sha, state, lock):
                 raise RuntimeError('public data/meta.json differs from the Pages parent; cannot use it as the receiver baseline')
             print(f'public_baseline_meta_sha256={hashlib.sha256(actual).hexdigest()}', flush=True)
 
+        credentials, enabled = source_credentials(state)
+        env.update(credentials)
+        # Local preflight only: the collectors re-check when they open, and the site shows what was read.
+        print(f'source_credentials={",".join(enabled) or "none"}', flush=True)
         run(sys.executable, 'pipeline.py')
         meta = ROOT / 'site-v11/data/meta.json'
         previous = meta.stat() if meta.is_file() else None

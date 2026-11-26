@@ -1,6 +1,6 @@
 """微博：用副号 Cookie 直接读 weibo.com 桌面版 ajax 接口（不走 m.weibo.cn，不装 weibo-crawler）。
 
-- Cookie：``~/.config/rebang/weibo-cookie.txt``（``REBANG_WEIBO_COOKIE`` / ``--weibo-cookie-file`` 可改），仓库外、0600，
+- Cookie：``~/.config/rebang/weibo-cookie.txt``（采集时 ``REBANG_WEIBO_COOKIE`` / ``--weibo-cookie-file`` 可改；``save-cookie``/``check`` 只用账号家目录下这个固定路径），仓库外、0600，
   一行浏览器 Cookie 值（从 weibo.com 请求头复制，不带 ``Cookie:`` 前缀）。代码只在发请求时读进内存，
   不打印、不写日志、不放进异常信息或输出文件。
 - 接口：``/ajax/statuses/mymblog?uid=…&page=1`` 取主页第一页；``isLongText`` 的帖再调 ``/ajax/statuses/longtext?id=<mblogid>``
@@ -9,17 +9,25 @@
   后面的账号不再请求，站上沿用上次成功的内容（run.py 通用逻辑）。
 - 输出目录（默认 ``var/rebang/weibo-crawler/``，``--weibo-output`` 可改）：放 longtext 缓存和每个账号最近一次原始回包（不含 Cookie）。
 """
+import argparse
 import json
 import os
 import re
+import selectors
+import subprocess
+import sys
+import time
 import urllib.error
 import urllib.request
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
+from .. import private_file
 from .common import BODY_CHARS, clip, detect_lang, iso, normalize_text, source_id, summary_of
 
-DEFAULT_COOKIE = Path(os.environ.get("REBANG_WEIBO_COOKIE") or Path.home() / ".config" / "rebang" / "weibo-cookie.txt")
+DEFAULT_COOKIE = Path(os.environ.get("REBANG_WEIBO_COOKIE")
+                      or Path(private_file.default_home()) / ".config" / "rebang" / "weibo-cookie.txt")
 DEFAULT_OUTPUT = Path(__file__).resolve().parents[2] / "var" / "rebang" / "weibo-crawler"
 BASE = 'https://weibo.com'
 UA = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -42,37 +50,82 @@ def cookie_configured(cookie_file):
     return bool(cookie_file) and os.path.isfile(cookie_file)
 
 
-def read_cookie(cookie_file):
-    """读进内存给请求用；空文件当未配置。出错只报代码，不带内容。"""
-    try:
-        value = Path(cookie_file).read_text(encoding='utf-8').strip()
-    except (OSError, UnicodeDecodeError):
-        raise WeiboError('cookie_unreadable') from None
+def clean_cookie(value):
+    """去掉首尾空白和可选的 ``Cookie:`` 前缀；空值、多行或带控制字符的当作不可用。"""
+    value = (value or '').strip()
     for prefix in ('Cookie:', 'cookie:'):
         if value.startswith(prefix):
             value = value[len(prefix):].strip()
-    if not value or '\n' in value:
+    if not value or any(ord(ch) < 0x20 or ord(ch) == 0x7f for ch in value):
         raise WeiboError('cookie_unreadable')
     return value
 
 
-def http_json(url, cookie, timeout=25):
+def read_cookie(cookie_file):
+    """读进内存给请求用；空文件当未配置。出错只报代码，不带内容。
+
+    用 private_file 安全打开：整条路径不跟软链接、目录和文件都只本人可用、单一硬链接、无 ACL，
+    并在读的同一个文件描述符上校验，检查后被换掉也只会打开失败。不合格一律当未配置。"""
+    try:
+        value = private_file.read_private(cookie_file).strip()
+    except (private_file.PrivateFileError, OSError, ValueError, TypeError):
+        raise WeiboError('cookie_unreadable') from None
+    return clean_cookie(value)
+
+
+def _origin(url):
+    parts = urlsplit(url)
+    try:
+        port = parts.port
+    except ValueError:
+        return None
+    return parts.scheme.lower(), (parts.hostname or '').lower(), port or (443 if parts.scheme.lower() == 'https' else 80)
+
+
+def _looks_like_login(url):
+    return 'passport.weibo' in url or '/login' in url or 'login.sina' in url
+
+
+class RedirectBlocked(urllib.error.URLError):
+    def __init__(self, location):
+        super().__init__('redirect_blocked')
+        self.location = location
+
+
+class SameOriginRedirect(urllib.request.HTTPRedirectHandler):
+    """带 Cookie 的请求只在同一个 HTTPS 源（scheme+host+port 都一样）里跟随跳转；
+    跨域、降级到 http 或原请求本身不是 https 都不跟，Cookie 不会被带到别处。"""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        source = _origin(req.full_url)
+        if source is None or source[0] != 'https' or _origin(newurl) != source:
+            raise RedirectBlocked(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_OPENER = urllib.request.build_opener(SameOriginRedirect)
+
+
+def http_json(url, cookie, timeout=25, opener=None):
     """GET weibo.com ajax → dict；登录失效抛 login_expired，其它网络问题抛 network/http_xxx。异常里不带 Cookie。"""
     req = urllib.request.Request(url, headers={
         'Cookie': cookie, 'User-Agent': UA, 'Referer': BASE + '/', 'Accept': 'application/json, text/plain, */*',
         'X-Requested-With': 'XMLHttpRequest'})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with (opener or _OPENER).open(req, timeout=timeout) as resp:
             final, body = resp.geturl(), resp.read()
+    except RedirectBlocked as exc:
+        # 跳去登录页（跨域到 passport）就是 Cookie 失效；其它跨域/降级跳转不跟，按这次没取到处理。
+        raise WeiboError('login_expired' if _looks_like_login(exc.location) else 'redirect_blocked') from None
     except urllib.error.HTTPError as exc:
         raise WeiboError('login_expired' if exc.code in (401, 403) else f'http_{exc.code}') from None
     except (urllib.error.URLError, OSError, ValueError):
         raise WeiboError('network') from None
-    if 'passport.weibo' in final or '/login' in final or 'login.sina' in final:
+    if _looks_like_login(final):
         raise WeiboError('login_expired')
     try:
         data = json.loads(body)
-    except ValueError:
+    except (ValueError, RecursionError):
         raise WeiboError('login_expired') from None   # 失效时回的是登录/访客页 HTML
     check(data)
     return data
@@ -285,3 +338,134 @@ def save_json(path, data):
 def save_cache(path, cache):
     keep = dict(list(cache.items())[-CACHE_KEEP:])
     save_json(path, keep)
+
+
+def fixed_cookie_path():
+    """save-cookie / check 用的唯一位置：系统账号库（pwd）里的家目录下固定路径，和发布器一致。
+    不看 HOME，也不看 REBANG_WEIBO_COOKIE，避免写到别处却提示成功。"""
+    return Path(private_file.account_home()) / '.config' / 'rebang' / 'weibo-cookie.txt'
+
+
+def read_stdin_limited(stream):
+    """最多读 MAX_BYTES+1 字节；超了直接报 too_large，什么都不写。返回文本。"""
+    raw = getattr(stream, 'buffer', stream).read(private_file.MAX_BYTES + 1)
+    if isinstance(raw, str):
+        raw = raw.encode('utf-8', 'surrogateescape')
+    if len(raw) > private_file.MAX_BYTES:
+        raise WeiboError('too_large')
+    try:
+        return raw.decode('utf-8')
+    except UnicodeDecodeError:
+        raise WeiboError('cookie_unreadable') from None
+
+
+def read_pbpaste(popen=None, timeout=10):
+    """直接调用 pbpaste 读入内存（最多 MAX_BYTES+1 字节），总超时覆盖读取和等待；确认退出码为 0 后才返回，失败不碰旧 Cookie。"""
+    try:
+        proc = (popen or subprocess.Popen)(['pbpaste'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    except OSError:
+        raise WeiboError('clipboard_failed') from None
+    deadline = time.monotonic() + timeout
+    limit = private_file.MAX_BYTES + 1
+    try:
+        stream = proc.stdout
+        if stream is None:
+            raw = b''
+        else:
+            try:
+                fd = stream.fileno()
+            except (AttributeError, OSError):
+                fd = None
+            if fd is not None:
+                chunks, size = [], 0
+                with selectors.DefaultSelector() as sel:
+                    sel.register(fd, selectors.EVENT_READ)
+                    while size < limit:
+                        remaining = deadline - time.monotonic()
+                        if remaining <= 0:
+                            raise subprocess.TimeoutExpired('pbpaste', timeout)
+                        if not sel.select(remaining):
+                            raise subprocess.TimeoutExpired('pbpaste', timeout)
+                        chunk = os.read(fd, limit - size)
+                        if not chunk:
+                            break
+                        chunks.append(chunk)
+                        size += len(chunk)
+                raw = b''.join(chunks)
+            else:
+                raw = stream.read(limit)
+        if len(raw) > private_file.MAX_BYTES:
+            proc.kill()
+            proc.wait(timeout=max(0.1, deadline - time.monotonic()))
+            raise WeiboError('too_large')
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise subprocess.TimeoutExpired('pbpaste', timeout)
+        rc = proc.wait(timeout=remaining)
+    except (subprocess.TimeoutExpired, OSError, ValueError):
+        # 任何失败（超时、选择器建不起来如 EMFILE、只剩 select() 时的高 fd ValueError）都先结束并回收子进程
+        try:
+            proc.kill()
+        except OSError:
+            pass
+        try:
+            proc.wait(timeout=2)
+        except (subprocess.TimeoutExpired, OSError):
+            pass
+        raise WeiboError('clipboard_failed') from None
+    finally:
+        if proc.stdout is not None:
+            proc.stdout.close()
+    if rc != 0:
+        raise WeiboError('clipboard_failed')
+    if isinstance(raw, str):
+        raw = raw.encode('utf-8', 'surrogateescape')
+    try:
+        return raw.decode('utf-8')
+    except UnicodeDecodeError:
+        raise WeiboError('cookie_unreadable') from None
+
+
+def main(argv=None, stdin=None):
+    """python3 -m rebang.bloggers.weibo save-cookie [--pbpaste]：安全落盘 Cookie。
+    只写账号家目录（pwd）下的固定路径 ~/.config/rebang/weibo-cookie.txt，忽略 HOME 和 REBANG_WEIBO_COOKIE。
+    只能由拥有本 checkout 的非 root 账号运行；超过 64 KiB 或 pbpaste 非零退出在碰目录和旧文件之前就拒绝；
+    写入同目录独占创建的 0600 临时文件后原子改名，输出不含内容。"""
+    ap = argparse.ArgumentParser(prog='python3 -m rebang.bloggers.weibo')
+    sub = ap.add_subparsers(dest='cmd', required=True)
+    sc = sub.add_parser('save-cookie', help='从标准输入或 --pbpaste 读一行 Cookie 值，写到账号家目录下固定的 0600 文件（不打印内容）')
+    sc.add_argument('--pbpaste', action='store_true', help='直接调用 macOS pbpaste 读入内存，确认退出码为 0 后才覆盖旧文件')
+    sub.add_parser('check', help='只检查固定位置的 Cookie 文件能否被采集器安全读取（不打印内容）')
+    args = ap.parse_args(argv)
+    try:
+        cookie_file = str(fixed_cookie_path())
+    except (KeyError, OSError):
+        print(json.dumps({'saved' if args.cmd == 'save-cookie' else 'usable': False, 'error': 'no_account_home'}))
+        return 1
+    if args.cmd == 'check':
+        ok = private_file.check_private(cookie_file)
+        print(json.dumps({'cookie_file': cookie_file, 'usable': ok}))
+        return 0 if ok else 1
+    problem = private_file.account_problem()
+    if problem:
+        print(json.dumps({'saved': False, 'error': problem}))
+        return 1
+    try:
+        raw_text = read_pbpaste() if args.pbpaste else read_stdin_limited(stdin or sys.stdin)
+        value = clean_cookie(raw_text)
+        line = value + '\n'
+        if len(line.encode('utf-8')) > private_file.MAX_BYTES:
+            raise WeiboError('too_large')
+        private_file.write_private(cookie_file, line)
+    except WeiboError as exc:
+        print(json.dumps({'saved': False, 'error': exc.code}))
+        return 1
+    except private_file.PrivateFileError as exc:
+        print(json.dumps({'saved': False, 'error': exc.code, 'cookie_file': cookie_file}))
+        return 1
+    print(json.dumps({'saved': True, 'cookie_file': cookie_file}))
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

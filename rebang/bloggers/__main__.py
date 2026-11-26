@@ -31,8 +31,8 @@ def main(argv=None):
                     help='仓库外 Cookie 文件（默认 ~/.config/rebang/weibo-cookie.txt；只在请求时读进内存，不打印）')
     ap.add_argument('--weibo-output', default=os.environ.get('REBANG_WEIBO_OUTPUT', str(weibo_mod.DEFAULT_OUTPUT)),
                     help='微博长文缓存与原始回包目录（默认 var/rebang/weibo-crawler/，不含 Cookie）')
-    ap.add_argument('--weread-session', default=str(weread_mod.DEFAULT_SESSION),
-                    help='微信读书会话文件（python3 -m rebang.bloggers.weread login 扫码后写入，仓库外、0600）；不存在 → 5 个公众号 not_configured')
+    ap.add_argument('--weread-session', default=os.environ.get('REBANG_WEREAD_SESSION', str(weread_mod.DEFAULT_SESSION)),
+                    help='微信读书会话文件（python3 -m rebang.bloggers.weread login 扫码后写入，仓库外、0600）；不存在或显式置空 → 5 个公众号 not_configured')
     ap.add_argument('--limit', type=int, default=10, help='每个账号最多条数')
     ap.add_argument('--pause', type=float, default=1.0, help='同平台账号之间的间隔秒数')
     ap.add_argument('--translate-engine', default=None, help='none|cache|openai-compatible（默认读 REBANG_TRANSLATE_ENGINE，否则 cache）')
