@@ -501,6 +501,8 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
             'slug': channel['slug'], 'name': channel['name'], 'order': channel['order'],
             'desc': CHANNEL_DESC.get(channel['slug'], ''),
             'sources': [s['name'] for s in channel['sources']],
+            # 列表来源前的平台图标按配置的来源类型标，不从 id 猜
+            'source_platforms': {s['id']: s['type'] for s in channel['sources']},
             'unavailable': bad_sources.get(channel['slug'], []),
             'total': len(mine), 'feed_total': len(feed), 'merged_total': len(folded), 'pages': len(pages),
             'banner': banner,

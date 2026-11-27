@@ -157,14 +157,84 @@
   function thumbOk(image) {
     return !!(image && image.url);
   }
-  /** 列表一行元信息（v16）：来源 · 时间 · 浏览 · 评论 · 译 / 重点；拿不到的数不显示 */
+  /** 频道首页 A2：大图只给够大的新闻配图；已知宽高且偏小的（头像、站点图标一类）留在右侧小图，不放大。 */
+  const COVER_MIN_LONG = 300, COVER_MIN_SHORT = 150;   // 竖版视频封面常见 180×320，也算大图
+  function coverOk(image) {
+    if (!thumbOk(image)) return false;
+    const w = Number(image.width), h = Number(image.height);
+    if (!(w > 0 && h > 0)) return true;          // 宽高未知：按大图排，图本身用原比例
+    return Math.max(w, h) >= COVER_MIN_LONG && Math.min(w, h) >= COVER_MIN_SHORT;
+  }
+  /** 来源平台：只认频道配置里的来源类型（建站写进 meta），不从来源 id 猜。 */
+  const PLATFORM = {telegram: {icon: 'icons/telegram.svg', label: 'Telegram'}, feed: {icon: 'icons/blog.svg', label: 'RSS'}};
+  let sourcePlatforms = {};
+  function setSourcePlatforms(channels) {
+    sourcePlatforms = {};
+    (channels || []).forEach(c => Object.entries(c && c.source_platforms || {}).forEach(([id, type]) => { sourcePlatforms[id] = type; }));
+  }
+  function platformOf(item) { return PLATFORM[sourcePlatforms[item.source_id]] || null; }
+  /** 列表摘要（A2）：短的整段显示；长的按句子取一个读得通的开头，后面接「继续读」；和标题完全一样才不显示。
+      不用正则后行断言：iOS 16.4 以前的 Safari 解析不了，整个 lib.js 会加载失败。 */
+  const EXCERPT_MAX = 140;
+  const ZH_END = '。！？…', EN_END = '.!?', CLOSERS = '」”’"』）)』】';
+  const ABBR = new Set(['mr', 'mrs', 'ms', 'dr', 'prof', 'st', 'jr', 'sr', 'vs', 'no', 'inc', 'ltd', 'co', 'corp', 'etc', 'eg', 'ie', 'us', 'uk', 'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'sept', 'oct', 'nov', 'dec', 'gov', 'gen', 'sen', 'rep', 'fig', 'approx']);
+  function plainKey(s) { return String(s || '').replace(/[\s【】「」『』《》〈〉\[\]()（）"“”'‘’]/g, '').replace(/[。！？.!?…]+$/, '').toLowerCase(); }
+  /** 句末位置（不含）列表：中文句末标点直接算；英文 .!? 要后接空白、下一个字不是小写、前面不是缩写或单个字母 */
+  function sentenceEnds(chars) {
+    const ends = [];
+    for (let i = 0; i < chars.length; i++) {
+      const c = chars[i];
+      let j = i + 1;
+      const zh = ZH_END.includes(c), en = EN_END.includes(c);
+      if (!zh && !en) continue;
+      while (j < chars.length && (ZH_END.includes(chars[j]) || EN_END.includes(chars[j]))) j++;
+      while (j < chars.length && CLOSERS.includes(chars[j])) j++;
+      if (en && !zh && !ZH_END.includes(chars[j - 1])) {
+        if (j < chars.length && !/\s/.test(chars[j])) { i = j - 1; continue; }
+        let k = j; while (k < chars.length && /\s/.test(chars[k])) k++;
+        if (k < chars.length && /[a-z]/.test(chars[k])) { i = j - 1; continue; }
+        if (c === '.') {
+          let w = i - 1, word = '';
+          while (w >= 0 && /[A-Za-z.]/.test(chars[w])) { word = chars[w] + word; w--; }
+          const bare = word.replace(/\./g, '').toLowerCase();
+          if (bare.length === 1 || ABBR.has(bare)) { i = j - 1; continue; }
+        }
+      }
+      ends.push(j);
+      i = j - 1;
+    }
+    return ends;
+  }
+  function excerpt(summary, title) {
+    const s = String(summary || '').trim();
+    if (!s) return {text: '', more: false};
+    const k = plainKey(s);
+    if (k && k === plainKey(title)) return {text: '', more: false};
+    const chars = [...s];
+    if (chars.length <= EXCERPT_MAX) return {text: s, more: false};
+    const fit = sentenceEnds(chars).filter(e => e <= EXCERPT_MAX && e < chars.length);
+    let out;
+    if (fit.length) {
+      out = chars.slice(0, fit[fit.length - 1]).join('').trim();
+    } else {
+      // 第一句就超过上限：在逗号一类停顿处收住；没有停顿就在空格处；都没有才硬截
+      const head = chars.slice(0, EXCERPT_MAX);
+      let cut = -1;
+      for (let i = head.length - 1; i > 0 && cut < 0; i--) {
+        if ('，、；：,;:\n'.includes(head[i])) cut = i;
+      }
+      if (cut < 0) for (let i = head.length - 1; i > 0 && cut < 0; i--) if (/\s/.test(head[i])) cut = i;
+      out = head.slice(0, cut > 0 ? cut : head.length).join('').trim() + '…';
+    }
+    return {text: out, more: true};
+  }
+  /** 列表一行元信息（A2）：平台图标 · 来源 · 译 / 重点 ……时间靠右。浏览、评论数只在详情里看。 */
   function metaLine(item, d) {
-    const tg = item.tg || {};
-    const views = tg.views != null ? `<span class="n" aria-label="浏览 ${esc(tg.views_label || tg.views)}">${icon('eye')}${esc(tg.views_label || fmtN(tg.views))}</span>` : '';
-    const cmt = tg.comments_total ? `<span class="n" aria-label="评论 ${tg.comments_total} 条">${ICO.reply}${esc(fmtN(tg.comments_total))}</span>` : '';
+    const p = platformOf(item);
+    const logo = p ? `<img class="plat" src="${esc(p.icon)}" alt="${esc(p.label)}" title="${esc(p.label)}" width="16" height="16">` : '';
     const hl = item.highlight ? '<span class="tag hl">重点</span>' : '';
     const mt = d.translated ? `<span class="tag mt-badge" title="${esc(d.label)}">译</span>` : '';
-    return `<div class="f-meta"><span class="src">${esc(item.source_name)}</span><span>${esc(fmtWhen(item.published_at))}</span>${views}${cmt}${mt}${hl}</div>`;
+    return `<div class="f-meta">${logo}<span class="src">${esc(item.source_name)}</span>${mt}${hl}<span class="when">${esc(fmtWhen(item.published_at))}</span></div>`;
   }
   /** TG 互动：表情回应 + 浏览数 + 评论数（都来自 t.me 公开页面；没有就不显示，不编） */
   function tgStatsHTML(item, full) {
@@ -206,12 +276,24 @@
     if (isBareForward(item)) {
       body = `<div class="fwd-tag">转发</div>${quoteCardHTML(item, false)}${metaLine(item, d)}${dupHTML(item)}`;
     } else {
-      const sum = d.summary.trim() ? `<p class="sum">${esc(d.summary)}</p>` :
-        (item.quote || thumbOk(item.image) ? '' : `<p class="sum none">${NO_SUMMARY}</p>`);
+      const ex = excerpt(d.summary, d.title);
+      const sum = ex.text ? `<p class="sum">${esc(ex.text)}${ex.more ? ' <span class="more">继续读 ›</span>' : ''}</p>` :
+        (item.quote || thumbOk(item.image) || d.summary.trim() ? '' : `<p class="sum none">${NO_SUMMARY}</p>`);
       body = `<h3>${esc(d.title)}</h3>${sum}${quoteCardHTML(item, false)}${metaLine(item, d)}${dupHTML(item)}`;
     }
     if (thumbOk(item.image)) {
-      return `<article class="feed-row" data-id="${esc(item.id)}"><div class="f-main">${body}</div><div class="thumb"><img src="${esc(item.image.url)}" alt="" loading="lazy" decoding="async" data-zoom="${esc(item.image.url)}"></div></article>`;
+      // 视频：能内播的是 type video；只有封面时采集端记成 image 并标 video_unavailable，两种都标「视频」
+      const tg = item.tg || {}, media = Array.isArray(tg.media) ? tg.media : [];
+      const video = !!(tg.video_unavailable || media.some(m => m && m.type === 'video'));
+      const badge = video ? '<span class="vid-badge">视频</span>' : '';
+      const im = item.image, w = Number(im.width), h = Number(im.height), sized = w > 0 && h > 0;
+      const img = `<img src="${esc(im.url)}" alt=""${sized ? ` width="${w}" height="${h}"` : ''} loading="lazy" decoding="async" data-zoom="${esc(im.url)}">`;
+      if (coverOk(im)) {
+        // A2：新闻配图、视频封面放在标题上方，保留原比例；视频只标出来，不自动播
+        const ratio = sized ? ` style="aspect-ratio:${w}/${h}"` : '';
+        return `<article class="feed-row cover" data-id="${esc(item.id)}"><div class="thumb${video ? ' video' : ''}"${ratio}>${img}${badge}</div><div class="f-main">${body}</div></article>`;
+      }
+      return `<article class="feed-row" data-id="${esc(item.id)}"><div class="f-main">${body}</div><div class="thumb${video ? ' video' : ''}">${img}${badge}</div></article>`;
     }
     return `<article class="feed-row noimg" data-id="${esc(item.id)}">${body}</article>`;
   }
@@ -459,7 +541,7 @@
     return safeBot === null ? null : {appH: null, safeBot};
   }
 
-  const Lib = {TZ, NO_SUMMARY, NO_BODY, BODY_PENDING, HOT_FAIL, esc, beijingDate, fmtTime, fmtWhen, fmtFull, dayLabel, fmtDay, fmtRefreshed, fmtN, display, isWebNews, thumbOk,
+  const Lib = {TZ, NO_SUMMARY, NO_BODY, BODY_PENDING, HOT_FAIL, esc, beijingDate, fmtTime, fmtWhen, fmtFull, dayLabel, fmtDay, fmtRefreshed, fmtN, display, isWebNews, thumbOk, coverOk, excerpt, setSourcePlatforms,
     tgStatsHTML, quoteCardHTML, dupHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, hotShort, tweetCardHTML, postRowHTML, bloggerAvatar, comparePosts, xCommentsHTML, rowHTML, parseItemHash, itemHash, ICO, icon, mediaGrid, fmtDur, standaloneGeometry};
   if (typeof module !== 'undefined' && module.exports) module.exports = Lib;
   else root.RebangLib = Lib;
