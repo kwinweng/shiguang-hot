@@ -354,6 +354,24 @@ class IngestTests(unittest.TestCase):
         pending = {(row['src'], row['kind']) for row in list_pending(Cache(translation_cache))}
         self.assertEqual(pending, {(english, 'summary'), (f'{english}\n{meta}', 'body')})
 
+    def test_trending_summary_only_translation_still_counts_pending_body(self):
+        english = 'This project provides a command line tool.'
+        entries = [dict(id='example/partial', title='example/partial', url='https://github.com/example/partial',
+                        ts=NOW.isoformat(), summary=english, meta='Python · 1 star today')]
+        self.cache.mkdir()
+        (self.cache / 'github-trending.json').write_text(
+            json.dumps({'fetched_at': NOW.isoformat(), 'entries': entries}), encoding='utf-8')
+
+        def summary_only(texts, src, kinds=None):
+            return ['合成中文摘要。' if kind and kind.endswith('summary') else None for kind in (kinds or [None] * len(texts))]
+
+        env = collect(NOW, db=self.dir / 'missing.db', cache=self.cache, inbox_loader=self.loader,
+                      translator=(summary_only, 'fixture'))
+        self.assertEqual(validate_items_envelope(env), [])
+        item, = env['items']
+        self.assertTrue(item['translation']['body_pending'])
+        self.assertEqual(env['translation']['untranslated'], 1)
+
     def test_partial_translation_title_without_body(self):
         from rebang.ingest.core import apply_translation
         body = 'Short summary here. ' + ('Long English paragraph. ' * 80)

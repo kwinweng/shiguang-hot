@@ -86,7 +86,7 @@
   const GATE_NON_SPACE = new RegExp(`[^${GATE_SPACE}]`);
   const WEB_CARD_URLS = new RegExp(`^(?:[${GATE_SPACE}]*${GATE_URL.source})+[${GATE_SPACE}]*`);
   function webCardText(text) { return (typeof text === 'string' ? text : '').replace(WEB_CARD_URLS, ''); }
-  const LATIN_PROSE = /(?:^|[^A-Za-z])[A-Za-z]{2,}(?:[ \t]+[A-Za-z]{2,}){2,}(?![A-Za-z])/;
+  const LATIN_PROSE = new RegExp(`(?:^|[^A-Za-z])[A-Za-z]{2,}(?:[${GATE_SPACE}]+[A-Za-z]{2,}){2,}(?![A-Za-z])`);
   function withoutURLs(text) { return (typeof text === 'string' ? text : '').replace(GATE_URL, ''); }
   function chineseText(text) {
     const plain = withoutURLs(text);

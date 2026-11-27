@@ -10,7 +10,7 @@ _URL = re.compile(rf'https?://[^{_GATE_SPACE}《》「」“”‘’，。、�
 _NON_SPACE = re.compile(rf'[^{_GATE_SPACE}]')
 _HAN = re.compile(r'[㐀-鿿]')
 _LATIN_WORD = re.compile(r'[A-Za-zÀ-ÖØ-öø-ÿ]+')
-_LATIN_PROSE = re.compile(r'(?:^|[^A-Za-z])[A-Za-z]{2,}(?:[ \t]+[A-Za-z]{2,}){2,}(?![A-Za-z])')
+_LATIN_PROSE = re.compile(rf'(?:^|[^A-Za-z])[A-Za-z]{{2,}}(?:[{_GATE_SPACE}]+[A-Za-z]{{2,}}){{2,}}(?![A-Za-z])')
 _REPO = re.compile(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z')
 
 

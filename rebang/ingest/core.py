@@ -790,7 +790,8 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
     ordered = sorted(unique.values(), key=lambda i: i['published_at'], reverse=True)
     return {'schema': ITEMS_SCHEMA, 'producer': PRODUCER, 'generated_at': _iso(now), 'items': ordered,
             'sources': statuses, 'translation': {'available': bool(translator), 'translated': translated,
-                                              'untranslated': sum(1 for i in ordered if not i['lang'].startswith('zh') and i['lang'] != 'und' and not i.get('translated'))},
+                                              'untranslated': sum(1 for i in ordered if not i['lang'].startswith('zh') and i['lang'] != 'und'
+                                                                 and (not i.get('translated') or (i.get('translation') or {}).get('body_pending')))},
             'extraction': extracted}
 
 
