@@ -288,6 +288,90 @@ class IngestTests(unittest.TestCase):
         self.assertEqual(len(calls), n)  # 第二次全走缓存，不重复翻
 
 
+    def test_chinese_trending_description_keeps_repository_metadata_without_translation(self):
+        page = '''<article class="Box-row">
+          <h2><a href="/example/project">example/project</a></h2>
+          <p>这是一个中文工具。</p>
+          <span itemprop="programmingLanguage">Python</span>
+          <span class="d-inline-block float-sm-right">1,200 stars today</span>
+        </article><article class="Box-row">
+          <h2><a href="/example/other">example/other</a></h2>
+          <p>这是另一个中文工具。</p>
+        </article>'''
+        get = fake_http()
+        calls = []
+
+        def http_get(url, now):
+            return page.encode() if FEEDS[url]['id'] == 'github-trending' else get(url, now)
+
+        def fake(texts, src):
+            calls.extend(texts)
+            return ['合成译文。'] * len(texts)
+
+        for options in ({'fetch': True, 'http_get': http_get}, {}):
+            env = self.run_collect(translator=(fake, 'fixture'), **options)
+            self.assertEqual(validate_items_envelope(env), [])
+            first, second = self.by_source(env)['github-trending']
+            self.assertEqual((first['lang'], first['translated']), ('zh', False))
+            self.assertEqual(first['body'], '这是一个中文工具。\n编程语言：Python · 今日新增 1,200 星')
+            self.assertEqual((second['lang'], second['translated']), ('zh', False))
+        self.assertFalse(any('中文工具' in text or 'stars today' in text for text in calls))
+
+    def test_trending_language_untranslated_total_and_pending_agree(self):
+        from rebang.chinese_news import needs_translation, public_item
+        from rebang.translate import Cache, Translator, list_pending
+
+        english = 'This project provides a command line tool.'
+        meta = 'Python · 1 star today'
+        cases = [
+            ('metadata-only', '', meta, 'zh'),
+            ('chinese', '这是一个中文工具。', meta, 'zh'),
+            ('english', english, meta, 'en'),
+            ('repo-only', '', '', 'zh'),
+        ]
+        entries = [dict(id=f'example/{repo}', title=f'example/{repo}', url=f'https://github.com/example/{repo}',
+                        ts=NOW.isoformat(), summary=summary, meta=metadata)
+                   for repo, summary, metadata, _ in cases]
+        self.cache.mkdir()
+        (self.cache / 'github-trending.json').write_text(
+            json.dumps({'fetched_at': NOW.isoformat(), 'entries': entries}), encoding='utf-8')
+        translation_cache = self.cache / 'fields.json'
+        translator = Translator('cache', cache=Cache(translation_cache))
+        env = collect(NOW, db=self.dir / 'missing.db', cache=self.cache, inbox_loader=self.loader,
+                      translator=(translator.translate_detailed, translator.engine, translator.save))
+        self.assertEqual(validate_items_envelope(env), [])
+        self.assertEqual(len(env['items']), len(cases))
+        items = {item['title']: item for item in env['items']}
+        for repo, _, _, expected_lang in cases:
+            item = items[f'example/{repo}']
+            with self.subTest(repo=repo):
+                needs_zh = expected_lang == 'en'
+                self.assertEqual(needs_translation(item), needs_zh)
+                self.assertEqual(public_item(item) is None, needs_zh)
+                self.assertEqual(item['lang'], expected_lang)
+        self.assertEqual(items['example/metadata-only']['body'], '编程语言：Python · 今日新增 1 星')
+        self.assertEqual(env['translation']['untranslated'], 1)
+        pending = {(row['src'], row['kind']) for row in list_pending(Cache(translation_cache))}
+        self.assertEqual(pending, {(english, 'summary'), (f'{english}\n{meta}', 'body')})
+
+    def test_trending_summary_only_translation_still_counts_pending_body(self):
+        english = 'This project provides a command line tool.'
+        entries = [dict(id='example/partial', title='example/partial', url='https://github.com/example/partial',
+                        ts=NOW.isoformat(), summary=english, meta='Python · 1 star today')]
+        self.cache.mkdir()
+        (self.cache / 'github-trending.json').write_text(
+            json.dumps({'fetched_at': NOW.isoformat(), 'entries': entries}), encoding='utf-8')
+
+        def summary_only(texts, src, kinds=None):
+            return ['合成中文摘要。' if kind and kind.endswith('summary') else None for kind in (kinds or [None] * len(texts))]
+
+        env = collect(NOW, db=self.dir / 'missing.db', cache=self.cache, inbox_loader=self.loader,
+                      translator=(summary_only, 'fixture'))
+        self.assertEqual(validate_items_envelope(env), [])
+        item, = env['items']
+        self.assertTrue(item['translation']['body_pending'])
+        self.assertEqual(env['translation']['untranslated'], 1)
+
     def test_partial_translation_title_without_body(self):
         from rebang.ingest.core import apply_translation
         body = 'Short summary here. ' + ('Long English paragraph. ' * 80)

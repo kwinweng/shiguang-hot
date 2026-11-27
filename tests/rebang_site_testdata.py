@@ -38,8 +38,9 @@ def site_items():
                 {'type': 'image', 'url': 'https://img.test/p0.png'},
             ], 'video_unavailable': True})
         items.append(item)
-    items.append(news('bbc-world', 'world', 1, title='Synthetic headline', lang='en', translated=True,
-                      translation={'title': '合成译文标题', 'summary': '合成译文摘要。', 'summary_source': '合成摘要，测试用。',
+    items.append(news('bbc-world', 'world', 1, title='Synthetic headline', summary='Synthetic summary.',
+                      body='This is the original English news article.', lang='en', translated=True,
+                      translation={'title': '合成译文标题', 'summary': '合成译文摘要。', 'summary_source': 'Synthetic summary.',
                                    'engine': 'test', 'label': '机器翻译'}))
     for slug in ('finance', 'tech-ai', 'digital', 'tools'):
         for n in range(3):

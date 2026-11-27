@@ -5,10 +5,26 @@ const lib = require('../web-v11/lib.js');
 const search = require('../web-v11/features/search.js');
 const fav = require('../web-v11/features/favorites.js');
 const contract = require('../rebang/contract/channels.json');
+const gateCases = require('./fixtures/rebang/chinese-gate-cases.json');
 
 const old = {id: 'bbc-world:1', kind: 'news', source_id: 'bbc-world', lang: 'en',
   title: 'English headline', summary: 'English summary', body: 'English body'};
 const translated = {...old, translated: true, translation: {title: '中文标题', summary: '中文摘要', summary_source: old.summary}};
+
+for (const {name, text, release} of gateCases.summaries) {
+  for (const lang of ['zh', 'mul']) {
+    test(`shared Chinese gate summary (${lang}): ${name}`, () => {
+      const item = {...old, title: '中文标题', summary: text, body: '', lang};
+      assert.equal(!lib.display(item).held, release);
+    });
+  }
+}
+
+for (const {name, translation, release} of gateCases.snapshots) {
+  test(`shared Chinese gate snapshot: ${name}`, () => {
+    assert.equal(!lib.display({...old, translated: true, translation}).held, release);
+  });
+}
 
 test('frontend gate covers all configured official web sources', () => {
   for (const c of contract.channels) for (const s of c.sources) {
@@ -39,6 +55,22 @@ test('GitHub repository identifier with usable Chinese preview does not need tra
     summary: '这是中文项目简介。', body: '这是中文正文。'};
   assert.equal(lib.display(repo).summary, repo.summary);
   assert.equal(lib.display({...repo, summary: 'An English project summary'}).held, true);
+});
+
+test('mixed website news preserves Chinese fields while holding untranslated English fields', () => {
+  const mixed = {...old, lang: 'mul', title: '中文标题', summary: '中文摘要。'};
+  const pending = lib.display(mixed);
+  assert.equal(pending.title, mixed.title);
+  assert.equal(pending.summary, mixed.summary);
+  assert.equal(pending.translated, false);
+  assert.equal(pending.bodyPending, true);
+  assert.equal(pending.body, '');
+  assert.equal(pending.orig.body, old.body);
+  assert.equal(lib.display({...mixed, translated: true, translation: {body: '中文全文。'}}).body, '中文全文。');
+  assert.equal(lib.display({...mixed, summary: old.summary}).held, true);
+  assert.equal(lib.display({...mixed, summary: old.summary, body: '原来的中文全文。', translated: true,
+    translation: {summary: '中文译文。', summary_source: old.summary}}).body, '原来的中文全文。');
+  assert.equal(lib.display({...translated, summary: '原来的中文摘要。'}).summary, '原来的中文摘要。');
 });
 
 test('legacy folded refs never substitute a Chinese title for proof of publication', () => {
