@@ -39,7 +39,8 @@ def site_items():
             ], 'video_unavailable': True})
         items.append(item)
     items.append(news('bbc-world', 'world', 1, title='Synthetic headline', lang='en', translated=True,
-                      translation={'title': '合成译文标题', 'summary': '合成译文摘要。', 'engine': 'test', 'label': '机器翻译'}))
+                      translation={'title': '合成译文标题', 'summary': '合成译文摘要。', 'summary_source': '合成摘要，测试用。',
+                                   'engine': 'test', 'label': '机器翻译'}))
     for slug in ('finance', 'tech-ai', 'digital', 'tools'):
         for n in range(3):
             items.append(news(TG[slug], slug, n, minutes=n))

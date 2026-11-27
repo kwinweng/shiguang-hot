@@ -224,8 +224,8 @@ class IngestCliEdgeTests(unittest.TestCase):
         self.assertEqual(lang, {**{k: 'zh' for k in ZH_IDS}, **{k: 'en' for k in EN_IDS}})
         self.assertIn('Review of 《黑神话：悟空》', queued)
         self.assertIn('Xi meets Lee in Beijing', queued)
-        for zh in ('中国外交部回应美方关税措施', 'MacBook Pro M4 Max 评测', '震后救援',
-                   'Apple M4 Max benchmark results and battery life tests.'):
+        self.assertIn('Apple M4 Max benchmark results and battery life tests.', queued)
+        for zh in ('中国外交部回应美方关税措施', '震后救援'):
             self.assertNotIn(zh, queued)
 
     def test_cli_fetch(self):

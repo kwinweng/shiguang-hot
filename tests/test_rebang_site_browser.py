@@ -649,6 +649,79 @@ class SiteBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate('window.__attached'), 'tnews365:5')
         self.page.locator('#btnBack').click()
 
+    def test_web_news_body_does_not_default_to_original_when_translation_is_pending(self):
+        self.open('#/item/bbc-world%3A1')
+        body = self.page.locator('#articleBody')
+        body.locator('.art-pending').wait_for()
+        self.assertIn('合成译文摘要', body.inner_text())
+        self.assertNotIn('world 合成正文', body.inner_text())
+        body.get_by_role('button', name='看原文').click()
+        self.assertIn('world 合成正文', body.inner_text())
+
+    def test_stale_favorite_does_not_mask_ready_search_snapshot(self):
+        archived_id = 'bbc-world:archived-1'
+        stale_only_id = 'bbc-world:stale-only-1'
+        search_payload = {
+            'schema': 'rebang.search-index/1',
+            'timezone': 'Asia/Shanghai',
+            'generated_at': NOW.isoformat(),
+            'entries': [{
+                'id': archived_id,
+                'kind': 'news',
+                'channel': 'world',
+                'source_id': 'bbc-world',
+                'source_name': 'BBC World',
+                'title': 'Archived English title',
+                'summary': 'Archived English summary',
+                'published_at': NOW.isoformat(),
+                'lang': 'en',
+                'translated': True,
+                'display_title': '归档补回的中文标题',
+                'display_summary': '归档补回的中文摘要',
+                'translation_title': '归档补回的中文标题',
+                'translation_summary': '归档补回的中文摘要',
+                'summary_source': 'Archived English summary',
+                'original_title': 'Archived English title',
+                'original_summary': 'Archived English summary',
+                'image': None,
+            }],
+        }
+        self.page.route('**/data/search-index.json*', lambda route: route.fulfill(json=search_payload))
+        self.open('')
+        self.page.evaluate('''([archivedId, staleOnlyId]) => {
+            localStorage.setItem('rebang.favorites.v1', JSON.stringify([
+                {
+                    id: archivedId, kind: 'news', channel: 'world', source_id: 'bbc-world',
+                    source_name: 'BBC World', title: 'Archived English title',
+                    summary: 'Archived English summary', lang: 'en', translated: false,
+                    saved_at: '2026-11-15T00:00:00Z'
+                },
+                {
+                    id: staleOnlyId, kind: 'news', channel: 'world', source_id: 'bbc-world',
+                    source_name: 'BBC World', title: 'Untranslated only title',
+                    summary: 'Untranslated only summary', lang: 'en', translated: false,
+                    saved_at: '2026-11-15T00:00:00Z'
+                }
+            ]));
+        }''', [archived_id, stale_only_id])
+        # Trigger search-index load so mounted.search.getItem(id) has the archived entry.
+        self.page.locator('#btnSearch').click()
+        self.page.locator('#search-panel input').fill('归档补回')
+        self.page.locator('#search-panel [data-search-hit]').first.wait_for()
+        self.page.locator('#search-panel [data-search-close]').click()
+        # Open via favorite click (passes stale English bookmark ref) -> must resolve to ready search snapshot.
+        self.page.locator('.tabbar [data-view=favorites]').click()
+        self.page.locator(f'[data-favorites-list] [data-item-id="{archived_id}"]').click()
+        self.page.locator('#articleView.on').wait_for()
+        self.assertEqual(self.page.locator('#articleTitle').inner_text(), '归档补回的中文标题')
+        self.assertIn('归档补回的中文摘要', self.page.locator('#articleBody').inner_text())
+        self.page.locator('#btnBack').click()
+        self.page.locator('#articleView.on').wait_for(state='hidden')
+        # Stale-only bookmark with no ready snapshot still refuses to display English.
+        self.page.locator(f'[data-favorites-list] [data-item-id="{stale_only_id}"]').click()
+        self.page.wait_for_function("document.querySelector('#toast').textContent.includes('中文译文尚未就绪')")
+        self.assertFalse(self.page.locator('#articleView').evaluate('e => e.classList.contains("on")'))
+
     def built_at(self):
         return json.loads((self.out / 'data' / 'meta.json').read_text())['built_at']
 
