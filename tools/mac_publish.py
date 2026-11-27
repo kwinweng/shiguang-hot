@@ -11,10 +11,11 @@ import json
 import os
 from pathlib import Path
 import re
-import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 from urllib.parse import urlsplit
 
 
@@ -29,7 +30,7 @@ SHA = re.compile(r'[0-9a-f]{40}')
 # `git push --porcelain` summaries that mean the push was refused before any ref moved.
 LEASE_REJECTED, ATOMIC_REJECTED = '[rejected] (stale info)', '[rejected] (atomic push failed)'
 X_INBOX_ENV = 'REBANG_X_INBOX_REPO'  # optional read-only X inbox; unset or empty = no inbox step at all
-X_INBOX_WORK = '.x-inbox-work-'      # per-round work directories under var/rebang, always deleted
+X_INBOX_TIMEOUT = 120              # seconds including worker startup and both cleanups
 
 
 class Skipped(Exception):
@@ -56,54 +57,65 @@ def write_atomic(path, text):
         os.close(directory)
 
 
-def import_x_inbox(repo, root, env):
-    """Optional X inbox step before collection (docs/rebang-v1/X-INBOX.md). Prints one result line
-    and, only if deleting work directories fails, one separate cleanup line. Never raises, never
-    writes HALT and never touches tracked files: X problems must not stop other sources."""
-    var = root / 'var/rebang'
-    result = dict(installed=[], pruned=[], error='x_inbox_internal', prune_error=None)
-
-    def cleanup():
-        # All work directories, including ones left by a killed earlier round. Runs under the
-        # publisher lock, so no other round is using them.
-        failures = []
-        try:
-            leftovers = [p for p in var.iterdir() if p.name.startswith(X_INBOX_WORK)] if var.is_dir() else []
-        except OSError as error:
-            return [type(error).__name__]
-        for path in leftovers:
-            try:
-                if path.is_symlink() or not path.is_dir():
-                    path.unlink()
-                else:
-                    shutil.rmtree(path)
-            except OSError as error:
-                failures.append(type(error).__name__)
-        return failures
-
-    failures = []
+def import_x_inbox(repo, root, env, *, lock=None):
+    """Supervise the isolated X receiver, including all of its filesystem operations."""
+    end = time.monotonic() + X_INBOX_TIMEOUT
+    process, output, failure = None, b'', None
     try:
-        failures += cleanup()
-        tools = str(ROOT / 'tools')
-        if tools not in sys.path:
-            sys.path.insert(0, tools)
-        import x_inbox
-        var.mkdir(parents=True, exist_ok=True)
-        work = Path(tempfile.mkdtemp(prefix=X_INBOX_WORK, dir=var))
-        result = x_inbox.pull(repo, work, var / 'x-dump', env=env)
-    except Exception:  # noqa: BLE001 - any receiver bug is reported as one code, never a failed round
-        pass
+        process = subprocess.Popen(
+            [sys.executable, '-I', str(ROOT / 'tools/x_inbox.py'), str(root / 'var/rebang'), str(end)],
+            cwd=root, env=dict(env, **{X_INBOX_ENV: repo}), pass_fds=() if lock is None else (lock,),
+            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
+        output, _ = process.communicate(timeout=max(0, end - time.monotonic()))
+        if process.returncode == -signal.SIGALRM:
+            failure = 'x_inbox_timeout'
+        elif process.returncode:
+            failure = 'x_inbox_internal'
+    except subprocess.TimeoutExpired as error:
+        output = error.output or b''
+        failure = 'x_inbox_timeout'
+    except Exception:
+        failure = 'x_inbox_internal'
     finally:
-        line = 'x_inbox=' + ('ok' if result['error'] is None else f'error code={result["error"]}')
-        line += ' installed=' + (','.join(result['installed']) or 'none')
-        if result['pruned']:
-            line += f' pruned={len(result["pruned"])}'
-        if result['prune_error']:
-            line += f' prune_error={result["prune_error"]}'
-        print(line, flush=True)
-        failures += cleanup()
-        if failures:
-            print(f'x_inbox_cleanup=failed error={failures[0]} count={len(failures)}', flush=True)
+        if process is not None and failure:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            except PermissionError:
+                # macOS can report EPERM after the worker exits on its own alarm.
+                try:
+                    process.kill()
+                except OSError:
+                    pass
+            process.stdout.close()
+            process.poll()
+
+    result = dict(installed=[], pruned=0, error='x_inbox_internal', prune_error=None)
+    cleanup = None
+    for raw in output.splitlines():
+        try:
+            event = json.loads(raw)
+        except ValueError:  # timeout may interrupt the last receipt
+            continue
+        if not isinstance(event, dict):
+            continue
+        if 'installed' in event:
+            result['installed'].append(event['installed'])
+        if 'result' in event:
+            result = event['result']
+        if 'cleanup' in event:
+            cleanup = event['cleanup']
+    error = failure or result['error']
+    line = 'x_inbox=' + ('ok' if error is None else f'error code={error}')
+    line += ' installed=' + (','.join(result['installed']) or 'none')
+    if result['pruned']:
+        line += f' pruned={result["pruned"]}'
+    if result['prune_error']:
+        line += f' prune_error={result["prune_error"]}'
+    print(line, flush=True)
+    if cleanup:
+        print(f'x_inbox_cleanup=failed error={cleanup["error"]} count={cleanup["count"]}', flush=True)
 
 
 def main_only_rejection(output, candidates):
@@ -351,7 +363,7 @@ def run_cycle(code_sha, state, lock, x_inbox_repo=''):
             print(f'public_baseline_meta_sha256={hashlib.sha256(actual).hexdigest()}', flush=True)
 
         if x_inbox_repo:
-            import_x_inbox(x_inbox_repo, ROOT, env)
+            import_x_inbox(x_inbox_repo, ROOT, env, lock=lock)
         credentials, enabled = source_credentials(state)
         env.update(credentials)
         # Local preflight only: the collectors re-check when they open, and the site shows what was read.

@@ -717,11 +717,37 @@ exec '{GIT}' "$@"
 
     # --- optional X inbox (REBANG_X_INBOX_REPO) ------------------------------------------------
 
-    def pin_inbox_code(self):
+    def pin_inbox_code(self, slow_inbox=None):
         """Pin a code commit that also carries the receiver and the real X reader it validates with."""
         for path in ('tools/x_inbox.py', 'rebang/bloggers/__init__.py', 'rebang/bloggers/x.py',
                      'rebang/bloggers/common.py'):
             shutil.copyfile(ROOT / path, self.checkout / path)
+        if slow_inbox:
+            # Inject a blocking filesystem operation only into the synthetic checkout.
+            slow_operation = f'''
+import time
+if not getattr(shutil.rmtree, '_inbox_fixture', False):
+    real_rmtree, real_read_bytes = shutil.rmtree, Path.read_bytes
+    def delay_inbox(path, stage):
+        if stage == {slow_inbox!r}:
+            Path('.git/inbox-stage').write_text(stage)
+            time.sleep(3)
+            Path('.git/inbox-stage-finished').touch()
+    def slow_rmtree(path, *args, **kwargs):
+        if Path(path).name.startswith('.x-inbox-work-'):
+            delay_inbox(path, 'old-cleanup' if Path(path).name.endswith('-old') else 'final-cleanup')
+        return real_rmtree(path, *args, **kwargs)
+    def slow_read_bytes(path):
+        if path.name == '_dump.json' and path.parent.parent.name == 'x-dump':
+            delay_inbox(path, 'scan')
+        return real_read_bytes(path)
+    slow_rmtree._inbox_fixture = True
+    shutil.rmtree, Path.read_bytes = slow_rmtree, slow_read_bytes
+'''
+            for path in ('tools/mac_publish.py', 'tools/x_inbox.py'):
+                script = self.checkout / path
+                text = script.read_text().replace('X_INBOX_TIMEOUT = 120', 'X_INBOX_TIMEOUT = 1.5')
+                script.write_text(text.replace('import shutil\n', 'import shutil\n' + slow_operation, 1))
         # The stub collector records which X batches it could see when it ran.
         (self.checkout / 'rebang/bloggers/__main__.py').write_text(
             "import os, pathlib\nroot = pathlib.Path('var/rebang/x-dump')\n"
@@ -757,6 +783,41 @@ exec '{GIT}' "$@"
         self.assertEqual((self.checkout / '.git/bloggers-saw').read_text(), dump_id)
         self.assertEqual(self.inbox_leftovers(), [])
         self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
+
+    def assert_x_inbox_timeout_still_publishes(self, stage):
+        from tests.test_x_inbox import InboxRepo, batch, x_response
+
+        self.pin_inbox_code(slow_inbox=stage)
+        repo = InboxRepo(self.root)
+        new = batch()
+        repo.publish(new)
+        var = self.checkout / 'var/rebang'
+        if stage == 'old-cleanup':
+            (var / '.x-inbox-work-old').mkdir(parents=True)
+        if stage == 'scan':
+            old = batch(minutes_ago=180)
+            backup = var / 'x-dump' / old[0]
+            backup.mkdir(parents=True)
+            (backup / '_dump.json').write_bytes(old[1])
+            (backup / 'posts.json').write_bytes(x_response())
+        result = self.cycle(dict(self.env, REBANG_X_INBOX_REPO=repo.url))
+        self.assert_success(result)
+        self.assertEqual((self.checkout / '.git/inbox-stage').read_text(), stage)
+        installed = new[0] if stage == 'final-cleanup' else 'none'
+        self.assertIn(f'x_inbox=error code=x_inbox_timeout installed={installed}', result.stdout)
+        self.assertFalse((self.checkout / '.git/inbox-stage-finished').exists())
+        self.assertTrue((self.checkout / '.git/bloggers-saw').exists())
+        if stage == 'final-cleanup':
+            self.assertEqual((self.checkout / '.git/bloggers-saw').read_text(), new[0])
+
+    def test_x_inbox_slow_old_cleanup_times_out_and_publication_continues(self):
+        self.assert_x_inbox_timeout_still_publishes('old-cleanup')
+
+    def test_x_inbox_slow_local_scan_times_out_and_publication_continues(self):
+        self.assert_x_inbox_timeout_still_publishes('scan')
+
+    def test_x_inbox_slow_final_cleanup_times_out_and_publication_continues(self):
+        self.assert_x_inbox_timeout_still_publishes('final-cleanup')
 
     def test_x_inbox_failure_still_publishes_without_halt(self):
         self.pin_inbox_code()

@@ -2,7 +2,7 @@
 
 Called by tools/mac_publish.py once per round, before collection, only when REBANG_X_INBOX_REPO
 is set. Each round makes one fresh shallow bare clone inside a work directory that the publisher
-creates and always deletes afterwards; there is no long-lived Git cache to repair after a crash.
+creates and cleans up under a single deadline; there is no long-lived Git cache to repair after a crash.
 
 Inbox layout (branch main): dumps/<dump_id>.json (manifest) + dumps/<dump_id>.tar.gz (bundle),
 optionally README.md at the root. Nothing else. See docs/rebang-v1/X-INBOX.md.
@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 import re
 import resource
+import selectors
 import shutil
 import signal
 import subprocess
@@ -27,8 +28,16 @@ import sys
 import tarfile
 import tempfile
 import time
+from urllib.parse import urlsplit
 import zlib
 
+
+if __name__ == '__main__':
+    # Keep the inherited publisher lock until exit, even if the publisher dies.
+    # The worker's own alarm also bounds that orphaned lifetime.
+    _WORKER_END = float(sys.argv[2])
+    signal.signal(signal.SIGALRM, signal.SIG_DFL)
+    signal.setitimer(signal.ITIMER_REAL, max(0.000001, _WORKER_END - time.monotonic()))
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -38,7 +47,6 @@ from rebang.bloggers.x import dump_files, read_export  # noqa: E402
 
 
 MIB = 1024 * 1024
-TIMEOUT = 120                 # seconds for the whole inbox step, Git included
 MIN_FREE = 1024 * MIB         # skip the round when the x-dump filesystem has less free space
 DOWNLOAD_LIMIT = 48 * MIB     # hard per-file size limit (RLIMIT_FSIZE) on every Git process
 MAX_MANIFEST = 64 * 1024
@@ -47,6 +55,8 @@ MAX_TAR = 32 * MIB            # decompressed, headers and padding included
 MAX_MEMBER = 8 * MIB
 MAX_MEMBERS = 128
 MAX_TREE_ENTRIES = 64
+MAX_TREE_BYTES = 8 * 1024     # room for 64 allowed paths even with SHA-256 object IDs
+WORK_PREFIX = '.x-inbox-work-'
 MAX_NEW = 2                   # newest new batches imported per round
 KEEP = 2                      # owned batches kept in x-dump
 OWNER_MARKER = '.x-inbox-owned'
@@ -64,8 +74,9 @@ class InboxError(Exception):
 
 
 class Deadline:
-    def __init__(self, seconds):
-        self.end = time.monotonic() + seconds
+    def __init__(self, end, *, worker=False):
+        self.end = end
+        self.worker = worker
 
     def left(self):
         left = self.end - time.monotonic()
@@ -83,9 +94,25 @@ def _limit_child(limit):
     return apply
 
 
-def git(args, *, env, deadline, limit, cwd=None):
-    """Run git in its own process group under a file-size limit; kill the whole group on timeout.
-    stderr is discarded so URLs or credential hints never reach the publisher's log."""
+def _tree_output(pipe, deadline):
+    data = bytearray()
+    entries = 0
+    with selectors.DefaultSelector() as selector:
+        selector.register(pipe, selectors.EVENT_READ)
+        while True:
+            if not selector.select(deadline.left()):
+                raise InboxError('x_inbox_timeout')
+            chunk = os.read(pipe.fileno(), min(4096, MAX_TREE_BYTES + 1 - len(data)))
+            if not chunk:
+                return data
+            entries += chunk.count(b'\0')
+            data.extend(chunk)
+            if len(data) > MAX_TREE_BYTES or entries > MAX_TREE_ENTRIES:
+                raise InboxError('x_inbox_layout')
+
+
+def git(args, *, env, deadline, limit, cwd=None, tree=False):
+    """Bound Git's disk writes and discard stderr, which may contain credential hints."""
     command = ['git', '-c', 'protocol.allow=never', '-c', 'protocol.file.allow=always',
                '-c', 'protocol.https.allow=always', '-c', 'protocol.ssh.allow=always',
                '-c', 'credential.interactive=false', '-c', 'core.hooksPath=/dev/null',
@@ -95,19 +122,33 @@ def git(args, *, env, deadline, limit, cwd=None):
     child_env = dict(env, GIT_TERMINAL_PROMPT='0', LC_ALL='C',
                      GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ControlMaster=no -o ControlPath=none '
                                      '-o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=2')
+    deadline.left()
     process = subprocess.Popen(command, cwd=cwd, env=child_env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                               stderr=subprocess.DEVNULL, start_new_session=True, preexec_fn=_limit_child(limit))
+                               stderr=subprocess.DEVNULL, start_new_session=not deadline.worker,
+                               preexec_fn=_limit_child(limit))
     try:
-        output, _ = process.communicate(timeout=deadline.left())
+        if tree:
+            output = _tree_output(process.stdout, deadline)
+            process.wait(timeout=deadline.left())
+        else:
+            output, _ = process.communicate(timeout=deadline.left())
     except subprocess.TimeoutExpired:
         raise InboxError('x_inbox_timeout') from None
     finally:
         if process.returncode is None:
             try:
-                os.killpg(process.pid, signal.SIGKILL)
+                if deadline.worker:
+                    process.kill()  # the publisher supervises the whole worker group
+                else:
+                    os.killpg(process.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-            process.communicate()
+            except PermissionError:
+                # macOS can report EPERM for a group whose leader just exited.
+                process.kill()
+        process.stdout.close()
+        if process.returncode is None:
+            process.wait()
     if process.returncode:
         raise InboxError('x_inbox_fetch_failed')
     return output
@@ -138,12 +179,11 @@ def read_tree(clone, *, env, deadline, limit):
     """Exact layout check from tree metadata only (nothing is checked out). Returns
     {dump_id: {'json': (blob, size), 'tar.gz': (blob, size)}}."""
     listing = git(['--git-dir', str(clone), 'ls-tree', '-r', '-z', '--long', '--full-tree', 'HEAD'],
-                  env=env, deadline=deadline, limit=limit)
-    entries = [line for line in listing.split(b'\0') if line]
-    if len(entries) > MAX_TREE_ENTRIES:
+                  env=env, deadline=deadline, limit=limit, tree=True)
+    if listing and not listing.endswith(b'\0'):
         raise InboxError('x_inbox_layout')
     batches = {}
-    for entry in entries:
+    for entry in listing.split(b'\0')[:-1]:
         info, _, raw_path = entry.partition(b'\t')
         fields = info.split()
         try:
@@ -158,7 +198,7 @@ def read_tree(clone, *, env, deadline, limit):
         match = TREE_PATH.fullmatch(path)
         if not match:
             raise InboxError('x_inbox_layout')
-        batches.setdefault(match[1], {})[match[2]] = (fields[2].decode(), int(fields[3]))
+        batches.setdefault(match[1], {})[match[2]] = (fields[2].decode('ascii'), int(fields[3]))
     if any(set(parts) != {'json', 'tar.gz'} for parts in batches.values()):
         raise InboxError('x_inbox_layout')  # a manifest without its bundle, or the reverse
     return batches
@@ -258,24 +298,26 @@ def _owned(directory):
 
 
 def _usable(directory, now):
-    """Local candidates must have an explicit fresh receipt and bounded readable exports."""
+    """Rank fresh backups, or count manual exports regardless of receipt or age (now=None)."""
     try:
-        meta_file = directory / '_dump.json'
-        if meta_file.is_symlink() or not meta_file.is_file() or meta_file.stat().st_size > MAX_MANIFEST:
-            return False
-        meta = parse_json(meta_file.read_bytes())
-        stamp = _timestamp(meta.get('generated_at')) if isinstance(meta, dict) else None
-        if stamp is None or not now - timedelta(hours=X_STALE_HOURS) <= stamp <= now + timedelta(minutes=5):
-            return False
+        if now is not None:
+            meta_file = directory / '_dump.json'
+            if meta_file.is_symlink() or not meta_file.is_file() or meta_file.stat().st_size > MAX_MANIFEST:
+                return False
+            meta = parse_json(meta_file.read_bytes())
+            stamp = _timestamp(meta.get('generated_at')) if isinstance(meta, dict) else None
+            if stamp is None or not now - timedelta(hours=X_STALE_HOURS) <= stamp <= now + timedelta(minutes=5):
+                return False
         files = dump_files(directory)
-        if not files or len(files) > MAX_MEMBERS or any(f.is_symlink() or f.stat().st_size > MAX_MEMBER for f in files):
+        if not files:
             return False
-        if sum(f.stat().st_size for f in files) > MAX_TAR:
-            return False
+        if (len(files) > MAX_MEMBERS or any(f.is_symlink() or f.stat().st_size > MAX_MEMBER for f in files)
+                or sum(f.stat().st_size for f in files) > MAX_TAR):
+            return now is None  # reserve a slot for a manual export we cannot safely verify
         (posts, _, _), _ = read_export(directory, ())
         return any(post.get('_main') is True for post in posts.values())
     except (InboxError, OSError, ValueError, TypeError, KeyError, OverflowError):
-        return False
+        return now is None
 
 
 def _install_exclusive(source, target):
@@ -302,46 +344,91 @@ def _install_exclusive(source, target):
     raise OSError(error, os.strerror(error))
 
 
-def prune(target_root, work, keep, now):
-    """Move expired owned batches out of reader view into the work directory (deleted later by the
-    publisher). Only directories this receiver created, with a well-formed name, are touched."""
-    if not target_root.is_dir() or target_root.is_symlink():
-        return []
-    owned = sorted(d.name for d in target_root.iterdir() if _owned(d))
+def _validate_repo(repo):
+    # Check raw delimiters too: urlsplit strips certain control characters and
+    # cannot distinguish an empty query/fragment from an absent delimiter.
+    if re.search(r'[\x00-\x20\x7f\\?#]', repo):
+        raise InboxError('x_inbox_repo_invalid')
+    try:
+        url = urlsplit(repo)
+        url.port  # reject malformed ports without including their value in any log
+    except ValueError:
+        raise InboxError('x_inbox_repo_invalid') from None
+    if '@' in url.netloc or '%' in url.netloc:
+        raise InboxError('x_inbox_repo_invalid')
+    if url.scheme == 'file' and repo.startswith('file://') and url.netloc in ('', 'localhost') and url.path.startswith('/'):
+        return
+    if url.scheme in ('https', 'ssh') and url.hostname and url.path.startswith('/'):
+        return
+    raise InboxError('x_inbox_repo_invalid')
+
+
+def _local_batches(target_root, now, deadline):
+    owned, manual, newest = [], 0, ''
+    if target_root.is_dir():
+        for directory in target_root.iterdir():
+            deadline.left()
+            if not directory.is_dir():
+                continue
+            if directory.is_symlink():
+                # An alias may be visible to the reader. Reserve space without reading its exports.
+                manual += bool(dump_files(directory))
+                continue
+            complete = DUMP_ID.fullmatch(directory.name) is not None and _usable(directory, now)
+            if complete:
+                newest = max(newest, directory.name)
+            if _owned(directory):
+                owned.append((complete, directory.name))
+            elif complete or _usable(directory, None):
+                manual += 1
+    return [name for _, name in sorted(owned)], manual, newest
+
+
+def _prune(target_root, work, owned, keep, result, deadline):
+    """Retire the worst backups first; each rename immediately frees one reader slot."""
     if len(owned) <= keep:
-        return []
-    preferred = sorted(owned, key=lambda name: (_usable(target_root / name, now), name), reverse=True)
-    expired = sorted(preferred[keep:])
-    retired = work / 'retired'
-    if expired:
+        return
+    count = len(owned) - keep
+    try:
+        retired = work / 'retired'
         retired.mkdir(exist_ok=True)
-    for name in expired:
-        os.rename(target_root / name, retired / name)
-    return expired
+        for name in owned[:count]:
+            deadline.left()
+            os.rename(target_root / name, retired / name)
+            result['pruned'].append(name)
+        del owned[:count]
+    except OSError as error:
+        result['prune_error'] = type(error).__name__
+        raise InboxError('x_inbox_prune_failed') from None
 
 
-def pull(repo, work, target_root, *, env, timeout=TIMEOUT, min_free=MIN_FREE, download_limit=DOWNLOAD_LIMIT,
-         keep=KEEP, max_new=MAX_NEW, now=None):
-    """One inbox round. Returns dict(installed=[...], pruned=[...], error=None|code, prune_error=None|name).
-    work must be an empty private directory on the same filesystem as target_root."""
+def pull(repo, work, target_root, *, env, timeout=120, min_free=MIN_FREE, download_limit=DOWNLOAD_LIMIT,
+         keep=KEEP, max_new=MAX_NEW, now=None, deadline=None, on_install=None):
+    """Return installed/pruned IDs and error codes. The publisher serializes this work."""
+    deadline = deadline or Deadline(time.monotonic() + timeout)
     result = dict(installed=[], pruned=[], error=None, prune_error=None)
-    deadline = Deadline(timeout)
     now = now or datetime.now(timezone.utc)
     work, target_root = Path(work), Path(target_root)
     try:
+        deadline.left()
+        _validate_repo(repo)
         if os.path.lexists(target_root) and (target_root.is_symlink() or not target_root.is_dir()):
             raise InboxError('x_inbox_target_invalid')
+        owned, manual, newest = _local_batches(target_root, now, deadline)
+        slots = max(0, keep - manual)
+        round_dir = None
+        if len(owned) > slots:
+            round_dir = Path(tempfile.mkdtemp(prefix='round-', dir=work))
+            _prune(target_root, round_dir, owned, slots, result, deadline)
+        if slots == 0:
+            raise InboxError('x_inbox_capacity')
         if shutil.disk_usage(target_root.parent).free < min_free:
             raise InboxError('x_inbox_disk_low')
-        work = Path(tempfile.mkdtemp(prefix='round-', dir=work))  # fresh even if work is reused
+        work = round_dir or Path(tempfile.mkdtemp(prefix='round-', dir=work))
         clone = work / 'inbox.git'
         git(['clone', '--quiet', '--bare', '--depth=1', '--single-branch', '--branch=main', '--no-tags',
              '--', repo, str(clone)], env=env, deadline=deadline, limit=download_limit)
         batches = read_tree(clone, env=env, deadline=deadline, limit=download_limit)
-        present = [d.name for d in target_root.iterdir()
-                   if DUMP_ID.fullmatch(d.name) and not d.is_symlink() and d.is_dir()
-                   and _usable(d, now)] if target_root.is_dir() else []
-        newest = max(present, default='')
         # Older than what we already have (or the same batch again): ignore, never overwrite.
         candidates = sorted(dump_id for dump_id in batches
                             if dump_id > newest and not os.path.lexists(target_root / dump_id))[-max_new:]
@@ -357,26 +444,75 @@ def pull(repo, work, target_root, *, env, timeout=TIMEOUT, min_free=MIN_FREE, do
                 bundle = read_blob(clone, *parts['tar.gz'], MAX_BUNDLE,
                                    env=env, deadline=deadline, limit=download_limit)
                 validate(dump_id, manifest, bundle, staging, now)
-            except InboxError as error:  # skip this batch only; a newer valid one may still install
+            except InboxError as error:
+                if error.code == 'x_inbox_timeout':
+                    raise
                 result['error'] = result['error'] or error.code
                 continue
             (staging / OWNER_MARKER).write_text(dump_id + '\n', encoding='ascii')
-            deadline.left()
             target_root.mkdir(mode=0o755, exist_ok=True)
             if target_root.is_symlink():
                 raise InboxError('x_inbox_target_invalid')
             if os.path.lexists(target_root / dump_id):
                 continue
+            _prune(target_root, work, owned, slots - 1, result, deadline)
+            deadline.left()
             if _install_exclusive(staging, target_root / dump_id):
+                owned.append(dump_id)
                 result['installed'].append(dump_id)
+                if on_install:
+                    on_install(dump_id)
     except InboxError as error:
-        result['error'] = result['error'] or error.code
+        if error.code == 'x_inbox_timeout' or result['error'] is None:
+            result['error'] = error.code
     except Exception:  # noqa: BLE001 - keep what was installed; report one code, never raise
         result['error'] = result['error'] or 'x_inbox_internal'
-    # Only retire a batch when this round successfully installed a newer, verified replacement.
-    if result['error'] is None and result['installed']:
-        try:
-            result['pruned'] = prune(target_root, work, keep, now)
-        except OSError as error:
-            result['prune_error'] = type(error).__name__
     return result
+
+
+def _cleanup_work(var):
+    first, count = None, 0
+    try:
+        if var.is_dir():
+            for path in var.iterdir():
+                if not path.name.startswith(WORK_PREFIX):
+                    continue
+                try:
+                    if path.is_symlink() or not path.is_dir():
+                        path.unlink()
+                    else:
+                        shutil.rmtree(path)
+                except OSError as error:
+                    first = first or type(error).__name__
+                    count += 1
+    except OSError as error:
+        first = first or type(error).__name__
+        count += 1
+    return first, count
+
+
+def _receive(var, repo, env, deadline, report):
+    """All receiver filesystem work runs inside the publisher's deadline."""
+    failures = [_cleanup_work(var)]
+    result = dict(installed=[], pruned=[], error='x_inbox_internal', prune_error=None)
+    try:
+        deadline.left()
+        var.mkdir(parents=True, exist_ok=True)
+        work = Path(tempfile.mkdtemp(prefix=WORK_PREFIX, dir=var))
+        result = pull(repo, work, var / 'x-dump', env=env, deadline=deadline,
+                      on_install=lambda dump_id: report(installed=dump_id))
+    except InboxError as error:
+        result['error'] = error.code
+    except Exception:
+        pass
+    finally:
+        report(result=dict(result, pruned=len(result['pruned'])))
+        failures.append(_cleanup_work(var))
+        errors = [name for name, _ in failures if name]
+        if errors:
+            report(cleanup=dict(error=errors[0], count=sum(count for _, count in failures)))
+
+
+if __name__ == '__main__':
+    _receive(Path(sys.argv[1]), os.environ.pop('REBANG_X_INBOX_REPO'), os.environ,
+             Deadline(_WORKER_END, worker=True), lambda **event: print(json.dumps(event), flush=True))
