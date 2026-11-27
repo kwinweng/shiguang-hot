@@ -15019,7 +15019,7 @@
         {
           "category": "科技",
           "day": "2026-10-29",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-29 06:00",
           "id": "8bd2c06c3e1a8d02ddc7",
           "image": "",
@@ -47349,7 +47349,7 @@
         {
           "category": "科技",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 04:00",
           "id": "4c8e26d7c5478a214832",
           "image": "",
