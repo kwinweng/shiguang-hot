@@ -1,6 +1,48 @@
 {
   "messages": [
     {
+      "category": "观星",
+      "day": "2026-11-27",
+      "id": "trial-efb98853ae8d82491df7",
+      "image": "",
+      "link": "https://earthsky.org/brightest-stars/bellatrix-3rd-brightest-star-in-orion/",
+      "section": "play",
+      "source": "earthsky",
+      "source_name": "EarthSky",
+      "summary": "Orion's shoulder star Bellatrix has a name that means \"female warrior.\" Bellatrix is one of the hottest stars you can see without optical aid. The post Bellatrix is Orion’s 3rd-brightest star first appeared on EarthSky .",
+      "text": "Orion's shoulder star Bellatrix has a name that means \"female warrior.\" Bellatrix is one of the hottest stars you can see without optical aid. The post Bellatrix is Orion’s 3rd-brightest star first appeared on EarthSky .",
+      "time": "2026-11-27T11:59:00+00:00",
+      "title": "Bellatrix is Orion’s 3rd-brightest star"
+    },
+    {
+      "category": "影视",
+      "day": "2026-11-27",
+      "id": "trial-2f9bb1f2220315a76b81",
+      "image": "https://www.whats-on-netflix.com/wp-content/uploads/2026/11/whats-new-on-netflix-uk-this-week-november-27-2026.jpg",
+      "link": "https://www.whats-on-netflix.com/whats-new/uk/the-hunting-wives-netflix-uk-36-new-movies-shows/",
+      "section": "play",
+      "source": "whats-on-netflix",
+      "source_name": "What's on Netflix",
+      "summary": "Looking for your next UK binge? A massive anime drop, a Peter Berg war epic, and the scandalous drama 'The Hunting Wives' top this week's Netflix arrivals.",
+      "text": "Looking for your next UK binge? A massive anime drop, a Peter Berg war epic, and the scandalous drama 'The Hunting Wives' top this week's Netflix arrivals.",
+      "time": "2026-11-27T11:35:26+00:00",
+      "title": "‘The Hunting Wives’ Drops Both Seasons as Netflix UK Adds 36 New Movies and Shows"
+    },
+    {
+      "category": "影视",
+      "day": "2026-11-27",
+      "id": "trial-33c59660dd0ae9f3416c",
+      "image": "https://www.whats-on-netflix.com/wp-content/uploads/2026/11/best-netflix-movies-of-2026-according-to-rotten-tomatoes.jpg",
+      "link": "https://www.whats-on-netflix.com/what-to-watch/the-best-netflix-movies-of-2026-according-to-rotten-tomatoes/",
+      "section": "play",
+      "source": "whats-on-netflix",
+      "source_name": "What's on Netflix",
+      "summary": "2026 has been a quieter year for Netflix films, so which have scored best on the Rotten Tomatoes Tomatometer?",
+      "text": "2026 has been a quieter year for Netflix films, so which have scored best on the Rotten Tomatoes Tomatometer?",
+      "time": "2026-11-27T11:26:28+00:00",
+      "title": "The Best Netflix Movies of 2026, According to Rotten Tomatoes"
+    },
+    {
       "category": "游戏",
       "day": "2026-11-27",
       "id": "trial-de03c440b201c4afe9ea",
