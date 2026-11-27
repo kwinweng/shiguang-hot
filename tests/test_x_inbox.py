@@ -1,5 +1,6 @@
 """X inbox receiver: synthetic local Git repositories only. No network, accounts or real exports."""
 from datetime import datetime, timedelta, timezone
+import fcntl
 import gzip
 import hashlib
 import importlib
@@ -99,7 +100,9 @@ class InboxRepo:
             mode, data = value if isinstance(value, tuple) else ('100644', value)
             blob = self.git('hash-object', '-w', '--stdin', input=data)
             self.git('update-index', '--add', '--cacheinfo', f'{mode},{blob},{path}')
-        tree = self.git('write-tree')
+        self.commit_tree(self.git('write-tree'))
+
+    def commit_tree(self, tree):
         parents = ['-p', self.parent] if self.parent else []
         self.parent = self.git('commit-tree', tree, *parents, '-m', 'Export')
         self.git('update-ref', 'refs/heads/main', self.parent)
@@ -291,14 +294,31 @@ class XInboxPullTests(unittest.TestCase):
             with self.subTest(label):
                 self.assert_rejected('x_inbox_layout', good, **change)
 
+    def test_extra_empty_tree_is_rejected_at_root_or_under_dumps(self):
+        empty = self.repo.git('mktree', input=b'')
+        good = batch()
+        self.repo.publish(good)
+        dumps = self.repo.git('rev-parse', 'HEAD:dumps')
+        blob_entries = self.repo.git('ls-tree', dumps).encode() + b'\n'
+        for nested in (False, True):
+            with self.subTest(nested=nested):
+                extra = f'040000 tree {empty}\tempty\n'.encode()
+                dumps_tree = self.repo.git('mktree', input=blob_entries + extra) if nested else dumps
+                root = f'040000 tree {dumps_tree}\tdumps\n'.encode()
+                self.repo.commit_tree(self.repo.git('mktree', input=root if nested else root + extra))
+                self.assertEqual(self.pull()['error'], 'x_inbox_layout')
+                self.assertEqual(self.installed(), [])
+
     # --- hard limits, timeouts and disk ------------------------------------------------------
 
-    def test_tree_accepts_64_entries_and_rejects_65(self):
+    def test_tree_accepts_64_entries_and_rejects_65_including_dumps_tree(self):
         batches = [batch(minutes_ago=60 + i) for i in range(32)]
-        self.repo.publish(*batches)
+        # 31 pairs + dumps + README = 64; 32 pairs + dumps = 65.
+        self.repo.publish(*batches[:-1], extra={'README.md': b'x'})
         result = self.pull()
         self.assertEqual((result['error'], len(result['installed'])), (None, 2))
-        self.assert_rejected('x_inbox_layout', *batches, extra={'README.md': b'x'})
+        shutil.rmtree(self.target)
+        self.assert_rejected('x_inbox_layout', *batches)
 
     def test_tree_output_stops_at_the_byte_or_entry_limit(self):
         # Generate a stream much larger than the receiver should ever read. A file
@@ -415,7 +435,47 @@ class XInboxPullTests(unittest.TestCase):
 
     # --- retention -----------------------------------------------------------------------------
 
-    def test_retention_keeps_newest_two_owned_batches_and_never_touches_others(self):
+    def test_every_foreign_entry_reserves_one_slot_and_is_never_removed(self):
+        older, newest = [batch(minutes_ago=m) for m in (120, 60)]
+        self.repo.publish(older, newest)
+        for entry_type in ('dangling link', 'alias to incoming', 'zero-post export', 'ordinary file', 'empty dir'):
+            with self.subTest(entry_type=entry_type):
+                shutil.rmtree(self.target, ignore_errors=True)
+                self.target.mkdir()
+                foreign = self.target / 'foreign'
+                if entry_type == 'dangling link':
+                    foreign.symlink_to(self.root / 'absent')
+                elif entry_type == 'alias to incoming':
+                    foreign.symlink_to(newest[0], target_is_directory=True)
+                elif entry_type == 'zero-post export':
+                    foreign.mkdir()
+                    (foreign / 'posts.json').write_text('{"data":[],"meta":{"result_count":0}}')
+                elif entry_type == 'ordinary file':
+                    foreign.write_text('manual file')
+                else:
+                    foreign.mkdir()
+                stat = foreign.lstat()
+                result = self.pull()
+                self.assertEqual((result['error'], result['installed'], result['pruned']), (None, [newest[0]], []))
+                self.assertEqual(self.installed(), sorted([foreign.name, newest[0]]))
+                self.assertEqual(foreign.lstat().st_ino, stat.st_ino)
+                if entry_type == 'alias to incoming':
+                    self.assertEqual((foreign / 'posts.json').read_bytes(),
+                                     (self.target / newest[0] / 'posts.json').read_bytes())
+
+    def test_full_slots_refuse_install_without_fetch_or_owned_rotation(self):
+        old, new = [batch(minutes_ago=m) for m in (120, 60)]
+        self.repo.publish(old)
+        self.assertEqual(self.pull()['installed'], [old[0]])
+        (self.target / 'foreign').write_text('leave alone')
+        self.repo.publish(new)
+        with mock.patch.object(self.inbox, 'git', side_effect=AssertionError('must not fetch')) as git:
+            result = self.pull()
+        git.assert_not_called()
+        self.assertEqual((result['error'], result['installed'], result['pruned']), ('x_inbox_slots_full', [], []))
+        self.assertEqual(self.installed(), sorted([old[0], 'foreign']))
+
+    def test_retention_retires_only_owned_excess_and_never_touches_others(self):
         base = datetime(2026, 11, 1, tzinfo=BEIJING)
         owned = [(base + timedelta(hours=2 * i)).strftime('%Y%m%dT%H%M') for i in range(26)]
         for name in owned:
@@ -437,105 +497,92 @@ class XInboxPullTests(unittest.TestCase):
         new = batch()
         self.repo.publish(new)
         result = self.pull()
-        self.assertEqual((result['installed'], result['error']), ([new[0]], None))
-        kept_owned = sorted(owned + [new[0]])[-2:]
-        expired = sorted(owned + [new[0]])[:-2]
+        self.assertEqual((result['installed'], result['error']), ([], 'x_inbox_slots_full'))
+        expired = owned
         self.assertEqual(sorted(result['pruned']), expired)
-        self.assertEqual(self.installed(), sorted(kept_owned + manual + [wrong_marker, '20261003T0000']))
+        self.assertEqual(self.installed(), sorted(manual + [wrong_marker, '20261003T0000']))
         self.assertTrue((outside / '.x-inbox-owned').exists())
         # Expired batches leave reader view by rename into the work directory; the publisher deletes it.
         for name in expired:
             self.assertFalse((self.target / name).exists())
         self.assertEqual(len([p for p in self.work.rglob('posts.json')]), len(expired))
 
-    def test_retention_preserves_a_readable_backup_over_a_damaged_newer_batch(self):
-        old, damaged, replacement = [batch(minutes_ago=m) for m in (180, 120, 60)]
-        self.repo.publish(old, damaged)
-        self.assertEqual(self.pull()['installed'], [old[0], damaged[0]])
-        (self.target / damaged[0] / 'posts.json').write_text('{}')
-        self.repo.publish(replacement)
+    def test_existing_excess_prefers_pruning_a_damaged_owned_batch(self):
+        old, backup, damaged = [batch(minutes_ago=m) for m in (180, 120, 60)]
+        self.repo.publish(old, backup)
+        self.assertEqual(self.pull()['installed'], [old[0], backup[0]])
+        (self.target / damaged[0]).mkdir()
+        (self.target / damaged[0] / '.x-inbox-owned').write_text(damaged[0] + '\n')
         result = self.pull()
-        self.assertEqual((result['installed'], result['pruned']), ([replacement[0]], [damaged[0]]))
-        self.assertEqual(self.installed(), [old[0], replacement[0]])
+        self.assertEqual((result['installed'], result['pruned']), ([], [damaged[0]]))
+        self.assertEqual(self.installed(), [old[0], backup[0]])
 
     def test_install_is_exclusive_even_if_an_empty_directory_appears_at_commit(self):
         incoming = batch()
         self.repo.publish(incoming)
         path = self.target / incoming[0]
-        real = os.path.lexists
+        install = self.inbox._install_exclusive
 
-        def race(candidate):
-            result = real(candidate)
-            if Path(candidate) == path and self.target.is_dir() and not result:
-                path.mkdir()
-            return result
+        def race(source, target):
+            path.mkdir()
+            return install(source, target)
 
-        with mock.patch.object(self.inbox.os.path, 'lexists', race):
+        with mock.patch.object(self.inbox, '_install_exclusive', race):
             result = self.pull()
         self.assertEqual((result['installed'], result['error']), ([], None))
         self.assertEqual(list(path.iterdir()), [])
 
-    def test_retention_converges_on_empty_round_or_failed_fetch_or_low_disk(self):
-        names = [batch(minutes_ago=m)[0] for m in (240, 180, 120)]
-        self.repo.publish()
-        url = self.repo.url
-        for expected in (None, 'x_inbox_fetch_failed', 'x_inbox_disk_low'):
-            with self.subTest(expected=expected):
-                for name in names:
-                    (self.target / name).mkdir(parents=True, exist_ok=True)
-                    (self.target / name / '.x-inbox-owned').write_text(name + '\n')
-                self.repo.url = (self.root / 'missing.git').as_uri() if expected == 'x_inbox_fetch_failed' else url
-                options = {'min_free': 1 << 62} if expected == 'x_inbox_disk_low' else {}
-                result = self.pull(**options)
-                self.assertEqual((result['error'], result['installed'], result['pruned']), (expected, [], names[:1]))
-                self.assertEqual(self.installed(), names[1:])
-
-    def test_retention_caps_mixed_round_in_either_order_and_next_empty_round(self):
-        old, backup, first, second = [batch(minutes_ago=m) for m in (240, 180, 120, 60)]
-        for good, invalid in ((first, second), (second, first)):
-            with self.subTest(valid=good[0]):
-                shutil.rmtree(self.target, ignore_errors=True)
-                self.repo.publish(old, backup)
-                self.assertEqual(self.pull()['installed'], [old[0], backup[0]])
-                self.repo.publish(good, (invalid[0], invalid[1], b'invalid'))
-                result = self.pull()
-                self.assertEqual((result['error'], result['installed'], result['pruned']),
-                                 ('x_inbox_sha256_mismatch', [good[0]], [old[0]]))
-                self.assertEqual(self.installed(), [backup[0], good[0]])
-                self.repo.publish()
-                self.assertEqual(self.pull()['installed'], [])
-                self.assertEqual(self.installed(), [backup[0], good[0]])
-
-    def test_retention_makes_room_before_each_of_two_valid_installs(self):
-        old, backup, first, second = [batch(minutes_ago=m) for m in (240, 180, 120, 60)]
-        self.repo.publish(old, backup)
-        self.assertEqual(self.pull()['installed'], [old[0], backup[0]])
-        self.repo.publish(first, second)
-        install = self.inbox._install_exclusive
-
-        def check_install(source, target):
-            self.assertLess(len(self.installed()), 2)
-            return install(source, target)
-
-        with mock.patch.object(self.inbox, '_install_exclusive', check_install):
-            result = self.pull()
-        self.assertEqual((result['error'], result['installed']), (None, [first[0], second[0]]))
-        self.assertEqual(self.installed(), [first[0], second[0]])
-
-    def test_retention_refuses_install_when_a_slot_cannot_be_retired(self):
+    def test_retention_does_not_rotate_two_owned_entries(self):
         old, backup, new = [batch(minutes_ago=m) for m in (180, 120, 60)]
         self.repo.publish(old, backup)
         self.assertEqual(self.pull()['installed'], [old[0], backup[0]])
         self.repo.publish(new)
-        with mock.patch.object(self.inbox.os, 'rename', side_effect=PermissionError('retire failed')):
-            result = self.pull()
-        self.assertEqual((result['installed'], result['prune_error']), ([], 'PermissionError'))
+        result = self.pull()
+        self.assertEqual((result['error'], result['installed'], result['pruned']), ('x_inbox_slots_full', [], []))
         self.assertEqual(self.installed(), [old[0], backup[0]])
 
-    def test_retention_is_safe_if_interrupted_immediately_after_atomic_install(self):
+    def test_one_opening_can_fall_back_if_newest_batch_is_invalid(self):
+        old, good, invalid = [batch(minutes_ago=m) for m in (180, 120, 60)]
+        self.repo.publish(old)
+        self.assertEqual(self.pull()['installed'], [old[0]])
+        self.repo.publish(good, (invalid[0], invalid[1], b'invalid'))
+        result = self.pull()
+        self.assertEqual((result['error'], result['installed'], result['pruned']),
+                         ('x_inbox_sha256_mismatch', [good[0]], []))
+        self.assertEqual(self.installed(), [old[0], good[0]])
+
+    def test_install_rechecks_capacity_after_validation(self):
+        new = batch()
+        self.repo.publish(new)
+        validate = self.inbox.validate
+
+        def fill_slots(*args):
+            validate(*args)
+            self.target.mkdir()
+            for name in ('one', 'two'):
+                (self.target / name).touch()
+
+        with mock.patch.object(self.inbox, 'validate', fill_slots):
+            result = self.pull()
+        self.assertEqual((result['error'], result['installed']), ('x_inbox_slots_full', []))
+        self.assertEqual(self.installed(), ['one', 'two'])
+
+    def test_retention_refuses_install_when_excess_cannot_be_retired(self):
         old, backup, new = [batch(minutes_ago=m) for m in (180, 120, 60)]
         self.repo.publish(old, backup)
         self.assertEqual(self.pull()['installed'], [old[0], backup[0]])
+        (self.target / 'foreign').touch()
+        self.repo.publish(new)
+        with mock.patch.object(self.inbox.os, 'rename', side_effect=PermissionError('retire failed')):
+            result = self.pull()
+        self.assertEqual((result['error'], result['installed'], result['prune_error']),
+                         ('x_inbox_prune_failed', [], 'PermissionError'))
+        self.assertEqual(self.installed(), sorted([old[0], backup[0], 'foreign']))
+
+    def test_retention_is_safe_if_interrupted_immediately_after_atomic_install(self):
+        backup, new = [batch(minutes_ago=m) for m in (120, 60)]
+        self.repo.publish(backup)
+        self.assertEqual(self.pull()['installed'], [backup[0]])
         self.repo.publish(new)
         install = self.inbox._install_exclusive
 
@@ -546,7 +593,7 @@ class XInboxPullTests(unittest.TestCase):
         with mock.patch.object(self.inbox, '_install_exclusive', interrupted), self.assertRaises(SystemExit):
             self.pull()
         self.assertEqual(self.installed(), [backup[0], new[0]])
-        self.assertEqual(self.pull()['installed'], [])
+        self.assertEqual(self.pull()['error'], 'x_inbox_slots_full')
         self.assertEqual(self.installed(), [backup[0], new[0]])
 
     def test_retention_preserves_readable_manual_batches_and_counts_them_toward_capacity(self):
@@ -557,8 +604,8 @@ class XInboxPullTests(unittest.TestCase):
         (self.target / old[0] / '_dump.json').unlink()  # legacy manual exports can lack a receipt
         self.repo.publish(new)
         result = self.pull()
-        self.assertEqual((result['installed'], result['pruned']), ([new[0]], [backup[0]]))
-        self.assertEqual(self.installed(), [old[0], new[0]])
+        self.assertEqual((result['error'], result['installed'], result['pruned']), ('x_inbox_slots_full', [], []))
+        self.assertEqual(self.installed(), [old[0], backup[0]])
 
     def test_retention_does_not_open_exports_behind_a_manual_symlink(self):
         old, new = [batch(minutes_ago=m) for m in (120, 60)]
@@ -575,7 +622,7 @@ class XInboxPullTests(unittest.TestCase):
 
         with mock.patch.object(self.inbox, 'read_export', no_symlink_read):
             result = self.pull()
-        self.assertEqual((result['error'], result['installed']), (None, [new[0]]))
+        self.assertEqual((result['error'], result['installed']), ('x_inbox_slots_full', []))
         self.assertTrue(alias.is_symlink())
 
     def test_symlinked_target_root_is_refused(self):
@@ -658,11 +705,88 @@ class PublisherInboxStepTests(unittest.TestCase):
         self.assertEqual((events['result']['error'], events['result']['installed']), ('x_inbox_internal', []))
         self.assertEqual(self.work_dirs(), [])
 
+    def assert_worker_stops_git_group(self, *, parent_lost):
+        bin_dir = self.root / 'bin'
+        bin_dir.mkdir()
+        child_lock = self.root / 'git-child.lock'
+        ready = self.root / 'git-child.ready'
+        stop_at = 30 if parent_lost else 4
+        sleeper = (
+            'import fcntl, os, pathlib, time; '
+            f'lock = open({str(child_lock)!r}, "w"); fcntl.flock(lock, fcntl.LOCK_EX); '
+            f'pathlib.Path({str(ready)!r}).write_text(str(os.getpgrp())); time.sleep(60)'
+        )
+        wrapper = bin_dir / 'git'
+        wrapper.write_text(f'#!/bin/sh\n{shlex.quote(sys.executable)} -I -c {shlex.quote(sleeper)} &\nwait\n')
+        wrapper.chmod(0o755)
+        publish_lock = self.root / 'publish.lock'
+        driver = (
+            'import fcntl, sys; from pathlib import Path; '
+            f'sys.path.insert(0, {str(ROOT / "tools")!r}); import mac_publish; '
+            f'mac_publish.X_INBOX_TIMEOUT = {stop_at}; '
+            f'lock = open({str(publish_lock)!r}, "w"); fcntl.flock(lock, fcntl.LOCK_EX); '
+            f'mac_publish.import_x_inbox({self.repo.url!r}, Path({str(self.checkout)!r}), '
+            f'dict(PATH={str(bin_dir)!r} + ":" + {self.env["PATH"]!r}), lock=lock.fileno())'
+        )
+        parent = subprocess.Popen([sys.executable, '-I', '-c', driver], start_new_session=True,
+                                  stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        group = None
+        try:
+            for _ in range(150):
+                if ready.exists() and (group_id := ready.read_text()):
+                    group = int(group_id)
+                    break
+                time.sleep(0.02)
+            else:
+                self.fail('long-lived Git grandchild did not start')
+            self.assertNotEqual(group, parent.pid)
+            self.assertNotEqual(group, os.getpgrp())
+            with child_lock.open() as child, publish_lock.open() as lock:
+                with self.assertRaises(BlockingIOError):
+                    fcntl.flock(child, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                with self.assertRaises(BlockingIOError):
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                if parent_lost:
+                    parent.kill()
+                    parent.wait(timeout=5)
+                else:
+                    # The parent cannot run its own timeout handler while stopped.
+                    os.kill(parent.pid, signal.SIGSTOP)
+                end = time.monotonic() + (2 if parent_lost else stop_at + 1)
+                while True:
+                    try:
+                        fcntl.flock(child, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        break
+                    except BlockingIOError:
+                        self.assertLess(time.monotonic(), end, 'Git grandchild survived the worker shutdown')
+                        time.sleep(0.02)
+            if not parent_lost:
+                os.kill(parent.pid, signal.SIGCONT)
+                output, _ = parent.communicate(timeout=5)
+                self.assertIn(b'x_inbox=error code=x_inbox_timeout installed=none', output)
+        finally:
+            if group is not None:
+                try:
+                    os.killpg(group, signal.SIGKILL)
+                except (ProcessLookupError, PermissionError):
+                    pass
+            if parent.poll() is None:
+                parent.kill()
+            parent.wait(timeout=5)
+            parent.stdout.close()
+
+    def test_worker_kills_git_grandchild_after_publisher_is_killed(self):
+        self.assert_worker_stops_git_group(parent_lost=True)
+
+    def test_worker_kills_git_grandchild_at_deadline_without_publisher_help(self):
+        self.assert_worker_stops_git_group(parent_lost=False)
+
     def test_hard_kill_mid_clone_leaves_nothing_the_next_round_depends_on(self):
         # A previous round was SIGKILLed while git was writing: stale locks and a half pack remain.
         bin_dir = self.root / 'bin'
         bin_dir.mkdir()
-        (bin_dir / 'git').write_text(f'#!/bin/sh\ncase "$*" in *" clone "*) echo $PPID > {self.root}/cloning; exec sleep 60;; esac\n'
+        (bin_dir / 'git').write_text(f'#!/bin/sh\ncase "$*" in *" clone "*) '
+                                    f'ps -o pgid= -p "$$" > {self.root}/cloning; exec sleep 60;; esac\n'
                                     f'exec {GIT} "$@"\n')
         (bin_dir / 'git').chmod(0o755)
         driver = (f'import sys; sys.path.insert(0, {str(ROOT / "tools")!r}); import mac_publish; '

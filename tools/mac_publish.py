@@ -63,11 +63,11 @@ def import_x_inbox(repo, root, env, *, lock=None):
     process, output, failure = None, b'', None
     try:
         process = subprocess.Popen(
-            [sys.executable, '-I', str(ROOT / 'tools/x_inbox.py'), str(root / 'var/rebang'), str(end)],
+            [sys.executable, '-I', str(ROOT / 'tools/x_inbox.py'), str(root / 'var/rebang'), str(end), str(os.getpid())],
             cwd=root, env=dict(env, **{X_INBOX_ENV: repo}), pass_fds=() if lock is None else (lock,),
             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
         output, _ = process.communicate(timeout=max(0, end - time.monotonic()))
-        if process.returncode == -signal.SIGALRM:
+        if process.returncode == -signal.SIGKILL and time.monotonic() >= end:
             failure = 'x_inbox_timeout'
         elif process.returncode:
             failure = 'x_inbox_internal'
@@ -83,7 +83,7 @@ def import_x_inbox(repo, root, env, *, lock=None):
             except ProcessLookupError:
                 pass
             except PermissionError:
-                # macOS can report EPERM after the worker exits on its own alarm.
+                # macOS can report EPERM after the worker already killed its group.
                 try:
                     process.kill()
                 except OSError:
