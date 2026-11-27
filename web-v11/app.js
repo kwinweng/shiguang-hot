@@ -263,6 +263,7 @@
   async function loadAll(snapshot, fresh) {
     const epoch = dataEpoch;
     meta = snapshot;
+    L.setSourcePlatforms(channels());
     updateHealthFreshness();
     channels().forEach(c => {
       c.banner = remember(c.banner);
@@ -423,7 +424,7 @@
   function fixBrokenThumbs(scope) {
     $$('.feed-row .thumb img, .brow .thumb img', scope).forEach(img => {
       if (img._bound) return; img._bound = true;
-      img.addEventListener('error', () => { const row = img.closest('.feed-row, .brow'), th = img.closest('.thumb'); if (th) th.remove(); if (row) row.classList.add('noimg'); }, {once: true});
+      img.addEventListener('error', () => { const row = img.closest('.feed-row, .brow'), th = img.closest('.thumb'); if (th) th.remove(); if (row) { row.classList.add('noimg'); row.classList.remove('cover'); } }, {once: true});
     });
   }
   async function loadMore(slug) {
@@ -835,7 +836,7 @@
     if (blocks && blocks.length) {
       // 公众号 / 博客 / 抽出的新闻正文：按原文顺序；有译文 blocks 时直接显示中文，原文可展开
       const origBlocks = d.translated && it.blocks && d.blocks ? `<div class="art-blocks">${L.blocksHTML(it.blocks)}</div>` : '';
-      return `${title}${artMeta(it)}${mtRow(d, origBlocks)}${it.tg ? media : ''}<div class="art-blocks" data-blocks>${L.blocksHTML(blocks)}</div>${artActions(it)}`;
+      return `${title}${artMeta(it)}${mtRow(d, origBlocks)}${it.tg ? media : (blocks.some(b => b && b.type === 'img' && !b.missing && it.image && b.src === it.image.url) ? '' : cover)}<div class="art-blocks" data-blocks>${L.blocksHTML(blocks)}</div>${artActions(it)}`;
     }
     if (it.kind === 'post') return `${L.tweetCardHTML(it, false)}${artActions(it)}`;
     let text = (d.body || d.summary || '').trim();
@@ -1175,6 +1176,7 @@
       toast((changed ? '有新内容，已更新。' : '已重新读取博主列表。') + NOTE);
     } else {
       meta = fresh;
+      L.setSourcePlatforms(channels());
       updateHealthFreshness();
       toast('没有新内容，已是最新。' + NOTE);
     }
@@ -1587,7 +1589,8 @@
   function onClick(e) {
     const t = e.target;
     if (performance.now() < suppressClickUntil) { e.preventDefault(); e.stopPropagation(); return; }
-    const zhit = t.closest('img[data-zoom], .media-grid .cell, .thumb .cell, .post-cover, .feed-row .thumb, .brow .thumb, .b-img');
+    // A2：列表大图点了进详情（详情里的图再点放大），只有右侧小图点了直接放大
+    const zhit = t.closest('.feed-row.cover') ? null : t.closest('img[data-zoom], .media-grid .cell, .thumb .cell, .post-cover, .feed-row .thumb, .brow .thumb, .b-img');
     if (zhit && !zoom.open) {
       const cell = zhit.closest('[data-media-list] .cell') || (zhit.matches('[data-media-list]') ? zhit.querySelector('.cell') : null);
       const mel = cell && cell.querySelector('[data-media-i]');

@@ -68,6 +68,12 @@ class SiteBuildTests(unittest.TestCase):
         self.assertTrue(meta['fixture'])
         self.assertEqual([c['slug'] for c in meta['channels']], schema.channel_slugs())
         self.assertTrue((out / 'index.html').exists() and (out / 'app.js').exists() and (out / 'lib.js').exists())
+        # 频道首页 A2：平台图标按配置的来源类型标；id 带 rss 字样的 Telegram 来源也算 Telegram
+        platforms = {k: v for c in meta['channels'] for k, v in c['source_platforms'].items()}
+        config = {s['id']: s['type'] for c in schema.load_channels()['channels'] for s in c['sources']}
+        self.assertEqual(platforms, config)
+        self.assertEqual(platforms.get('shuangyunews_rss'), 'telegram')
+        self.assertTrue((out / 'icons' / 'telegram.svg').exists() and (out / 'icons' / 'blog.svg').exists())
 
     def test_brand_icons_copied_and_head_tags_present(self):
         out, _ = self.build()
