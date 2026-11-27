@@ -1,6 +1,27 @@
 {
   "hours": [
     {
+      "hour": "2026-11-28 06:00",
+      "messages": [
+        {
+          "category": "其他",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 06:00",
+          "id": "75ba730aee9d99896c7c",
+          "image": "media/freechinese/113619_1.webp",
+          "link": "https://t.me/freechinese/113619",
+          "source": "freechinese",
+          "source_name": "FREE 中文",
+          "summary": "山东校长：这位同学注意你的言辞啊，这个叫聚酯纤维",
+          "text": "山东校长：这位同学注意你的言辞啊，这个叫聚酯纤维",
+          "time": "2026-11-28T06:54:08+08:00",
+          "title": "山东校长：这位同学注意你的言辞啊，这个叫聚酯纤维",
+          "type": "telegram"
+        }
+      ]
+    },
+    {
       "hour": "2026-11-28 05:00",
       "messages": [
         {
@@ -38017,7 +38038,7 @@
           "hot": false,
           "hour": "2026-11-14 06:00",
           "id": "780169cc782ad1dcade6",
-          "image": "media/zaihuapd/45116_1.webp",
+          "image": "",
           "link": "https://t.me/zaihuapd/45116",
           "source": "zaihuapd",
           "source_name": "在花科技圈",
@@ -84728,7 +84749,7 @@
         {
           "category": "财经",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 19:00",
           "id": "93368163bcf3f4128d70",
           "image": "",
@@ -86864,7 +86885,7 @@
         {
           "category": "科技",
           "day": "2026-10-29",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-29 11:00",
           "id": "33e46ff18e4ac84f0648",
           "image": "",
@@ -87290,7 +87311,7 @@
         {
           "category": "财经",
           "day": "2026-10-29",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-29 09:00",
           "id": "8c2937fa30f7ea4c264c",
           "image": "",
@@ -87577,7 +87598,7 @@
         {
           "category": "数码",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 06:00",
           "id": "3376a3d833697b09d38c",
           "image": "",
@@ -87593,7 +87614,7 @@
         {
           "category": "国际",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 06:00",
           "id": "8f7da0ad2b63697e5d89",
           "image": "",
@@ -87609,7 +87630,7 @@
         {
           "category": "科技",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 06:00",
           "id": "8bd2c06c3e1a8d02ddc7",
           "image": "",
@@ -144646,6 +144667,22 @@
   ],
   "messages": [
     {
+      "category": "其他",
+      "day": "2026-11-28",
+      "hot": false,
+      "hour": "2026-11-28 06:00",
+      "id": "75ba730aee9d99896c7c",
+      "image": "media/freechinese/113619_1.webp",
+      "link": "https://t.me/freechinese/113619",
+      "source": "freechinese",
+      "source_name": "FREE 中文",
+      "summary": "山东校长：这位同学注意你的言辞啊，这个叫聚酯纤维",
+      "text": "山东校长：这位同学注意你的言辞啊，这个叫聚酯纤维",
+      "time": "2026-11-28T06:54:08+08:00",
+      "title": "山东校长：这位同学注意你的言辞啊，这个叫聚酯纤维",
+      "type": "telegram"
+    },
+    {
       "category": "科技",
       "day": "2026-11-28",
       "hot": false,
@@ -181179,7 +181216,7 @@
       "hot": false,
       "hour": "2026-11-14 06:00",
       "id": "780169cc782ad1dcade6",
-      "image": "media/zaihuapd/45116_1.webp",
+      "image": "",
       "link": "https://t.me/zaihuapd/45116",
       "source": "zaihuapd",
       "source_name": "在花科技圈",
@@ -226200,7 +226237,7 @@
     {
       "category": "财经",
       "day": "2026-10-29",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-29 19:00",
       "id": "93368163bcf3f4128d70",
       "image": "",
@@ -228296,7 +228333,7 @@
     {
       "category": "科技",
       "day": "2026-10-29",
-      "hot": false,
+      "hot": true,
       "hour": "2026-10-29 11:00",
       "id": "33e46ff18e4ac84f0648",
       "image": "",
@@ -228712,7 +228749,7 @@
     {
       "category": "财经",
       "day": "2026-10-29",
-      "hot": false,
+      "hot": true,
       "hour": "2026-10-29 09:00",
       "id": "8c2937fa30f7ea4c264c",
       "image": "",
@@ -228984,7 +229021,7 @@
     {
       "category": "数码",
       "day": "2026-10-29",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-29 06:00",
       "id": "3376a3d833697b09d38c",
       "image": "",
@@ -229000,7 +229037,7 @@
     {
       "category": "国际",
       "day": "2026-10-29",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-29 06:00",
       "id": "8f7da0ad2b63697e5d89",
       "image": "",
@@ -229016,7 +229053,7 @@
     {
       "category": "科技",
       "day": "2026-10-29",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-29 06:00",
       "id": "8bd2c06c3e1a8d02ddc7",
       "image": "",
@@ -283335,5 +283372,5 @@
     }
   ],
   "sample": false,
-  "updated": "2026-11-28T06:05:08.759773+08:00"
+  "updated": "2026-11-28T07:05:10.988857+08:00"
 }
