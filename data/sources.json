@@ -15003,7 +15003,7 @@
         {
           "category": "数码",
           "day": "2026-10-29",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-29 06:00",
           "id": "3376a3d833697b09d38c",
           "image": "",
@@ -47317,7 +47317,7 @@
         {
           "category": "科技",
           "day": "2026-10-29",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-29 04:00",
           "id": "4c8e26d7c5478a214832",
           "image": "",
@@ -47365,7 +47365,7 @@
         {
           "category": "财经",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 03:00",
           "id": "46ea150653a7f45eb5ec",
           "image": "",
@@ -47445,7 +47445,7 @@
         {
           "category": "财经",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 02:00",
           "id": "2126a4968a060003fc86",
           "image": "",
@@ -119661,7 +119661,7 @@
         {
           "category": "数码",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 01:00",
           "id": "66a414a0a1ea49e1a842",
           "image": "",
@@ -119677,7 +119677,7 @@
         {
           "category": "科技",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 01:00",
           "id": "d8c6da6daec240efbde7",
           "image": "",
