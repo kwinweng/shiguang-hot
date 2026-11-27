@@ -1,6 +1,34 @@
 {
   "messages": [
     {
+      "category": "游戏",
+      "day": "2026-11-27",
+      "id": "trial-d2c8e02664585439d772",
+      "image": "https://image.gcores.com/589966472c5c2bfc447c7e12f0bbd7bb-1600-900.jpg?x-oss-process=image/resize,limit_1,m_fill,w_626,h_292/quality,q_90",
+      "link": "https://www.gcores.com/radios/222853",
+      "section": "play",
+      "source": "gcores",
+      "source_name": "机核",
+      "summary": "【录音笔】是GPASS推出的一档会员专享节目，内容来自机核办公室日程生活和工作中的一些短小记录，每期时长十几分钟左右（大概吧）。内容也许是一些不成体统的碎碎念，也许是一些突然发疯的暴言，还有可能是哪个缺德的把办公室里真实的日常对话（dui ma）偷偷录了下来，总之就连我们自己现在也不知道每期会有哪些人参与，会录些什么。",
+      "text": "【录音笔】是GPASS推出的一档会员专享节目，内容来自机核办公室日程生活和工作中的一些短小记录，每期时长十几分钟左右（大概吧）。内容也许是一些不成体统的碎碎念，也许是一些突然发疯的暴言，还有可能是哪个缺德的把办公室里真实的日常对话（dui ma）偷偷录了下来，总之就连我们自己现在也不知道每期会有哪些人参与，会录些什么。",
+      "time": "2026-11-27T09:47:48+00:00",
+      "title": "聊聊在北京租房的感受，录音笔VOL.835"
+    },
+    {
+      "category": "软件与 App",
+      "day": "2026-11-27",
+      "id": "trial-193d5275e73fc72bff35",
+      "image": "",
+      "link": "https://www.appinn.com/nodewarden-update-1/",
+      "section": "play",
+      "source": "appinn",
+      "source_name": "小众软件",
+      "summary": "今年 2 月，青小蛙介绍过一款非常有意思的开源密码管理器 NodeWarden，它可以直接部署在 Cloudflare Workers 上，无需服务器，就能拥有一个兼容 Bitwarden 的私人密码库。 9 个月过去了，NodeWarden 增加了许多新功能，包括离线使用、自动云备份、多用户管理、",
+      "text": "今年 2 月，青小蛙介绍过一款非常有意思的开源密码管理器 NodeWarden，它可以直接部署在 Cloudflare Workers 上，无需服务器，就能拥有一个兼容 Bitwarden 的私人密码库。 9 个月过去了，NodeWarden 增加了许多新功能，包括离线使用、自动云备份、多用户管理、",
+      "time": "2026-11-27T09:13:00+00:00",
+      "title": "NodeWarden – 不用服务器，在 Cloudflare 上免费自建密码管理器【续】"
+    },
+    {
       "category": "苹果数码",
       "day": "2026-11-27",
       "id": "trial-830db34844174d9f7144",
