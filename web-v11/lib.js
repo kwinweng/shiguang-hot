@@ -80,13 +80,20 @@
   // Stable source IDs also identify old browser snapshots. Contract parity is tested.
   const WEB_SOURCES = new Set('bbc-world guardian-world cna-world france24-en dw-world npr-world google-blog openai-blog github-blog apple-newsroom android-authority macrumors github-trending selfhst itsfoss'.split(' '));
   function isWebNews(item) { return item.kind === 'news' && WEB_SOURCES.has(item.source_id); }
-  function withoutURLs(text) { return (typeof text === 'string' ? text : '').replace(/https?:\/\/[^\s《》「」“”‘’，。、；：！？（）【】<>]+/g, ''); }
+  // Keep the character classes in sync with rebang/chinese_news.py.
+  const GATE_SPACE = '\t-\r\x1c-\x20\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff';
+  const GATE_URL = new RegExp(`https?://[^${GATE_SPACE}《》「」“”‘’，。、；：！？（）【】<>]+`, 'g');
+  const GATE_NON_SPACE = new RegExp(`[^${GATE_SPACE}]`);
+  const WEB_CARD_URLS = new RegExp(`^(?:[${GATE_SPACE}]*${GATE_URL.source})+[${GATE_SPACE}]*`);
+  function webCardText(text) { return (typeof text === 'string' ? text : '').replace(WEB_CARD_URLS, ''); }
+  const LATIN_PROSE = /(?:^|[^A-Za-z])[A-Za-z]{2,}(?:[ \t]+[A-Za-z]{2,}){2,}(?![A-Za-z])/;
+  function withoutURLs(text) { return (typeof text === 'string' ? text : '').replace(GATE_URL, ''); }
   function chineseText(text) {
     const plain = withoutURLs(text);
     return /[㐀-鿿]/.test(plain) && plain.split('\n').every(line => {
       const latin = (line.match(/[A-Za-zÀ-ÖØ-öø-ÿ]+/g) || []).length;
       const han = (line.match(/[㐀-鿿]/g) || []).length;
-      return !/\b[a-z]{2,}(?:[ \t]+[a-z]{2,}){2,}\b/i.test(line) && (!latin || han) && latin <= Math.max(3, han);
+      return !LATIN_PROSE.test(line) && (!latin || han) && latin <= Math.max(3, han);
     });
   }
   function repoTitle(item) {
@@ -99,7 +106,7 @@
     if (captions && block.type === 'img') return [block.alt];
     return [];
   }
-  function allChinese(parts) { return parts.every(t => !withoutURLs(t).trim() || chineseText(t)); }
+  function allChinese(parts) { return parts.every(t => !GATE_NON_SPACE.test(withoutURLs(t)) || chineseText(t)); }
   function displayWebNews(item) {
     const originalBlocks = Array.isArray(item.blocks) ? item.blocks : [];
     const originalBody = originalBlocks.length ? originalBlocks.flatMap(b => blockText(b, true)) : [item.body];
@@ -107,12 +114,12 @@
     const keepSummary = allChinese([item.summary]);
     const keepBody = allChinese(originalBody);
     if (keepTitle && keepSummary && keepBody) {
-      return {title: item.title, summary: cardText(item.summary), body: item.body || '',
+      return {title: item.title, summary: webCardText(item.summary), body: item.body || '',
         blocks: item.blocks || null, bodyPending: false, translated: false, label: '', orig: null};
     }
     const tr = item.translated === true ? (item.translation || {}) : {};
     const title = keepTitle ? item.title : tr.title;
-    const summary = keepSummary ? cardText(item.summary) : chineseText(tr.summary) ? cardText(tr.summary) : '';
+    const summary = webCardText(keepSummary ? item.summary : chineseText(tr.summary) ? tr.summary : '');
     if ((!keepTitle && !chineseText(title)) || (!keepSummary && (!summary || tr.summary_source !== item.summary))) {
       return {title: '中文译文尚未就绪', summary: '', body: '', blocks: null, bodyPending: true,
         translated: false, label: '', orig: null, held: true};

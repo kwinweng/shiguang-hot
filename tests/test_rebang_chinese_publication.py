@@ -1,6 +1,10 @@
 import json
+from pathlib import Path
+
+import pytest
 
 from rebang.archive import build as build_archive
+from rebang.chinese_news import public_item
 from rebang.contract import validate_items_envelope
 from rebang.ingest.core import apply_translation
 from rebang.site import builder
@@ -19,6 +23,22 @@ def translation(title='合成译文标题', summary='合成译文摘要', **fiel
 
 def read(path):
     return json.loads(path.read_text())
+
+
+GATE_CASES = json.loads((Path(__file__).parent / 'fixtures/rebang/chinese-gate-cases.json').read_text(encoding='utf-8'))
+
+
+@pytest.mark.parametrize('case', GATE_CASES['summaries'], ids=lambda case: case['name'])
+@pytest.mark.parametrize('lang', ['zh', 'mul'])
+def test_shared_chinese_gate_summaries(case, lang):
+    item = dict(article(1), title='中文标题', summary=case['text'], body='', lang=lang)
+    assert (public_item(item) is not None) == case['release']
+
+
+@pytest.mark.parametrize('case', GATE_CASES['snapshots'], ids=lambda case: case['name'])
+def test_shared_chinese_gate_legacy_snapshots(case):
+    item = article(1, translated=True, translation=dict(case['translation'], engine='test', label='机器翻译'))
+    assert (public_item(item) is not None) == case['release']
 
 
 def test_public_build_holds_untranslated_web_items_including_legacy_search(tmp_path, monkeypatch):

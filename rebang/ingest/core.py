@@ -454,7 +454,7 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
             full = _plain(e.get('summary'))
             meta = e.get('meta') or ''
             if cfg['type'] == 'page':
-                lang = guess_lang(title, full)
+                lang = guess_lang(full)  # Trending 的 title 是仓库名
                 if not has_text(full) or chinese_text(full):
                     meta = _trending_meta_zh(meta)
             else:   # 先按标题判断，抽取正文后再检查是否混有待译文本

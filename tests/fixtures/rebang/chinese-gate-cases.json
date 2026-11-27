@@ -1,0 +1,38 @@
+{
+  "summaries": [
+    {"name": "Han before English", "text": "这段话包含this is English", "release": false},
+    {"name": "Han after English", "text": "this is English并继续报道。", "release": false},
+    {"name": "Han around English", "text": "这段话包含this is English并继续报道。", "release": false},
+    {"name": "Chinese punctuation around English", "text": "这段话包含「this is English」并继续报道。", "release": false},
+    {"name": "digits and underscores around English", "text": "这段话包含1this is English_并继续报道。", "release": false},
+    {"name": "one product name", "text": "这段报道提到GitHub。", "release": true},
+    {"name": "two product names", "text": "这段报道提到GitHub和OpenAI。", "release": true},
+    {"name": "English sentence", "text": "This report describes the new policy.", "release": false},
+    {"name": "Chinese sentence", "text": "这段报道介绍了新政策。", "release": true},
+    {"name": "empty optional summary", "text": "", "release": true},
+    {"name": "URL followed by English after NEL", "text": "中文导语。https://example.com\u0085this is English", "release": false},
+    {"name": "URL followed by English after BOM", "text": "中文导语。https://example.com\ufeffthis is English", "release": false}
+  ],
+  "snapshots": [
+    {
+      "name": "legacy snapshot with matching summary source",
+      "translation": {"title": "旧译文标题", "summary": "旧译文摘要。", "summary_source": "English summary"},
+      "release": true
+    },
+    {
+      "name": "legacy translation with a URL touching Chinese punctuation",
+      "translation": {"title": "旧译文标题", "summary": "https://example.com。旧译文摘要。", "summary_source": "English summary"},
+      "release": true
+    },
+    {
+      "name": "legacy snapshot without matching summary source",
+      "translation": {"title": "旧译文标题", "summary": "旧译文摘要。"},
+      "release": false
+    },
+    {
+      "name": "legacy snapshot with English inside translated summary",
+      "translation": {"title": "旧译文标题", "summary": "这段话包含this is English并继续报道。", "summary_source": "English summary"},
+      "release": false
+    }
+  ]
+}

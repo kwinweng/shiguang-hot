@@ -4,10 +4,13 @@ from functools import lru_cache
 
 from rebang.contract import load_channels
 
-_URL = re.compile(r'https?://[^\s《》「」“”‘’，。、；：！？（）【】<>]+')
+# Keep the character classes in sync with the browser gate in web-v11/lib.js.
+_GATE_SPACE = r'\t-\r\x1c-\x20\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff'
+_URL = re.compile(rf'https?://[^{_GATE_SPACE}《》「」“”‘’，。、；：！？（）【】<>]+')
+_NON_SPACE = re.compile(rf'[^{_GATE_SPACE}]')
 _HAN = re.compile(r'[㐀-鿿]')
 _LATIN_WORD = re.compile(r'[A-Za-zÀ-ÖØ-öø-ÿ]+')
-_LATIN_PROSE = re.compile(r'\b[a-z]{2,}(?:[ \t]+[a-z]{2,}){2,}\b', re.I)
+_LATIN_PROSE = re.compile(r'(?:^|[^A-Za-z])[A-Za-z]{2,}(?:[ \t]+[A-Za-z]{2,}){2,}(?![A-Za-z])')
 _REPO = re.compile(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z')
 
 
@@ -26,10 +29,11 @@ def chinese_text(text):
 
     Allow terms like BBC and AI in Chinese text, as well as separate URLs and numeric lines.
     """
-    if not isinstance(text, str) or not _HAN.search(_URL.sub('', text)):
-        return False
-    return all(not _LATIN_PROSE.search(line) and len(_LATIN_WORD.findall(line)) <= max(3, len(_HAN.findall(line)))
-               and (not _LATIN_WORD.search(line) or _HAN.search(line)) for line in _URL.sub('', text).split('\n'))
+    plain = _URL.sub('', text) if isinstance(text, str) else ''
+    return bool(_HAN.search(plain)) and all(
+        not _LATIN_PROSE.search(line) and len(_LATIN_WORD.findall(line)) <= max(3, len(_HAN.findall(line)))
+        and (not _LATIN_WORD.search(line) or _HAN.search(line)) for line in plain.split('\n')
+    )
 
 
 def _block_texts(blocks, *, captions=False):
@@ -46,7 +50,7 @@ def _block_texts(blocks, *, captions=False):
 
 
 def has_text(text):
-    return isinstance(text, str) and bool(_URL.sub('', text).strip())
+    return isinstance(text, str) and bool(_NON_SPACE.search(_URL.sub('', text)))
 
 
 def _all_chinese(texts):
@@ -78,9 +82,13 @@ def needs_translation(item):
 
 
 def web_language(item):
-    """A title-based zh hint only describes the whole item if its fields pass the release checks."""
+    """Reconcile the language hint with the fields needed for Chinese release."""
     lang = item.get('lang') or ''
-    return 'mul' if lang.startswith('zh') and needs_translation(item) else lang
+    if lang.startswith('zh'):
+        return 'mul' if needs_translation(item) else lang
+    if _repo_title(item) and not needs_translation(item):
+        return 'zh'
+    return lang
 
 
 def _safe_blocks(blocks):

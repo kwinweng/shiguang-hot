@@ -5,10 +5,26 @@ const lib = require('../web-v11/lib.js');
 const search = require('../web-v11/features/search.js');
 const fav = require('../web-v11/features/favorites.js');
 const contract = require('../rebang/contract/channels.json');
+const gateCases = require('./fixtures/rebang/chinese-gate-cases.json');
 
 const old = {id: 'bbc-world:1', kind: 'news', source_id: 'bbc-world', lang: 'en',
   title: 'English headline', summary: 'English summary', body: 'English body'};
 const translated = {...old, translated: true, translation: {title: '中文标题', summary: '中文摘要', summary_source: old.summary}};
+
+for (const {name, text, release} of gateCases.summaries) {
+  for (const lang of ['zh', 'mul']) {
+    test(`shared Chinese gate summary (${lang}): ${name}`, () => {
+      const item = {...old, title: '中文标题', summary: text, body: '', lang};
+      assert.equal(!lib.display(item).held, release);
+    });
+  }
+}
+
+for (const {name, translation, release} of gateCases.snapshots) {
+  test(`shared Chinese gate snapshot: ${name}`, () => {
+    assert.equal(!lib.display({...old, translated: true, translation}).held, release);
+  });
+}
 
 test('frontend gate covers all configured official web sources', () => {
   for (const c of contract.channels) for (const s of c.sources) {
