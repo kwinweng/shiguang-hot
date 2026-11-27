@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -27,6 +28,8 @@ SKIPPED = 75  # EX_TEMPFAIL: nothing published, nothing stopped, the next round 
 SHA = re.compile(r'[0-9a-f]{40}')
 # `git push --porcelain` summaries that mean the push was refused before any ref moved.
 LEASE_REJECTED, ATOMIC_REJECTED = '[rejected] (stale info)', '[rejected] (atomic push failed)'
+X_INBOX_ENV = 'REBANG_X_INBOX_REPO'  # optional read-only X inbox; unset or empty = no inbox step at all
+X_INBOX_WORK = '.x-inbox-work-'      # per-round work directories under var/rebang, always deleted
 
 
 class Skipped(Exception):
@@ -51,6 +54,56 @@ def write_atomic(path, text):
         os.fsync(directory)
     finally:
         os.close(directory)
+
+
+def import_x_inbox(repo, root, env):
+    """Optional X inbox step before collection (docs/rebang-v1/X-INBOX.md). Prints one result line
+    and, only if deleting work directories fails, one separate cleanup line. Never raises, never
+    writes HALT and never touches tracked files: X problems must not stop other sources."""
+    var = root / 'var/rebang'
+    result = dict(installed=[], pruned=[], error='x_inbox_internal', prune_error=None)
+
+    def cleanup():
+        # All work directories, including ones left by a killed earlier round. Runs under the
+        # publisher lock, so no other round is using them.
+        failures = []
+        try:
+            leftovers = [p for p in var.iterdir() if p.name.startswith(X_INBOX_WORK)] if var.is_dir() else []
+        except OSError as error:
+            return [type(error).__name__]
+        for path in leftovers:
+            try:
+                if path.is_symlink() or not path.is_dir():
+                    path.unlink()
+                else:
+                    shutil.rmtree(path)
+            except OSError as error:
+                failures.append(type(error).__name__)
+        return failures
+
+    failures = []
+    try:
+        failures += cleanup()
+        tools = str(ROOT / 'tools')
+        if tools not in sys.path:
+            sys.path.insert(0, tools)
+        import x_inbox
+        var.mkdir(parents=True, exist_ok=True)
+        work = Path(tempfile.mkdtemp(prefix=X_INBOX_WORK, dir=var))
+        result = x_inbox.pull(repo, work, var / 'x-dump', env=env)
+    except Exception:  # noqa: BLE001 - any receiver bug is reported as one code, never a failed round
+        pass
+    finally:
+        line = 'x_inbox=' + ('ok' if result['error'] is None else f'error code={result["error"]}')
+        line += ' installed=' + (','.join(result['installed']) or 'none')
+        if result['pruned']:
+            line += f' pruned={len(result["pruned"])}'
+        if result['prune_error']:
+            line += f' prune_error={result["prune_error"]}'
+        print(line, flush=True)
+        failures += cleanup()
+        if failures:
+            print(f'x_inbox_cleanup=failed error={failures[0]} count={len(failures)}', flush=True)
 
 
 def main_only_rejection(output, candidates):
@@ -115,7 +168,7 @@ def source_credentials(state, home=None):
     return env, enabled
 
 
-def run_cycle(code_sha, state, lock):
+def run_cycle(code_sha, state, lock, x_inbox_repo=''):
     # Do not inherit build overrides, Git ref/index overrides or source credential overrides.
     env = {key: os.environ[key] for key in ('PATH', 'HOME', 'TMPDIR', 'SSH_AUTH_SOCK') if key in os.environ}
     env.update(BOX_PYTHON=sys.executable, TZ='Asia/Shanghai', SITE_MODE='public', MAIL_DIGEST='0',
@@ -297,6 +350,8 @@ def run_cycle(code_sha, state, lock):
                 raise RuntimeError('public data/meta.json differs from the Pages parent; cannot use it as the receiver baseline')
             print(f'public_baseline_meta_sha256={hashlib.sha256(actual).hexdigest()}', flush=True)
 
+        if x_inbox_repo:
+            import_x_inbox(x_inbox_repo, ROOT, env)
         credentials, enabled = source_credentials(state)
         env.update(credentials)
         # Local preflight only: the collectors re-check when they open, and the site shows what was read.
@@ -418,7 +473,7 @@ def main():
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
                 raise RuntimeError('Mac publisher is already running') from None
-            run_cycle(args.code_sha, state, lock.fileno())
+            run_cycle(args.code_sha, state, lock.fileno(), os.environ.get(X_INBOX_ENV, ''))
     except Skipped as skipped:
         print(f'Mac publish skipped: {skipped}', file=sys.stderr)
         return SKIPPED
