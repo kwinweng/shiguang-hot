@@ -41,6 +41,22 @@ test('GitHub repository identifier with usable Chinese preview does not need tra
   assert.equal(lib.display({...repo, summary: 'An English project summary'}).held, true);
 });
 
+test('mixed website news preserves Chinese fields while holding untranslated English fields', () => {
+  const mixed = {...old, lang: 'mul', title: '中文标题', summary: '中文摘要。'};
+  const pending = lib.display(mixed);
+  assert.equal(pending.title, mixed.title);
+  assert.equal(pending.summary, mixed.summary);
+  assert.equal(pending.translated, false);
+  assert.equal(pending.bodyPending, true);
+  assert.equal(pending.body, '');
+  assert.equal(pending.orig.body, old.body);
+  assert.equal(lib.display({...mixed, translated: true, translation: {body: '中文全文。'}}).body, '中文全文。');
+  assert.equal(lib.display({...mixed, summary: old.summary}).held, true);
+  assert.equal(lib.display({...mixed, summary: old.summary, body: '原来的中文全文。', translated: true,
+    translation: {summary: '中文译文。', summary_source: old.summary}}).body, '原来的中文全文。');
+  assert.equal(lib.display({...translated, summary: '原来的中文摘要。'}).summary, '原来的中文摘要。');
+});
+
 test('legacy folded refs never substitute a Chinese title for proof of publication', () => {
   const ref = {id: old.id, source_id: old.source_id, title_zh: '中文标题'};
   assert.equal(lib.dupHTML({merged: [ref]}), '');

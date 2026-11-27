@@ -654,9 +654,10 @@ class SiteBrowserTests(unittest.TestCase):
         body = self.page.locator('#articleBody')
         body.locator('.art-pending').wait_for()
         self.assertIn('合成译文摘要', body.inner_text())
-        self.assertNotIn('world 合成正文', body.inner_text())
+        original = 'This is the original English news article.'
+        self.assertNotIn(original, body.inner_text())
         body.get_by_role('button', name='看原文').click()
-        self.assertIn('world 合成正文', body.inner_text())
+        self.assertIn(original, body.inner_text())
 
     def test_stale_favorite_does_not_mask_ready_search_snapshot(self):
         archived_id = 'bbc-world:archived-1'

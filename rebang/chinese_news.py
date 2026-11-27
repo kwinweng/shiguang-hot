@@ -57,9 +57,13 @@ def _repo_title(item):
     return item.get('source_id') == 'github-trending' and bool(_REPO.fullmatch(item.get('title') or ''))
 
 
-def native_preview(item):
-    native_title = (item.get('lang') or '').startswith('zh') and chinese_text(item.get('title'))
-    return (native_title or _repo_title(item)) and _all_chinese([item.get('summary')])
+def native_title(item):
+    lang = item.get('lang') or ''
+    return _repo_title(item) or ((lang.startswith('zh') or lang == 'mul') and chinese_text(item.get('title')))
+
+
+def native_summary(item):
+    return _all_chinese([item.get('summary')])
 
 
 def native_body(item):
@@ -70,7 +74,13 @@ def native_body(item):
 def needs_translation(item):
     if not is_web_news(item):
         return False
-    return not native_preview(item) or not native_body(item)
+    return not (native_title(item) and native_summary(item) and native_body(item))
+
+
+def web_language(item):
+    """A title-based zh hint only describes the whole item if its fields pass the release checks."""
+    lang = item.get('lang') or ''
+    return 'mul' if lang.startswith('zh') and needs_translation(item) else lang
 
 
 def _safe_blocks(blocks):
@@ -90,29 +100,23 @@ def public_item(item):
         return {**item, 'translated': False, 'translation': None} if item.get('translated') else item
     raw = item.get('translation')
     tr = dict(raw) if item.get('translated') is True and isinstance(raw, dict) else {}
-    native = native_preview(item)
-    if native:
-        if not tr or not (chinese_text(tr.get('body')) or _safe_blocks(tr.get('blocks'))):
-            return {**item, 'translated': False, 'translation': None}
-        tr.update(title=item['title'], summary=item.get('summary') or '')
-    elif _repo_title(item):
-        tr['title'] = item['title']
-    elif not chinese_text(tr.get('title')):
+    keep_title, keep_summary = native_title(item), native_summary(item)
+    if not keep_title and not chinese_text(tr.get('title')):
         return None
-    if not native and has_text(item.get('summary')) and (
-            not chinese_text(tr.get('summary')) or tr.get('summary_source') != item.get('summary')):
+    if not keep_summary and (not chinese_text(tr.get('summary')) or tr.get('summary_source') != item.get('summary')):
         return None
-    if not chinese_text(tr.get('summary')):
-        tr['summary'] = ''
     if not chinese_text(tr.get('body')):
         tr.pop('body', None)
     if not _safe_blocks(tr.get('blocks')):
         tr.pop('blocks', None)
-    if (item.get('body') or item.get('blocks')) and not (tr.get('body') or tr.get('blocks')):
+    if keep_title and keep_summary and not (tr.get('body') or tr.get('blocks')):
+        return {**item, 'translated': False, 'translation': None}
+    if keep_title:
+        tr['title'] = item['title']
+    if keep_summary:
+        tr['summary'] = item.get('summary') or ''
+    if not native_body(item) and not (tr.get('body') or tr.get('blocks')):
         tr['body_pending'] = True
     else:
         tr.pop('body_pending', None)
-    # A bare GitHub identifier is not itself translated.
-    if not raw and not tr['summary']:
-        tr.update(engine='source', label='机器翻译')
-    return {**item, 'translated': True, 'translation': tr}
+    return {**item, 'lang': web_language(item), 'translated': True, 'translation': tr}

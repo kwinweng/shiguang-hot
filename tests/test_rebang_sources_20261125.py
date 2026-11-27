@@ -156,12 +156,13 @@ MIXED_RSS = """<?xml version="1.0" encoding="UTF-8"?>
 <description>中国国家主席习近平在北京会见新加坡总理黄循财，双方讨论贸易。</description></item>
 </channel></rss>""".encode('utf-8')
 
-ZH_IDS = {'cna-world:zh-1', 'cna-world:zh-2', 'cna-world:zh-3'}
+ZH_IDS = {'cna-world:zh-1', 'cna-world:zh-3'}
+MIXED_ID = 'cna-world:zh-2'
 EN_IDS = {'cna-world:en-1', 'cna-world:en-2'}
 
 
 class IngestCliEdgeTests(unittest.TestCase):
-    """从入库命令入口验证：坏图只丢图、坏链接/相对链接不丢条、按标题判语言、中文条不进待翻队列。"""
+    """从入库入口验证：坏图或链接不丢条、混合网页稿单独标记、已有中文不进待译队列。"""
 
     FEEDS = {'macrumors': BAD_RSS, 'npr-world': ATOM_REL, 'dw-world': ATOM_NO_BASE, 'cna-world': MIXED_RSS}
 
@@ -221,7 +222,7 @@ class IngestCliEdgeTests(unittest.TestCase):
 
     def check_lang(self, items, queued):
         lang = {k: v['lang'] for k, v in items.items() if k.startswith('cna-world:')}
-        self.assertEqual(lang, {**{k: 'zh' for k in ZH_IDS}, **{k: 'en' for k in EN_IDS}})
+        self.assertEqual(lang, {**{k: 'zh' for k in ZH_IDS}, **{k: 'en' for k in EN_IDS}, MIXED_ID: 'mul'})
         self.assertIn('Review of 《黑神话：悟空》', queued)
         self.assertIn('Xi meets Lee in Beijing', queued)
         self.assertIn('Apple M4 Max benchmark results and battery life tests.', queued)

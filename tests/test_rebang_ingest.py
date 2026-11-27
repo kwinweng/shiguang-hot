@@ -288,6 +288,35 @@ class IngestTests(unittest.TestCase):
         self.assertEqual(len(calls), n)  # 第二次全走缓存，不重复翻
 
 
+    def test_chinese_trending_description_keeps_repository_metadata_without_translation(self):
+        page = '''<article class="Box-row">
+          <h2><a href="/example/project">example/project</a></h2>
+          <p>这是一个中文工具。</p>
+          <span itemprop="programmingLanguage">Python</span>
+          <span class="d-inline-block float-sm-right">1,200 stars today</span>
+        </article><article class="Box-row">
+          <h2><a href="/example/other">example/other</a></h2>
+          <p>这是另一个中文工具。</p>
+        </article>'''
+        get = fake_http()
+        calls = []
+
+        def http_get(url, now):
+            return page.encode() if FEEDS[url]['id'] == 'github-trending' else get(url, now)
+
+        def fake(texts, src):
+            calls.extend(texts)
+            return ['合成译文。'] * len(texts)
+
+        for options in ({'fetch': True, 'http_get': http_get}, {}):
+            env = self.run_collect(translator=(fake, 'fixture'), **options)
+            self.assertEqual(validate_items_envelope(env), [])
+            first, second = self.by_source(env)['github-trending']
+            self.assertEqual((first['lang'], first['translated']), ('zh', False))
+            self.assertEqual(first['body'], '这是一个中文工具。\n编程语言：Python · 今日新增 1,200 星')
+            self.assertEqual((second['lang'], second['translated']), ('zh', False))
+        self.assertFalse(any('中文工具' in text or 'stars today' in text for text in calls))
+
     def test_partial_translation_title_without_body(self):
         from rebang.ingest.core import apply_translation
         body = 'Short summary here. ' + ('Long English paragraph. ' * 80)

@@ -1,6 +1,7 @@
 import json
 
 from rebang.archive import build as build_archive
+from rebang.contract import validate_items_envelope
 from rebang.ingest.core import apply_translation
 from rebang.site import builder
 from tests.rebang_site_testdata import NOW, envelope, img, news
@@ -50,6 +51,71 @@ def test_public_build_holds_untranslated_web_items_including_legacy_search(tmp_p
     assert published['translation'].get('body') is None
     assert published['translation']['body_pending'] is True
     assert any(r['id'] == legacy['id'] for r in read(day)['items'])
+
+
+def test_mixed_web_items_survive_ingest_contract_and_publish_with_chinese_previews(tmp_path, monkeypatch):
+    repo = news('github-trending', 'tools', 1, lang='zh', title='example/project',
+                summary='这是中文项目简介。', body='This repository has an English readme.')
+    native_repo = news('github-trending', 'tools', 2, lang='zh', title='example/other',
+                       summary='另一个中文项目。', body='')
+    mixed = dict(article(3), lang='zh-Hant', title='中文新聞標題', summary='中文新聞摘要。',
+                 body='This report is written in English.',
+                 blocks=[{'type': 'p', 'text': 'This report is written in English.'}])
+    mixed_summary = dict(article(4), lang='zh', title='中文标题配外文摘要',
+                         summary='English report on the Chinese market 中国市场', body='中文正文已经就绪。')
+    english = dict(article(5), source_id='google-blog', channel='tech-ai', id='google-blog:5',
+                   summary='已有中文摘要。')
+    held = dict(article(6), lang='zh', title='本条摘要尚未就绪', summary='This preview is not translated.', body='')
+    items = [repo, native_repo, mixed, mixed_summary, english, held]
+    texts = {repo['body']: '这是项目的中文全文。', mixed['body']: '这是报道的中文全文。',
+             mixed_summary['summary']: '关于中国市场的报道。', english['title']: '科技新闻的中文标题',
+             english['body']: '这是科技新闻的中文全文。'}
+    calls = []
+
+    def fake(batch, src):
+        calls.extend(batch)
+        return [texts.get(text) for text in batch]
+
+    assert apply_translation(items, None) == 0
+    assert all(item['lang'] == 'mul' for item in (repo, mixed, mixed_summary, held))
+    for item in (repo, mixed):
+        assert builder.public_item(item)['translated'] is False
+    assert builder.public_item(mixed_summary) is None
+
+    apply_translation(items, (fake, 'test'), tmp_path)
+    assert validate_items_envelope(envelope(items)) == []
+    assert set(calls) == set(texts) | {held['summary']}
+    assert not native_repo['translated']
+    assert not held['translated']
+    assert repo['translation']['body'] == texts[repo['body']]
+    assert mixed['translation']['blocks'][0]['text'] == texts[mixed['body']]
+    assert not mixed_summary['translation'].get('body_pending')
+
+    cached = [dict(item, translated=False, translation=None) for item in items]
+    calls.clear()
+    apply_translation(cached, (fake, 'test'), tmp_path)
+    assert set(calls) == {held['summary']}
+    assert validate_items_envelope(envelope(cached)) == []
+    assert [item.get('translation') for item in cached] == [item.get('translation') for item in items]
+
+    inp, out = tmp_path / 'in', tmp_path / 'out'
+    inp.mkdir()
+    (inp / 'ingest.json').write_text(json.dumps(envelope(items)))
+    monkeypatch.setattr(builder, '_run_archive', lambda items, out, report: build_archive(items, out, tmp_path / 'archive'))
+    monkeypatch.setenv('REBANG_TRANSLATE_CACHE', str(tmp_path / 'field-cache.json'))
+    builder.build(out, inp, now=NOW, web_dir=None, hot_archive_dir=None)
+    data = out / 'data'
+    assert set(read(data / 'id-index.json')) == {item['id'] for item in items if item is not held}
+    channels = {c['slug']: c for c in read(data / 'meta.json')['channels']}
+    assert channels['world']['total'] == 2
+    assert channels['tools']['total'] == 2
+    assert channels['tech-ai']['total'] == 1
+    results = {row['id']: row for row in read(data / 'search-index.json')['entries']}
+    assert results[repo['id']]['display_title'] == repo['title']
+    assert results[repo['id']]['display_summary'] == repo['summary']
+    assert results[mixed['id']]['display_title'] == mixed['title']
+    assert results[mixed_summary['id']]['display_summary'] == texts[mixed_summary['summary']]
+    assert results[english['id']]['display_summary'] == english['summary']
 
 
 def test_archive_only_uses_current_safe_rendition_for_same_id(tmp_path):

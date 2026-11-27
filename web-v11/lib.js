@@ -102,17 +102,18 @@
   function allChinese(parts) { return parts.every(t => !withoutURLs(t).trim() || chineseText(t)); }
   function displayWebNews(item) {
     const originalBlocks = Array.isArray(item.blocks) ? item.blocks : [];
-    const repo = repoTitle(item);
     const originalBody = originalBlocks.length ? originalBlocks.flatMap(b => blockText(b, true)) : [item.body];
-    const native = (repo || (/^zh/.test(item.lang || '') && chineseText(item.title))) && allChinese([item.summary]);
-    if (native && allChinese(originalBody)) {
+    const keepTitle = repoTitle(item) || ((/^zh/.test(item.lang || '') || item.lang === 'mul') && chineseText(item.title));
+    const keepSummary = allChinese([item.summary]);
+    const keepBody = allChinese(originalBody);
+    if (keepTitle && keepSummary && keepBody) {
       return {title: item.title, summary: cardText(item.summary), body: item.body || '',
         blocks: item.blocks || null, bodyPending: false, translated: false, label: '', orig: null};
     }
     const tr = item.translated === true ? (item.translation || {}) : {};
-    const title = repo || native ? item.title : tr.title;
-    const summary = native ? cardText(item.summary) : chineseText(tr.summary) ? cardText(tr.summary) : '';
-    if ((!repo && !chineseText(title)) || (!native && withoutURLs(item.summary).trim() && (!summary || tr.summary_source !== item.summary))) {
+    const title = keepTitle ? item.title : tr.title;
+    const summary = keepSummary ? cardText(item.summary) : chineseText(tr.summary) ? cardText(tr.summary) : '';
+    if ((!keepTitle && !chineseText(title)) || (!keepSummary && (!summary || tr.summary_source !== item.summary))) {
       return {title: '中文译文尚未就绪', summary: '', body: '', blocks: null, bodyPending: true,
         translated: false, label: '', orig: null, held: true};
     }
@@ -121,10 +122,12 @@
       ['p', 'h', 'quote', 'ul', 'ol', 'hr', 'img'].includes(b.type)) &&
       proposed.flatMap(b => blockText(b, false)).some(chineseText) &&
       allChinese(proposed.flatMap(b => blockText(b, true))) ? proposed : null;
-    const body = chineseText(tr.body) ? tr.body : '';
-    return {title, summary, body, blocks, bodyPending: !!((item.body || originalBlocks.length) && !body && !blocks),
-      translated: item.translated === true, label: item.translated ? (tr.label || '机器翻译') : '',
-      orig: (item.translated || native) ? {title: item.title || '', summary: item.summary || '', body: item.body || '', blocks: item.blocks || null} : null};
+    const body = keepBody ? item.body || '' : chineseText(tr.body) ? tr.body : '';
+    const translated = item.translated === true && (!keepTitle || !keepSummary || !!(body || blocks));
+    return {title, summary, body, blocks: keepBody ? item.blocks || null : blocks,
+      bodyPending: !keepBody && !body && !blocks,
+      translated, label: translated ? (tr.label || '机器翻译') : '',
+      orig: {title: item.title || '', summary: item.summary || '', body: item.body || '', blocks: item.blocks || null}};
   }
   function display(item) {
     if (isWebNews(item)) return displayWebNews(item);
