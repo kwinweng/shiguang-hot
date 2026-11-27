@@ -870,7 +870,7 @@ html.app-fullscreen .health-view{bottom:auto;height:var(--app-h)}
 .feed-row:not(.noimg) .sum{display:block}
 .feed-row .sum.none{display:-webkit-box;-webkit-line-clamp:1;overflow:hidden;font-size:13px;color:var(--mute-2)}
 .feed-row .sum .more{font-size:12.5px;font-weight:600;color:var(--primary);white-space:nowrap}
-.feed-row .f-meta .plat{width:16px;height:16px;flex:none;margin-right:6px;border-radius:4px}
+.feed-row .f-meta .plat{width:16px;height:16px;flex:none;margin-right:6px;border-radius:50%}
 .feed-row .f-meta .when{margin-left:auto;padding-left:8px;font-variant-numeric:tabular-nums}
 .feed-row .f-meta .when::before{content:none}
 /* 已读：标题变浅但仍读得清，并在时间后标一个「已读」 */
@@ -883,3 +883,11 @@ html.app-fullscreen .health-view{bottom:auto;height:var(--app-h)}
 .feed-row:not(.cover) .thumb{position:relative}
 .feed-row:not(.cover) .thumb img{object-fit:scale-down}
 .feed-row:not(.cover) .vid-badge{left:4px;top:4px;padding:1px 5px;font-size:10px}
+/* 底栏改为独立停靠条，不浮在内容上遮挡最后几行 */
+.tabbar{position:static;left:auto;bottom:auto;transform:none;width:100%;height:calc(var(--tab) + var(--safe-bot));padding:0 max(4px,var(--safe-right)) var(--safe-bot) max(4px,var(--safe-left));display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-radius:0;border:0;border-top:.5px solid var(--line);box-shadow:none;background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none;flex-shrink:0}
+.tabbar button{width:auto;height:100%;border-radius:0;background:none;color:var(--mute);gap:3px}
+.tabbar button.on{background:none;color:var(--primary)}
+.tabbar button:active{background:var(--press)}
+.tabbar svg{width:21px;height:21px}
+.feed-root,.sub,.view > .rebang-favorites{padding-bottom:20px}
+.toast{bottom:calc(var(--safe-bot) + var(--tab) + 12px)}

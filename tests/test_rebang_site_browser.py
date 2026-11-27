@@ -521,6 +521,12 @@ class SiteBrowserTests(unittest.TestCase):
         sum_box = long_row.locator('.sum').bounding_box()
         self.assertLessEqual(sum_box['x'] + sum_box['width'], long_row.bounding_box()['x'] + long_row.bounding_box()['width'] + 1)
         self.assertLessEqual(long_row.locator('.sum').evaluate('e => e.scrollWidth - e.clientWidth'), 1, '连续长串换行，不溢出')
+        plat = cover.locator('.f-meta .plat').first
+        self.assertEqual(plat.evaluate('i => getComputedStyle(i).borderRadius'), '50%', '渠道平台图标为圆形')
+        bar = self.page.locator('.tabbar').bounding_box()
+        views = self.page.locator('.views').bounding_box()
+        self.assertGreaterEqual(bar['y'], views['y'] + views['height'] - 1, '底栏独立停靠在内容区下方，不遮挡列表')
+        self.assertGreaterEqual(bar['width'], 319, '底栏通栏铺满视口宽度')
 
     def test_a2_rss_cover_with_text_blocks_still_zoomable_in_article(self):
         """列表点大图进详情；正文 blocks 里没有图时，详情要补上封面，否则就再也放大不了。"""
