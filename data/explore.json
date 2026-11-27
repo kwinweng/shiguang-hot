@@ -1,6 +1,48 @@
 {
   "messages": [
     {
+      "category": "影视",
+      "day": "2026-11-27",
+      "id": "trial-7c4a6e207bf57c1bf2c9",
+      "image": "https://www.whats-on-netflix.com/wp-content/uploads/2026/11/eastbound-and-down-coming-to-netflix.webp",
+      "link": "https://www.whats-on-netflix.com/news/eastbound-and-down-netflix-release-date/",
+      "section": "play",
+      "source": "whats-on-netflix",
+      "source_name": "What's on Netflix",
+      "summary": "All 29 episodes of the Kenny Powers comedy land on Netflix US on December 12th.",
+      "text": "All 29 episodes of the Kenny Powers comedy land on Netflix US on December 12th.",
+      "time": "2026-11-27T18:54:54+00:00",
+      "title": "Danny McBride’s Cult HBO Comedy Series Heading to Netflix for the First Time"
+    },
+    {
+      "category": "苹果数码",
+      "day": "2026-11-27",
+      "id": "trial-8ed0196440362d8f8dcb",
+      "image": "https://9to5mac.com/wp-content/uploads/sites/6/2026/10/apple-vs-openai-01.jpg?quality=82&strip=all&w=1600",
+      "link": "https://9to5mac.com/2026/11/27/openai-countersues-apple-alleging-trade-secret-theft-and-supplier-threats/",
+      "section": "buy",
+      "source": "9to5mac",
+      "source_name": "9to5Mac",
+      "summary": "OpenAI has countersued Apple, accusing the iPhone maker of stealing trade secrets and threatening suppliers working on its upcoming devices. The filing escalates a legal fight that began with Apple’s lawsuit against OpenAI in July . more…",
+      "text": "OpenAI has countersued Apple, accusing the iPhone maker of stealing trade secrets and threatening suppliers working on its upcoming devices. The filing escalates a legal fight that began with Apple’s lawsuit against OpenAI in July . more…",
+      "time": "2026-11-27T18:42:21+00:00",
+      "title": "OpenAI countersues Apple, alleging trade secret theft and supplier threats"
+    },
+    {
+      "category": "苹果数码",
+      "day": "2026-11-27",
+      "id": "trial-b4e3e8e63b0c8445f8be",
+      "image": "https://9to5mac.com/wp-content/uploads/sites/6/2026/11/aqara-w200.jpg?quality=82&strip=all&w=1600",
+      "link": "https://9to5mac.com/2026/11/27/aqara-w200-adaptive-temperature-thermostat-review/",
+      "section": "buy",
+      "source": "9to5mac",
+      "source_name": "9to5Mac",
+      "summary": "Earlier this year, my wife and I bought our first house. Along with all the other exciting things, it’s also let me spend a lot of time testing new smart home gear. One of the most important and useful smart home accessories is a smart thermostat. Six months ago, I installed the Aqara Smart Thermostat W200 , and it’s been a fantastic addition to our smart home setup … especially because it supports Apple’s Adaptive Temperature feature. Here’s how it works. Buy the Aqara W200 Smart Thermostat $12",
+      "text": "Earlier this year, my wife and I bought our first house. Along with all the other exciting things, it’s also let me spend a lot of time testing new smart home gear. One of the most important and useful smart home accessories is a smart thermostat. Six months ago, I installed the Aqara Smart Thermostat W200 , and it’s been a fantastic addition to our smart home setup … especially because it supports Apple’s Adaptive Temperature feature. Here’s how it works. Buy the Aqara W200 Smart Thermostat $12",
+      "time": "2026-11-27T18:26:36+00:00",
+      "title": "Review: Aqara W200 supports Adaptive Temperature in HomeKit at a great price"
+    },
+    {
       "category": "苹果数码",
       "day": "2026-11-27",
       "id": "trial-451daa45791e6204d04e",
