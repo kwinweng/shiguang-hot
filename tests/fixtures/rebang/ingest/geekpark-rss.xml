@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic examples of the GeekPark RSS format. -->
+<rss version="2.0">
+  <channel>
+    <title>极客公园</title>
+    <link>https://www.geekpark.net/</link>
+    <description>离线样本</description>
+    <item>
+      <guid isPermaLink="false">depth</guid>
+      <link>https://www.geekpark.net/news/100001</link>
+      <title>《把模型装进口袋》</title>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <description><![CDATA[<p>我们比较了端侧模型的两种实现。</p><img src="https://images.example.test/chip.jpg" alt="配图说明"><p>第一种实现把模型参数压缩到低位宽，以便减少推理时访问内存的次数。到底能省下多少空间，取决于模型架构和压缩方法。为了比较两种实现，我们把同一组问题交给各自的模型，并分别记录生成首字的时间和后续输出的速度。</p><p>第二种实现把工作分给设备和服务器。网络正常时，简单问题由设备回答，复杂问题交给服务器。离开网络以后，两种实现都可以继续处理短文本，但是设备的内存容量限制了上下文的长度。我们还用同一组提示词检查了每轮模型输出的准确性。</p><p>测试也记录了温度和电量。短时间的性能峰值可以在多数设备上观察到，持续运行则更依赖散热和电源管理。为了排除环境变化，我们在同一个房间重复了三轮测试，最后再把设备带到室外复查结果。</p><p>此句只出现在长描述尾部。</p>]]></description>
+      <enclosure url="https://images.example.test/cover.jpg" type="image/jpeg" length="1000"/>
+    </item>
+    <item>
+      <guid isPermaLink="false">review</guid>
+      <link>https://www.geekpark.net/news/100002</link>
+      <title>实测一周，早报应用的离线阅读怎么样？</title>
+      <pubDate>Fri, 27 Nov 2026 08:00:00 +0800</pubDate>
+      <description><![CDATA[<p>我们在地铁上试用了<strong>离线模式</strong>。</p><img src="https://images.example.test/review.jpg">]]></description>
+    </item>
+    <item>
+      <guid isPermaLink="false">digest</guid>
+      <link>https://www.geekpark.net/news/100003</link>
+      <title>两款新手机发布，机器人公司融资｜极客早知道</title>
+      <pubDate>Fri, 27 Nov 2026 07:00:00 +0800</pubDate>
+      <description><![CDATA[<p>今天的科技新闻汇总。</p>]]></description>
+    </item>
+  </channel>
+</rss>

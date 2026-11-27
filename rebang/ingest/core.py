@@ -24,7 +24,7 @@ DEFAULT_CACHE = ROOT / 'var' / 'rebang' / 'cache' / 'ingest'
 MEDIA_DAYS = 14          # 与 shiguang/ingest/telegram.py MEDIA_DAYS 一致：图片按条目时间保留 14 天
 SUMMARY_CHARS = 300
 PRODUCER = 'ingest'
-FEED_LANG = 'en'         # 官方订阅都是英文
+FEED_LANG = 'en'         # 未声明语言的官方订阅默认用英文
 MT = '机器翻译'
 
 
@@ -399,6 +399,24 @@ def _preserve_tg_success(rows, cache, now):
         save_cache(_write_json, _cache_path(cache, key), updated)
 
 
+def _project_feed_entries(entries, cfg):
+    """对新抓取和旧缓存应用同样的标题过滤与摘要限制。"""
+    patterns = cfg.get('exclude_title_patterns', ())
+    summary_only = cfg.get('summary_only')
+    if not patterns and not summary_only:
+        return entries
+    out = []
+    for entry in entries:
+        if any(re.search(pattern, _plain(entry.get('title'))) for pattern in patterns):
+            continue
+        if summary_only:
+            # parse_feed 已将订阅描述转为纯文本。缓存只保留展示所需的片段。
+            summary = _plain(strip_leading_urls(entry.get('summary')), SUMMARY_CHARS)
+            entry = dict(entry, summary=summary, image=None)
+        out.append(entry)
+    return out
+
+
 def remote_items(sources, now, floor, *, fetch, cache, http_get):
     items, statuses = [], []
     for channel, cfg in sources:
@@ -414,9 +432,6 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
             else:
                 entries, fetched_at = parsed, _iso(now)
                 state = 'ok' if entries else 'empty'
-                if not save_cache(_write_json, _cache_path(cache, sid),
-                                  {'fetched_at': fetched_at, 'url': cfg['url'], 'entries': entries}):
-                    cache_warning = 'write_failed'
         if entries is None:
             cached = _read_cache(cache, sid)
             if cached:
@@ -425,14 +440,22 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
             else:
                 entries = []
                 state = state or 'not_fetched'
+        is_feed = cfg['type'] == 'feed'
+        summary_only = is_feed and cfg.get('summary_only')
+        if is_feed:
+            entries = _project_feed_entries(entries, cfg)
+        if fetch and state in ('ok', 'empty'):
+            if not save_cache(_write_json, _cache_path(cache, sid),
+                              {'fetched_at': fetched_at, 'url': cfg['url'], 'entries': entries}):
+                cache_warning = 'write_failed'
         count = 0
         for e in entries:
             timestamp = e.get('ts')
             published = _parse_when(timestamp)
-            verified = (cfg['type'] == 'feed' and e.get('published_at_verified') is True
+            verified = (is_feed and e.get('published_at_verified') is True
                         and is_aware_iso(timestamp) and published is not None)
             published = published or now
-            if cfg['type'] != 'page' and published < floor:
+            if is_feed and published < floor:
                 continue
             title = _plain(e.get('title'))
             if not title:
@@ -440,11 +463,13 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
             # 缓存里的链接不再补全（旧缓存没存基准地址）：不合格就置空，条目保留
             link = _resolve_link(e.get('url'), None)
             full = _plain(e.get('summary'))
-            body = full + ('\n' + e['meta'] if e.get('meta') else '') if (full or e.get('meta')) else None
+            body = None
+            if not summary_only and (full or e.get('meta')):
+                body = full + ('\n' + e['meta'] if e.get('meta') else '')
             if cfg['type'] == 'page':
                 lang = 'zh' if re.search(r'[\u4e00-\u9fff]', title + full) else FEED_LANG
-            else:   # 英文订阅里偶尔混进中文条目：只看标题，标题有汉字（引号/书名号里的不算）标 zh，不送翻译
-                lang = 'zh' if mostly_chinese(title) else FEED_LANG
+            else:   # 未声明语言的订阅仍按标题判断，引号或书名号中的汉字不计。
+                lang = cfg.get('lang') or ('zh' if mostly_chinese(title) else FEED_LANG)
             # 图片地址坏了（缺主机名等）只丢图、条目保留；旧缓存里的坏图同样在这里挡掉
             fresh = published >= now - timedelta(days=MEDIA_DAYS)
             image = {'url': e['image']} if fresh and _valid_http(e.get('image')) else None
@@ -754,8 +779,13 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
         translator = default_translator()
     from rebang.extract import apply_extraction
     extract_cache = Path(cache) / 'extract' if cache else Path(DEFAULT_CACHE) / 'extract'
-    extracted = apply_extraction(items, extract_cache, fetch=fetch, http_get=http_get or default_http_get, now=now)
-    translated = apply_translation(items, translator, cache)
+    feeds = by_type.get('feed', [])
+    summary_sources = {cfg['id'] for _, cfg in feeds if cfg.get('summary_only')}
+    extractable = [item for item in items if item['source_id'] not in summary_sources]
+    extracted = apply_extraction(extractable, extract_cache, fetch=fetch, http_get=http_get or default_http_get, now=now)
+    chinese_sources = {cfg['id'] for _, cfg in feeds if (cfg.get('lang') or '').startswith('zh')}
+    translatable = [item for item in items if item['source_id'] not in chinese_sources]
+    translated = apply_translation(translatable, translator, cache)
     unique = {}
     for item in items:
         unique.setdefault(item['id'], item)

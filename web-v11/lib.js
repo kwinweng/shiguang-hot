@@ -78,7 +78,7 @@
   /** 卡片摘要：去掉开头裸露的链接（TG 频道常把原文链接放在第一行），正文页仍显示完整内容 */
   function cardText(t) { return String(t || '').replace(/^(?:\s*https?:\/\/\S+)+\s*/, ''); }
   // Stable source IDs also identify old browser snapshots. Contract parity is tested.
-  const WEB_SOURCES = new Set('bbc-world guardian-world cna-world france24-en dw-world npr-world google-blog openai-blog github-blog apple-newsroom android-authority macrumors github-trending selfhst itsfoss'.split(' '));
+  const WEB_SOURCES = new Set('bbc-world guardian-world cna-world france24-en dw-world npr-world google-blog openai-blog github-blog geekpark apple-newsroom android-authority macrumors github-trending selfhst itsfoss'.split(' '));
   function isWebNews(item) { return item.kind === 'news' && WEB_SOURCES.has(item.source_id); }
   function withoutURLs(text) { return (typeof text === 'string' ? text : '').replace(/https?:\/\/[^\s《》「」“”‘’，。、；：！？（）【】<>]+/g, ''); }
   function chineseText(text) {

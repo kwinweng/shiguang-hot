@@ -26,6 +26,11 @@
       {"id": "google-blog", "name": "Google Blog", "type": "feed", "url": "https://blog.google/rss/", "stability": "stable"},
       {"id": "openai-blog", "name": "OpenAI Blog", "type": "feed", "url": "https://openai.com/news/rss.xml", "stability": "stable"},
       {"id": "github-blog", "name": "GitHub Blog", "type": "feed", "url": "https://github.blog/feed/", "stability": "stable"},
+      {"id": "geekpark", "name": "极客公园", "type": "feed", "url": "https://www.geekpark.net/rss", "stability": "stable",
+       "lang": "zh", "summary_only": true, "exclude_title_patterns": [
+         "^(?:【\\s*(?:极客早知道|(?:极客(?:公园)?)?早报)\\s*】|(?:极客早知道|(?:极客(?:公园)?)?早报)(?:\\s*[:：|｜丨]|$))",
+         "[|｜丨]\\s*(?:极客早知道|(?:极客(?:公园)?)?早报)$"
+       ]},
       {"id": "zaihuapd", "name": "在花科技圈", "type": "telegram", "handle": "zaihuapd", "stability": "mid"},
       {"id": "OneMillion_AI", "name": "动察Beating AI News", "type": "telegram", "handle": "OneMillion_AI", "stability": "mid"},
       {"id": "AwesomeChatGPT", "name": "ChatGPT 精选", "type": "telegram", "handle": "AwesomeChatGPT", "stability": "mid"},
