@@ -1,7 +1,7 @@
 {
  "schema": "rebang.search-index/1",
  "timezone": "Asia/Shanghai",
- "generated_at": "2026-11-27T13:10:05+08:00",
+ "generated_at": "2026-11-27T14:11:21+08:00",
  "entries": [
   {
    "id": "github-trending:HKUDS/CLI-Anything",
@@ -11,7 +11,7 @@
    "source_name": "GitHub Trending",
    "title": "HKUDS/CLI-Anything",
    "summary": "\"CLI-Anything: Making ALL Software Agent-Native\" -- CLI-Hub: https://clianything.cc/",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -30,7 +30,7 @@
    "source_name": "GitHub Trending",
    "title": "Tracer-Cloud/opensre",
    "summary": "The open-source agent for CI/CD reliability.",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -49,7 +49,7 @@
    "source_name": "GitHub Trending",
    "title": "XiaoYouChR/Ghost-Downloader-3",
    "summary": "The only downloader you need. 下载器的集大成者。",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "zh",
    "translated": false,
    "image": null,
@@ -68,7 +68,7 @@
    "source_name": "GitHub Trending",
    "title": "cathrynlavery/diagram-design",
    "summary": "Editorial diagram design for Claude Code, Codex, GitHub Copilot, Cursor, Factory Droid, Qoder, and Pi. 52 diagram types. Self-contained HTML + SVG. No shadows. No Mermaid slop.",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -87,7 +87,7 @@
    "source_name": "GitHub Trending",
    "title": "cursor/plugins",
    "summary": "Cursor plugin specification and official plugins",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -106,7 +106,7 @@
    "source_name": "GitHub Trending",
    "title": "elementalsouls/Claude-BugHunter",
    "summary": "A Claude Code skill bundle for bug hunting and external red-team work - 85 skills, 16 slash commands, 681 disclosed-report patterns curated across 24 core vulnerability classes, plus enterprise identity + infrastructure attack matrices.",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -125,7 +125,7 @@
    "source_name": "GitHub Trending",
    "title": "firecrawl/firecrawl",
    "summary": "Knowledge infrastructure to make your agents smarter. Search, scrape and access 550+ data providers through one API.",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -144,7 +144,7 @@
    "source_name": "GitHub Trending",
    "title": "google-labs-code/stitch-skills",
    "summary": "A library of Agent Skills designed to work with the Stitch MCP server. Each skill follows the Agent Skills open standard, for compatibility with coding agents such as Antigravity, Gemini CLI, Claude Code, Cursor.",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -163,7 +163,7 @@
    "source_name": "GitHub Trending",
    "title": "jingyaogong/minimind",
    "summary": "🧠 两小时从 0 训出你的 64M 大模型。Train your own 64M LLM from scratch in 2 hours.",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "zh",
    "translated": false,
    "image": null,
@@ -182,7 +182,7 @@
    "source_name": "GitHub Trending",
    "title": "mjmirza/app-store-compliance",
    "summary": "Avoid common App Store and Google Play rejections. Open playbook and pre-submission guard with 125 documented rejection patterns and fixes, privacy manifest and Data safety checks, 117 tracked deadlines (EU AI Act, DSA, COPPA, age laws), and a skill for AI coding agents.",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -201,7 +201,7 @@
    "source_name": "GitHub Trending",
    "title": "mvanhorn/last30days-skill",
    "summary": "AI agent skill that researches any topic across Reddit, X, YouTube, HN, Polymarket, and the web - then synthesizes a grounded summary",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -220,7 +220,7 @@
    "source_name": "GitHub Trending",
    "title": "nginx/nginx",
    "summary": "The official NGINX Open Source repository.",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -239,7 +239,7 @@
    "source_name": "GitHub Trending",
    "title": "obra/superpowers",
    "summary": "An agentic skills framework & software development methodology that works.",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -258,7 +258,7 @@
    "source_name": "GitHub Trending",
    "title": "openvinotoolkit/openvino",
    "summary": "OpenVINO™ is an open source toolkit for optimizing and deploying AI inference",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -277,7 +277,7 @@
    "source_name": "GitHub Trending",
    "title": "toeverything/AFFiNE",
    "summary": "There can be more than Notion and Miro. AFFiNE(pronounced [ə‘fain]) is a next-gen knowledge base that brings planning, sorting and creating all together. Privacy first, open-source, customizable and ready to use.",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "en",
    "translated": false,
    "image": null,
@@ -296,12 +296,531 @@
    "source_name": "GitHub Trending",
    "title": "zhouxiaoka/autoclip",
    "summary": "AutoClip｜The open-source OpusClip alternative — local-first AI clipping & MCP server, zero subscriptions. 一个链接，一键出片。开源 AI 视频剪辑桌面工具，将播客、访谈、课程等长视频自动剪成短视频，生成字幕、封面和发布文案，适配抖音、小红书、TikTok、Reels 与 YouTube Shorts。",
-   "published_at": "2026-11-27T13:09:47+08:00",
+   "published_at": "2026-11-27T14:10:58+08:00",
    "lang": "zh",
    "translated": false,
    "image": null,
    "display_title": "zhouxiaoka/autoclip",
    "display_summary": "AutoClip｜The open-source OpusClip alternative — local-first AI clipping & MCP server, zero subscriptions. 一个链接，一键出片。开源 AI 视频剪辑桌面工具，将播客、访谈、课程等长视频自动剪成短视频，生成字幕、封面和发布文案，适配抖音、小红书、TikTok、Reels 与 YouTube Shorts。",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497225",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "科创 #半导体 ETF华夏 #成交额 超过150亿元，创历史最高记录，触及20cm #涨停 。",
+   "summary": "",
+   "published_at": "2026-11-27T13:55:07+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "科创 #半导体 ETF华夏 #成交额 超过150亿元，创历史最高记录，触及20cm #涨停 。",
+   "display_summary": "",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497224",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "#沪指 重回3600点上方， #创业板 指涨超11%， #科 #创50  涨超14%。",
+   "summary": "",
+   "published_at": "2026-11-27T13:50:07+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "#沪指 重回3600点上方， #创业板 指涨超11%， #科 #创50  涨超14%。",
+   "display_summary": "",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497223",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "富时 #中国 A50指数 #期货 涨超4%。",
+   "summary": "",
+   "published_at": "2026-11-27T13:50:04+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "富时 #中国 A50指数 #期货 涨超4%。",
+   "display_summary": "",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "android-authority:https://www.androidauthority.com/samsung-messages-hands-free-texting-update-3740679/",
+   "kind": "news",
+   "channel": "digital",
+   "source_id": "android-authority",
+   "source_name": "Android Authority",
+   "title": "Samsung Messages could soon find, send, and forward texts for you",
+   "summary": "The app's development is far from over.",
+   "published_at": "2026-11-27T13:45:34+08:00",
+   "lang": "en",
+   "translated": false,
+   "image": {
+    "url": "https://secure.gravatar.com/avatar/058e8e6b631e57744dd9123c899b3e20af8d4935a921278e81df78bdcecb83ca?s=96&d=mm&r=g"
+   },
+   "display_title": "Samsung Messages could soon find, send, and forward texts for you",
+   "display_summary": "The app's development is far from over.",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497222",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "#创业板 指 #大涨 10%，科 #创50 指数涨近13%， #半导体 、CPO、先进封装板块 #涨幅 居前，全市场超5…",
+   "summary": "#创业板 指 #大涨 10%，科 #创50 指数涨近13%， #半导体 、CPO、先进封装板块 #涨幅 居前，全市场超5300股上涨。",
+   "published_at": "2026-11-27T13:40:06+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "#创业板 指 #大涨 10%，科 #创50 指数涨近13%， #半导体 、CPO、先进封装板块 #涨幅 居前，全市场超5…",
+   "display_summary": "#创业板 指 #大涨 10%，科 #创50 指数涨近13%， #半导体 、CPO、先进封装板块 #涨幅 居前，全市场超5300股上涨。",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "zaihuapd:45400",
+   "kind": "news",
+   "channel": "tech-ai",
+   "source_id": "zaihuapd",
+   "source_name": "在花科技圈",
+   "title": "国常会：加力发挥“国家队”稳市作用，优化中央汇金类“平准基金”功能",
+   "summary": "国务院总理李强 11 月 27 日主持召开国务院常务会议。会议指出，资本市场事关经济发展大局，要坚持逆周期调节和改革攻坚两手抓，持续完善资本市场稳市机制，实施好存量政策，谋划出台增量政策。 会议要求推动上市公司加大分红回购力度，加力发挥“国家队”稳市作用，进一步优化中央汇金公司的类“平准基金”功能，提供充足流动性保障；完善保险、企业年金、社保基金等中长期资金入市支持引导政策。同时依法强化资本市场全链条监管，坚决查处财务造假、违规减持等行为。 钛媒体 🌸 科技圈· 茶馆 · 投稿",
+   "published_at": "2026-11-27T13:35:16+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "国常会：加力发挥“国家队”稳市作用，优化中央汇金类“平准基金”功能",
+   "display_summary": "国务院总理李强 11 月 27 日主持召开国务院常务会议。会议指出，资本市场事关经济发展大局，要坚持逆周期调节和改革攻坚两手抓，持续完善资本市场稳市机制，实施好存量政策，谋划出台增量政策。 会议要求推动上市公司加大分红回购力度，加力发挥“国家队”稳市作用，进一步优化中央汇金公司的类“平准基金”功能，提供充足流动性保障；完善保险、企业年金、社保基金等中长期资金入市支持引导政策。同时依法强化资本市场全链条监管，坚决查处财务造假、违规减持等行为。 钛媒体 🌸 科技圈· 茶馆 · 投稿",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "xhqcankao:33388",
+   "kind": "news",
+   "channel": "tech-ai",
+   "source_id": "xhqcankao",
+   "source_name": "风向旗参考快讯",
+   "title": "特朗普再次发声力挺黄仁勋 坦言一度对美股下跌感到担忧",
+   "summary": "当时时间周四，美国总统特朗普表示，市场对于黄仁勋重新出任英伟达首席执行官反应积极，但周三早盘的股市下挫曾令他“有些担忧”。周三，以科技股为主的纳斯达克指数在开盘后的头几个小时内下跌逾4%，随后收复了大部分失地，最终收盘时仅小幅下跌。特朗普周四还再次力挺黄仁勋，表示黄仁勋的“第二任期”会比“第一任期”做的更好，并再次驳斥了黄仁勋复职引发的国家安全担忧。他还表示，推动黄仁勋复职是他为“美国、甚至全世界做了一件大好事”，并称可能很快就会与黄仁勋会面。 —— 财联社",
+   "published_at": "2026-11-27T13:35:11+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "特朗普再次发声力挺黄仁勋 坦言一度对美股下跌感到担忧",
+   "display_summary": "当时时间周四，美国总统特朗普表示，市场对于黄仁勋重新出任英伟达首席执行官反应积极，但周三早盘的股市下挫曾令他“有些担忧”。周三，以科技股为主的纳斯达克指数在开盘后的头几个小时内下跌逾4%，随后收复了大部分失地，最终收盘时仅小幅下跌。特朗普周四还再次力挺黄仁勋，表示黄仁勋的“第二任期”会比“第一任期”做的更好，并再次驳斥了黄仁勋复职引发的国家安全担忧。他还表示，推动黄仁勋复职是他为“美国、甚至全世界做了一件大好事”，并称可能很快就会与黄仁勋会面。 —— 财联社",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497221",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "监管部门：进一步严格规范控股股东、实控人 #减持 等行为",
+   "summary": "监管部门将深入实施新一轮 #上市 公司治理专项行动，进一步严格规范控股股东、实控人减持等行为，加强董事高管任职履职离职全流程监管，引导更多上市公司加快健全 #中国 特色现代企业制度。严格执行 #退市 制度，加强退市后监管和退市过程中的投资者保护。（证券时报）",
+   "published_at": "2026-11-27T13:35:10+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "监管部门：进一步严格规范控股股东、实控人 #减持 等行为",
+   "display_summary": "监管部门将深入实施新一轮 #上市 公司治理专项行动，进一步严格规范控股股东、实控人减持等行为，加强董事高管任职履职离职全流程监管，引导更多上市公司加快健全 #中国 特色现代企业制度。严格执行 #退市 制度，加强退市后监管和退市过程中的投资者保护。（证券时报）",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497220",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "# #恒生 科技指数  #涨幅 扩大至6%， #恒生指数 涨超2%。",
+   "summary": "",
+   "published_at": "2026-11-27T13:35:07+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "# #恒生 科技指数  #涨幅 扩大至6%， #恒生指数 涨超2%。",
+   "display_summary": "",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497219",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "监管部门：加快推动制定 #上市 公司监管条例",
+   "summary": "监管部门将继续建立健全常态化长效化的财务造假综合惩防机制，进一步汇聚部际协调、央地协同的合力，加快建设财务造假线索发现中心和第三方配合造假监测预警机制，共同营造不敢、不能、不想造假的市场生态。加大重大典型案例查处力度，打好刑事追责和民事救济组合拳。持续巩固和提升预防造假的监管能力，加快推动制定上市公司监管条例，推动上市公司治理准则全面落地实施。（证券时报）",
+   "published_at": "2026-11-27T13:35:05+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "监管部门：加快推动制定 #上市 公司监管条例",
+   "display_summary": "监管部门将继续建立健全常态化长效化的财务造假综合惩防机制，进一步汇聚部际协调、央地协同的合力，加快建设财务造假线索发现中心和第三方配合造假监测预警机制，共同营造不敢、不能、不想造假的市场生态。加大重大典型案例查处力度，打好刑事追责和民事救济组合拳。持续巩固和提升预防造假的监管能力，加快推动制定上市公司监管条例，推动上市公司治理准则全面落地实施。（证券时报）",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "shuangyunews_rss:16410",
+   "kind": "news",
+   "channel": "current",
+   "source_id": "shuangyunews_rss",
+   "source_name": "看新闻 学英语 双语新闻",
+   "title": "纽约时报双语版",
+   "summary": "宏福苑大火一周年：民众纪念逝者，北京警告“以灾乱港” Telegraph | 原文链接 | 频道大全",
+   "published_at": "2026-11-27T13:30:10+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "纽约时报双语版",
+   "display_summary": "宏福苑大火一周年：民众纪念逝者，北京警告“以灾乱港” Telegraph | 原文链接 | 频道大全",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "shuangyunews_rss:16408",
+   "kind": "news",
+   "channel": "current",
+   "source_id": "shuangyunews_rss",
+   "source_name": "看新闻 学英语 双语新闻",
+   "title": "纽约时报双语版",
+   "summary": "在中国，“女凝”正在推动一场新的娱乐消费热潮 Telegraph | 原文链接 | 频道大全",
+   "published_at": "2026-11-27T13:30:08+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "纽约时报双语版",
+   "display_summary": "在中国，“女凝”正在推动一场新的娱乐消费热潮 Telegraph | 原文链接 | 频道大全",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "shuangyunews_rss:16409",
+   "kind": "news",
+   "channel": "current",
+   "source_id": "shuangyunews_rss",
+   "source_name": "看新闻 学英语 双语新闻",
+   "title": "纽约时报双语版",
+   "summary": "特朗普新关税再将矛头指向北京，旨在削弱中国供应链优势 Telegraph | 原文链接 | 频道大全",
+   "published_at": "2026-11-27T13:30:08+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "纽约时报双语版",
+   "display_summary": "特朗普新关税再将矛头指向北京，旨在削弱中国供应链优势 Telegraph | 原文链接 | 频道大全",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "shuangyunews_rss:16407",
+   "kind": "news",
+   "channel": "current",
+   "source_id": "shuangyunews_rss",
+   "source_name": "看新闻 学英语 双语新闻",
+   "title": "纽约时报双语版",
+   "summary": "华为：从被美国制裁到成为中国人工智能战略的核心 Telegraph | 原文链接 | 频道大全",
+   "published_at": "2026-11-27T13:30:07+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "纽约时报双语版",
+   "display_summary": "华为：从被美国制裁到成为中国人工智能战略的核心 Telegraph | 原文链接 | 频道大全",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497218",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "监管将严防“伪科技”借机 #上市 、无真实业绩公司\"注水\"上市 维护新股 #发行 秩序",
+   "summary": "11月27日召开的 #国务院 常务会议，研究持续深化资本市场投融资综合改革工作。监管部门表示，将在维护市场稳定运行的前提下，进一步聚焦国家战略大局，更加精准支持优质科技企业发行上市。同时密切跟踪科技产业发展最新趋势，提高相关制度的包容性、精准性，严防“伪科技”借机上市、无真实业绩公司“注水”上市，切实维护公平有序的新股发行秩序。（新华财经）",
+   "published_at": "2026-11-27T13:30:05+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "监管将严防“伪科技”借机 #上市 、无真实业绩公司\"注水\"上市 维护新股 #发行 秩序",
+   "display_summary": "11月27日召开的 #国务院 常务会议，研究持续深化资本市场投融资综合改革工作。监管部门表示，将在维护市场稳定运行的前提下，进一步聚焦国家战略大局，更加精准支持优质科技企业发行上市。同时密切跟踪科技产业发展最新趋势，提高相关制度的包容性、精准性，严防“伪科技”借机上市、无真实业绩公司“注水”上市，切实维护公平有序的新股发行秩序。（新华财经）",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497217",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "监管部门：持续筑牢资本市场 #风险 防波堤防浪堤，全力维护资本市场平稳运行",
+   "summary": "11月27日召开的 #国务院 常务会议，研究持续深化资本市场投融资综合改革工作。监管部门表示，将加强跨境风险监测研判和政策工具储备，巩固完善稳市机制建设，持续筑牢资本市场风险防波堤防浪堤，全力维护资本市场平稳运行。",
+   "published_at": "2026-11-27T13:25:08+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "监管部门：持续筑牢资本市场 #风险 防波堤防浪堤，全力维护资本市场平稳运行",
+   "display_summary": "11月27日召开的 #国务院 常务会议，研究持续深化资本市场投融资综合改革工作。监管部门表示，将加强跨境风险监测研判和政策工具储备，巩固完善稳市机制建设，持续筑牢资本市场风险防波堤防浪堤，全力维护资本市场平稳运行。",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497216",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "监管部门：将全力推动中长期资金入市政策文件取得更多成效",
+   "summary": "11月27日召开的 #国务院 常务会议，研究持续深化资本市场投融资综合改革工作。监管部门表示，将全力推动中长期资金入市政策文件取得更多成效，持续健全“长钱长投”的市场机制和生态，进一步推动长周期考核全面落实落地，持续深化 #公募 #基金 改革，研究推出更多务实管用的新政策新举措，推动形成长期投资回报稳定、投融资协调发展和市场功能有效发挥的良性互动。（新华财经)",
+   "published_at": "2026-11-27T13:25:05+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "监管部门：将全力推动中长期资金入市政策文件取得更多成效",
+   "display_summary": "11月27日召开的 #国务院 常务会议，研究持续深化资本市场投融资综合改革工作。监管部门表示，将全力推动中长期资金入市政策文件取得更多成效，持续健全“长钱长投”的市场机制和生态，进一步推动长周期考核全面落实落地，持续深化 #公募 #基金 改革，研究推出更多务实管用的新政策新举措，推动形成长期投资回报稳定、投融资协调发展和市场功能有效发挥的良性互动。（新华财经)",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "jike-bb668784-6bbc-456d-989c-1f8e90f6fd95:https://m.okjike.com/originalPosts/6b0913f6320fd7e1b5998572",
+   "kind": "post",
+   "channel": null,
+   "source_id": "jike-bb668784-6bbc-456d-989c-1f8e90f6fd95",
+   "source_name": "王帅真",
+   "title": "",
+   "summary": "ó？",
+   "published_at": "2026-11-27T13:24:06+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": {
+    "url": "https://cdnv2.ruguoapp.com/Fh5YAH7SJUklKtvi5snN0Yqk17jqv3.jpg"
+   },
+   "display_title": "ó？",
+   "display_summary": "ó？",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "bbc-world:https://www.bbc.co.uk/news/articles/ckm2mz3prq77o#0",
+   "kind": "news",
+   "channel": "world",
+   "source_id": "bbc-world",
+   "source_name": "BBC World",
+   "title": "Major Thanksgiving storm brings flooding, flight delays across US",
+   "summary": "Almost one million customers in the US had no power on Thursday evening as storms descended on both US coasts, bringing wind gusts, heavy rain and flooding.",
+   "published_at": "2026-11-27T13:15:26+08:00",
+   "lang": "en",
+   "translated": false,
+   "image": {
+    "url": "https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/af5b/live/7a140030-e9f0-11f1-99b6-a35a62fa4264.jpg"
+   },
+   "display_title": "Major Thanksgiving storm brings flooding, flight delays across US",
+   "display_summary": "Almost one million customers in the US had no power on Thursday evening as storms descended on both US coasts, bringing wind gusts, heavy rain and flooding.",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497215",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "#沪指 涨超2%， #创业板 指涨超8%， #半导体 、CPO等板块 #涨幅 居前； #沪深 京三市近5200股上涨。",
+   "summary": "",
+   "published_at": "2026-11-27T13:15:05+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "#沪指 涨超2%， #创业板 指涨超8%， #半导体 、CPO等板块 #涨幅 居前； #沪深 京三市近5200股上涨。",
+   "display_summary": "",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497214",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "#港股 午后 #大涨 ， # # #恒生 科技 指数 涨超5%， #恒生指数 涨近2%； #半导体 、光通信、PCB等板…",
+   "summary": "#港股 午后 #大涨 ， # # #恒生 科技 指数 涨超5%， #恒生指数 涨近2%； #半导体 、光通信、PCB等板块 #涨幅 居前。",
+   "published_at": "2026-11-27T13:10:12+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "#港股 午后 #大涨 ， # # #恒生 科技 指数 涨超5%， #恒生指数 涨近2%； #半导体 、光通信、PCB等板…",
+   "display_summary": "#港股 午后 #大涨 ， # # #恒生 科技 指数 涨超5%， #恒生指数 涨近2%； #半导体 、光通信、PCB等板块 #涨幅 居前。",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497213",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "#科 #创50  指数 #大涨 超10%，成分股中仅4股下跌，华丰科技、中科飞测 #涨停 ，源杰科技、盛科通信、华海清科…",
+   "summary": "#科 #创50 指数 #大涨 超10%，成分股中仅4股下跌，华丰科技、中科飞测 #涨停 ，源杰科技、盛科通信、华海清科、拓荆科技涨超15%。",
+   "published_at": "2026-11-27T13:10:09+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "#科 #创50  指数 #大涨 超10%，成分股中仅4股下跌，华丰科技、中科飞测 #涨停 ，源杰科技、盛科通信、华海清科…",
+   "display_summary": "#科 #创50 指数 #大涨 超10%，成分股中仅4股下跌，华丰科技、中科飞测 #涨停 ，源杰科技、盛科通信、华海清科、拓荆科技涨超15%。",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497212",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "富时 #中国 A50指数 #期货 涨超2%。",
+   "summary": "",
+   "published_at": "2026-11-27T13:10:05+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "富时 #中国 A50指数 #期货 涨超2%。",
+   "display_summary": "",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497211",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "#创业板 指涨超7%， #科 #创50  涨超9%。 #沪深 京三市上涨个股近5100只。",
+   "summary": "",
+   "published_at": "2026-11-27T13:05:14+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "#创业板 指涨超7%， #科 #创50  涨超9%。 #沪深 京三市上涨个股近5100只。",
+   "display_summary": "",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497210",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "#港股 午后快速拉升， #恒生 科技指数涨4%。",
+   "summary": "",
+   "published_at": "2026-11-27T13:05:11+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "#港股 午后快速拉升， #恒生 科技指数涨4%。",
+   "display_summary": "",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497209",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "#创业板 指涨超6%，光刻机、 #半导体 、CPO板块 #涨幅 居前。",
+   "summary": "",
+   "published_at": "2026-11-27T13:05:08+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "#创业板 指涨超6%，光刻机、 #半导体 、CPO板块 #涨幅 居前。",
+   "display_summary": "",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "FinanceNewsDaily:497208",
+   "kind": "news",
+   "channel": "finance",
+   "source_id": "FinanceNewsDaily",
+   "source_name": "华尔街见闻·财经时讯",
+   "title": "#A股 午后 #涨幅 扩大， #创业板 指涨超5%。 #半导体 等方向涨幅居前， #沪深 京三市上涨个股近4800只。",
+   "summary": "",
+   "published_at": "2026-11-27T13:05:05+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "#A股 午后 #涨幅 扩大， #创业板 指涨超5%。 #半导体 等方向涨幅居前， #沪深 京三市上涨个股近4800只。",
+   "display_summary": "",
    "translation_title": "",
    "translation_summary": "",
    "original_title": "",
@@ -1303,27 +1822,6 @@
    },
    "display_title": "#News",
    "display_summary": "☀️ 自留地早报【11.27】 1️⃣ 播客主持人 Lex Fridman 发帖称，黄仁勋离职 NVIDIA CEO 的 11 天时间里，他们曾规划骑摩托车横穿美国 2️⃣ 腾讯混元 开源新一代草稿模型 DFly2，可以在保持模型权重不变、输出不变的前提下，让 Hy4 flash 模型吐字速度成倍提升 3️⃣ 𝕏 正式推出面向 13~17 岁青少年的家长控制功能，家长或监护人可了解青少年对 X 平台的使用情况并设置每日时长限制，但青少年本人依旧是账户的所有者，家长无法窥探其隐私 4️⃣ 商汤科技 发布面向机器人操作的视觉语言模型 SenseNova-RoboRSI-27B 正式版，能够自主判断…",
-   "translation_title": "",
-   "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
-  },
-  {
-   "id": "bbc-world:https://www.bbc.co.uk/news/articles/ckm2mz3prq77o#0",
-   "kind": "news",
-   "channel": "world",
-   "source_id": "bbc-world",
-   "source_name": "BBC World",
-   "title": "Major Thanksgiving storm brings flooding, flight delays across US",
-   "summary": "Almost one million customers in the US had no power on Thursday evening as storms descended on both US coasts, bringing wind gusts, heavy rain and flooding.",
-   "published_at": "2026-11-27T08:52:11+08:00",
-   "lang": "en",
-   "translated": false,
-   "image": {
-    "url": "https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/af5b/live/7a140030-e9f0-11f1-99b6-a35a62fa4264.jpg"
-   },
-   "display_title": "Major Thanksgiving storm brings flooding, flight delays across US",
-   "display_summary": "Almost one million customers in the US had no power on Thursday evening as storms descended on both US coasts, bringing wind gusts, heavy rain and flooding.",
    "translation_title": "",
    "translation_summary": "",
    "original_title": "",
@@ -3220,14 +3718,14 @@
    "summary": "Among the many already existing effects of AI has been a great de-individualization. I open a YouTube video, and I hear Claude. I sit in a conference presentation, and I hear Claude. I open my email i…",
    "published_at": "2026-11-26T23:09:31+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "Quoting Jack Despain Zhou",
-   "display_summary": "Among the many already existing effects of AI has been a great de-individualization. I open a YouTube video, and I hear Claude. I sit in a conference presentation, and I hear Claude. I open my email i…",
-   "translation_title": "",
+   "display_title": "引用 Jack Despain Zhou 的话",
+   "display_summary": "",
+   "translation_title": "引用 Jack Despain Zhou 的话",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Quoting Jack Despain Zhou",
+   "original_summary": "Among the many already existing effects of AI has been a great de-individualization. I open a YouTube video, and I hear Claude. I sit in a conference presentation, and I hear Claude. I open my email i…"
   },
   {
    "id": "android-authority:https://www.androidauthority.com/samsung-one-ui-9-5-spac-private-cloud-galaxy-ai-apk-teardown-3739743/",
@@ -3865,18 +4363,18 @@
    "summary": "What happens when parents can choose how their children are born, what traits they inherit, and how long childhood lasts? We explore artificial wombs, engineered children, immortal families, and the a…",
    "published_at": "2026-11-26T21:56:07+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/81y9i1mdrzU/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Children of the Far Future",
-   "display_summary": "What happens when parents can choose how their children are born, what traits they inherit, and how long childhood lasts? We explore artificial wombs, engineered children, immortal families, and the a…",
-   "translation_title": "",
+   "display_title": "遥远未来的孩子们",
+   "display_summary": "",
+   "translation_title": "遥远未来的孩子们",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Children of the Far Future",
+   "original_summary": "What happens when parents can choose how their children are born, what traits they inherit, and how long childhood lasts? We explore artificial wombs, engineered children, immortal families, and the a…"
   },
   {
    "id": "zaihuapd:45388",
@@ -6137,7 +6635,7 @@
    "source_id": "dw-world",
    "source_name": "DW World",
    "title": "Russia-Ukraine war extends to the Baltic and the Mediterranean",
-   "summary": "By attacking Russian vessels around the world, Kyiv is trying to up the pressure on Moscow and also sending out signals to its Western allies. What is the impact on global maritime trade?",
+   "summary": "By attacking Russian vessels around the world, Ukraine is trying to increase the pressure on Russia and also sending out signals to its Western allies. What is the impact on global maritime trade?",
    "published_at": "2026-11-26T17:27:00+08:00",
    "lang": "en",
    "translated": false,
@@ -6145,7 +6643,7 @@
     "url": "https://static.dw.com/image/80042297_605.jpg"
    },
    "display_title": "Russia-Ukraine war extends to the Baltic and the Mediterranean",
-   "display_summary": "By attacking Russian vessels around the world, Kyiv is trying to up the pressure on Moscow and also sending out signals to its Western allies. What is the impact on global maritime trade?",
+   "display_summary": "By attacking Russian vessels around the world, Ukraine is trying to increase the pressure on Russia and also sending out signals to its Western allies. What is the impact on global maritime trade?",
    "translation_title": "",
    "translation_summary": "",
    "original_title": "",
@@ -9924,18 +10422,18 @@
    "summary": "Chinese bean dishes! While you might not immediately associate \"Chinese food\" with \"whole dried beans\", there's actually a ton of dishes out there - especially in the southwest. 0:00 - why doesnt chin…",
    "published_at": "2026-11-26T07:33:35+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/qSU9aKgwxe4/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "How China Cooks Beans",
-   "display_summary": "Chinese bean dishes! While you might not immediately associate \"Chinese food\" with \"whole dried beans\", there's actually a ton of dishes out there - especially in the southwest. 0:00 - why doesnt chin…",
-   "translation_title": "",
+   "display_title": "中国如何烹饪豆子",
+   "display_summary": "",
+   "translation_title": "中国如何烹饪豆子",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "How China Cooks Beans",
+   "original_summary": "Chinese bean dishes! While you might not immediately associate \"Chinese food\" with \"whole dried beans\", there's actually a ton of dishes out there - especially in the southwest. 0:00 - why doesnt chin…"
   },
   {
    "id": "TimeHorizonX:2009",
@@ -10073,14 +10571,14 @@
    "summary": "It’s now obvious that we’ll be getting, not one-off solutions to this or that complexity question, but a whole new continent of mathematical truth, one that we’d previously only glimpsed through fog.…",
    "published_at": "2026-11-26T07:26:32+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "Quoting Scott Aaronson",
-   "display_summary": "It’s now obvious that we’ll be getting, not one-off solutions to this or that complexity question, but a whole new continent of mathematical truth, one that we’d previously only glimpsed through fog.…",
-   "translation_title": "",
+   "display_title": "引用 Scott Aaronson",
+   "display_summary": "",
+   "translation_title": "引用 Scott Aaronson",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Quoting Scott Aaronson",
+   "original_summary": "It’s now obvious that we’ll be getting, not one-off solutions to this or that complexity question, but a whole new continent of mathematical truth, one that we’d previously only glimpsed through fog.…"
   },
   {
    "id": "bbc-world:https://www.bbc.co.uk/news/articles/cmvg2989wv74o#1",
@@ -11092,18 +11590,18 @@
    "summary": "The biggest project I've ever done Get dbrand’s Black Friday’s deals at https://dbrand.com/shop/black-friday MKBHD Merch: http://shop.MKBHD.com Playlist of MKBHD Intro music: https://goo.gl/B3AWV5 ~ h…",
    "published_at": "2026-11-26T02:32:40+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/-Cd_JmKG1SM/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "I've Been Keeping This A Secret",
-   "display_summary": "The biggest project I've ever done Get dbrand’s Black Friday’s deals at https://dbrand.com/shop/black-friday MKBHD Merch: http://shop.MKBHD.com Playlist of MKBHD Intro music: https://goo.gl/B3AWV5 ~ h…",
-   "translation_title": "",
+   "display_title": "我一直保守着这个秘密",
+   "display_summary": "",
+   "translation_title": "我一直保守着这个秘密",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "I've Been Keeping This A Secret",
+   "original_summary": "The biggest project I've ever done Get dbrand’s Black Friday’s deals at https://dbrand.com/shop/black-friday MKBHD Merch: http://shop.MKBHD.com Playlist of MKBHD Intro music: https://goo.gl/B3AWV5 ~ h…"
   },
   {
    "id": "blog-simonw:https://simonwillison.net/2026/Nov/25/datasette-charts/",
@@ -11115,16 +11613,16 @@
    "summary": "Release: datasette-charts 0.3a0 I added chart annotations to datasette-charts ! You can now render a chart and then annotate it with lines, shaded areas, labels, or a combination of the three. A chart…",
    "published_at": "2026-11-26T02:16:50+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://static.simonwillison.net/static/2026/chart-with-annotations.webp"
    },
    "display_title": "datasette-charts 0.3a0",
-   "display_summary": "Release: datasette-charts 0.3a0 I added chart annotations to datasette-charts ! You can now render a chart and then annotate it with lines, shaded areas, labels, or a combination of the three. A chart…",
-   "translation_title": "",
+   "display_summary": "",
+   "translation_title": "datasette-charts 0.3a0",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "datasette-charts 0.3a0",
+   "original_summary": "Release: datasette-charts 0.3a0 I added chart annotations to datasette-charts ! You can now render a chart and then annotate it with lines, shaded areas, labels, or a combination of the three. A chart…"
   },
   {
    "id": "cna-world:https://www.channelnewsasia.com/world/us-army-detonates-toxic-explosives-in-iowa-despite-contamination-fears-6582536",
@@ -11802,14 +12300,14 @@
    "summary": "Now that code ships faster than ever, you have more time to spend on projects just for the fun of it. Here's what we can learn through that process as developers. The post Art of play in the age of AI appeared first on The GitHub Blog .",
    "published_at": "2026-11-26T00:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "Art of play in the age of AI",
-   "display_summary": "Now that code ships faster than ever, you have more time to spend on projects just for the fun of it. Here's what we can learn through that process as developers. The post Art of play in the age of AI appeared first on The GitHub Blog .",
-   "translation_title": "",
+   "display_title": "人工智能时代的玩耍艺术",
+   "display_summary": "",
+   "translation_title": "人工智能时代的玩耍艺术",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Art of play in the age of AI",
+   "original_summary": "Now that code ships faster than ever, you have more time to spend on projects just for the fun of it. Here's what we can learn through that process as developers. The post Art of play in the age of AI appeared first on The GitHub Blog ."
   },
   {
    "id": "itsfoss:6b06604382845000011c9a41",
@@ -18313,18 +18811,18 @@
    "summary": "A normal vacuum is space without particles. But some quantum-gravity models begin with something stranger: no ordinary space at all. In Group Field Theory, the Fock vacuum contains no quanta of geomet…",
    "published_at": "2026-11-25T03:00:32+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/YsudvTe7gmc/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "What Is a No Space Vacuum?",
-   "display_summary": "A normal vacuum is space without particles. But some quantum-gravity models begin with something stranger: no ordinary space at all. In Group Field Theory, the Fock vacuum contains no quanta of geomet…",
-   "translation_title": "",
+   "display_title": "什么是无空间真空？",
+   "display_summary": "",
+   "translation_title": "什么是无空间真空？",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "What Is a No Space Vacuum?",
+   "original_summary": "A normal vacuum is space without particles. But some quantum-gravity models begin with something stranger: no ordinary space at all. In Group Field Theory, the Fock vacuum contains no quanta of geomet…"
   },
   {
    "id": "youtube-UCn3npsPixgoi_xLdCg9J-LQ:-0owjCiBb98",
@@ -21681,14 +22179,14 @@
    "summary": "Release: datasette-charts 0.2a1 Minor UI improvements: Collapsing the suggested charts section now leaves the chart visible. Following a link to a chart opens it with the suggestions collapsed for tha…",
    "published_at": "2026-11-24T14:07:19+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
    "display_title": "datasette-charts 0.2a1",
-   "display_summary": "Release: datasette-charts 0.2a1 Minor UI improvements: Collapsing the suggested charts section now leaves the chart visible. Following a link to a chart opens it with the suggestions collapsed for tha…",
-   "translation_title": "",
+   "display_summary": "",
+   "translation_title": "datasette-charts 0.2a1",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "datasette-charts 0.2a1",
+   "original_summary": "Release: datasette-charts 0.2a1 Minor UI improvements: Collapsing the suggested charts section now leaves the chart visible. Following a link to a chart opens it with the suggestions collapsed for tha…"
   },
   {
    "id": "FinanceNewsDaily:497050",
@@ -22094,14 +22592,14 @@
    "summary": "Release: datasette-charts 0.2a0 I introduced this new charting plugin for Datasette yesterday . Today it's gained integration with Datasette Agent , so now you can ask chat for a chart and it will cre…",
    "published_at": "2026-11-24T12:24:29+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
    "display_title": "datasette-charts 0.2a0",
-   "display_summary": "Release: datasette-charts 0.2a0 I introduced this new charting plugin for Datasette yesterday . Today it's gained integration with Datasette Agent , so now you can ask chat for a chart and it will cre…",
-   "translation_title": "",
+   "display_summary": "",
+   "translation_title": "datasette-charts 0.2a0",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "datasette-charts 0.2a0",
+   "original_summary": "Release: datasette-charts 0.2a0 I introduced this new charting plugin for Datasette yesterday . Today it's gained integration with Datasette Agent , so now you can ask chat for a chart and it will cre…"
   },
   {
    "id": "jike-7B1385A9-FCC9-4446-B8CE-472EAF6817B2:https://m.okjike.com/originalPosts/6b050fef5bf736d2104a7e20",
@@ -22283,14 +22781,14 @@
    "summary": "Release: datasette-agent 0.7a1 A small improvement to Datasette Agent : chat sessions could already open an iframe side panel that could then navigate to different pages. This version improves navigat…",
    "published_at": "2026-11-24T11:45:57+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
    "display_title": "datasette-agent 0.7a1",
-   "display_summary": "Release: datasette-agent 0.7a1 A small improvement to Datasette Agent : chat sessions could already open an iframe side panel that could then navigate to different pages. This version improves navigat…",
-   "translation_title": "",
+   "display_summary": "",
+   "translation_title": "datasette-agent 0.7a1",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "datasette-agent 0.7a1",
+   "original_summary": "Release: datasette-agent 0.7a1 A small improvement to Datasette Agent : chat sessions could already open an iframe side panel that could then navigate to different pages. This version improves navigat…"
   },
   {
    "id": "FinanceNewsDaily:497046",
@@ -23890,18 +24388,18 @@
    "summary": "Last video from this studio. Ever. Next up: A fresh start Black Friday sale at Ridge and get up to 49% off at https://ridge.com/MKBHD MKBHD Merch: http://shop.MKBHD.com Playlist of MKBHD Intro music:…",
    "published_at": "2026-11-24T05:10:51+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/cc5C8hRblBY/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "I'm Starting Over",
-   "display_summary": "Last video from this studio. Ever. Next up: A fresh start Black Friday sale at Ridge and get up to 49% off at https://ridge.com/MKBHD MKBHD Merch: http://shop.MKBHD.com Playlist of MKBHD Intro music:…",
-   "translation_title": "",
+   "display_title": "我重新开始",
+   "display_summary": "",
+   "translation_title": "我重新开始",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "I'm Starting Over",
+   "original_summary": "Last video from this studio. Ever. Next up: A fresh start Black Friday sale at Ridge and get up to 49% off at https://ridge.com/MKBHD MKBHD Merch: http://shop.MKBHD.com Playlist of MKBHD Intro music:…"
   },
   {
    "id": "FinanceNewsDaily:497027",
@@ -29964,14 +30462,14 @@
    "summary": "How perplexity measures progress in AI models, and why it could help developers establish a shared approach to evaluating emerging capabilities.",
    "published_at": "2026-11-22T08:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "Perplexity and Intelligence",
-   "display_summary": "How perplexity measures progress in AI models, and why it could help developers establish a shared approach to evaluating emerging capabilities.",
-   "translation_title": "",
+   "display_title": "困惑度与智能",
+   "display_summary": "",
+   "translation_title": "困惑度与智能",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Perplexity and Intelligence",
+   "original_summary": "How perplexity measures progress in AI models, and why it could help developers establish a shared approach to evaluating emerging capabilities."
   },
   {
    "id": "blog-simonw:https://simonwillison.net/2026/Nov/21/muru/",
@@ -31973,18 +32471,18 @@
    "summary": "What if the Universe doesn't start with distances at all? Causal Set Theory explores spacetime built from events and the order in which they can influence one another. With enough structure, familiar…",
    "published_at": "2026-11-21T03:00:23+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/5qej90YSgbA/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Is Distance Real?",
-   "display_summary": "What if the Universe doesn't start with distances at all? Causal Set Theory explores spacetime built from events and the order in which they can influence one another. With enough structure, familiar…",
-   "translation_title": "",
+   "display_title": "距离是真实的吗？",
+   "display_summary": "",
+   "translation_title": "距离是真实的吗？",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Is Distance Real?",
+   "original_summary": "What if the Universe doesn't start with distances at all? Causal Set Theory explores spacetime built from events and the order in which they can influence one another. With enough structure, familiar…"
   },
   {
    "id": "FinanceNewsDaily:496944",
@@ -32729,18 +33227,18 @@
    "summary": "Anker soundcore: https://soundcore.tech/Mrwhosetheboss_D1105_Mrwhosetheboss_471348 AMZ: https://soundcore.tech/Mrwhosetheboss_D1105_Mrwhosetheboss_402556 #ankersoundcore #Ankerearbuds #AeroClip2 #Thus…",
    "published_at": "2026-11-20T21:40:52+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/XVH84RKzuOw/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Airpods got DESTROYED",
-   "display_summary": "Anker soundcore: https://soundcore.tech/Mrwhosetheboss_D1105_Mrwhosetheboss_471348 AMZ: https://soundcore.tech/Mrwhosetheboss_D1105_Mrwhosetheboss_402556 #ankersoundcore #Ankerearbuds #AeroClip2 #Thus…",
-   "translation_title": "",
+   "display_title": "Airpods 被彻底摧毁",
+   "display_summary": "",
+   "translation_title": "Airpods 被彻底摧毁",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Airpods got DESTROYED",
+   "original_summary": "Anker soundcore: https://soundcore.tech/Mrwhosetheboss_D1105_Mrwhosetheboss_471348 AMZ: https://soundcore.tech/Mrwhosetheboss_D1105_Mrwhosetheboss_402556 #ankersoundcore #Ankerearbuds #AeroClip2 #Thus…"
   },
   {
    "id": "FinanceNewsDaily:496922",
@@ -37497,18 +37995,18 @@
    "summary": "What is spacetime actually made of? Could space and time be built from something smaller, or might they emerge from a deeper layer of physics? From quantum foam and discrete geometry to string theory…",
    "published_at": "2026-11-19T21:56:28+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/R1tP9pkbiCc/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Is Spacetime Made of Something?",
-   "display_summary": "What is spacetime actually made of? Could space and time be built from something smaller, or might they emerge from a deeper layer of physics? From quantum foam and discrete geometry to string theory…",
-   "translation_title": "",
+   "display_title": "时空是由某种东西构成的吗？",
+   "display_summary": "",
+   "translation_title": "时空是由某种东西构成的吗？",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Is Spacetime Made of Something?",
+   "original_summary": "What is spacetime actually made of? Could space and time be built from something smaller, or might they emerge from a deeper layer of physics? From quantum foam and discrete geometry to string theory…"
   },
   {
    "id": "FinanceNewsDaily:496855",
@@ -41622,14 +42120,14 @@
    "summary": "Watch a walkthrough of onboarding to Daybreak Blue, with a closer look at the setup experience and how to get started.",
    "published_at": "2026-11-19T08:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "Get started with Daybreak Blue",
-   "display_summary": "Watch a walkthrough of onboarding to Daybreak Blue, with a closer look at the setup experience and how to get started.",
-   "translation_title": "",
+   "display_title": "Daybreak Blue 入门指南",
+   "display_summary": "",
+   "translation_title": "Daybreak Blue 入门指南",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Get started with Daybreak Blue",
+   "original_summary": "Watch a walkthrough of onboarding to Daybreak Blue, with a closer look at the setup experience and how to get started."
   },
   {
    "id": "openai-blog:https://openai.com/business/learn/deploying-daybreak-red",
@@ -41641,16 +42139,16 @@
    "summary": "Explore a reference architecture for supervised security investigations with Daybreak Red, including safety controls, setup, and monitoring.",
    "published_at": "2026-11-19T08:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://images.ctfassets.net/kftzwdyauwt9/4UR2EaD3NPPhGHpAh7Jwu5/8d21aff44d75bd501b7794cff4851288/how-workers-use-chatgpt-cover.png?w=3840&q=90&fm=webp"
    },
-   "display_title": "Deploying Daybreak Red",
-   "display_summary": "Explore a reference architecture for supervised security investigations with Daybreak Red, including safety controls, setup, and monitoring.",
-   "translation_title": "",
+   "display_title": "部署 Daybreak Red",
+   "display_summary": "",
+   "translation_title": "部署 Daybreak Red",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Deploying Daybreak Red",
+   "original_summary": "Explore a reference architecture for supervised security investigations with Daybreak Red, including safety controls, setup, and monitoring."
   },
   {
    "id": "openai-blog:https://openai.com/business/learn/pr-scans-demo",
@@ -41662,14 +42160,14 @@
    "summary": "Watch a walkthrough of PR scans and see how the presenter reviews scan results in a pull request workflow.",
    "published_at": "2026-11-19T08:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "See PR scans in action",
-   "display_summary": "Watch a walkthrough of PR scans and see how the presenter reviews scan results in a pull request workflow.",
-   "translation_title": "",
+   "display_title": "查看 PR 扫描的实际效果",
+   "display_summary": "",
+   "translation_title": "查看 PR 扫描的实际效果",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "See PR scans in action",
+   "original_summary": "Watch a walkthrough of PR scans and see how the presenter reviews scan results in a pull request workflow."
   },
   {
    "id": "FinanceNewsDaily:496800",
@@ -43643,16 +44141,16 @@
    "summary": "Dean Ball, Head of Strategic Futures at OpenAI, examines how more capable AI could reshape society and how people can retain control of their institutions.",
    "published_at": "2026-11-18T18:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://images.ctfassets.net/kftzwdyauwt9/6rQTHf1q0hsSrYapYJaOJQ/66ed5c49d6bfe279ae089d6fecfc9de4/future-of-the-firm-cover.png?w=3840&q=90&fm=webp"
    },
-   "display_title": "The Silent Consensus",
-   "display_summary": "Dean Ball, Head of Strategic Futures at OpenAI, examines how more capable AI could reshape society and how people can retain control of their institutions.",
-   "translation_title": "",
+   "display_title": "沉默的共识",
+   "display_summary": "",
+   "translation_title": "沉默的共识",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "The Silent Consensus",
+   "original_summary": "Dean Ball, Head of Strategic Futures at OpenAI, examines how more capable AI could reshape society and how people can retain control of their institutions."
   },
   {
    "id": "NewlearnerChannel:16151",
@@ -44422,16 +44920,16 @@
    "summary": "See how Codex runs commands on your machine while enforcing the filesystem and network limits you control across macOS, Linux, and Windows.",
    "published_at": "2026-11-18T16:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://images.ctfassets.net/kftzwdyauwt9/iYpBFP2nteJOaNG1v5Rrp/e0eb5dbefa86d133c3392df5983e45a3/performance-factory-cover.png?w=3840&q=90&fm=webp"
    },
-   "display_title": "Inside the Codex sandbox",
-   "display_summary": "See how Codex runs commands on your machine while enforcing the filesystem and network limits you control across macOS, Linux, and Windows.",
-   "translation_title": "",
+   "display_title": "深入 Codex 沙盒",
+   "display_summary": "",
+   "translation_title": "深入 Codex 沙盒",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Inside the Codex sandbox",
+   "original_summary": "See how Codex runs commands on your machine while enforcing the filesystem and network limits you control across macOS, Linux, and Windows."
   },
   {
    "id": "openai-blog:https://openai.com/index/research-acceleration-jagged-frontier",
@@ -46741,18 +47239,18 @@
    "summary": "Can you trust MKBHD videos? Part 2. Part 1: https://youtu.be/5nLWTVTwOhY MKBHD Merch: http://shop.MKBHD.com Playlist of MKBHD Intro music: https://goo.gl/B3AWV5 ~ http://twitter.com/MKBHD http://insta…",
    "published_at": "2026-11-18T02:39:57+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/KTDJiVpSDTI/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Can You Trust MKBHD?",
-   "display_summary": "Can you trust MKBHD videos? Part 2. Part 1: https://youtu.be/5nLWTVTwOhY MKBHD Merch: http://shop.MKBHD.com Playlist of MKBHD Intro music: https://goo.gl/B3AWV5 ~ http://twitter.com/MKBHD http://insta…",
-   "translation_title": "",
+   "display_title": "你能信任 MKBHD 吗？",
+   "display_summary": "",
+   "translation_title": "你能信任 MKBHD 吗？",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Can You Trust MKBHD?",
+   "original_summary": "Can you trust MKBHD videos? Part 2. Part 1: https://youtu.be/5nLWTVTwOhY MKBHD Merch: http://shop.MKBHD.com Playlist of MKBHD Intro music: https://goo.gl/B3AWV5 ~ http://twitter.com/MKBHD http://insta…"
   },
   {
    "id": "github-blog:https://github.blog/?p=100215",
@@ -48690,16 +49188,16 @@
    "summary": "Explore the new Sales plugin and 30+ new and expanded partner plugins in ChatGPT to research prospects, prepare pitches, update your CRM, and move deals forward.",
    "published_at": "2026-11-17T16:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://images.ctfassets.net/kftzwdyauwt9/2TCcE1IdEPpWT2vaC3PDWu/e78bceb30c38422b1461a2326838e762/Art_Card___1_1_1080x1080.png?w=3840&q=90&fm=webp"
    },
-   "display_title": "Introducing ChatGPT for Sales",
-   "display_summary": "Explore the new Sales plugin and 30+ new and expanded partner plugins in ChatGPT to research prospects, prepare pitches, update your CRM, and move deals forward.",
-   "translation_title": "",
+   "display_title": "为销售推出 ChatGPT",
+   "display_summary": "",
+   "translation_title": "为销售推出 ChatGPT",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Introducing ChatGPT for Sales",
+   "original_summary": "Explore the new Sales plugin and 30+ new and expanded partner plugins in ChatGPT to research prospects, prepare pitches, update your CRM, and move deals forward."
   },
   {
    "id": "freechinese:113402",
@@ -50691,16 +51189,16 @@
    "summary": "OpenAI and the Government of Chile are partnering to support responsible AI adoption, build public-sector skills and help local startups develop AI applications.",
    "published_at": "2026-11-17T08:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://images.ctfassets.net/kftzwdyauwt9/2DbgwJ93neBePatQjKO2h7/d63008264f83f3dcc786fe98410151be/government-blog-card-option-051-review-1080x1080.png?w=3840&q=90&fm=webp"
    },
-   "display_title": "Introducing OpenAI for Chile",
-   "display_summary": "OpenAI and the Government of Chile are partnering to support responsible AI adoption, build public-sector skills and help local startups develop AI applications.",
-   "translation_title": "",
+   "display_title": "为智利推出 OpenAI",
+   "display_summary": "",
+   "translation_title": "为智利推出 OpenAI",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Introducing OpenAI for Chile",
+   "original_summary": "OpenAI and the Government of Chile are partnering to support responsible AI adoption, build public-sector skills and help local startups develop AI applications."
   },
   {
    "id": "openai-blog:https://openai.com/index/strengthening-nato-allied-cyber-defences-ai",
@@ -55187,16 +55685,16 @@
    "summary": "The OpenAI science blog shares new findings, practical methods, and firsthand accounts from researchers using AI to advance scientific discovery.",
    "published_at": "2026-11-16T06:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://images.ctfassets.net/kftzwdyauwt9/77i38N8Ov2vmY2uJ4pWRIQ/5f6f3eceaf8751f07fc23f179ad14c32/from-ai-results-to-scientific-understanding-cover.png?w=3840&q=90&fm=webp"
    },
-   "display_title": "Our new blog for science",
-   "display_summary": "The OpenAI science blog shares new findings, practical methods, and firsthand accounts from researchers using AI to advance scientific discovery.",
-   "translation_title": "",
+   "display_title": "我们的科学新博客",
+   "display_summary": "",
+   "translation_title": "我们的科学新博客",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Our new blog for science",
+   "original_summary": "The OpenAI science blog shares new findings, practical methods, and firsthand accounts from researchers using AI to advance scientific discovery."
   },
   {
    "id": "FinanceNewsDaily:496638",
@@ -59062,16 +59560,16 @@
    "summary": "Introducing ChatGPT Wallet, a secure way for agents in ChatGPT Work, Codex, and dots to complete purchases with user approval and existing card protections.",
    "published_at": "2026-11-13T23:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://cdn.openai.com/mdx-assets/e193aefe-5e58-431c-8cd2-adadac0c1496/a8298611-fe6e-4853-90e1-7ec5b3bbdf5f.6a518def.png"
    },
-   "display_title": "Introducing ChatGPT Wallet",
-   "display_summary": "Introducing ChatGPT Wallet, a secure way for agents in ChatGPT Work, Codex, and dots to complete purchases with user approval and existing card protections.",
-   "translation_title": "",
+   "display_title": "推出 ChatGPT Wallet",
+   "display_summary": "",
+   "translation_title": "推出 ChatGPT Wallet",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Introducing ChatGPT Wallet",
+   "original_summary": "Introducing ChatGPT Wallet, a secure way for agents in ChatGPT Work, Codex, and dots to complete purchases with user approval and existing card protections."
   },
   {
    "id": "TimeHorizonX:1968",
@@ -59350,16 +59848,16 @@
    "summary": "Customers can now purchase Apple HomeView and experience a new way to enjoy entertainment, stay connected, and manage their home.",
    "published_at": "2026-11-13T21:59:07+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://www.apple.com/newsroom/images/2026/11/apple-homeview-available-today/article/Apple-HomeView-available-3up_big.jpg.large.jpg"
    },
-   "display_title": "Apple HomeView available today",
-   "display_summary": "Customers can now purchase Apple HomeView and experience a new way to enjoy entertainment, stay connected, and manage their home.",
-   "translation_title": "",
+   "display_title": "Apple HomeView 今日上市",
+   "display_summary": "",
+   "translation_title": "Apple HomeView 今日上市",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Apple HomeView available today",
+   "original_summary": "Customers can now purchase Apple HomeView and experience a new way to enjoy entertainment, stay connected, and manage their home."
   },
   {
    "id": "FinanceNewsDaily:496604",
@@ -61020,11 +61518,7 @@
    "published_at": "2026-11-13T13:26:39+08:00",
    "lang": "zh",
    "translated": false,
-   "image": {
-    "url": "media/TimeHorizonX/1967_1.webp",
-    "width": 450,
-    "height": 800
-   },
+   "image": null,
    "display_title": "10月生产资料的出厂价格（PPI）同比涨了7.4%，生活资料还是−0.1%，两者相差7.5个百分点，剪刀差是2022年4…",
    "display_summary": "10月生产资料的出厂价格（PPI）同比涨了7.4%，生活资料还是−0.1%，两者相差7.5个百分点，剪刀差是2022年4月以来最大的一次。上游在涨价，消费品这头几乎没动。",
    "translation_title": "",
@@ -61043,11 +61537,7 @@
    "published_at": "2026-11-13T13:15:17+08:00",
    "lang": "zh",
    "translated": false,
-   "image": {
-    "url": "media/freechinese/113326_1.webp",
-    "width": 180,
-    "height": 320
-   },
+   "image": null,
    "display_title": "马克龙与斯洛伐克总统会晤期间，两名仪仗队员晕倒",
    "display_summary": "其中一名仪仗队员踉跄了一下，掉落了他的剑，然后倒在了台阶上。马克龙和附近几个人赶紧冲过去帮助他。 该士兵很快被抬离现场。不久之后，第二名仪仗队员也感到不适，但那一刻没有被视频捕捉到。",
    "translation_title": "",
@@ -62519,18 +63009,18 @@
    "summary": "Can you eat enough and still starve? Even if you consume enough daily calories, without key micronutrients your health could still be at risk. One proven solution to this is to fortify foods. So, what…",
    "published_at": "2026-11-13T00:00:37+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/Y1vEGsnNYek/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "What Is Food Fortification?",
-   "display_summary": "Can you eat enough and still starve? Even if you consume enough daily calories, without key micronutrients your health could still be at risk. One proven solution to this is to fortify foods. So, what…",
-   "translation_title": "",
+   "display_title": "什么是食品强化？",
+   "display_summary": "",
+   "translation_title": "什么是食品强化？",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "What Is Food Fortification?",
+   "original_summary": "Can you eat enough and still starve? Even if you consume enough daily calories, without key micronutrients your health could still be at risk. One proven solution to this is to fortify foods. So, what…"
   },
   {
    "id": "xhqcankao:33075",
@@ -70393,18 +70883,18 @@
    "summary": "To get started planning a career that works on one of the world’s most pressing problems, sign up now at https://80000hours.org/inanutshell Get cozy with our new Sleep Collection: https://shop.kgs.lin…",
    "published_at": "2026-11-10T23:00:01+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/fEjvSbI_PT4/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Dying Is Complicated",
-   "display_summary": "To get started planning a career that works on one of the world’s most pressing problems, sign up now at https://80000hours.org/inanutshell Get cozy with our new Sleep Collection: https://shop.kgs.lin…",
-   "translation_title": "",
+   "display_title": "死亡很复杂",
+   "display_summary": "",
+   "translation_title": "死亡很复杂",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Dying Is Complicated",
+   "original_summary": "To get started planning a career that works on one of the world’s most pressing problems, sign up now at https://80000hours.org/inanutshell Get cozy with our new Sleep Collection: https://shop.kgs.lin…"
   },
   {
    "id": "youtube-UCbfYPyITQ-7l4upoX8nvctg:vug73goPJaM",
@@ -70416,18 +70906,18 @@
    "summary": "❤️ Check out Lambda here and sign up for their GPU Cloud: https://lambda.com/papers 📝 The papers and sources are available here: MirrorCode: https://arxiv.org/abs/2606.30182 REMEND: https://huggingfac…",
    "published_at": "2026-11-10T18:15:57+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/vug73goPJaM/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Is Software Over?",
-   "display_summary": "❤️ Check out Lambda here and sign up for their GPU Cloud: https://lambda.com/papers 📝 The papers and sources are available here: MirrorCode: https://arxiv.org/abs/2606.30182 REMEND: https://huggingfac…",
-   "translation_title": "",
+   "display_title": "软件终结了吗？",
+   "display_summary": "",
+   "translation_title": "软件终结了吗？",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Is Software Over?",
+   "original_summary": "❤️ Check out Lambda here and sign up for their GPU Cloud: https://lambda.com/papers 📝 The papers and sources are available here: MirrorCode: https://arxiv.org/abs/2606.30182 REMEND: https://huggingfac…"
   },
   {
    "id": "blog-emollick:https://www.oneusefulthing.org/p/fable-52-and-jagged-agi",
@@ -70439,16 +70929,16 @@
    "summary": "General, often expert, and sometimes jagged",
    "published_at": "2026-11-10T03:04:26+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://substackcdn.com/image/fetch/$s_!-MYM!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F4498fb7e-ff69-4b09-903a-f22ff7147e4b_2912x1632.png"
    },
-   "display_title": "Fable 5.2 and Jagged AGI",
-   "display_summary": "General, often expert, and sometimes jagged",
-   "translation_title": "",
+   "display_title": "Fable 5.2 与参差不齐的通用人工智能",
+   "display_summary": "",
+   "translation_title": "Fable 5.2 与参差不齐的通用人工智能",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Fable 5.2 and Jagged AGI",
+   "original_summary": "General, often expert, and sometimes jagged"
   },
   {
    "id": "youtube-UCh9IfI45mmk59eDvSWtuuhQ:_bzxjH0lX3A",
@@ -71015,18 +71505,18 @@
    "summary": "5 days hiking across Tenerife. Volcanic ridges and forest trails across the Canary Islands. kraigadams.com/guides/canary-islands",
    "published_at": "2026-11-01T05:10:13+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/cwWI4MoGtFw/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "5 days hiking across Tenerife",
-   "display_summary": "5 days hiking across Tenerife. Volcanic ridges and forest trails across the Canary Islands. kraigadams.com/guides/canary-islands",
-   "translation_title": "",
+   "display_title": "在特内里费岛徒步 5 天",
+   "display_summary": "",
+   "translation_title": "在特内里费岛徒步 5 天",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "5 days hiking across Tenerife",
+   "original_summary": "5 days hiking across Tenerife. Volcanic ridges and forest trails across the Canary Islands. kraigadams.com/guides/canary-islands"
   },
   {
    "id": "blog-karpathy:https://karpathy.bearblog.dev/hacker-tube/",
@@ -71038,16 +71528,16 @@
    "summary": "Instead of YouTube, watch HackerTube!",
    "published_at": "2026-11-01T01:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://bear-images.sfo2.cdn.digitaloceanspaces.com/karpathy/image-2.webp"
    },
    "display_title": "HackerTube",
-   "display_summary": "Instead of YouTube, watch HackerTube!",
-   "translation_title": "",
+   "display_summary": "",
+   "translation_title": "HackerTube",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "HackerTube",
+   "original_summary": "Instead of YouTube, watch HackerTube!"
   },
   {
    "id": "youtube-UCiczXOhGpvoQGhOL16EZiTg:meBi616y1mg",
@@ -71170,18 +71660,18 @@
    "summary": "Ketamine is often used in medicine as one of medicine's safest painkillers, but without safeguards, it can be very dangerous. So, what exactly is ketamine, and how does it work? #kurzgesagt #inanutshe…",
    "published_at": "2026-10-29T23:30:29+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/KBfIo9sZbC4/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "How Does Ketamine Work?",
-   "display_summary": "Ketamine is often used in medicine as one of medicine's safest painkillers, but without safeguards, it can be very dangerous. So, what exactly is ketamine, and how does it work? #kurzgesagt #inanutshe…",
-   "translation_title": "",
+   "display_title": "氯胺酮是如何起作用的？",
+   "display_summary": "",
+   "translation_title": "氯胺酮是如何起作用的？",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "How Does Ketamine Work?",
+   "original_summary": "Ketamine is often used in medicine as one of medicine's safest painkillers, but without safeguards, it can be very dangerous. So, what exactly is ketamine, and how does it work? #kurzgesagt #inanutshe…"
   },
   {
    "id": "youtube-UCh9IfI45mmk59eDvSWtuuhQ:F8mqt6Ae0aY",
@@ -71325,18 +71815,18 @@
    "summary": "This is an acoustic imaging camera",
    "published_at": "2026-10-28T04:14:55+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/ai1gIWacf0I/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "This can SEE Sound!",
-   "display_summary": "This is an acoustic imaging camera",
-   "translation_title": "",
+   "display_title": "这能看见声音！",
+   "display_summary": "",
+   "translation_title": "这能看见声音！",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "This can SEE Sound!",
+   "original_summary": "This is an acoustic imaging camera"
   },
   {
    "id": "youtube-UCsXVk37bltHxD1rDPwtNM8Q:5_Fayfx2NUM",
@@ -71451,18 +71941,18 @@
    "summary": "The sunlight and the heat coming from Sun are essential for nearly all of life on Earth. So, what would happen if we cool down our star by 30%? #kurzgesagt #inanutshell #kurzgesagt_inanutshell #learnw…",
    "published_at": "2026-10-24T22:00:15+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/35No369rmq0/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "What If We Cool Down the Sun?",
-   "display_summary": "The sunlight and the heat coming from Sun are essential for nearly all of life on Earth. So, what would happen if we cool down our star by 30%? #kurzgesagt #inanutshell #kurzgesagt_inanutshell #learnw…",
-   "translation_title": "",
+   "display_title": "如果我们给太阳降温会怎样？",
+   "display_summary": "",
+   "translation_title": "如果我们给太阳降温会怎样？",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "What If We Cool Down the Sun?",
+   "original_summary": "The sunlight and the heat coming from Sun are essential for nearly all of life on Earth. So, what would happen if we cool down our star by 30%? #kurzgesagt #inanutshell #kurzgesagt_inanutshell #learnw…"
   },
   {
    "id": "youtube-UCn3npsPixgoi_xLdCg9J-LQ:FFfbkIVI0LM",
@@ -71543,18 +72033,18 @@
    "summary": "iPhone duo only comes with 2 things in the box",
    "published_at": "2026-10-21T22:00:33+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/_4ELeWAgMwo/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "ASMR iPhone Duo Unboxing",
-   "display_summary": "iPhone duo only comes with 2 things in the box",
-   "translation_title": "",
+   "display_title": "ASMR iPhone Duo 开箱",
+   "display_summary": "",
+   "translation_title": "ASMR iPhone Duo 开箱",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "ASMR iPhone Duo Unboxing",
+   "original_summary": "iPhone duo only comes with 2 things in the box"
   },
   {
    "id": "youtube-UCMiJRAwDNSNzuYeN2uWa0pA:i3ZlSlnGWng",
@@ -71566,18 +72056,18 @@
    "summary": "For my tech hot takes: http://twitter.com/Mrwhosetheboss For my Personal Posts: http://instagram.com/mrwhosetheboss For quick tech videos: https://www.tiktok.com/@mrwhosetheboss Does anyone still use…",
    "published_at": "2026-10-21T20:02:02+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/i3ZlSlnGWng/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "6 ways iPhone Duo beats Samsung",
-   "display_summary": "For my tech hot takes: http://twitter.com/Mrwhosetheboss For my Personal Posts: http://instagram.com/mrwhosetheboss For quick tech videos: https://www.tiktok.com/@mrwhosetheboss Does anyone still use…",
-   "translation_title": "",
+   "display_title": "iPhone Duo 胜过三星的 6 种方式",
+   "display_summary": "",
+   "translation_title": "iPhone Duo 胜过三星的 6 种方式",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "6 ways iPhone Duo beats Samsung",
+   "original_summary": "For my tech hot takes: http://twitter.com/Mrwhosetheboss For my Personal Posts: http://instagram.com/mrwhosetheboss For quick tech videos: https://www.tiktok.com/@mrwhosetheboss Does anyone still use…"
   },
   {
    "id": "youtube-UCBJycsmduvYEL83R_U4JriQ:ESABTN4VtrA",
@@ -71909,18 +72399,18 @@
    "summary": "Get exclusive content and early access to videos over on my Patreon: https://patreon.com/ryangeorge Merch: https://ryan-george.dashery.com/ For business inquiries: ryan@28thave.com Visual assets sourc…",
    "published_at": "2026-10-05T03:00:08+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/Fx7eZItF8u0/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Please Touch Grass",
-   "display_summary": "Get exclusive content and early access to videos over on my Patreon: https://patreon.com/ryangeorge Merch: https://ryan-george.dashery.com/ For business inquiries: ryan@28thave.com Visual assets sourc…",
-   "translation_title": "",
+   "display_title": "请去摸摸草",
+   "display_summary": "",
+   "translation_title": "请去摸摸草",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Please Touch Grass",
+   "original_summary": "Get exclusive content and early access to videos over on my Patreon: https://patreon.com/ryangeorge Merch: https://ryan-george.dashery.com/ For business inquiries: ryan@28thave.com Visual assets sourc…"
   },
   {
    "id": "blog-emollick:https://www.oneusefulthing.org/p/the-dot-and-the-swarm",
@@ -71932,16 +72422,16 @@
    "summary": "Benefitting from the Bitter Lesson",
    "published_at": "2026-10-01T18:54:12+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://substackcdn.com/image/fetch/$s_!Narw!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe3014425-47c2-47aa-848b-3528f4dc9517_2912x1632.png"
    },
-   "display_title": "The Dot and the Swarm",
-   "display_summary": "Benefitting from the Bitter Lesson",
-   "translation_title": "",
+   "display_title": "圆点与蜂群",
+   "display_summary": "",
+   "translation_title": "圆点与蜂群",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "The Dot and the Swarm",
+   "original_summary": "Benefitting from the Bitter Lesson"
   },
   {
    "id": "youtube-UCh9IfI45mmk59eDvSWtuuhQ:HtW1AiJ5Sx8",
@@ -72022,16 +72512,16 @@
    "summary": "Using your deep knowledge, wide knowledge, taste, and agency",
    "published_at": "2026-09-19T01:54:32+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://substackcdn.com/image/fetch/$s_!lOLb!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F47cb24b9-02ec-426b-960f-8429df91be29_1942x1016.png"
    },
-   "display_title": "The Overhang",
-   "display_summary": "Using your deep knowledge, wide knowledge, taste, and agency",
-   "translation_title": "",
+   "display_title": "悬垂部分",
+   "display_summary": "",
+   "translation_title": "悬垂部分",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "The Overhang",
+   "original_summary": "Using your deep knowledge, wide knowledge, taste, and agency"
   },
   {
    "id": "youtube-UC54SLBnD5k5U3Q6N__UjbAw:39L4Zl2JB7Y",
@@ -72089,18 +72579,18 @@
    "summary": "Get exclusive content and early access to videos over on my Patreon: https://patreon.com/ryangeorge Merch: https://ryan-george.dashery.com/ For business inquiries: ryan@28thave.com Visual assets sourc…",
    "published_at": "2026-09-11T22:03:03+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/isLWnuBkaOc/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Your Boss Who Has AI Psychosis",
-   "display_summary": "Get exclusive content and early access to videos over on my Patreon: https://patreon.com/ryangeorge Merch: https://ryan-george.dashery.com/ For business inquiries: ryan@28thave.com Visual assets sourc…",
-   "translation_title": "",
+   "display_title": "你那位患有 AI 精神病的老板",
+   "display_summary": "",
+   "translation_title": "你那位患有 AI 精神病的老板",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Your Boss Who Has AI Psychosis",
+   "original_summary": "Get exclusive content and early access to videos over on my Patreon: https://patreon.com/ryangeorge Merch: https://ryan-george.dashery.com/ For business inquiries: ryan@28thave.com Visual assets sourc…"
   },
   {
    "id": "jike-2d619b75-fc6a-4151-8125-156762ab46dc:https://m.okjike.com/originalPosts/6a9fa496141b85b29201fed0",
@@ -72177,18 +72667,18 @@
    "summary": "🌏 Get Exclusive NordVPN deal + 4 months extra here → https://nordvpn.com/ryangeorge It’s risk-free with Nord’s 30-day money-back guarantee! ✌️ Get exclusive content and early access to videos over on…",
    "published_at": "2026-09-02T22:22:05+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/4JowYdu7vnY/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Restaurant Menus In 2026",
-   "display_summary": "🌏 Get Exclusive NordVPN deal + 4 months extra here → https://nordvpn.com/ryangeorge It’s risk-free with Nord’s 30-day money-back guarantee! ✌️ Get exclusive content and early access to videos over on…",
-   "translation_title": "",
+   "display_title": "2026 年的餐厅菜单",
+   "display_summary": "",
+   "translation_title": "2026 年的餐厅菜单",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Restaurant Menus In 2026",
+   "original_summary": "🌏 Get Exclusive NordVPN deal + 4 months extra here → https://nordvpn.com/ryangeorge It’s risk-free with Nord’s 30-day money-back guarantee! ✌️ Get exclusive content and early access to videos over on…"
   },
   {
    "id": "blog-emollick:https://www.oneusefulthing.org/p/agency-and-agents",
@@ -72200,16 +72690,16 @@
    "summary": "From the Hugging Face Incident to Twilight Factories",
    "published_at": "2026-08-31T08:24:35+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://substackcdn.com/image/fetch/$s_!LzPL!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F94cee090-1da6-4c8d-a043-01d835708104_1456x816.png"
    },
-   "display_title": "Agency and Agents",
-   "display_summary": "From the Hugging Face Incident to Twilight Factories",
-   "translation_title": "",
+   "display_title": "能动性与智能体",
+   "display_summary": "",
+   "translation_title": "能动性与智能体",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Agency and Agents",
+   "original_summary": "From the Hugging Face Incident to Twilight Factories"
   },
   {
    "id": "youtube-UCn3npsPixgoi_xLdCg9J-LQ:ksk36W2vCoM",
@@ -72244,18 +72734,18 @@
    "summary": "Danhonggao, Sichuan-style pancakes! A classic street snack around Chengdu that's getting increasingly popular all around China. 0:00 - what pancakes can learn from sichuan 1:56 - how to make danhongga…",
    "published_at": "2026-08-19T07:54:29+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/YOTAZBKS9TA/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Sichuan-style Pancakes (蛋烘糕)",
-   "display_summary": "Danhonggao, Sichuan-style pancakes! A classic street snack around Chengdu that's getting increasingly popular all around China. 0:00 - what pancakes can learn from sichuan 1:56 - how to make danhongga…",
-   "translation_title": "",
+   "display_title": "川式蛋烘糕",
+   "display_summary": "",
+   "translation_title": "川式蛋烘糕",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Sichuan-style Pancakes (蛋烘糕)",
+   "original_summary": "Danhonggao, Sichuan-style pancakes! A classic street snack around Chengdu that's getting increasingly popular all around China. 0:00 - what pancakes can learn from sichuan 1:56 - how to make danhongga…"
   },
   {
    "id": "wechat-王建硕:MP_WXS_2397242840_-Dpo4wgqULwFP0EUwsFzYA",
@@ -72542,18 +73032,18 @@
    "summary": "Last week we covered \"brothy rice\", so in this next iteration of our \"Over Rice Series\", it felt like a natural next step to cover... \"saucy rice\". 0:00 - why saucy over rice 2:14 - pork with douchi 6…",
    "published_at": "2026-07-02T10:02:26+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/hRnE8iu7Vz0/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Saucy Rice",
-   "display_summary": "Last week we covered \"brothy rice\", so in this next iteration of our \"Over Rice Series\", it felt like a natural next step to cover... \"saucy rice\". 0:00 - why saucy over rice 2:14 - pork with douchi 6…",
-   "translation_title": "",
+   "display_title": "香浓米饭",
+   "display_summary": "",
+   "translation_title": "香浓米饭",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Saucy Rice",
+   "original_summary": "Last week we covered \"brothy rice\", so in this next iteration of our \"Over Rice Series\", it felt like a natural next step to cover... \"saucy rice\". 0:00 - why saucy over rice 2:14 - pork with douchi 6…"
   },
   {
    "id": "blog-emollick:https://www.oneusefulthing.org/p/the-twilight-of-the-chatbots",
@@ -72565,16 +73055,16 @@
    "summary": "How work changes along the exponential",
    "published_at": "2026-07-01T06:18:12+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://substackcdn.com/image/fetch/$s_!CQgP!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F8215c2ac-ba16-483d-a53d-2957f2add233_1376x864.png"
    },
-   "display_title": "The twilight of the chatbots",
-   "display_summary": "How work changes along the exponential",
-   "translation_title": "",
+   "display_title": "聊天机器人的黄昏",
+   "display_summary": "",
+   "translation_title": "聊天机器人的黄昏",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "The twilight of the chatbots",
+   "original_summary": "How work changes along the exponential"
   },
   {
    "id": "blog-lilianweng:https://lilianweng.github.io/posts/2026-06-24-scaling-laws/",
@@ -72586,14 +73076,14 @@
    "summary": "Scaling laws are one of the most critical empirical findings in deep learning. The observation is simple in form: the training loss $L$ decreases predictably as we scale up model size $N$, dataset siz…",
    "published_at": "2026-06-24T08:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "Scaling Laws, Carefully",
-   "display_summary": "Scaling laws are one of the most critical empirical findings in deep learning. The observation is simple in form: the training loss $L$ decreases predictably as we scale up model size $N$, dataset siz…",
-   "translation_title": "",
+   "display_title": "谨慎看待规模定律",
+   "display_summary": "",
+   "translation_title": "谨慎看待规模定律",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Scaling Laws, Carefully",
+   "original_summary": "Scaling laws are one of the most critical empirical findings in deep learning. The observation is simple in form: the training loss $L$ decreases predictably as we scale up model size $N$, dataset siz…"
   },
   {
    "id": "youtube-UCn3npsPixgoi_xLdCg9J-LQ:4JsqDE7NuYQ",
@@ -72628,18 +73118,18 @@
    "summary": "Chinese Paofan: is this the same thing as influencer brothy rice? 0:00 - Brothy Rice in China 2:12 - Shanghai Veggie Brothy Rice 4:35 - Guizhou Chicken Soup Brothy Rice 6:58 - Tomato Beef Brothy Rice…",
    "published_at": "2026-06-18T09:22:58+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/rLf2dDC7D68/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Brothy Rice",
-   "display_summary": "Chinese Paofan: is this the same thing as influencer brothy rice? 0:00 - Brothy Rice in China 2:12 - Shanghai Veggie Brothy Rice 4:35 - Guizhou Chicken Soup Brothy Rice 6:58 - Tomato Beef Brothy Rice…",
-   "translation_title": "",
+   "display_title": "汤泡饭",
+   "display_summary": "",
+   "translation_title": "汤泡饭",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Brothy Rice",
+   "original_summary": "Chinese Paofan: is this the same thing as influencer brothy rice? 0:00 - Brothy Rice in China 2:12 - Shanghai Veggie Brothy Rice 4:35 - Guizhou Chicken Soup Brothy Rice 6:58 - Tomato Beef Brothy Rice…"
   },
   {
    "id": "blog-emollick:https://www.oneusefulthing.org/p/what-it-feels-like-to-work-with-mythos",
@@ -72693,16 +73183,16 @@
    "summary": "If you go to your favorite social media site, you will find it full of posts that start to look suspiciously similar to each other:",
    "published_at": "2026-05-27T03:56:01+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://substackcdn.com/image/fetch/$s_!a8R9!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fb63d669d-64f1-4f8b-81ae-9476d20a720d_1182x635.png"
    },
-   "display_title": "Choosing to Stay Human",
-   "display_summary": "If you go to your favorite social media site, you will find it full of posts that start to look suspiciously similar to each other:",
-   "translation_title": "",
+   "display_title": "选择保持人性",
+   "display_summary": "",
+   "translation_title": "选择保持人性",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Choosing to Stay Human",
+   "original_summary": "If you go to your favorite social media site, you will find it full of posts that start to look suspiciously similar to each other:"
   },
   {
    "id": "youtube-UC54SLBnD5k5U3Q6N__UjbAw:LGNWgnkOp9Q",
@@ -72737,18 +73227,18 @@
    "summary": "Xinping's dipping sauce fish! A great way to eat tilapia, and pretty easy to boot. 0:00 - the land of dips 1:05 - xinping dipping sauce fish 2:32 - making the soup 6:08 - making the dips 7:35 - how to…",
    "published_at": "2026-05-10T09:36:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/qUFFFT_379Y/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Dipping Sauce Tilapia (蘸水罗非鱼)",
-   "display_summary": "Xinping's dipping sauce fish! A great way to eat tilapia, and pretty easy to boot. 0:00 - the land of dips 1:05 - xinping dipping sauce fish 2:32 - making the soup 6:08 - making the dips 7:35 - how to…",
-   "translation_title": "",
+   "display_title": "蘸水罗非鱼",
+   "display_summary": "",
+   "translation_title": "蘸水罗非鱼",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Dipping Sauce Tilapia (蘸水罗非鱼)",
+   "original_summary": "Xinping's dipping sauce fish! A great way to eat tilapia, and pretty easy to boot. 0:00 - the land of dips 1:05 - xinping dipping sauce fish 2:32 - making the soup 6:08 - making the dips 7:35 - how to…"
   },
   {
    "id": "blog-karpathy:https://karpathy.bearblog.dev/sequoia-ascent-2026/",
@@ -72760,14 +73250,14 @@
    "summary": "Summary of my talk at Sequoia Ascent",
    "published_at": "2026-05-01T00:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "Sequoia Ascent 2026 summary",
-   "display_summary": "Summary of my talk at Sequoia Ascent",
-   "translation_title": "",
+   "display_title": "Sequoia Ascent 2026 摘要",
+   "display_summary": "",
+   "translation_title": "Sequoia Ascent 2026 摘要",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Sequoia Ascent 2026 summary",
+   "original_summary": "Summary of my talk at Sequoia Ascent"
   },
   {
    "id": "jike-C0052298-F57E-483F-9BBA-0C6BF17AB59E:https://m.okjike.com/originalPosts/69eac7b8ab68bbb4d53ce4d6",
@@ -73000,14 +73490,14 @@
    "summary": "I want to share some thoughts on my recent experience with OpenClaw. Over the past year, I’ve been actively using Claude Code for development. Many people believed AI could already assist with program…",
    "published_at": "2026-02-08T10:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "OpenClaw Is Changing My Life",
-   "display_summary": "I want to share some thoughts on my recent experience with OpenClaw. Over the past year, I’ve been actively using Claude Code for development. Many people believed AI could already assist with program…",
-   "translation_title": "",
+   "display_title": "OpenClaw 正在改变我的生活",
+   "display_summary": "",
+   "translation_title": "OpenClaw 正在改变我的生活",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "OpenClaw Is Changing My Life",
+   "original_summary": "I want to share some thoughts on my recent experience with OpenClaw. Over the past year, I’ve been actively using Claude Code for development. Many people believed AI could already assist with program…"
   },
   {
    "id": "blog-karpathy:https://karpathy.bearblog.dev/year-in-review-2025/",
@@ -73019,16 +73509,16 @@
    "summary": "2025 Year in Review of LLM paradigm changes",
    "published_at": "2025-12-20T02:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://bear-images.sfo2.cdn.digitaloceanspaces.com/karpathy/unnamed.webp"
    },
-   "display_title": "2025 LLM Year in Review",
-   "display_summary": "2025 Year in Review of LLM paradigm changes",
-   "translation_title": "",
+   "display_title": "2025 大语言模型年度回顾",
+   "display_summary": "",
+   "translation_title": "2025 大语言模型年度回顾",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "2025 LLM Year in Review",
+   "original_summary": "2025 Year in Review of LLM paradigm changes"
   },
   {
    "id": "blog-karpathy:https://karpathy.bearblog.dev/chemical-hygiene/",
@@ -73040,16 +73530,16 @@
    "summary": "An evolving guide of protecting your health from a pricemaxxing industry.",
    "published_at": "2025-12-19T02:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://bear-images.sfo2.cdn.digitaloceanspaces.com/karpathy/gvwk5b1x0aeevjd.webp"
    },
-   "display_title": "Chemical hygiene",
-   "display_summary": "An evolving guide of protecting your health from a pricemaxxing industry.",
-   "translation_title": "",
+   "display_title": "化学卫生",
+   "display_summary": "",
+   "translation_title": "化学卫生",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Chemical hygiene",
+   "original_summary": "An evolving guide of protecting your health from a pricemaxxing industry."
   },
   {
    "id": "blog-karpathy:https://karpathy.bearblog.dev/auto-grade-hn/",
@@ -73082,16 +73572,16 @@
    "summary": "On the space of minds and the optimizations that give rise to them.",
    "published_at": "2025-11-30T02:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://bear-images.sfo2.cdn.digitaloceanspaces.com/karpathy/g6zymj4a0amnjkj.webp"
    },
-   "display_title": "The space of minds",
-   "display_summary": "On the space of minds and the optimizations that give rise to them.",
-   "translation_title": "",
+   "display_title": "心智的空间",
+   "display_summary": "",
+   "translation_title": "心智的空间",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "The space of minds",
+   "original_summary": "On the space of minds and the optimizations that give rise to them."
   },
   {
    "id": "blog-karpathy:https://karpathy.bearblog.dev/verifiability/",
@@ -73103,14 +73593,14 @@
    "summary": "The impact of verifiability on the jagged frontier of LLMs",
    "published_at": "2025-11-18T01:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "Verifiability",
-   "display_summary": "The impact of verifiability on the jagged frontier of LLMs",
-   "translation_title": "",
+   "display_title": "可验证性",
+   "display_summary": "",
+   "translation_title": "可验证性",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Verifiability",
+   "original_summary": "The impact of verifiability on the jagged frontier of LLMs"
   },
   {
    "id": "blog-karpathy:https://karpathy.bearblog.dev/animals-vs-ghosts/",
@@ -73122,14 +73612,14 @@
    "summary": "Today's frontier LLM research is not about building animals. It is about summoning ghosts. And a bit more on Sutton's Dwarkesh pod.",
    "published_at": "2025-10-02T01:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "Animals vs Ghosts",
-   "display_summary": "Today's frontier LLM research is not about building animals. It is about summoning ghosts. And a bit more on Sutton's Dwarkesh pod.",
-   "translation_title": "",
+   "display_title": "动物与幽灵",
+   "display_summary": "",
+   "translation_title": "动物与幽灵",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Animals vs Ghosts",
+   "original_summary": "Today's frontier LLM research is not about building animals. It is about summoning ghosts. And a bit more on Sutton's Dwarkesh pod."
   },
   {
    "id": "blog-tualatrix:https://imtx.me/blog/macos-dual-boot/",
@@ -73162,14 +73652,14 @@
    "summary": "Special thanks to John Schulman for a lot of super valuable feedback and direct edits on this post. Test time compute ( Graves et al. 2016 , Ling, et al. 2017 , Cobbe et al. 2021 ) and Chain-of-though…",
    "published_at": "2025-05-01T08:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "Why We Think",
-   "display_summary": "Special thanks to John Schulman for a lot of super valuable feedback and direct edits on this post. Test time compute ( Graves et al. 2016 , Ling, et al. 2017 , Cobbe et al. 2021 ) and Chain-of-though…",
-   "translation_title": "",
+   "display_title": "我们为何思考",
+   "display_summary": "",
+   "translation_title": "我们为何思考",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Why We Think",
+   "original_summary": "Special thanks to John Schulman for a lot of super valuable feedback and direct edits on this post. Test time compute ( Graves et al. 2016 , Ling, et al. 2017 , Cobbe et al. 2021 ) and Chain-of-though…"
   },
   {
    "id": "blog-karpathy:https://karpathy.bearblog.dev/vibe-coding-menugen/",
@@ -73181,16 +73671,16 @@
    "summary": "Work log of vibe coding menugen app",
    "published_at": "2025-04-27T20:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://bear-images.sfo2.cdn.digitaloceanspaces.com/karpathy/02pm.webp"
    },
-   "display_title": "Vibe coding MenuGen",
-   "display_summary": "Work log of vibe coding menugen app",
-   "translation_title": "",
+   "display_title": "氛围编程 MenuGen",
+   "display_summary": "",
+   "translation_title": "氛围编程 MenuGen",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Vibe coding MenuGen",
+   "original_summary": "Work log of vibe coding menugen app"
   },
   {
    "id": "blog-tualatrix:https://imtx.me/now/",
@@ -73263,18 +73753,18 @@
    "summary": "The example-driven, practical walkthrough of Large Language Models and their growing list of related features, as a new entry to my general audience series on LLMs. In this more practical followup, I…",
    "published_at": "2025-02-28T06:29:56+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/EWvNQjAaOHw/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "How I use LLMs",
-   "display_summary": "The example-driven, practical walkthrough of Large Language Models and their growing list of related features, as a new entry to my general audience series on LLMs. In this more practical followup, I…",
-   "translation_title": "",
+   "display_title": "我如何使用大语言模型",
+   "display_summary": "",
+   "translation_title": "我如何使用大语言模型",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "How I use LLMs",
+   "original_summary": "The example-driven, practical walkthrough of Large Language Models and their growing list of related features, as a new entry to my general audience series on LLMs. In this more practical followup, I…"
   },
   {
    "id": "youtube-UCXUPKJO5MZQN11PqgIvyuvQ:7xTGNNLPyMI",
@@ -73347,18 +73837,18 @@
    "summary": "We reproduce the GPT-2 (124M) from scratch. This video covers the whole process: First we build the GPT-2 network, then we optimize its training to be really fast, then we set up the training run foll…",
    "published_at": "2024-06-10T07:31:35+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/l8pRSuU81PU/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Let's reproduce GPT-2 (124M)",
-   "display_summary": "We reproduce the GPT-2 (124M) from scratch. This video covers the whole process: First we build the GPT-2 network, then we optimize its training to be really fast, then we set up the training run foll…",
-   "translation_title": "",
+   "display_title": "让我们复现 GPT-2（124M）",
+   "display_summary": "",
+   "translation_title": "让我们复现 GPT-2（124M）",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Let's reproduce GPT-2 (124M)",
+   "original_summary": "We reproduce the GPT-2 (124M) from scratch. This video covers the whole process: First we build the GPT-2 network, then we optimize its training to be really fast, then we set up the training run foll…"
   },
   {
    "id": "blog-tualatrix:https://imtx.me/blog/starting-new-projects-as-spiritual-massage/",
@@ -73410,18 +73900,18 @@
    "summary": "The Tokenizer is a necessary and pervasive component of Large Language Models (LLMs), where it translates between strings and tokens (text chunks). Tokenizers are a completely separate stage of the LL…",
    "published_at": "2024-02-21T01:11:35+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/zduSFxRajkE/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Let's build the GPT Tokenizer",
-   "display_summary": "The Tokenizer is a necessary and pervasive component of Large Language Models (LLMs), where it translates between strings and tokens (text chunks). Tokenizers are a completely separate stage of the LL…",
-   "translation_title": "",
+   "display_title": "让我们构建 GPT 分词器",
+   "display_summary": "",
+   "translation_title": "让我们构建 GPT 分词器",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Let's build the GPT Tokenizer",
+   "original_summary": "The Tokenizer is a necessary and pervasive component of Large Language Models (LLMs), where it translates between strings and tokens (text chunks). Tokenizers are a completely separate stage of the LL…"
   },
   {
    "id": "blog-lilianweng:https://lilianweng.github.io/posts/2024-02-05-human-data-quality/",
@@ -73576,14 +74066,14 @@
    "summary": "The use of large language models in the real world has strongly accelerated by the launch of ChatGPT. We (including my team at OpenAI, shoutout to them) have invested a lot of effort to build default…",
    "published_at": "2023-10-25T08:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "Adversarial Attacks on LLMs",
-   "display_summary": "The use of large language models in the real world has strongly accelerated by the launch of ChatGPT. We (including my team at OpenAI, shoutout to them) have invested a lot of effort to build default…",
-   "translation_title": "",
+   "display_title": "针对大语言模型的对抗性攻击",
+   "display_summary": "",
+   "translation_title": "针对大语言模型的对抗性攻击",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Adversarial Attacks on LLMs",
+   "original_summary": "The use of large language models in the real world has strongly accelerated by the launch of ChatGPT. We (including my team at OpenAI, shoutout to them) have invested a lot of effort to build default…"
   },
   {
    "id": "blog-lilianweng:https://lilianweng.github.io/posts/2023-06-23-agent/",
@@ -73595,16 +74085,16 @@
    "summary": "Building agents with LLM (large language model) as its core controller is a cool concept. Several proof-of-concepts demos, such as AutoGPT , GPT-Engineer and BabyAGI , serve as inspiring examples. The…",
    "published_at": "2023-06-23T08:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://lilianweng.github.io/posts/2023-06-23-agent/agent-overview.png"
    },
-   "display_title": "LLM Powered Autonomous Agents",
-   "display_summary": "Building agents with LLM (large language model) as its core controller is a cool concept. Several proof-of-concepts demos, such as AutoGPT , GPT-Engineer and BabyAGI , serve as inspiring examples. The…",
-   "translation_title": "",
+   "display_title": "由大语言模型驱动的自主智能体",
+   "display_summary": "",
+   "translation_title": "由大语言模型驱动的自主智能体",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "LLM Powered Autonomous Agents",
+   "original_summary": "Building agents with LLM (large language model) as its core controller is a cool concept. Several proof-of-concepts demos, such as AutoGPT , GPT-Engineer and BabyAGI , serve as inspiring examples. The…"
   },
   {
    "id": "blog-tualatrix:https://imtx.me/blog/pastenow-212/",
@@ -73679,14 +74169,14 @@
    "summary": "Prompt Engineering , also known as In-Context Prompting , refers to methods for how to communicate with LLM to steer its behavior for desired outcomes without updating the model weights. It is an empi…",
    "published_at": "2023-03-15T08:00:00+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": null,
-   "display_title": "Prompt Engineering",
-   "display_summary": "Prompt Engineering , also known as In-Context Prompting , refers to methods for how to communicate with LLM to steer its behavior for desired outcomes without updating the model weights. It is an empi…",
-   "translation_title": "",
+   "display_title": "提示工程",
+   "display_summary": "",
+   "translation_title": "提示工程",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Prompt Engineering",
+   "original_summary": "Prompt Engineering , also known as In-Context Prompting , refers to methods for how to communicate with LLM to steer its behavior for desired outcomes without updating the model weights. It is an empi…"
   },
   {
    "id": "blog-reorx:https://reorx.com/makers-daily/006-a-gpt-ai-based-workflow-for-content-creation/",
@@ -73908,18 +74398,18 @@
    "summary": "We implement a multilayer perceptron (MLP) character-level language model. In this video we also introduce many basics of machine learning (e.g. model training, learning rate tuning, hyperparameters,…",
    "published_at": "2022-09-12T22:43:06+08:00",
    "lang": "en",
-   "translated": false,
+   "translated": true,
    "image": {
     "url": "https://i.ytimg.com/vi/TCH_1BHY58I/hqdefault.jpg",
     "width": 480,
     "height": 360
    },
-   "display_title": "Building makemore Part 2: MLP",
-   "display_summary": "We implement a multilayer perceptron (MLP) character-level language model. In this video we also introduce many basics of machine learning (e.g. model training, learning rate tuning, hyperparameters,…",
-   "translation_title": "",
+   "display_title": "构建 makemore 第二部分：MLP",
+   "display_summary": "",
+   "translation_title": "构建 makemore 第二部分：MLP",
    "translation_summary": "",
-   "original_title": "",
-   "original_summary": ""
+   "original_title": "Building makemore Part 2: MLP",
+   "original_summary": "We implement a multilayer perceptron (MLP) character-level language model. In this video we also introduce many basics of machine learning (e.g. model training, learning rate tuning, hyperparameters,…"
   }
  ]
 }
