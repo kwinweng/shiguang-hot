@@ -4,6 +4,7 @@ from datetime import timedelta, timezone
 
 import pytest
 
+from rebang.chinese_news import needs_translation
 from rebang.site import builder as site
 from tests.rebang_site_testdata import NOW, envelope, img, news
 
@@ -21,10 +22,16 @@ def build(tmp_path, monkeypatch):
 
     monkeypatch.setattr(site, '_run_archive', archive)
 
+    def translated(items):
+        # The highlights suite examines corroboration after the independent Chinese publication gate.
+        return [dict(item, translated=True, translation={'title': '合成译文标题', 'summary': '合成译文摘要',
+                     'summary_source': item['summary'], 'label': '机器翻译', 'engine': 'test'})
+                if needs_translation(item) else item for item in items]
+
     def run(items, *, history=(), producer='test'):
         if history:
-            build_archive(history, tmp_path / 'archive-seed', archive_dir=tmp_path / 'archive', generated_at=NOW)
-        (incoming / 'news.json').write_text(json.dumps(envelope(items, producer=producer)), encoding='utf-8')
+            build_archive(translated(history), tmp_path / 'archive-seed', archive_dir=tmp_path / 'archive', generated_at=NOW)
+        (incoming / 'news.json').write_text(json.dumps(envelope(translated(items), producer=producer)), encoding='utf-8')
         site.build(out, incoming, now=NOW, hot_archive_dir=tmp_path / 'hot', web_dir=None)
         return {str(path.relative_to(out / 'data')): json.loads(path.read_text(encoding='utf-8'))
                 for path in (out / 'data').rglob('*.json')}

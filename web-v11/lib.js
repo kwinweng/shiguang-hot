@@ -77,7 +77,57 @@
   /** 有译文先显示译文（标「机器翻译」），orig 保留原文供展开 */
   /** 卡片摘要：去掉开头裸露的链接（TG 频道常把原文链接放在第一行），正文页仍显示完整内容 */
   function cardText(t) { return String(t || '').replace(/^(?:\s*https?:\/\/\S+)+\s*/, ''); }
+  // Stable source IDs also identify old browser snapshots. Contract parity is tested.
+  const WEB_SOURCES = new Set('bbc-world guardian-world cna-world france24-en dw-world npr-world google-blog openai-blog github-blog apple-newsroom android-authority macrumors github-trending selfhst itsfoss'.split(' '));
+  function isWebNews(item) { return item.kind === 'news' && WEB_SOURCES.has(item.source_id); }
+  function withoutURLs(text) { return (typeof text === 'string' ? text : '').replace(/https?:\/\/[^\s《》「」“”‘’，。、；：！？（）【】<>]+/g, ''); }
+  function chineseText(text) {
+    const plain = withoutURLs(text);
+    return /[㐀-鿿]/.test(plain) && plain.split('\n').every(line => {
+      const latin = (line.match(/[A-Za-zÀ-ÖØ-öø-ÿ]+/g) || []).length;
+      const han = (line.match(/[㐀-鿿]/g) || []).length;
+      return !/\b[a-z]{2,}(?:[ \t]+[a-z]{2,}){2,}\b/i.test(line) && (!latin || han) && latin <= Math.max(3, han);
+    });
+  }
+  function repoTitle(item) {
+    return item.source_id === 'github-trending' && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(item.title || '');
+  }
+  function blockText(block, captions) {
+    if (!block || typeof block !== 'object') return [];
+    if (block.type === 'ul' || block.type === 'ol') return Array.isArray(block.items) ? block.items : [];
+    if (['p', 'h', 'quote', 'pre'].includes(block.type)) return [block.text];
+    if (captions && block.type === 'img') return [block.alt];
+    return [];
+  }
+  function allChinese(parts) { return parts.every(t => !withoutURLs(t).trim() || chineseText(t)); }
+  function displayWebNews(item) {
+    const originalBlocks = Array.isArray(item.blocks) ? item.blocks : [];
+    const repo = repoTitle(item);
+    const originalBody = originalBlocks.length ? originalBlocks.flatMap(b => blockText(b, true)) : [item.body];
+    const native = (repo || (/^zh/.test(item.lang || '') && chineseText(item.title))) && allChinese([item.summary]);
+    if (native && allChinese(originalBody)) {
+      return {title: item.title, summary: cardText(item.summary), body: item.body || '',
+        blocks: item.blocks || null, bodyPending: false, translated: false, label: '', orig: null};
+    }
+    const tr = item.translated === true ? (item.translation || {}) : {};
+    const title = repo || native ? item.title : tr.title;
+    const summary = native ? cardText(item.summary) : chineseText(tr.summary) ? cardText(tr.summary) : '';
+    if ((!repo && !chineseText(title)) || (!native && withoutURLs(item.summary).trim() && (!summary || tr.summary_source !== item.summary))) {
+      return {title: '中文译文尚未就绪', summary: '', body: '', blocks: null, bodyPending: true,
+        translated: false, label: '', orig: null, held: true};
+    }
+    const proposed = tr.blocks;
+    const blocks = Array.isArray(proposed) && proposed.length && proposed.every(b => b &&
+      ['p', 'h', 'quote', 'ul', 'ol', 'hr', 'img'].includes(b.type)) &&
+      proposed.flatMap(b => blockText(b, false)).some(chineseText) &&
+      allChinese(proposed.flatMap(b => blockText(b, true))) ? proposed : null;
+    const body = chineseText(tr.body) ? tr.body : '';
+    return {title, summary, body, blocks, bodyPending: !!((item.body || originalBlocks.length) && !body && !blocks),
+      translated: item.translated === true, label: item.translated ? (tr.label || '机器翻译') : '',
+      orig: (item.translated || native) ? {title: item.title || '', summary: item.summary || '', body: item.body || '', blocks: item.blocks || null} : null};
+  }
   function display(item) {
+    if (isWebNews(item)) return displayWebNews(item);
     const tr = item.translation || {};
     const hasTr = !!(item.translated && (tr.title || tr.summary || tr.body || tr.blocks));
     const title = (hasTr && tr.title) ? tr.title : (item.title || '');
@@ -130,7 +180,8 @@
   }
   /** 同类事件合并（第 5 步）：主条下折叠「另有 N 个来源」，点开列出其它来源，点某一条打开它的详情 */
   function dupHTML(item) {
-    const list = Array.isArray(item.merged) ? item.merged.filter(m => m && m.id) : [];
+    const list = Array.isArray(item.merged) ? item.merged.filter(m => m && m.id &&
+      (!WEB_SOURCES.has(m.source_id) || (m.chinese_release === true && (chineseText(m.title_zh || m.title) || repoTitle(m))))) : [];
     if (!list.length) return '';
     // 按 source_id 数来源（同名不同号的来源分开数）；只是同来源同链接的折叠不算「来源」
     const others = new Set(list.map(m => m.source_id || m.source_name).filter(n => n && n !== (item.source_id || item.source_name)));
@@ -398,7 +449,7 @@
     return safeBot === null ? null : {appH: null, safeBot};
   }
 
-  const Lib = {TZ, NO_SUMMARY, NO_BODY, BODY_PENDING, HOT_FAIL, esc, beijingDate, fmtTime, fmtWhen, fmtFull, dayLabel, fmtDay, fmtRefreshed, fmtN, display, thumbOk,
+  const Lib = {TZ, NO_SUMMARY, NO_BODY, BODY_PENDING, HOT_FAIL, esc, beijingDate, fmtTime, fmtWhen, fmtFull, dayLabel, fmtDay, fmtRefreshed, fmtN, display, isWebNews, thumbOk,
     tgStatsHTML, quoteCardHTML, dupHTML, isBareForward, blocksHTML, feedRowHTML, heroHTML, bannerHTML, hotsearchHTML, hotShort, tweetCardHTML, postRowHTML, bloggerAvatar, comparePosts, xCommentsHTML, rowHTML, parseItemHash, itemHash, ICO, icon, mediaGrid, fmtDur, standaloneGeometry};
   if (typeof module !== 'undefined' && module.exports) module.exports = Lib;
   else root.RebangLib = Lib;

@@ -40,18 +40,31 @@ function match(entry, query) {
   return fieldsOf(entry).some((value) => normalize(value).includes(needle));
 }
 
+const L = typeof module !== 'undefined' && module.exports ? require('../lib.js') : window.RebangLib;
+function webSnapshot(entry) {
+  if (!L || !L.isWebNews(entry) || entry.translation || !entry.translated) return entry;
+  return {...entry, translation: {title: entry.translation_title, summary: entry.translation_summary, summary_source: entry.summary_source}};
+}
+function webCard(entry) {
+  return L && L.isWebNews(entry) ? L.display(webSnapshot(entry)) : null;
+}
+
 function search(entries, query) {
   const needle = normalize(query).trim();
   if (!needle) return [];
-  return (entries || []).filter((entry) => match(entry, needle));
+  return (entries || []).filter((entry) => !webCard(entry)?.held && match(entry, needle));
 }
 
 function displayTitle(entry) {
+  const card = webCard(entry);
+  if (card) return card.title;
   return entry.display_title || (entry.translated && entry.translation && entry.translation.title)
     || entry.translation_title || entry.title || entry.summary || '';
 }
 
 function displaySummary(entry) {
+  const card = webCard(entry);
+  if (card) return card.summary;
   if (entry.display_summary) return entry.display_summary;
   if (entry.translated && entry.translation && entry.translation.summary) return entry.translation.summary;
   return entry.translation_summary || entry.summary || '';
@@ -175,7 +188,7 @@ function mount(el, ctx) {
   }
 
   const ready = loadIndex(ctx).catch(() => []).then((list) => {
-    entries = list;
+    entries = list.map(webSnapshot);
     loaded = true;
     run();
     return entries;

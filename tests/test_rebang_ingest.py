@@ -267,18 +267,19 @@ class IngestTests(unittest.TestCase):
 
         def fake(texts, src):
             calls.append((len(texts), src))
-            return ['译：' + t for t in texts]
+            return [{'Fresh headline': '合成新标题', 'Fresh summary text.': '合成新摘要。'}.get(t, '合成中文译文。')
+                    for t in texts]
         env = self.run_collect(fetch=True, http_get=fake_http(), translator=(fake, 'fake-mt'))
         self.assertEqual(validate_items_envelope(env), [])
         bbc = self.by_source(env)['bbc-world'][0]
         self.assertTrue(bbc['translated'])
-        self.assertEqual(bbc['translation']['title'], '译：Fresh headline')
-        self.assertEqual(bbc['translation']['summary'], '译：Fresh summary text.')
+        self.assertEqual(bbc['translation']['title'], '合成新标题')
+        self.assertEqual(bbc['translation']['summary'], '合成新摘要。')
         self.assertEqual(bbc['translation']['engine'], 'fake-mt')
         self.assertEqual(bbc['translation']['label'], '机器翻译')
         # 摘要即正文时会同时译 body，或从正文译文截出摘要
         if 'body' in bbc['translation']:
-            self.assertTrue(bbc['translation']['body'].startswith('译：'))
+            self.assertEqual(bbc['translation']['body'], '合成新摘要。')
         trending = self.by_source(env)['github-trending'][0]
         self.assertEqual(trending['translation']['title'], trending['title'])  # 仓库名不翻
         self.assertFalse(any(i['translated'] for i in env['items'] if i['lang'] == 'zh'))

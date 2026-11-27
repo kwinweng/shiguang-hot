@@ -28,6 +28,7 @@ function snapshot(item) {
   const trans = item.translation && typeof item.translation === 'object' ? {
     title: item.translation.title || '',
     summary: item.translation.summary || '',
+    ...(typeof item.translation.summary_source === 'string' ? {summary_source: item.translation.summary_source} : {}),
     label: item.translation.label || '',
   } : null;
   const image = item.image && typeof item.image === 'object' && item.image.url
@@ -96,13 +97,16 @@ function toggle(item, storage) {
   return { items: add(item, storage), on: true };
 }
 
+const L = typeof module !== 'undefined' && module.exports ? require('../lib.js') : window.RebangLib;
 function displayTitle(item) {
+  if (L && L.isWebNews(item)) return L.display(item).title;
   const trans = item.translated && item.translation;
   if (trans && trans.title) return trans.title;
   return item.title || item.summary || '';
 }
 
 function displaySummary(item) {
+  if (L && L.isWebNews(item)) return L.display(item).summary;
   const trans = item.translated && item.translation;
   if (trans && trans.summary) return trans.summary;
   return item.summary || '';
