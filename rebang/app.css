@@ -256,6 +256,10 @@ h2.ch{margin:0 16px 4px;font-size:var(--text-display);letter-spacing:-.04em;line
 
 /* ---------- v11：真站外壳（替代设计稿的手机外框）---------- */
 html,body{margin:0;height:100%;height:100dvh;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,"PingFang SC","Noto Sans SC",sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+/* 手机上快速点两下会被 iOS 当成「双击放大」，整页放大后卡住、内容被裁。
+   manipulation 只关双击放大，保留滑动和双指缩放；touch-action 不继承，所以逐个元素设，
+   低优先级选择器，让 .feed-root.lr、.zoom-view 等已有的更严设置照旧生效。 */
+html,body,body *{touch-action:manipulation}
 .app{position:fixed;inset:0;width:100%;max-width:480px;margin:0 auto;height:auto;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
 @media (min-width:540px){.app{border-left:1px solid var(--line);border-right:1px solid var(--line)}}
 .app[aria-busy="true"] .views{opacity:.4}

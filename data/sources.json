@@ -22762,10 +22762,10 @@
         }
       ],
       "name": "风向旗参考快讯",
-      "seven_day_count": 133,
+      "seven_day_count": 123,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 11,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/xhqcankao"
     },
@@ -25095,17 +25095,33 @@
         }
       ],
       "name": "竹新社",
-      "seven_day_count": 12,
+      "seven_day_count": 11,
       "stale_hours": 24.0,
-      "status": "ok",
-      "today_count": 1,
+      "status": "stale",
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/tnews365"
     },
     {
       "id": "FinanceNewsDaily",
-      "last_update": "2026-11-27T22:35:09+08:00",
+      "last_update": "2026-11-28T00:40:05+08:00",
       "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 00:00",
+          "id": "890854b97113da279736",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497258",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "纳斯达克100指数涨幅扩大至2%，刷新日高，标普涨1.4%，道指涨1.1%，纳指涨1.8%，半导体指数涨超3.5%",
+          "text": "纳斯达克100指数涨幅扩大至2%，刷新日高，标普涨1.4%，道指涨1.1%，纳指涨1.8%，半导体指数涨超3.5%",
+          "time": "2026-11-28T00:40:05+08:00",
+          "title": "纳斯达克100指数涨幅扩大至2%，刷新日高，标普涨1.4%，道指涨1.1%，纳指涨1.8%，半导体指数涨超3.5%",
+          "type": "telegram"
+        },
         {
           "category": "财经",
           "day": "2026-11-27",
@@ -47493,7 +47509,7 @@
         {
           "category": "数码",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 01:00",
           "id": "3dc4bb97a9e1fd2698a1",
           "image": "",
@@ -62788,10 +62804,10 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 314,
+      "seven_day_count": 292,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 65,
+      "today_count": 1,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
@@ -71009,10 +71025,10 @@
         }
       ],
       "name": "每日消费电子观察",
-      "seven_day_count": 55,
+      "seven_day_count": 52,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 1,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/CE_Observe"
     },
@@ -85310,10 +85326,10 @@
         }
       ],
       "name": "FREE 中文",
-      "seven_day_count": 91,
+      "seven_day_count": 70,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 10,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/freechinese"
     },
@@ -87483,17 +87499,33 @@
         }
       ],
       "name": "Time经济观察",
-      "seven_day_count": 22,
+      "seven_day_count": 20,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 5,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/TimeHorizonX"
     },
     {
       "id": "pelosi3",
-      "last_update": "2026-11-27T20:16:20+08:00",
+      "last_update": "2026-11-27T23:14:10+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-27",
+          "hot": false,
+          "hour": "2026-11-27 23:00",
+          "id": "3a65bbe709c50181c1c8",
+          "image": "media/pelosi3/30494_1.webp",
+          "link": "https://t.me/pelosi3/30494",
+          "source": "pelosi3",
+          "source_name": "敏感经济信息分享",
+          "summary": "11月27日，路透社报道，根据一张11月5日在福建大埕湾拍摄的卫星照片，显示多艘民船在海面上连成一线，正在进行登陆演练。\n\n据路透社报道，共有8艘民船参演。11月1日至16日的卫星影像记录了船只搭起、又拆除约800米长浮桥的过程。\n中华民国国防部向路透社证实，已掌握民船参演情况。一名知情安全官员说，演练到27日仍在继续。\n\n早在2025年3月（视频2），就有网民在广东湛江沙滩拍到多艘特种驳船首尾相连，搭成一座伸向海滩的浮桥进行登陆训练，车辆可以直接开上岸。\n\n同年1月，《海军新闻》也报道过中国突然批量建造这种适合登台作战的特种驳船。\n\n分析认为，解放军正把这类民用和半民用船只纳入两栖作战体系，以弥补正规登陆舰数量不足。\n\n11月26日，中国国防部发言人陈曦在回答有关福建舰入列一周年的提问时说，有人民军队保护，“台湾同胞更加安全、更有尊严，腰杆会更硬，底气会更足”。\n路透社就大埕湾这场演练询问中国国防部，截至发稿未获回应。",
+          "text": "11月27日，路透社报道，根据一张11月5日在福建大埕湾拍摄的卫星照片，显示多艘民船在海面上连成一线，正在进行登陆演练。\n\n据路透社报道，共有8艘民船参演。11月1日至16日的卫星影像记录了船只搭起、又拆除约800米长浮桥的过程。\n中华民国国防部向路透社证实，已掌握民船参演情况。一名知情安全官员说，演练到27日仍在继续。\n\n早在2025年3月（视频2），就有网民在广东湛江沙滩拍到多艘特种驳船首尾相连，搭成一座伸向海滩的浮桥进行登陆训练，车辆可以直接开上岸。\n\n同年1月，《海军新闻》也报道过中国突然批量建造这种适合登台作战的特种驳船。\n\n分析认为，解放军正把这类民用和半民用船只纳入两栖作战体系，以弥补正规登陆舰数量不足。\n\n11月26日，中国国防部发言人陈曦在回答有关福建舰入列一周年的提问时说，有人民军队保护，“台湾同胞更加安全、更有尊严，腰杆会更硬，底气会更足”。\n路透社就大埕湾这场演练询问中国国防部，截至发稿未获回应。",
+          "time": "2026-11-27T23:14:10+08:00",
+          "title": "解放军再次于福建训练用民船搭起浮桥进行两栖登陆，台湾地方选举前一天仍在演练",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-27",
@@ -99960,10 +99992,10 @@
         }
       ],
       "name": "敏感经济信息分享",
-      "seven_day_count": 103,
+      "seven_day_count": 99,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 16,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/pelosi3"
     },
@@ -109813,7 +109845,7 @@
       "seven_day_count": 32,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 7,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/shuangyunews_rss"
     },
@@ -109880,8 +109912,40 @@
     },
     {
       "id": "zaihuapd",
-      "last_update": "2026-11-27T21:42:43+08:00",
+      "last_update": "2026-11-28T00:35:48+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 00:00",
+          "id": "98328ed7e7fe9c6543ef",
+          "image": "media/zaihuapd/45412_1.webp",
+          "link": "https://t.me/zaihuapd/45412",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "华为创始人任正非 10 月在深圳总部接受《纽约时报》采访时称，美国制裁推动华为与中国走向自立，并请该报转达对特朗普的感谢。他称华为已成为“我们自己国家的公司”，总部一条走廊被高管称为“特朗普走廊”。\n\n该采访在纽约陪审团裁定华为共谋窃取美国公司商业秘密及涉伊朗银行欺诈罪名成立两天后刊发，华为称裁决“没有法律或事实依据”。任正非还称，中国最终将在芯片上超越美国，“只是时间问题”。\n\nTNW\n\n🌸 科技圈· 茶馆 · 投稿",
+          "text": "华为创始人任正非 10 月在深圳总部接受《纽约时报》采访时称，美国制裁推动华为与中国走向自立，并请该报转达对特朗普的感谢。他称华为已成为“我们自己国家的公司”，总部一条走廊被高管称为“特朗普走廊”。\n\n该采访在纽约陪审团裁定华为共谋窃取美国公司商业秘密及涉伊朗银行欺诈罪名成立两天后刊发，华为称裁决“没有法律或事实依据”。任正非还称，中国最终将在芯片上超越美国，“只是时间问题”。\n\nTNW\n\n🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-28T00:35:48+08:00",
+          "title": "任正非称美国制裁促华为自立，请《纽约时报》向特朗普转达感谢",
+          "type": "telegram"
+        },
+        {
+          "category": "国际",
+          "day": "2026-11-27",
+          "hot": false,
+          "hour": "2026-11-27 23:00",
+          "id": "48b5d9085f282f49de6a",
+          "image": "media/zaihuapd/45411_1.webp",
+          "link": "https://t.me/zaihuapd/45411",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "苹果 2026 年黑色星期五促销已启动，澳大利亚、新西兰和泰国先行上线，美国、欧洲和加拿大陆续开放。活动形式是购买指定产品赠 Apple Gift Card，美国区面值 25 至 300 美元，礼品卡只能用于后续购买，不能抵扣当次订单。\n\n美国促销期为太平洋时间 11 月 27 日 00:00 至 11 月 30 日 23:59（北京时间 11 月 27 日 16:00 至 12 月 1 日 15:59）。iPhone 17e 赠 50 美元，16 英寸 MacBook Pro 赠 300 美元，iPhone 18 Pro 等新品及翻新产品不参加。\n\nMacRumors | Apple\n\n🌸 科技圈· 茶馆 · 投稿",
+          "text": "苹果 2026 年黑色星期五促销已启动，澳大利亚、新西兰和泰国先行上线，美国、欧洲和加拿大陆续开放。活动形式是购买指定产品赠 Apple Gift Card，美国区面值 25 至 300 美元，礼品卡只能用于后续购买，不能抵扣当次订单。\n\n美国促销期为太平洋时间 11 月 27 日 00:00 至 11 月 30 日 23:59（北京时间 11 月 27 日 16:00 至 12 月 1 日 15:59）。iPhone 17e 赠 50 美元，16 英寸 MacBook Pro 赠 300 美元，iPhone 18 Pro 等新品及翻新产品不参加。\n\nMacRumors | Apple\n\n🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-27T23:45:23+08:00",
+          "title": "苹果启动黑色星期五促销 美国区买指定产品最高赠 300 美元礼品卡",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-27",
@@ -119597,7 +119661,7 @@
         {
           "category": "数码",
           "day": "2026-10-29",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-29 01:00",
           "id": "66a414a0a1ea49e1a842",
           "image": "",
@@ -126252,10 +126316,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 134,
+      "seven_day_count": 119,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 18,
+      "today_count": 1,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -128694,10 +128758,10 @@
         }
       ],
       "name": "Newlearnerの自留地",
-      "seven_day_count": 25,
+      "seven_day_count": 24,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 5,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/NewlearnerChannel"
     },
@@ -130563,10 +130627,10 @@
         }
       ],
       "name": "严选君综合福利社",
-      "seven_day_count": 23,
+      "seven_day_count": 21,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 9,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/yxzbp"
     },
@@ -141552,10 +141616,10 @@
         }
       ],
       "name": "动察Beating AI News",
-      "seven_day_count": 110,
+      "seven_day_count": 101,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 20,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/OneMillion_AI"
     },
@@ -143469,10 +143533,10 @@
         }
       ],
       "name": "Reorx’s Forge",
-      "seven_day_count": 22,
+      "seven_day_count": 20,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 3,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/reorx_share"
     },
@@ -143783,7 +143847,7 @@
       "seven_day_count": 3,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 1,
+      "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/AwesomeChatGPT"
     }

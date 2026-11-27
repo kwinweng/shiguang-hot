@@ -80,13 +80,20 @@
   // Stable source IDs also identify old browser snapshots. Contract parity is tested.
   const WEB_SOURCES = new Set('bbc-world guardian-world cna-world france24-en dw-world npr-world google-blog openai-blog github-blog apple-newsroom android-authority macrumors github-trending selfhst itsfoss'.split(' '));
   function isWebNews(item) { return item.kind === 'news' && WEB_SOURCES.has(item.source_id); }
-  function withoutURLs(text) { return (typeof text === 'string' ? text : '').replace(/https?:\/\/[^\s《》「」“”‘’，。、；：！？（）【】<>]+/g, ''); }
+  // Keep the character classes in sync with rebang/chinese_news.py.
+  const GATE_SPACE = '\t-\r\x1c-\x20\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff';
+  const GATE_URL = new RegExp(`https?://[^${GATE_SPACE}《》「」“”‘’，。、；：！？（）【】<>]+`, 'g');
+  const GATE_NON_SPACE = new RegExp(`[^${GATE_SPACE}]`);
+  const WEB_CARD_URLS = new RegExp(`^(?:[${GATE_SPACE}]*${GATE_URL.source})+[${GATE_SPACE}]*`);
+  function webCardText(text) { return (typeof text === 'string' ? text : '').replace(WEB_CARD_URLS, ''); }
+  const LATIN_PROSE = new RegExp(`(?:^|[^A-Za-z])[A-Za-z]{2,}(?:[${GATE_SPACE}]+[A-Za-z]{2,}){2,}(?![A-Za-z])`);
+  function withoutURLs(text) { return (typeof text === 'string' ? text : '').replace(GATE_URL, ''); }
   function chineseText(text) {
     const plain = withoutURLs(text);
     return /[㐀-鿿]/.test(plain) && plain.split('\n').every(line => {
       const latin = (line.match(/[A-Za-zÀ-ÖØ-öø-ÿ]+/g) || []).length;
       const han = (line.match(/[㐀-鿿]/g) || []).length;
-      return !/\b[a-z]{2,}(?:[ \t]+[a-z]{2,}){2,}\b/i.test(line) && (!latin || han) && latin <= Math.max(3, han);
+      return !LATIN_PROSE.test(line) && (!latin || han) && latin <= Math.max(3, han);
     });
   }
   function repoTitle(item) {
@@ -99,20 +106,21 @@
     if (captions && block.type === 'img') return [block.alt];
     return [];
   }
-  function allChinese(parts) { return parts.every(t => !withoutURLs(t).trim() || chineseText(t)); }
+  function allChinese(parts) { return parts.every(t => !GATE_NON_SPACE.test(withoutURLs(t)) || chineseText(t)); }
   function displayWebNews(item) {
     const originalBlocks = Array.isArray(item.blocks) ? item.blocks : [];
-    const repo = repoTitle(item);
     const originalBody = originalBlocks.length ? originalBlocks.flatMap(b => blockText(b, true)) : [item.body];
-    const native = (repo || (/^zh/.test(item.lang || '') && chineseText(item.title))) && allChinese([item.summary]);
-    if (native && allChinese(originalBody)) {
-      return {title: item.title, summary: cardText(item.summary), body: item.body || '',
+    const keepTitle = repoTitle(item) || ((/^zh/.test(item.lang || '') || item.lang === 'mul') && chineseText(item.title));
+    const keepSummary = allChinese([item.summary]);
+    const keepBody = allChinese(originalBody);
+    if (keepTitle && keepSummary && keepBody) {
+      return {title: item.title, summary: webCardText(item.summary), body: item.body || '',
         blocks: item.blocks || null, bodyPending: false, translated: false, label: '', orig: null};
     }
     const tr = item.translated === true ? (item.translation || {}) : {};
-    const title = repo || native ? item.title : tr.title;
-    const summary = native ? cardText(item.summary) : chineseText(tr.summary) ? cardText(tr.summary) : '';
-    if ((!repo && !chineseText(title)) || (!native && withoutURLs(item.summary).trim() && (!summary || tr.summary_source !== item.summary))) {
+    const title = keepTitle ? item.title : tr.title;
+    const summary = webCardText(keepSummary ? item.summary : chineseText(tr.summary) ? tr.summary : '');
+    if ((!keepTitle && !chineseText(title)) || (!keepSummary && (!summary || tr.summary_source !== item.summary))) {
       return {title: '中文译文尚未就绪', summary: '', body: '', blocks: null, bodyPending: true,
         translated: false, label: '', orig: null, held: true};
     }
@@ -121,10 +129,12 @@
       ['p', 'h', 'quote', 'ul', 'ol', 'hr', 'img'].includes(b.type)) &&
       proposed.flatMap(b => blockText(b, false)).some(chineseText) &&
       allChinese(proposed.flatMap(b => blockText(b, true))) ? proposed : null;
-    const body = chineseText(tr.body) ? tr.body : '';
-    return {title, summary, body, blocks, bodyPending: !!((item.body || originalBlocks.length) && !body && !blocks),
-      translated: item.translated === true, label: item.translated ? (tr.label || '机器翻译') : '',
-      orig: (item.translated || native) ? {title: item.title || '', summary: item.summary || '', body: item.body || '', blocks: item.blocks || null} : null};
+    const body = keepBody ? item.body || '' : chineseText(tr.body) ? tr.body : '';
+    const translated = item.translated === true && (!keepTitle || !keepSummary || !!(body || blocks));
+    return {title, summary, body, blocks: keepBody ? item.blocks || null : blocks,
+      bodyPending: !keepBody && !body && !blocks,
+      translated, label: translated ? (tr.label || '机器翻译') : '',
+      orig: {title: item.title || '', summary: item.summary || '', body: item.body || '', blocks: item.blocks || null}};
   }
   function display(item) {
     if (isWebNews(item)) return displayWebNews(item);
