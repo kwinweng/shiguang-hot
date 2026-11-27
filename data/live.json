@@ -1,6 +1,27 @@
 {
   "hours": [
     {
+      "hour": "2026-11-28 03:00",
+      "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 03:00",
+          "id": "26d6a03010d6cb188592",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497260",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "OpenAI于周五起诉苹果公司，指控这家科技巨头窃取其商业秘密并阻挠其接触硬件供应商。此前，苹果公司曾以OpenAI涉嫌挖角其员工以获取其技术为由起诉了OpenAI。\n\n这家ChatGPT开发商在美国加利福尼亚州联邦法院提出反诉，称苹果的雇佣做法旨在“困住”员工，并阻止他们参与竞争对手的技术开发。",
+          "text": "OpenAI于周五起诉苹果公司，指控这家科技巨头窃取其商业秘密并阻挠其接触硬件供应商。此前，苹果公司曾以OpenAI涉嫌挖角其员工以获取其技术为由起诉了OpenAI。\n\n这家ChatGPT开发商在美国加利福尼亚州联邦法院提出反诉，称苹果的雇佣做法旨在“困住”员工，并阻止他们参与竞争对手的技术开发。",
+          "time": "2026-11-28T03:15:04+08:00",
+          "title": "OpenAI以窃取商业秘密为由对苹果提起反诉",
+          "type": "telegram"
+        }
+      ]
+    },
+    {
       "hour": "2026-11-28 02:00",
       "messages": [
         {
@@ -1224,7 +1245,7 @@
         {
           "category": "科技",
           "day": "2026-11-27",
-          "hot": false,
+          "hot": true,
           "hour": "2026-11-27 15:00",
           "id": "90d859b58172e5edb571",
           "image": "media/OneMillion_AI/6188_1.webp",
@@ -84819,7 +84840,7 @@
         {
           "category": "科技",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 18:00",
           "id": "f77bbe592af929315129",
           "image": "",
@@ -86348,7 +86369,7 @@
         {
           "category": "科技",
           "day": "2026-10-29",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-29 13:00",
           "id": "0fded2692376e6bff86d",
           "image": "",
@@ -87136,7 +87157,7 @@
         {
           "category": "财经",
           "day": "2026-10-29",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-29 09:00",
           "id": "8f060975f2a01ae0592f",
           "image": "",
@@ -87657,7 +87678,7 @@
         {
           "category": "国际",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 04:00",
           "id": "ede0066358eb87c3c1db",
           "image": "",
@@ -144572,6 +144593,22 @@
   ],
   "messages": [
     {
+      "category": "科技",
+      "day": "2026-11-28",
+      "hot": false,
+      "hour": "2026-11-28 03:00",
+      "id": "26d6a03010d6cb188592",
+      "image": "",
+      "link": "https://t.me/FinanceNewsDaily/497260",
+      "source": "FinanceNewsDaily",
+      "source_name": "华尔街见闻·财经时讯",
+      "summary": "OpenAI于周五起诉苹果公司，指控这家科技巨头窃取其商业秘密并阻挠其接触硬件供应商。此前，苹果公司曾以OpenAI涉嫌挖角其员工以获取其技术为由起诉了OpenAI。\n\n这家ChatGPT开发商在美国加利福尼亚州联邦法院提出反诉，称苹果的雇佣做法旨在“困住”员工，并阻止他们参与竞争对手的技术开发。",
+      "text": "OpenAI于周五起诉苹果公司，指控这家科技巨头窃取其商业秘密并阻挠其接触硬件供应商。此前，苹果公司曾以OpenAI涉嫌挖角其员工以获取其技术为由起诉了OpenAI。\n\n这家ChatGPT开发商在美国加利福尼亚州联邦法院提出反诉，称苹果的雇佣做法旨在“困住”员工，并阻止他们参与竞争对手的技术开发。",
+      "time": "2026-11-28T03:15:04+08:00",
+      "title": "OpenAI以窃取商业秘密为由对苹果提起反诉",
+      "type": "telegram"
+    },
+    {
       "category": "财经",
       "day": "2026-11-28",
       "hot": false,
@@ -145742,7 +145779,7 @@
     {
       "category": "科技",
       "day": "2026-11-27",
-      "hot": false,
+      "hot": true,
       "hour": "2026-11-27 15:00",
       "id": "90d859b58172e5edb571",
       "image": "media/OneMillion_AI/6188_1.webp",
@@ -226222,7 +226259,7 @@
     {
       "category": "科技",
       "day": "2026-10-29",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-29 18:00",
       "id": "f77bbe592af929315129",
       "image": "",
@@ -227726,7 +227763,7 @@
     {
       "category": "科技",
       "day": "2026-10-29",
-      "hot": false,
+      "hot": true,
       "hour": "2026-10-29 13:00",
       "id": "0fded2692376e6bff86d",
       "image": "",
@@ -228494,7 +228531,7 @@
     {
       "category": "财经",
       "day": "2026-10-29",
-      "hot": false,
+      "hot": true,
       "hour": "2026-10-29 09:00",
       "id": "8f060975f2a01ae0592f",
       "image": "",
@@ -228990,7 +229027,7 @@
     {
       "category": "国际",
       "day": "2026-10-29",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-29 04:00",
       "id": "ede0066358eb87c3c1db",
       "image": "",
@@ -283197,5 +283234,5 @@
     }
   ],
   "sample": false,
-  "updated": "2026-11-28T03:05:11.517265+08:00"
+  "updated": "2026-11-28T04:05:10.157051+08:00"
 }
