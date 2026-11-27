@@ -176,7 +176,11 @@
       if (ctl && trackFind) pendingFindCtls.delete(ctl);
     }
   }
-  function remember(list) { (list || []).forEach(it => it && it.id && items.set(it.id, it)); return list || []; }
+  function remember(list) {
+    const visible = (list || []).filter(it => it && it.id && !L.display(it).held);
+    visible.forEach(it => items.set(it.id, it));
+    return visible;
+  }
   function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('on'), 3200); }
   bindDiagLongPress(document.querySelector('#chBtn'), () => { const on = !diagOn(); diagSet(on); toast(on ? '诊断已打开（再长按左上角标题关闭）' : '诊断已关闭'); });
   function channels() { return (meta && meta.channels) || []; }
@@ -261,7 +265,7 @@
     meta = snapshot;
     updateHealthFreshness();
     channels().forEach(c => {
-      remember(c.banner);
+      c.banner = remember(c.banner);
       ch[c.slug] = {list: [], page: 0, pages: c.pages || 1, total: c.feed_total || 0, loading: false, error: null};
     });
     await Promise.all([
@@ -807,8 +811,8 @@
   }
   function paras(text) { return String(text || '').split(/\n+/).map(x => x.trim()).filter(Boolean).map(x => `<p>${L.esc(x)}</p>`).join(''); }
   function mtRow(d, origHTML) {
-    if (!d.translated) return '';
-    return `<div class="mt-row art-tools"><span class="mt-badge">${L.esc(d.label)}</span>${origHTML ? '<button type="button" class="orig-btn" data-art-orig>看原文</button>' : ''}</div>${origHTML ? `<div class="art-orig" data-art-orig-box>${origHTML}</div>` : ''}`;
+    if (!d.translated && !origHTML) return '';
+    return `<div class="mt-row art-tools">${d.translated ? `<span class="mt-badge">${L.esc(d.label)}</span>` : ''}${origHTML ? '<button type="button" class="orig-btn" data-art-orig>看原文</button>' : ''}</div>${origHTML ? `<div class="art-orig" data-art-orig-box>${origHTML}</div>` : ''}`;
   }
   function artActions(it) {
     const slot = '<div class="fav-slot" data-fav-slot></div>';
@@ -817,7 +821,7 @@
   }
   function articleHTML(it) {
     const d = L.display(it);
-    const blocks = d.blocks || (d.bodyPending ? null : it.blocks);
+    const blocks = d.blocks || ((d.bodyPending || (L.isWebNews(it) && d.translated)) ? null : it.blocks);
     const title = d.title ? `<h3 class="art-title">${L.esc(d.title)}</h3>` : '';
     const cover = it.image && it.image.url ? `<img class="cover" src="${L.esc(it.image.url)}" alt="${L.esc(it.image.alt || '')}" data-zoom="${L.esc(it.image.url)}">` : '';
     const tgMedia = it.tg && it.tg.media;
@@ -838,7 +842,8 @@
     // TG 正文第一行常是「【标题】」，标题已单独显示，正文里不再重复
     const first = text.split('\n')[0].replace(/[【】\s]/g, '');
     if (first && first === d.title.replace(/[【】\s]/g, '')) text = text.slice(text.indexOf('\n') + 1 || text.length).trim();
-    const orig = d.translated ? `<h4>${L.esc(d.orig.title)}</h4>${L.esc(d.orig.body || d.orig.summary)}` : '';
+    const orig = d.translated ? `<h4>${L.esc(d.orig.title)}</h4>${L.isWebNews(it) && d.orig.blocks?.length
+      ? `<div class="art-blocks">${L.blocksHTML(d.orig.blocks)}</div>` : L.esc(d.orig.body || d.orig.summary)}` : '';
     const bare = L.isBareForward(it);
     const pending = d.bodyPending ? `<p class="art-pending">${L.esc(L.BODY_PENDING)}</p>` : '';
     const main = bare ? '<div class="fwd-tag">转发</div>' :
@@ -961,8 +966,8 @@
     // 进入 await 之前先记下返回位置：调用方（如搜索）可能紧接着就把自己的层收起来
     const ret = !opts.fromPop && !(articleOpen && articleId === id) ? (articleOpen ? returnState : captureScroll()) : null;
     // 先按 id 经 id-index 读本次发布的完整条目（被折叠的条目在 merged.json 里，带正文和「今日重点」标）；
-    // 读不到（或超时）再用收藏/搜索传进来的快照兜底
-    let it = await findItem(id) || (typeof ref === 'object' ? ref : null);
+    // 读不到（或超时）再用收藏/搜索传进来的快照兜底，不让旧英文收藏盖住已就绪的中文搜索快照
+    const live = await findItem(id);
     if (seq !== openSeq) {
       if ((opts.fromPop || opts.replaceHash) && myNav === navSeq && L.parseItemHash(location.hash) === id) {
         if (articleOpen) closeArticle({fromPop: true});
@@ -970,20 +975,23 @@
       }
       return;
     }
+    let it = live;
     if (!it) {
-      const fav = window.RebangFavorites && window.RebangFavorites.load ? window.RebangFavorites.load().find(x => x.id === id) : null;
+      const passed = typeof ref === 'object' ? ref : null;
       const hit = mounted.search && typeof mounted.search.getItem === 'function' ? mounted.search.getItem(id) : null;
-      if (fav || hit) it = fav || hit;
-      else {
-        if (opts.fromPop || opts.replaceHash) {
-          if (articleOpen) closeArticle({fromPop: true});
-          if (L.parseItemHash(location.hash) || (history.state && history.state.article)) {
-            history.replaceState({home: true}, '', location.pathname + location.search);
-          }
+      const fav = window.RebangFavorites && window.RebangFavorites.load ? window.RebangFavorites.load().find(x => x.id === id) : null;
+      it = [passed, hit, fav].find(snapshot => snapshot && !L.display(snapshot).held) || passed || hit || fav;
+    }
+    const held = it && L.display(it).held;
+    if (!it || held) {
+      if (opts.fromPop || opts.replaceHash) {
+        if (articleOpen) closeArticle({fromPop: true});
+        if (L.parseItemHash(location.hash) || (history.state && history.state.article)) {
+          history.replaceState({home: true}, '', location.pathname + location.search);
         }
-        toast('这条已经不在最近一次发布的数据里了。');
-        return;
       }
+      toast(held ? '中文译文尚未就绪。' : '这条已经不在最近一次发布的数据里了。');
+      return;
     }
     if (!opts.keepNav && !opts.fromPop) navList = opts.list ? {ids: opts.list} : null;
     if (ret) returnState = ret;

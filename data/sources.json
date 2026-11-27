@@ -25104,8 +25104,40 @@
     },
     {
       "id": "FinanceNewsDaily",
-      "last_update": "2026-11-27T21:55:05+08:00",
+      "last_update": "2026-11-27T22:35:09+08:00",
       "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-27",
+          "hot": false,
+          "hour": "2026-11-27 22:00",
+          "id": "114aff20b387f5814481",
+          "image": "media/FinanceNewsDaily/497257_1.webp",
+          "link": "https://t.me/FinanceNewsDaily/497257",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "美股盘初，闪迪涨8.1%，Nebius集团涨5.1%，希捷科技、SK海力士ADR、西部数据、Cerebras系统、美光、CoreWeave、英特尔、AMD、台积电至多涨超4%，英伟达涨1.2%。\n\nAnthropic涨3.6%，SpaceX涨2.8%。\n\n纳斯达克金龙中国指数涨约3%，热门中概股里，金山云涨8.3%，B站涨7.1%。中概ETF CQQQ涨8.5%。\n\n美股将提前收盘。\n\n国常会：加力发挥“国家队”稳市作用，进一步优化中央汇金公司的类“平准基金”功能。\n\nAdobe报告显示，美国消费者在“黑色星期五”的线上消费将达到创纪录的129亿美元，同比增长9.2%。",
+          "text": "美股盘初，闪迪涨8.1%，Nebius集团涨5.1%，希捷科技、SK海力士ADR、西部数据、Cerebras系统、美光、CoreWeave、英特尔、AMD、台积电至多涨超4%，英伟达涨1.2%。\n\nAnthropic涨3.6%，SpaceX涨2.8%。\n\n纳斯达克金龙中国指数涨约3%，热门中概股里，金山云涨8.3%，B站涨7.1%。中概ETF CQQQ涨8.5%。\n\n美股将提前收盘。\n\n国常会：加力发挥“国家队”稳市作用，进一步优化中央汇金公司的类“平准基金”功能。\n\nAdobe报告显示，美国消费者在“黑色星期五”的线上消费将达到创纪录的129亿美元，同比增长9.2%。",
+          "time": "2026-11-27T22:35:09+08:00",
+          "title": "美股开盘：纳斯达克100指数涨1.5%，中概指数涨约3%",
+          "type": "telegram"
+        },
+        {
+          "category": "其他",
+          "day": "2026-11-27",
+          "hot": false,
+          "hour": "2026-11-27 22:00",
+          "id": "ebd15eaaba101ed124fb",
+          "image": "",
+          "link": "https://t.me/FinanceNewsDaily/497256",
+          "source": "FinanceNewsDaily",
+          "source_name": "华尔街见闻·财经时讯",
+          "summary": "恒大汽车在港交所公告，公司接获联交所函件，当中载述联交所上市委员会已决定根据上市规则第6.01A(1)条取消本公司的上市地位，因为上市委员会认为本公司未能于2026年9月30日的复牌截止时间达成所有复牌指引。公司有权于除牌决定发出日期起计七个营业日内，将除牌决定提交上市复核委员会复核。倘公司决定不要求进行上市复核委员会复核，则股份的最后上市日期将为2026年12月11日，而股份的上市地位将于2026年12月14日上午九时正起取消。董事会正征询其顾问的意见，并考虑是否提出请求，将除牌决定提交联交所上市复核委员会作进一步复核。",
+          "text": "恒大汽车在港交所公告，公司接获联交所函件，当中载述联交所上市委员会已决定根据上市规则第6.01A(1)条取消本公司的上市地位，因为上市委员会认为本公司未能于2026年9月30日的复牌截止时间达成所有复牌指引。公司有权于除牌决定发出日期起计七个营业日内，将除牌决定提交上市复核委员会复核。倘公司决定不要求进行上市复核委员会复核，则股份的最后上市日期将为2026年12月11日，而股份的上市地位将于2026年12月14日上午九时正起取消。董事会正征询其顾问的意见，并考虑是否提出请求，将除牌决定提交联交所上市复核委员会作进一步复核。",
+          "time": "2026-11-27T22:35:06+08:00",
+          "title": "恒大汽车：联交所上市委员会决定取消公司的上市地位",
+          "type": "telegram"
+        },
         {
           "category": "其他",
           "day": "2026-11-27",
@@ -47461,7 +47493,7 @@
         {
           "category": "数码",
           "day": "2026-10-29",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-29 01:00",
           "id": "3dc4bb97a9e1fd2698a1",
           "image": "",
@@ -62756,10 +62788,10 @@
         }
       ],
       "name": "华尔街见闻·财经时讯",
-      "seven_day_count": 312,
+      "seven_day_count": 314,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 63,
+      "today_count": 65,
       "type": "telegram",
       "url": "https://t.me/FinanceNewsDaily"
     },
@@ -78271,7 +78303,7 @@
         {
           "category": "数码",
           "day": "2026-10-28",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-28 22:00",
           "id": "031d0c33ef129571ddb9",
           "image": "",
@@ -91084,7 +91116,7 @@
           "hot": false,
           "hour": "2026-11-13 22:00",
           "id": "2fb2093ec525339155f5",
-          "image": "media/pelosi3/30214_1.webp",
+          "image": "",
           "link": "https://t.me/pelosi3/30214",
           "source": "pelosi3",
           "source_name": "敏感经济信息分享",
@@ -109853,7 +109885,7 @@
         {
           "category": "科技",
           "day": "2026-11-27",
-          "hot": false,
+          "hot": true,
           "hour": "2026-11-27 21:00",
           "id": "fc67baa0eb0a3a2c7aba",
           "image": "",
@@ -114368,7 +114400,7 @@
           "hot": false,
           "hour": "2026-11-13 22:00",
           "id": "5bdc2b739eb47d2f6b3c",
-          "image": "media/zaihuapd/45111_1.webp",
+          "image": "",
           "link": "https://t.me/zaihuapd/45111",
           "source": "zaihuapd",
           "source_name": "在花科技圈",
@@ -126338,8 +126370,24 @@
     },
     {
       "id": "NewlearnerChannel",
-      "last_update": "2026-11-27T17:59:01+08:00",
+      "last_update": "2026-11-27T22:05:14+08:00",
       "messages": [
+        {
+          "category": "财经",
+          "day": "2026-11-27",
+          "hot": false,
+          "hour": "2026-11-27 22:00",
+          "id": "56c744294de4a417acae",
+          "image": "media/NewlearnerChannel/16185_1.webp",
+          "link": "https://t.me/NewlearnerChannel/16185",
+          "source": "NewlearnerChannel",
+          "source_name": "Newlearnerの自留地",
+          "summary": "🌃 自留地晚报【11.27】\n\n1️⃣ 华尔街日报 称，目前全球内存芯片市场出现人类史上最严重的供应短缺\n\n2️⃣ 腾讯混元 发布 3D 生成大模型 Hy3D 3.6：面向专业 3D 创作\n\n3️⃣ 知乎 宣布与 DeepSeek 展开内容合作\n\n4️⃣ 联发科 表示天玑旗舰智能手机芯片仍正常迭代\n\n5️⃣ TrendForce 表示 DRAM 需求面临更大不确定性，一般型内存合约价 2028 年转跌风险升温\n\n6️⃣ Anthropic 表示 AI 改变工程师晋升标准，不再只看项目耗时\n\n7️⃣ 小米汽车 正式发布小米汽车世界模型 2.0\n\n频道：@NewlearnerChannel",
+          "text": "🌃 自留地晚报【11.27】\n\n1️⃣ 华尔街日报 称，目前全球内存芯片市场出现人类史上最严重的供应短缺\n\n2️⃣ 腾讯混元 发布 3D 生成大模型 Hy3D 3.6：面向专业 3D 创作\n\n3️⃣ 知乎 宣布与 DeepSeek 展开内容合作\n\n4️⃣ 联发科 表示天玑旗舰智能手机芯片仍正常迭代\n\n5️⃣ TrendForce 表示 DRAM 需求面临更大不确定性，一般型内存合约价 2028 年转跌风险升温\n\n6️⃣ Anthropic 表示 AI 改变工程师晋升标准，不再只看项目耗时\n\n7️⃣ 小米汽车 正式发布小米汽车世界模型 2.0\n\n频道：@NewlearnerChannel",
+          "time": "2026-11-27T22:05:14+08:00",
+          "title": "News",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-27",
@@ -128646,10 +128694,10 @@
         }
       ],
       "name": "Newlearnerの自留地",
-      "seven_day_count": 24,
+      "seven_day_count": 25,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 4,
+      "today_count": 5,
       "type": "telegram",
       "url": "https://t.me/NewlearnerChannel"
     },
@@ -134628,7 +134676,7 @@
           "hot": true,
           "hour": "2026-11-13 22:00",
           "id": "5f115bfc096ff195c856",
-          "image": "media/OneMillion_AI/5924_1.webp",
+          "image": "",
           "link": "https://t.me/OneMillion_AI/5924",
           "source": "OneMillion_AI",
           "source_name": "动察Beating AI News",
