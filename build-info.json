@@ -2,8 +2,8 @@
   "schema": "shiguang.build/1",
   "source_commit": "ba0d855400265538aaddf60127b37a60ef75b9d9",
   "public_feeds_tree": "293aeab9f0b93c1ea28ab064e1c13640e0fa0e6d",
-  "database_sha256": "a3e3aa06948ff420c74b578258a7788c4ef7d316698f5e5bad57dc4bb62000f3",
-  "built_at": "2026-11-27T03:09:58.003241+00:00",
+  "database_sha256": "379fa9c929618b6fec0dc21f0adfdf43d742858dbc83f988f7320450e8c9fcd2",
+  "built_at": "2026-11-27T04:11:33.602974+00:00",
   "event": "local",
   "run_id": null
 }
