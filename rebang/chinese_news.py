@@ -17,6 +17,12 @@ def web_sources():
                      if source['type'] in ('feed', 'page'))
 
 
+@lru_cache(maxsize=1)
+def native_chinese_web_sources():
+    return frozenset(source['id'] for channel in load_channels()['channels'] for source in channel['sources']
+                     if source['type'] in ('feed', 'page') and source.get('lang') == 'zh')
+
+
 def is_web_news(item):
     return item.get('kind') == 'news' and item.get('source_id') in web_sources()
 
@@ -58,7 +64,9 @@ def _repo_title(item):
 
 
 def native_preview(item):
-    native_title = (item.get('lang') or '').startswith('zh') and chinese_text(item.get('title'))
+    title = item.get('title')
+    configured_title = item.get('source_id') in native_chinese_web_sources() and has_text(title)
+    native_title = configured_title or ((item.get('lang') or '').startswith('zh') and chinese_text(title))
     return (native_title or _repo_title(item)) and _all_chinese([item.get('summary')])
 
 

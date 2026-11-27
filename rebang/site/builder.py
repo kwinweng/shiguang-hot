@@ -18,10 +18,11 @@ import os
 import shutil
 import sys
 from datetime import datetime, timedelta, timezone
+from html import escape
 from itertools import chain
 from pathlib import Path
 
-from rebang.chinese_news import is_web_news, public_item
+from rebang.chinese_news import is_web_news, native_chinese_web_sources, public_item
 from rebang.contract import schema
 from rebang.site.dedup import fold
 from rebang.site.health import build_health
@@ -400,14 +401,17 @@ def _write(path, data):
     path.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
 
 
-def _inject_features(site):
-    """web-v11/features/*.js（history 分支）存在就按文件名顺序挂进 index.html，不存在就什么也不加。"""
+def _prepare_index(site):
+    """填入来源配置，并按文件名顺序挂载可选的 features 脚本。"""
     index = site / 'index.html'
     if not index.exists():
         return
     names = sorted(p.name for p in (site / 'features').glob('*.js')) if (site / 'features').is_dir() else []
     tags = '\n'.join(f'<script src="features/{n}"></script>' for n in names)
-    index.write_text(index.read_text(encoding='utf-8').replace('<!--FEATURES-->', tags), encoding='utf-8')
+    sources = escape(' '.join(sorted(native_chinese_web_sources())))
+    html = index.read_text(encoding='utf-8').replace('<!--FEATURES-->', tags)
+    html = html.replace('data-native-chinese-sources=""', f'data-native-chinese-sources="{sources}"', 1)
+    index.write_text(html, encoding='utf-8')
 
 
 def _run_archive(items, out_dir, report):
@@ -532,7 +536,7 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
     _write(data / 'id-index.json', id_index)
     health = build_health(envelopes, items, now)
     _write(data / 'health.json', health)
-    _inject_features(tmp)
+    _prepare_index(tmp)
     input_times = [parse_time(e.get('generated_at')) for _, e in envelopes] + \
                   ([parse_time(hotsearch[1].get('generated_at'))] if hotsearch else [])
     input_times = [t for t in input_times if t]

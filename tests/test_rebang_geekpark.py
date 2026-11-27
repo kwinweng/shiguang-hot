@@ -6,6 +6,7 @@ from urllib.parse import urlsplit
 
 import pytest
 
+from rebang.archive import build as build_archive
 from rebang.contract import validate_items_envelope
 from rebang.extract import ExtractCache
 from rebang.ingest import collect
@@ -109,26 +110,23 @@ def test_geekpark_cached_feed_drops_images_and_never_reuses_extracted_body(colle
     assert len(depth['summary']) == len(fresh['items'][0]['summary'])
 
 
-def test_geekpark_folds_existing_coverage_and_keeps_its_summary_in_detail(collect_feed, tmp_path):
+def test_geekpark_mixed_titles_open_from_channel_fold_and_deep_link(collect_feed, tmp_path, monkeypatch):
     run, _, _, _ = collect_feed
-    xml = FIXTURE.read_text()
+    xml = (FIXTURE.read_text().replace('《把模型装进口袋》', 'Example Product Name 实测')
+           .replace('实测一周，早报应用的离线阅读怎么样？', 'Another Product Name 实测'))
     start = xml.index('    <item>')
     end = xml.index('    </item>', start) + len('    </item>')
     result = run((xml[:end] + '\n' + xml[start:end] + xml[end:]).encode())
     assert [i['id'] for i in result['items']] == ['geekpark:depth', 'geekpark:review']
-    depth = result['items'][0]
+    depth, review = result['items']
     existing = news('zaihuapd', 'tech-ai', 1, url=ARTICLE, title=depth['title'],
                     published_at='2026-11-27T08:50:00+08:00')
     inp, out = tmp_path / 'in', tmp_path / 'site'
     inp.mkdir()
     (inp / 'ingest.json').write_text(json.dumps(result))
     (inp / 'existing.json').write_text(json.dumps(envelope([existing])))
+    monkeypatch.setattr(builder, '_run_archive', lambda items, dest, report: build_archive(items, dest, tmp_path / 'archive'))
     report = builder.build(out, inp, now=NOW, hot_archive_dir=None)
-    assert report['channels']['tech-ai']['merged'] == 1
-    merged = json.loads((out / 'data/channel/tech-ai/merged.json').read_text())['items']
-    assert [i['id'] for i in merged] == [depth['id']]
-    assert merged[0]['summary'] == depth['summary']
-    assert merged[0]['image'] is None and 'body' not in merged[0] and 'blocks' not in merged[0]
 
     playwright = pytest.importorskip('playwright.sync_api')
     with playwright.sync_playwright() as pw, pw.chromium.launch() as browser:
@@ -143,6 +141,23 @@ def test_geekpark_folds_existing_coverage_and_keeps_its_summary_in_detail(collec
                 route.abort()
 
         page.route('**/*', serve)
+        page.goto('https://rebang.test/index.html')
+        page.locator('#app:not([aria-busy])').wait_for()
+        page.locator('#chBtn').click()
+        page.locator('#dropList button').filter(has_text='科技').click()
+        row = page.locator(f'.feed-row[data-id="{review["id"]}"]')
+        playwright.expect(row.locator('h3')).to_have_text(review['title'])
+        row.click()
+        playwright.expect(page.locator('.art-title')).to_have_text(review['title'])
+        page.locator('#btnBack').click()
+        primary = page.locator(f'.feed-row[data-id="{existing["id"]}"]')
+        primary.locator('.dup-btn').click()
+        folded = primary.locator(f'[data-dup-id="{depth["id"]}"]')
+        playwright.expect(folded.locator('.t')).to_have_text(depth['title'])
+        folded.click()
+        playwright.expect(page.locator('.art-title')).to_have_text(depth['title'])
+
+        page.goto('about:blank')
         page.goto('https://rebang.test/index.html#/item/geekpark%3Adepth')
         playwright.expect(page.locator('.art-title')).to_have_text(depth['title'])
         playwright.expect(page.locator('.art-text')).to_have_text(depth['summary'])
@@ -150,3 +165,9 @@ def test_geekpark_folds_existing_coverage_and_keeps_its_summary_in_detail(collec
         original = page.get_by_role('link', name='打开原文')
         playwright.expect(original).to_have_attribute('href', ARTICLE)
         playwright.expect(page.locator('.cover, .art-blocks, .art-pending, [data-art-orig]')).to_have_count(0)
+
+    assert report['channels']['tech-ai']['merged'] == 1
+    merged = json.loads((out / 'data/channel/tech-ai/merged.json').read_text())['items']
+    assert [i['id'] for i in merged] == [depth['id']]
+    assert merged[0]['summary'] == depth['summary']
+    assert merged[0]['image'] is None and 'body' not in merged[0] and 'blocks' not in merged[0]

@@ -77,8 +77,18 @@
   /** 有译文先显示译文（标「机器翻译」），orig 保留原文供展开 */
   /** 卡片摘要：去掉开头裸露的链接（TG 频道常把原文链接放在第一行），正文页仍显示完整内容 */
   function cardText(t) { return String(t || '').replace(/^(?:\s*https?:\/\/\S+)+\s*/, ''); }
+  const NODE = typeof module !== 'undefined' && module.exports;
+  // The site builder supplies this config before any channel, deep link or saved snapshot is read.
+  const nativeChineseSources = NODE
+    ? require('../rebang/contract/channels.json').channels.flatMap(c => c.sources)
+      .filter(s => ['feed', 'page'].includes(s.type) && s.lang === 'zh').map(s => s.id)
+    : (root.document?.currentScript?.dataset.nativeChineseSources || '').split(/\s+/).filter(Boolean);
+  const NATIVE_CHINESE_WEB_SOURCES = new Set(nativeChineseSources);
   // Stable source IDs also identify old browser snapshots. Contract parity is tested.
-  const WEB_SOURCES = new Set('bbc-world guardian-world cna-world france24-en dw-world npr-world google-blog openai-blog github-blog geekpark apple-newsroom android-authority macrumors github-trending selfhst itsfoss'.split(' '));
+  const WEB_SOURCES = new Set([
+    ...'bbc-world guardian-world cna-world france24-en dw-world npr-world google-blog openai-blog github-blog geekpark apple-newsroom android-authority macrumors github-trending selfhst itsfoss'.split(' '),
+    ...NATIVE_CHINESE_WEB_SOURCES,
+  ]);
   function isWebNews(item) { return item.kind === 'news' && WEB_SOURCES.has(item.source_id); }
   function withoutURLs(text) { return (typeof text === 'string' ? text : '').replace(/https?:\/\/[^\s《》「」“”‘’，。、；：！？（）【】<>]+/g, ''); }
   function chineseText(text) {
@@ -100,11 +110,15 @@
     return [];
   }
   function allChinese(parts) { return parts.every(t => !withoutURLs(t).trim() || chineseText(t)); }
+  function configuredChineseTitle(sourceId, title) {
+    return NATIVE_CHINESE_WEB_SOURCES.has(sourceId) && Boolean(withoutURLs(title).trim());
+  }
   function displayWebNews(item) {
     const originalBlocks = Array.isArray(item.blocks) ? item.blocks : [];
     const repo = repoTitle(item);
     const originalBody = originalBlocks.length ? originalBlocks.flatMap(b => blockText(b, true)) : [item.body];
-    const native = (repo || (/^zh/.test(item.lang || '') && chineseText(item.title))) && allChinese([item.summary]);
+    const nativeTitle = configuredChineseTitle(item.source_id, item.title) || (/^zh/.test(item.lang || '') && chineseText(item.title));
+    const native = (repo || nativeTitle) && allChinese([item.summary]);
     if (native && allChinese(originalBody)) {
       return {title: item.title, summary: cardText(item.summary), body: item.body || '',
         blocks: item.blocks || null, bodyPending: false, translated: false, label: '', orig: null};
@@ -112,7 +126,7 @@
     const tr = item.translated === true ? (item.translation || {}) : {};
     const title = repo || native ? item.title : tr.title;
     const summary = native ? cardText(item.summary) : chineseText(tr.summary) ? cardText(tr.summary) : '';
-    if ((!repo && !chineseText(title)) || (!native && withoutURLs(item.summary).trim() && (!summary || tr.summary_source !== item.summary))) {
+    if (!native && ((!repo && !chineseText(title)) || (withoutURLs(item.summary).trim() && (!summary || tr.summary_source !== item.summary)))) {
       return {title: '中文译文尚未就绪', summary: '', body: '', blocks: null, bodyPending: true,
         translated: false, label: '', orig: null, held: true};
     }
@@ -180,8 +194,13 @@
   }
   /** 同类事件合并（第 5 步）：主条下折叠「另有 N 个来源」，点开列出其它来源，点某一条打开它的详情 */
   function dupHTML(item) {
-    const list = Array.isArray(item.merged) ? item.merged.filter(m => m && m.id &&
-      (!WEB_SOURCES.has(m.source_id) || (m.chinese_release === true && (chineseText(m.title_zh || m.title) || repoTitle(m))))) : [];
+    const list = Array.isArray(item.merged) ? item.merged.filter(m => {
+      if (!m || !m.id) return false;
+      if (!WEB_SOURCES.has(m.source_id)) return true;
+      const title = m.title_zh || m.title;
+      return m.chinese_release === true &&
+        (configuredChineseTitle(m.source_id, title) || chineseText(title) || repoTitle(m));
+    }) : [];
     if (!list.length) return '';
     // 按 source_id 数来源（同名不同号的来源分开数）；只是同来源同链接的折叠不算「来源」
     const others = new Set(list.map(m => m.source_id || m.source_name).filter(n => n && n !== (item.source_id || item.source_name)));

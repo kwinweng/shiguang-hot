@@ -1,6 +1,9 @@
 import json
 
+import pytest
+
 from rebang.archive import build as build_archive
+from rebang.chinese_news import needs_translation, public_item
 from rebang.ingest.core import apply_translation
 from rebang.site import builder
 from tests.rebang_site_testdata import NOW, envelope, img, news
@@ -50,6 +53,47 @@ def test_public_build_holds_untranslated_web_items_including_legacy_search(tmp_p
     assert published['translation'].get('body') is None
     assert published['translation']['body_pending'] is True
     assert any(r['id'] == legacy['id'] for r in read(day)['items'])
+
+
+@pytest.mark.parametrize('title', ['Example Product Name 实测', 'Example Product Name', '中文标题'])
+def test_configured_chinese_source_uses_native_title_without_item_language(title):
+    raw = news('geekpark', 'tech-ai', 1, title=title, lang='en', body='')
+    assert not needs_translation(raw)
+    assert public_item(raw) == raw
+    assert public_item(dict(raw, summary='An untranslated preview.')) is None
+    assert public_item(dict(raw, body='An untranslated whole paragraph.'))['translated'] is False
+
+
+def test_configured_chinese_previews_reach_banner_channel_fold_and_archive(tmp_path, monkeypatch):
+    archive = tmp_path / 'archive'
+    monkeypatch.setenv('REBANG_TRANSLATE_CACHE', str(tmp_path / 'translation/cache.json'))
+    monkeypatch.setattr(builder, '_run_archive', lambda items, out, report: build_archive(items, out, archive))
+    inp, out = tmp_path / 'in', tmp_path / 'out'
+    inp.mkdir()
+    banner = news('geekpark', 'tech-ai', 1, title='Example Product Name 实测', image=img(1), body='')
+    feed = news('geekpark', 'tech-ai', 2, title='Another Product Name', body='')
+    folded = news('geekpark', 'tech-ai', 3, title='中文报道', body='')
+    primary = news('zaihuapd', 'tech-ai', 4, url=folded['url'], title=folded['title'], fold_preferred=True)
+    spoof = dict(article(5), lang='zh', title='Example Product Name 实测', summary='中文摘要')
+    archived = news('geekpark', 'tech-ai', 6, title='Archived Product Name 实测', body='')
+    build_archive([archived, spoof], tmp_path / 'seed', archive)
+    (inp / 'ingest.json').write_text(json.dumps(envelope([banner, feed, folded, primary, spoof])))
+    builder.build(out, inp, now=NOW, web_dir=None, hot_archive_dir=None)
+    data = out / 'data'
+    assert read(data / 'id-index.json') == {
+        banner['id']: 'meta.json', feed['id']: 'channel/tech-ai/page-1.json',
+        folded['id']: 'channel/tech-ai/merged.json', primary['id']: 'channel/tech-ai/page-1.json',
+    }
+    tech = next(c for c in read(data / 'meta.json')['channels'] if c['slug'] == 'tech-ai')
+    assert [item['title'] for item in tech['banner']] == [banner['title']]
+    feed_items = {item['id']: item for item in read(data / 'channel/tech-ai/page-1.json')['items']}
+    assert feed_items[feed['id']]['title'] == feed['title']
+    assert feed_items[primary['id']]['merged'][0]['chinese_release'] is True
+    assert [item['title'] for item in read(data / 'channel/tech-ai/merged.json')['items']] == [folded['title']]
+    entries = read(data / 'search-index.json')['entries']
+    assert {entry['id']: entry['display_title'] for entry in entries} == {
+        item['id']: item['title'] for item in (banner, feed, folded, primary, archived)
+    }
 
 
 def test_archive_only_uses_current_safe_rendition_for_same_id(tmp_path):

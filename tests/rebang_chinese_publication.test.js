@@ -16,6 +16,44 @@ test('frontend gate covers all configured official web sources', () => {
   }
 });
 
+test('only configured Chinese web sources can display a product-name title without translation', () => {
+  for (const channel of contract.channels) for (const source of channel.sources) {
+    if (!['feed', 'page'].includes(source.type)) continue;
+    const native = source.lang === 'zh';
+    const item = {...old, source_id: source.id, lang: native ? 'en' : 'zh',
+      title: 'Example Product Name', summary: '中文摘要', body: ''};
+    assert.equal(Boolean(lib.display(item).held), !native, source.id);
+  }
+});
+
+for (const title of ['Example Product Name 实测', 'Example Product Name', '中文标题']) {
+  test(`configured Chinese originals reach search, old favorites and folded rows: ${title}`, () => {
+    const item = {id: 'geekpark:1', kind: 'news', source_id: 'geekpark', title, summary: '中文摘要'};
+    assert.deepEqual(search.search([item], title), [item]);
+    assert.equal(search.displayTitle(item), title);
+    const storage = {getItem: () => JSON.stringify({version: 1, items: [item]})};
+    const [favorite] = fav.load(storage);
+    assert.equal(fav.displayTitle(favorite), title);
+    assert.equal(lib.display(favorite).summary, item.summary);
+    assert.equal(lib.display({...item, summary: old.summary}).held, true);
+    const ref = {id: item.id, source_id: item.source_id, title};
+    assert.equal(lib.dupHTML({merged: [ref]}), '');
+    assert.match(lib.dupHTML({merged: [{...ref, chinese_release: true}]}), new RegExp(title));
+    const pending = lib.display({...item, body: 'An untranslated whole paragraph.'});
+    assert.equal(pending.title, title);
+    assert.equal(pending.bodyPending, true);
+    assert.equal(pending.body, '');
+  });
+}
+
+test('Chinese item language cannot release an English source preview', () => {
+  const spoof = {...old, lang: 'zh', title: 'Example Product Name 实测', summary: '中文摘要'};
+  assert.equal(lib.display(spoof).held, true);
+  assert.deepEqual(search.search([spoof], 'Example'), []);
+  assert.equal(fav.displayTitle(spoof), '中文译文尚未就绪');
+  assert.equal(lib.dupHTML({merged: [{...spoof, chinese_release: true}]}), '');
+});
+
 test('cached English headlines and partial translations are not search results', () => {
   assert.deepEqual(search.search([old, {...translated, translation: {title: '中文标题', summary: ''}}], 'English'), []);
   assert.equal(search.displayTitle({...old, translated: true, translation_title: '中文标题',
