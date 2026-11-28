@@ -1,6 +1,80 @@
 {
   "hours": [
     {
+      "hour": "2026-11-28 10:00",
+      "messages": [
+        {
+          "category": "其他",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 10:00",
+          "id": "46625db74be1607c7919",
+          "image": "media/pelosi3/30498_1.webp",
+          "link": "https://t.me/pelosi3/30498",
+          "source": "pelosi3",
+          "source_name": "敏感经济信息分享",
+          "summary": "11月27日，据《每日邮报》（Daily Mail）报道，此前驾驶价值150万澳元的蒂芙尼蓝劳斯莱斯撞上澳洲主持人凯尔·桑迪兰兹（Kyle Sandilands）司机奔驰车的杨兰兰（LanLan Yang），当天身穿名牌服饰、脚穿约1900澳元爱马仕鞋、全程戴着口罩，终于现身悉尼唐宁中心地方法院（Downing Centre Local Court），出席为期5天正式庭审的首日。\n\n庭审中还披露了事发当天的警局看守记录：事故发生后凌晨约5时30分，曾有一名登记为“Xu Ma”关系标注为“丈夫”的男子与杨兰兰有过面对面接触；5时45分，她又与“近亲”及调查警员交谈。",
+          "text": "11月27日，据《每日邮报》（Daily Mail）报道，此前驾驶价值150万澳元的蒂芙尼蓝劳斯莱斯撞上澳洲主持人凯尔·桑迪兰兹（Kyle Sandilands）司机奔驰车的杨兰兰（LanLan Yang），当天身穿名牌服饰、脚穿约1900澳元爱马仕鞋、全程戴着口罩，终于现身悉尼唐宁中心地方法院（Downing Centre Local Court），出席为期5天正式庭审的首日。\n\n庭审中还披露了事发当天的警局看守记录：事故发生后凌晨约5时30分，曾有一名登记为“Xu Ma”关系标注为“丈夫”的男子与杨兰兰有过面对面接触；5时45分，她又与“近亲”及调查警员交谈。",
+          "time": "2026-11-28T10:03:27+08:00",
+          "title": "11月27日，据《每日邮报》（Daily Mail）报道，此前驾驶价值150万澳元的蒂芙尼蓝劳斯莱斯撞上澳洲主持人凯尔·桑迪兰兹（Kyle Sandilands）司机奔驰车…",
+          "type": "telegram"
+        }
+      ]
+    },
+    {
+      "hour": "2026-11-28 09:00",
+      "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 09:00",
+          "id": "bd31bb00236a7676370f",
+          "image": "media/AwesomeChatGPT/3278_1.webp",
+          "link": "https://t.me/AwesomeChatGPT/3278",
+          "source": "AwesomeChatGPT",
+          "source_name": "ChatGPT 精选",
+          "summary": "北京时间 11 月 28 日发布的 Agent Mesh v0.3.0 加入了一个预览功能：浏览器打开 Agent Mesh Connect 页面，就能用自己的身份加入智能体网络。\n\n在电脑上把 Claude Code 和页面配对后，它就能查找远程工具，并按这个节点的权限调用。浏览器标签页要保持打开，关掉后节点就会停止运行。",
+          "text": "北京时间 11 月 28 日发布的 Agent Mesh v0.3.0 加入了一个预览功能：浏览器打开 Agent Mesh Connect 页面，就能用自己的身份加入智能体网络。\n\n在电脑上把 Claude Code 和页面配对后，它就能查找远程工具，并按这个节点的权限调用。浏览器标签页要保持打开，关掉后节点就会停止运行。",
+          "time": "2026-11-28T09:28:54+08:00",
+          "title": "本机的 Claude Code 怎么用上另一台机器的工具",
+          "type": "telegram"
+        },
+        {
+          "category": "其他",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 09:00",
+          "id": "765a148e10d042dae228",
+          "image": "media/freechinese/113620_1.webp",
+          "link": "https://t.me/freechinese/113620",
+          "source": "freechinese",
+          "source_name": "FREE 中文",
+          "summary": "哎哎哎，怎么还上手呢",
+          "text": "哎哎哎，怎么还上手呢",
+          "time": "2026-11-28T09:10:11+08:00",
+          "title": "哎哎哎，怎么还上手呢",
+          "type": "telegram"
+        },
+        {
+          "category": "科技",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 09:00",
+          "id": "ec7ec0faa62e57da8a5f",
+          "image": "",
+          "link": "https://t.me/zaihuapd/45414",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "Pavel Durov 在 Telegram 频道警告，iPhone 用户正遭到大规模攻击，iOS 版本稍旧就有数据风险，仅打开网站就可能中招，并称要向所有使用旧版 iOS 的用户发送这条提醒。\n\nDurov\n\n🌸 科技圈· 茶馆 · 投稿",
+          "text": "Pavel Durov 在 Telegram 频道警告，iPhone 用户正遭到大规模攻击，iOS 版本稍旧就有数据风险，仅打开网站就可能中招，并称要向所有使用旧版 iOS 的用户发送这条提醒。\n\nDurov\n\n🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-28T09:08:54+08:00",
+          "title": "✈️ Durov 提醒 iOS 用户更新到最新客户端",
+          "type": "telegram"
+        }
+      ]
+    },
+    {
       "hour": "2026-11-28 08:00",
       "messages": [
         {
@@ -37772,7 +37846,7 @@
           "hot": false,
           "hour": "2026-11-14 09:00",
           "id": "cbcb4dba88d0104fa95b",
-          "image": "media/OneMillion_AI/5928_1.webp",
+          "image": "",
           "link": "https://t.me/OneMillion_AI/5928",
           "source": "OneMillion_AI",
           "source_name": "动察Beating AI News",
@@ -37804,7 +37878,7 @@
           "hot": false,
           "hour": "2026-11-14 09:00",
           "id": "f693ed81ccc232f8173f",
-          "image": "media/pelosi3/30227_1.webp",
+          "image": "",
           "link": "https://t.me/pelosi3/30227",
           "source": "pelosi3",
           "source_name": "敏感经济信息分享",
@@ -82402,7 +82476,7 @@
         {
           "category": "科技",
           "day": "2026-10-30",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-30 13:00",
           "id": "1ad4030b445caad101b1",
           "image": "",
@@ -83270,7 +83344,7 @@
         {
           "category": "科技",
           "day": "2026-10-30",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-30 09:00",
           "id": "d140271f6554a8056402",
           "image": "",
@@ -84089,7 +84163,7 @@
         {
           "category": "财经",
           "day": "2026-10-30",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-30 01:00",
           "id": "e0c7fa8305cc2a7998ca",
           "image": "",
@@ -84786,7 +84860,7 @@
         {
           "category": "财经",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 19:00",
           "id": "93368163bcf3f4128d70",
           "image": "",
@@ -86480,7 +86554,7 @@
         {
           "category": "科技",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 13:00",
           "id": "0fded2692376e6bff86d",
           "image": "",
@@ -86922,7 +86996,7 @@
         {
           "category": "科技",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 11:00",
           "id": "33e46ff18e4ac84f0648",
           "image": "",
@@ -86938,7 +87012,7 @@
         {
           "category": "财经",
           "day": "2026-10-29",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-29 11:00",
           "id": "6e6372d6a5afefba7c33",
           "image": "",
@@ -87172,7 +87246,7 @@
         {
           "category": "数码",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 09:00",
           "id": "c3d66d3c8ea193d5ffe1",
           "image": "",
@@ -87268,7 +87342,7 @@
         {
           "category": "财经",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 09:00",
           "id": "8f060975f2a01ae0592f",
           "image": "",
@@ -144704,6 +144778,70 @@
   ],
   "messages": [
     {
+      "category": "其他",
+      "day": "2026-11-28",
+      "hot": false,
+      "hour": "2026-11-28 10:00",
+      "id": "46625db74be1607c7919",
+      "image": "media/pelosi3/30498_1.webp",
+      "link": "https://t.me/pelosi3/30498",
+      "source": "pelosi3",
+      "source_name": "敏感经济信息分享",
+      "summary": "11月27日，据《每日邮报》（Daily Mail）报道，此前驾驶价值150万澳元的蒂芙尼蓝劳斯莱斯撞上澳洲主持人凯尔·桑迪兰兹（Kyle Sandilands）司机奔驰车的杨兰兰（LanLan Yang），当天身穿名牌服饰、脚穿约1900澳元爱马仕鞋、全程戴着口罩，终于现身悉尼唐宁中心地方法院（Downing Centre Local Court），出席为期5天正式庭审的首日。\n\n庭审中还披露了事发当天的警局看守记录：事故发生后凌晨约5时30分，曾有一名登记为“Xu Ma”关系标注为“丈夫”的男子与杨兰兰有过面对面接触；5时45分，她又与“近亲”及调查警员交谈。",
+      "text": "11月27日，据《每日邮报》（Daily Mail）报道，此前驾驶价值150万澳元的蒂芙尼蓝劳斯莱斯撞上澳洲主持人凯尔·桑迪兰兹（Kyle Sandilands）司机奔驰车的杨兰兰（LanLan Yang），当天身穿名牌服饰、脚穿约1900澳元爱马仕鞋、全程戴着口罩，终于现身悉尼唐宁中心地方法院（Downing Centre Local Court），出席为期5天正式庭审的首日。\n\n庭审中还披露了事发当天的警局看守记录：事故发生后凌晨约5时30分，曾有一名登记为“Xu Ma”关系标注为“丈夫”的男子与杨兰兰有过面对面接触；5时45分，她又与“近亲”及调查警员交谈。",
+      "time": "2026-11-28T10:03:27+08:00",
+      "title": "11月27日，据《每日邮报》（Daily Mail）报道，此前驾驶价值150万澳元的蒂芙尼蓝劳斯莱斯撞上澳洲主持人凯尔·桑迪兰兹（Kyle Sandilands）司机奔驰车…",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-28",
+      "hot": false,
+      "hour": "2026-11-28 09:00",
+      "id": "bd31bb00236a7676370f",
+      "image": "media/AwesomeChatGPT/3278_1.webp",
+      "link": "https://t.me/AwesomeChatGPT/3278",
+      "source": "AwesomeChatGPT",
+      "source_name": "ChatGPT 精选",
+      "summary": "北京时间 11 月 28 日发布的 Agent Mesh v0.3.0 加入了一个预览功能：浏览器打开 Agent Mesh Connect 页面，就能用自己的身份加入智能体网络。\n\n在电脑上把 Claude Code 和页面配对后，它就能查找远程工具，并按这个节点的权限调用。浏览器标签页要保持打开，关掉后节点就会停止运行。",
+      "text": "北京时间 11 月 28 日发布的 Agent Mesh v0.3.0 加入了一个预览功能：浏览器打开 Agent Mesh Connect 页面，就能用自己的身份加入智能体网络。\n\n在电脑上把 Claude Code 和页面配对后，它就能查找远程工具，并按这个节点的权限调用。浏览器标签页要保持打开，关掉后节点就会停止运行。",
+      "time": "2026-11-28T09:28:54+08:00",
+      "title": "本机的 Claude Code 怎么用上另一台机器的工具",
+      "type": "telegram"
+    },
+    {
+      "category": "其他",
+      "day": "2026-11-28",
+      "hot": false,
+      "hour": "2026-11-28 09:00",
+      "id": "765a148e10d042dae228",
+      "image": "media/freechinese/113620_1.webp",
+      "link": "https://t.me/freechinese/113620",
+      "source": "freechinese",
+      "source_name": "FREE 中文",
+      "summary": "哎哎哎，怎么还上手呢",
+      "text": "哎哎哎，怎么还上手呢",
+      "time": "2026-11-28T09:10:11+08:00",
+      "title": "哎哎哎，怎么还上手呢",
+      "type": "telegram"
+    },
+    {
+      "category": "科技",
+      "day": "2026-11-28",
+      "hot": false,
+      "hour": "2026-11-28 09:00",
+      "id": "ec7ec0faa62e57da8a5f",
+      "image": "",
+      "link": "https://t.me/zaihuapd/45414",
+      "source": "zaihuapd",
+      "source_name": "在花科技圈",
+      "summary": "Pavel Durov 在 Telegram 频道警告，iPhone 用户正遭到大规模攻击，iOS 版本稍旧就有数据风险，仅打开网站就可能中招，并称要向所有使用旧版 iOS 的用户发送这条提醒。\n\nDurov\n\n🌸 科技圈· 茶馆 · 投稿",
+      "text": "Pavel Durov 在 Telegram 频道警告，iPhone 用户正遭到大规模攻击，iOS 版本稍旧就有数据风险，仅打开网站就可能中招，并称要向所有使用旧版 iOS 的用户发送这条提醒。\n\nDurov\n\n🌸 科技圈· 茶馆 · 投稿",
+      "time": "2026-11-28T09:08:54+08:00",
+      "title": "✈️ Durov 提醒 iOS 用户更新到最新客户端",
+      "type": "telegram"
+    },
+    {
       "category": "科技",
       "day": "2026-11-28",
       "hot": false,
@@ -180997,7 +181135,7 @@
       "hot": false,
       "hour": "2026-11-14 09:00",
       "id": "cbcb4dba88d0104fa95b",
-      "image": "media/OneMillion_AI/5928_1.webp",
+      "image": "",
       "link": "https://t.me/OneMillion_AI/5928",
       "source": "OneMillion_AI",
       "source_name": "动察Beating AI News",
@@ -181029,7 +181167,7 @@
       "hot": false,
       "hour": "2026-11-14 09:00",
       "id": "f693ed81ccc232f8173f",
-      "image": "media/pelosi3/30227_1.webp",
+      "image": "",
       "link": "https://t.me/pelosi3/30227",
       "source": "pelosi3",
       "source_name": "敏感经济信息分享",
@@ -224002,7 +224140,7 @@
     {
       "category": "科技",
       "day": "2026-10-30",
-      "hot": false,
+      "hot": true,
       "hour": "2026-10-30 13:00",
       "id": "1ad4030b445caad101b1",
       "image": "",
@@ -224850,7 +224988,7 @@
     {
       "category": "科技",
       "day": "2026-10-30",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-30 09:00",
       "id": "d140271f6554a8056402",
       "image": "",
@@ -225634,7 +225772,7 @@
     {
       "category": "财经",
       "day": "2026-10-30",
-      "hot": false,
+      "hot": true,
       "hour": "2026-10-30 01:00",
       "id": "e0c7fa8305cc2a7998ca",
       "image": "",
@@ -226306,7 +226444,7 @@
     {
       "category": "财经",
       "day": "2026-10-29",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-29 19:00",
       "id": "93368163bcf3f4128d70",
       "image": "",
@@ -227970,7 +228108,7 @@
     {
       "category": "科技",
       "day": "2026-10-29",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-29 13:00",
       "id": "0fded2692376e6bff86d",
       "image": "",
@@ -228402,7 +228540,7 @@
     {
       "category": "科技",
       "day": "2026-10-29",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-29 11:00",
       "id": "33e46ff18e4ac84f0648",
       "image": "",
@@ -228418,7 +228556,7 @@
     {
       "category": "财经",
       "day": "2026-10-29",
-      "hot": false,
+      "hot": true,
       "hour": "2026-10-29 11:00",
       "id": "6e6372d6a5afefba7c33",
       "image": "",
@@ -228642,7 +228780,7 @@
     {
       "category": "数码",
       "day": "2026-10-29",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-29 09:00",
       "id": "c3d66d3c8ea193d5ffe1",
       "image": "",
@@ -228738,7 +228876,7 @@
     {
       "category": "财经",
       "day": "2026-10-29",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-29 09:00",
       "id": "8f060975f2a01ae0592f",
       "image": "",
@@ -283441,5 +283579,5 @@
     }
   ],
   "sample": false,
-  "updated": "2026-11-28T09:05:10.850671+08:00"
+  "updated": "2026-11-28T10:05:10.881201+08:00"
 }
