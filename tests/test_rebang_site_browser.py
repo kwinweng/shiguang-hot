@@ -475,6 +475,106 @@ class SiteBrowserTests(unittest.TestCase):
         hot.locator('[data-hot=zhihu]').click()
         self.assertIn('暂时取不到', self.page.locator('#view-hot .hot-empty').inner_text())
 
+    def test_a2_cover_click_opens_article_and_summary_visible(self):
+        self.open()
+        row = self.page.locator('.ch-sec[data-ch=current] .feed-row.cover').first
+        row.wait_for()
+        box = row.locator('.thumb').bounding_box()
+        self.assertLess(box['y'], row.locator('h3').bounding_box()['y'], 'A2：大图在标题上方')
+        rid = row.get_attribute('data-id')
+        sum_el = row.locator('.sum')
+        self.assertEqual(sum_el.count(), 1, '有图的行照样渲染摘要')
+        self.assertTrue(sum_el.is_visible(), '有图也显示摘要')
+        row.locator('.thumb img').click()
+        self.page.locator('#articleBody').wait_for()
+        self.assertFalse(self.page.evaluate('!!document.querySelector("#zoomStage") && getComputedStyle(document.querySelector("#zoomStage")).display !== "none" && document.querySelector("#zoomStage").offsetHeight > 0'), '点列表大图进详情，不直接放大')
+
+    def inject_rows(self, items, width=390):
+        self.page.set_viewport_size({'width': width, 'height': 844})
+        self.page.evaluate("""items => { const list = document.querySelector('.ch-sec[data-ch=current] .feed-list');
+          list.insertAdjacentHTML('afterbegin', '<div class="chunk" id="a2probe">' + items.map(RebangLib.feedRowHTML).join('') + '</div>'); }""", items)
+        self.page.wait_for_timeout(100)
+
+    def test_a2_layout_meta_right_no_clip_no_upscale_no_overflow(self):
+        self.open()
+        base = {'kind': 'news', 'channel': 'current', 'source_id': 'tnews365', 'source_name': '竹新社', 'url': 'https://t.me/x/1',
+                'published_at': '2026-11-15T11:00:00Z', 'lang': 'zh', 'translated': False}
+        self.inject_rows([
+            dict(base, id='a2:cover', title='通报', summary='短。', image={'url': 'https://img.test/c.png', 'width': 800, 'height': 450}),
+            dict(base, id='a2:small', title='很长的一个标题用来占位很长的一个标题', summary='短。', image={'url': 'https://img.test/s.png', 'width': 32, 'height': 32}),
+            dict(base, id='a2:long', title='长串', summary='校验码 ' + 'a' * 64, image=None),
+        ], width=320)
+        cover = self.page.locator('#a2probe .feed-row[data-id="a2:cover"]')
+        row_box = cover.bounding_box()
+        when = cover.locator('.f-meta .when').bounding_box()
+        self.assertGreater(when['x'] + when['width'], row_box['x'] + row_box['width'] - 24, '大图短文行的时间也靠右')
+        small = self.page.locator('#a2probe .feed-row[data-id="a2:small"]')
+        small.evaluate("e => e.classList.add('read')")
+        meta = small.locator('.f-meta')
+        clipped = meta.evaluate("""m => { const r = m.getBoundingClientRect(); const w = m.querySelector('.when').getBoundingClientRect();
+          return m.scrollWidth > m.clientWidth + 1 || w.right > r.right + 1; }""")
+        self.assertFalse(clipped, '320px 屏上小图行的时间和「已读」不被裁掉')
+        self.assertEqual(small.locator('.thumb img').evaluate('i => getComputedStyle(i).objectFit'), 'scale-down', '已知偏小的图不放大')
+        self.inject_rows([dict(base, id='a2:smallvid', title='小视频', summary='短。', image={'url': 'https://img.test/v.png', 'width': 64, 'height': 64}, tg={'media': [{'type': 'video'}]})], width=320)
+        self.assertEqual(self.page.locator('#a2probe .feed-row[data-id="a2:smallvid"] .thumb img').first.evaluate('i => getComputedStyle(i).objectFit'), 'scale-down', '偏小的视频封面也不放大')
+        long_row = self.page.locator('#a2probe .feed-row[data-id="a2:long"]')
+        sum_box = long_row.locator('.sum').bounding_box()
+        self.assertLessEqual(sum_box['x'] + sum_box['width'], long_row.bounding_box()['x'] + long_row.bounding_box()['width'] + 1)
+        self.assertLessEqual(long_row.locator('.sum').evaluate('e => e.scrollWidth - e.clientWidth'), 1, '连续长串换行，不溢出')
+        plat = cover.locator('.f-meta .plat').first
+        self.assertEqual(plat.evaluate('i => getComputedStyle(i).borderRadius'), '50%', '渠道平台图标为圆形')
+        bar = self.page.locator('.tabbar').bounding_box()
+        views = self.page.locator('.views').bounding_box()
+        self.assertGreaterEqual(bar['y'], views['y'] + views['height'] - 1, '底栏独立停靠在内容区下方，不遮挡列表')
+        self.assertGreaterEqual(bar['width'], 319, '底栏通栏铺满视口宽度')
+
+    def test_a2_rss_cover_with_text_blocks_still_zoomable_in_article(self):
+        """列表点大图进详情；正文 blocks 里没有图时，详情要补上封面，否则就再也放大不了。"""
+        def patch(route):
+            url = urlsplit(route.request.url)
+            if url.netloc == 'rebang.test' and url.path.endswith('/channel/current/page-1.json'):
+                data = json.loads((self.out / unquote(url.path).lstrip('/')).read_text(encoding='utf-8'))
+                first = data['items'][0]
+                first.pop('tg', None); first.pop('quote', None)
+                first['image'] = {'url': 'https://img.test/rss.png', 'width': 400, 'height': 200}
+                first['blocks'] = [{'type': 'p', 'text': '只有文字的正文。'}]
+                return route.fulfill(status=200, body=json.dumps(data), content_type='application/json')
+            return self.page_route(route)
+        self.page.unroute('**/*')
+        self.page.route('**/*', patch)
+        self.open()
+        row = self.page.locator('.ch-sec[data-ch=current] .feed-row.cover').first
+        row.locator('.thumb img').click()
+        self.page.locator('#articleBody .art-blocks').wait_for()
+        self.assertEqual(self.page.locator('#articleBody img.cover[data-zoom="https://img.test/rss.png"]').count(), 1, '详情里有封面可放大')
+
+    def test_a2_article_cover_kept_unless_same_image_in_blocks(self):
+        """正文图没存下来、或正文里是别的图：详情照样放列表大图；正文里已有同一张图才不重复。"""
+        cases = [([{'type': 'img', 'missing': True}, {'type': 'p', 'text': '文字'}], 1),
+                 ([{'type': 'img', 'src': 'https://img.test/other.png'}, {'type': 'p', 'text': '文字'}], 1),
+                 ([{'type': 'img', 'src': 'https://img.test/rss.png'}, {'type': 'p', 'text': '文字'}], 0)]
+        for blocks, want in cases:
+            with self.subTest(blocks=blocks[0]):
+                def make(blocks):
+                  def patch(route):
+                    url = urlsplit(route.request.url)
+                    if url.netloc == 'rebang.test' and url.path.endswith('/channel/current/page-1.json'):
+                        data = json.loads((self.out / unquote(url.path).lstrip('/')).read_text(encoding='utf-8'))
+                        first = data['items'][0]
+                        first.pop('tg', None); first.pop('quote', None)
+                        first['image'] = {'url': 'https://img.test/rss.png', 'width': 400, 'height': 200}
+                        first['blocks'] = blocks
+                        return route.fulfill(status=200, body=json.dumps(data), content_type='application/json')
+                    return self.page_route(route)
+                  return patch
+                self.page.unroute('**/*')
+                self.page.route('**/*', make(blocks))
+                self.open()
+                self.page.locator('.ch-sec[data-ch=current] .feed-row.cover').first.locator('.thumb img').click()
+                self.page.locator('#articleBody .art-blocks').wait_for()
+                self.assertEqual(self.page.locator('#articleBody img.cover').count(), want)
+                self.page.goto('about:blank')
+
     def test_feed_cards_and_infinite_load_to_end(self):
         self.open()
         page = self.page.locator('.ch-sec[data-ch=current]')
@@ -648,6 +748,80 @@ class SiteBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.locator('#articleBody #stub-fav-btn').count(), 1)
         self.assertEqual(self.page.evaluate('window.__attached'), 'tnews365:5')
         self.page.locator('#btnBack').click()
+
+    def test_web_news_body_does_not_default_to_original_when_translation_is_pending(self):
+        self.open('#/item/bbc-world%3A1')
+        body = self.page.locator('#articleBody')
+        body.locator('.art-pending').wait_for()
+        self.assertIn('合成译文摘要', body.inner_text())
+        original = 'This is the original English news article.'
+        self.assertNotIn(original, body.inner_text())
+        body.get_by_role('button', name='看原文').click()
+        self.assertIn(original, body.inner_text())
+
+    def test_stale_favorite_does_not_mask_ready_search_snapshot(self):
+        archived_id = 'bbc-world:archived-1'
+        stale_only_id = 'bbc-world:stale-only-1'
+        search_payload = {
+            'schema': 'rebang.search-index/1',
+            'timezone': 'Asia/Shanghai',
+            'generated_at': NOW.isoformat(),
+            'entries': [{
+                'id': archived_id,
+                'kind': 'news',
+                'channel': 'world',
+                'source_id': 'bbc-world',
+                'source_name': 'BBC World',
+                'title': 'Archived English title',
+                'summary': 'Archived English summary',
+                'published_at': NOW.isoformat(),
+                'lang': 'en',
+                'translated': True,
+                'display_title': '归档补回的中文标题',
+                'display_summary': '归档补回的中文摘要',
+                'translation_title': '归档补回的中文标题',
+                'translation_summary': '归档补回的中文摘要',
+                'summary_source': 'Archived English summary',
+                'original_title': 'Archived English title',
+                'original_summary': 'Archived English summary',
+                'image': None,
+            }],
+        }
+        self.page.route('**/data/search-index.json*', lambda route: route.fulfill(json=search_payload))
+        self.open('')
+        self.page.evaluate('''([archivedId, staleOnlyId]) => {
+            localStorage.setItem('rebang.favorites.v1', JSON.stringify([
+                {
+                    id: archivedId, kind: 'news', channel: 'world', source_id: 'bbc-world',
+                    source_name: 'BBC World', title: 'Archived English title',
+                    summary: 'Archived English summary', lang: 'en', translated: false,
+                    saved_at: '2026-11-15T00:00:00Z'
+                },
+                {
+                    id: staleOnlyId, kind: 'news', channel: 'world', source_id: 'bbc-world',
+                    source_name: 'BBC World', title: 'Untranslated only title',
+                    summary: 'Untranslated only summary', lang: 'en', translated: false,
+                    saved_at: '2026-11-15T00:00:00Z'
+                }
+            ]));
+        }''', [archived_id, stale_only_id])
+        # Trigger search-index load so mounted.search.getItem(id) has the archived entry.
+        self.page.locator('#btnSearch').click()
+        self.page.locator('#search-panel input').fill('归档补回')
+        self.page.locator('#search-panel [data-search-hit]').first.wait_for()
+        self.page.locator('#search-panel [data-search-close]').click()
+        # Open via favorite click (passes stale English bookmark ref) -> must resolve to ready search snapshot.
+        self.page.locator('.tabbar [data-view=favorites]').click()
+        self.page.locator(f'[data-favorites-list] [data-item-id="{archived_id}"]').click()
+        self.page.locator('#articleView.on').wait_for()
+        self.assertEqual(self.page.locator('#articleTitle').inner_text(), '归档补回的中文标题')
+        self.assertIn('归档补回的中文摘要', self.page.locator('#articleBody').inner_text())
+        self.page.locator('#btnBack').click()
+        self.page.locator('#articleView.on').wait_for(state='hidden')
+        # Stale-only bookmark with no ready snapshot still refuses to display English.
+        self.page.locator(f'[data-favorites-list] [data-item-id="{stale_only_id}"]').click()
+        self.page.wait_for_function("document.querySelector('#toast').textContent.includes('中文译文尚未就绪')")
+        self.assertFalse(self.page.locator('#articleView').evaluate('e => e.classList.contains("on")'))
 
     def built_at(self):
         return json.loads((self.out / 'data' / 'meta.json').read_text())['built_at']

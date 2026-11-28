@@ -11,6 +11,9 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from rebang.chinese_news import chinese_text, has_text, is_web_news, public_item
+from rebang.translate import Cache, LABEL as TRANSLATE_LABEL
+
 TIMEZONE = 'Asia/Shanghai'
 BEIJING = ZoneInfo(TIMEZONE)
 ARCHIVE_DAY_SCHEMA = 'rebang.archive-day/1'
@@ -173,6 +176,8 @@ def _search_entry(item: dict) -> dict:
         entry['display_summary'] = translation.get('summary') if translation.get('summary') is not None else entry['summary']
         entry['translation_title'] = translation.get('title') or ''
         entry['translation_summary'] = translation.get('summary') or ''
+        if 'summary_source' in translation:
+            entry['summary_source'] = translation['summary_source']
         entry['original_title'] = entry['title']
         entry['original_summary'] = entry['summary']
     else:
@@ -183,6 +188,51 @@ def _search_entry(item: dict) -> dict:
         entry['original_title'] = ''
         entry['original_summary'] = ''
     return entry
+
+
+def _cache_lookup(tr_cache: Cache, text: str, src_lang: str = 'en'):
+    for lang in (src_lang, f'{src_lang}-x-web-repair'):
+        hit = tr_cache.get(text, lang)
+        if hit and chinese_text(hit['zh']):
+            return hit
+    return None
+
+
+def _recover_from_cache(raw: dict, tr_cache: Cache | None):
+    """只读查精确字段译文缓存，让滑出采集窗口的旧归档条目能回到搜索索引；绝不改归档或排待译。"""
+    if tr_cache is None or not tr_cache.entries or not is_web_news(raw):
+        return None
+    existing = raw.get('translation') if raw.get('translated') is True and isinstance(raw.get('translation'), dict) else {}
+    tr = dict(existing)
+    engines = []
+    changed = False
+    title = raw.get('title')
+    if has_text(title) and not chinese_text(tr.get('title')):
+        hit = _cache_lookup(tr_cache, title)
+        if hit:
+            tr['title'] = hit['zh']
+            engines.append(hit.get('engine') or 'cache')
+            changed = True
+    summary = raw.get('summary')
+    if has_text(summary) and (not chinese_text(tr.get('summary')) or tr.get('summary_source') != summary):
+        hit = _cache_lookup(tr_cache, summary)
+        if hit:
+            tr['summary'] = hit['zh']
+            tr['summary_source'] = summary
+            engines.append(hit.get('engine') or 'cache')
+            changed = True
+    body = raw.get('body')
+    if has_text(body) and not chinese_text(tr.get('body')):
+        hit = _cache_lookup(tr_cache, body)
+        if hit:
+            tr['body'] = hit['zh']
+            engines.append(hit.get('engine') or 'cache')
+            changed = True
+    if not changed:
+        return None
+    tr.setdefault('engine', '+'.join(sorted(set(engines))))
+    tr.setdefault('label', TRANSLATE_LABEL)
+    return public_item({**raw, 'translated': True, 'translation': tr})
 
 
 def _history_item(record: dict) -> dict:
@@ -210,6 +260,7 @@ def build(items, out_dir, archive_dir=None, generated_at=None):
     id_index = _load_id_index(archive_dir)
     cache = {}
     dirty = set()
+    incoming_ids = set()
 
     for item in incoming:
         if not isinstance(item, dict) or not item.get('id') or not item.get('published_at'):
@@ -219,6 +270,7 @@ def build(items, out_dir, archive_dir=None, generated_at=None):
             date = beijing_date(item['published_at'])
         except (ValueError, TypeError):
             continue
+        incoming_ids.add(ident)
         old_date = id_index.get(ident)
         if old_date and old_date != date:
             old_records = _load_day(archive_dir, old_date, cache)
@@ -265,6 +317,8 @@ def build(items, out_dir, archive_dir=None, generated_at=None):
 
     dates = []
     search_entries = []
+    tr_cache = None
+    tr_cache_loaded = False
     for path in _day_files(archive_dir):
         day = _load_json(path)
         if not day:
@@ -282,7 +336,15 @@ def build(items, out_dir, archive_dir=None, generated_at=None):
         items_out = sorted((_history_item(r) for r in records),
                            key=lambda it: it.get('published_at') or '', reverse=True)
         dates.append({'date': date, 'count': len(items_out)})
-        for item in items_out:
+        for raw in items_out:
+            item = public_item(raw)
+            if item is None and raw.get('id') not in incoming_ids and is_web_news(raw):
+                if not tr_cache_loaded:
+                    tr_cache = Cache()
+                    tr_cache_loaded = True
+                item = _recover_from_cache(raw, tr_cache)
+            if item is None:
+                continue
             entry = _search_entry(item)
             # 站内相对图（media/…）只保留这次站点里真有的文件：旧条目的本地图会被清掉，留着就是 404 的破图
             url = ((entry.get('image') or {}).get('url') or '')

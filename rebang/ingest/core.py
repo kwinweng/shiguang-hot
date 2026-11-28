@@ -13,6 +13,8 @@ from urllib.parse import urljoin, urlsplit
 from zoneinfo import ZoneInfo
 
 from rebang.cache import save_cache
+from rebang.chinese_news import (chinese_text, has_text, is_web_news, native_body, native_summary,
+                                native_title, needs_translation, web_language)
 from rebang.contract import ITEMS_SCHEMA, load_channels
 from rebang.contract.schema import is_aware_iso
 from rebang.health_time import observation_time
@@ -376,6 +378,17 @@ def parse_trending(html, now):
     return out
 
 
+def _trending_meta_zh(meta):
+    language, sep, stars = meta.rpartition(' · ')
+    count = re.fullmatch(r'([0-9,]+) stars? today', stars)
+    if not count and sep:
+        return meta
+    if not count:
+        language = stars
+    return ' · '.join(part for part in (f'编程语言：{language}' if language else '',
+                                        f'今日新增 {count[1]} 星' if count else '') if part)
+
+
 def _cache_path(cache, sid):
     return Path(cache) / f'{sid}.json'
 
@@ -453,11 +466,14 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
             # 缓存里的链接不再补全（旧缓存没存基准地址）：不合格就置空，条目保留
             link = _resolve_link(e.get('url'), None)
             full = _plain(e.get('summary'))
-            body = full + ('\n' + e['meta'] if e.get('meta') else '') if (full or e.get('meta')) else None
+            meta = e.get('meta') or ''
             if cfg['type'] == 'page':
-                lang = 'zh' if re.search(r'[\u4e00-\u9fff]', title + full) else FEED_LANG
-            else:   # 英文订阅里偶尔混进中文条目：只看标题，标题有汉字（引号/书名号里的不算）标 zh，不送翻译
+                lang = guess_lang(full)  # Trending 的 title 是仓库名
+                if not has_text(full) or chinese_text(full):
+                    meta = _trending_meta_zh(meta)
+            else:   # 先按标题判断，抽取正文后再检查是否混有待译文本
                 lang = 'zh' if mostly_chinese(title) else FEED_LANG
+            body = '\n'.join(filter(None, (full, meta)))
             # 图片地址坏了（缺主机名等）只丢图、条目保留；旧缓存里的坏图同样在这里挡掉
             fresh = published >= now - timedelta(days=MEDIA_DAYS)
             image = {'url': e['image']} if fresh and _valid_http(e.get('image')) else None
@@ -533,7 +549,7 @@ def default_translator():
     translator = Translator()
     if translator.engine == 'none':
         return None
-    return (lambda texts, src: translator.translate_detailed(texts, src)), translator.engine, translator.save
+    return translator.translate_detailed, translator.engine, translator.save
 
 
 def _call_translator(fn, texts, kinds=None):
@@ -612,13 +628,20 @@ def _summary_from_body(body, limit=300):
 
 
 def apply_translation(items, translator, cache=None):
-    """只翻非中文条目的标题、摘要和正文（GitHub Trending 仓库名不翻）。按条增量：
+    """翻译非中文条目的待译字段（保留已有中文和 GitHub Trending 仓库名）。按条增量：
     已译过的条目（cache/translations.json，按 id+标题+摘要+正文）直接复用；新条目或新抽出的
     正文才调。默认翻译器只查 rebang.translate 缓存，缺的原文进 pending.json，等 Grok 补译后
     （python3 -m rebang.translate fill）下次生成即带上。
 
     标题和摘要一旦有译文就写入，不等待正文。正文稍后补上；在此之前详情页用中文摘要，并标明全文还在翻译。
     """
+    # Reconcile the original language after extraction, even when there is no translator.
+    for item in items:
+        item['lang'] = web_language(item)
+        if item['lang'].startswith('zh'):
+            if item.get('translated'):
+                item['translated'] = False
+            item.pop('translation', None)
     if not translator:
         return 0
     fn, default_engine = translator[0], translator[1]
@@ -630,27 +653,50 @@ def apply_translation(items, translator, cache=None):
     key = lambda i: _sha(i['id'] + '\n' + i['title'] + '\n' + i['summary'] + '\n' + (i.get('body') or ''))  # noqa: E731
     done, changed = 0, False
     for item in items:
-        if item['lang'].startswith('zh') or item['lang'] == 'und':
+        web = is_web_news(item)
+        if item['lang'].startswith('zh') or (web and not needs_translation(item)) or (not web and item['lang'] == 'und'):
             continue
         hit = store.get(key(item))
         body = (item.get('body') or '').strip()
-        derive_summary = bool(body and item.get('summary') and (item['summary'] == body or body.startswith(item['summary'])))
-        missing_body = bool(body) and not (hit and hit.get('body'))
-        missing_blocks = bool(item.get('blocks')) and not (hit and hit.get('blocks'))
-        keep_title = item['source_id'] == 'github-trending'
+        src_sum = item.get('summary') or ''
+        keep_title = web and native_title(item)
+        keep_summary = web and native_summary(item)
+        keep_body = web and native_body(item)
+        if keep_title or keep_summary:
+            hit = dict(hit or {})
+            hit.setdefault('engine', default_engine)
+            if keep_title:
+                hit['title'] = item['title']
+            if keep_summary:
+                hit['summary'] = src_sum
+                hit.pop('summary_source', None)
+        if web and isinstance(hit, dict):
+            # 旧版可能把空摘要/英文回显写成命中。重新查字段缓存，不能永久跳过。
+            hit = dict(hit)
+            for field in ('title', 'summary', 'body'):
+                if (field == 'title' and not keep_title or field == 'summary' and not keep_summary
+                        or field == 'body' and body) and not chinese_text(hit.get(field)):
+                    hit.pop(field, None)
+            if not keep_summary and hit.get('summary_source') != src_sum:
+                hit.pop('summary', None)
+            if hit.get('blocks') and not all(chinese_text(t) for t in _blocks_texts(hit['blocks'])[1]):
+                hit.pop('blocks', None)
+        derive_summary = bool(body and src_sum and (src_sum == body or body.startswith(src_sum)))
+        missing_body = not keep_body and bool(body) and not (hit and hit.get('body'))
+        missing_blocks = not keep_body and bool(item.get('blocks')) and not (hit and hit.get('blocks'))
         # 1) 标题和摘要单独翻，不被长正文拖住
         if not hit or not hit.get('title') or hit.get('summary') is None:
             texts, slots, kinds = [], [], []
             if not keep_title and not (hit and hit.get('title')):
                 texts.append(item['title']); slots.append('title'); kinds.append('title')
             need_summary = not (hit and hit.get('summary') is not None)
-            src_sum = item.get('summary') or ''
-            if need_summary and src_sum.strip() and (not derive_summary or not (hit and hit.get('body'))):
+            if need_summary and src_sum.strip() and (web or not derive_summary or not (hit and hit.get('body'))):
                 texts.append(src_sum); slots.append('summary'); kinds.append('summary')
-            result = _translate_one(fn, texts, kinds) if texts else None
+            result = _translate_one(fn, texts, [f'web:{kind}' for kind in kinds] if web else kinds) if texts else None
             if result:
-                out, engine = (result or ([], None))
-                mapped = {slot: zh for slot, zh in zip(slots, out) if isinstance(zh, str) and zh.strip()}
+                out, engine = result
+                mapped = {slot: zh for slot, zh in zip(slots, out)
+                          if isinstance(zh, str) and zh.strip() and (not web or chinese_text(zh))}
                 title = item['title'] if keep_title else mapped.get('title') or (hit or {}).get('title')
                 summary = mapped.get('summary')
                 if summary is None:
@@ -667,6 +713,8 @@ def apply_translation(items, translator, cache=None):
                         'title': title, 'summary': summary,
                         'engine': engine or prev.get('engine') or default_engine,
                     })
+                    if web and 'summary' in mapped:
+                        prev['summary_source'] = src_sum
                     if summary_pending:
                         prev['summary_pending'] = True
                     else:
@@ -674,7 +722,7 @@ def apply_translation(items, translator, cache=None):
                     hit = store[key(item)] = prev
                     changed = True
         # 2) 正文和 blocks 另一次，缺了也不撤掉已有的标题/摘要
-        if hit and (missing_body or missing_blocks):
+        if hit and hit.get('title') and (missing_body or missing_blocks):
             texts, slots, kinds = [], [], []
             bkeys, btexts = ([], [])
             if missing_body:
@@ -683,29 +731,35 @@ def apply_translation(items, translator, cache=None):
                 bkeys, btexts = _blocks_texts(item.get('blocks'))
                 texts.extend(btexts)
                 kinds.extend(['block'] * len(btexts))
-            result = _translate_one(fn, texts, kinds) if texts else None
+            result = _translate_one(fn, texts, [f'web:{kind}' for kind in kinds] if web else kinds) if texts else None
             if result:
                 out, engine = result
-                mapped = {slot: zh for slot, zh in zip(slots, out[:len(slots)]) if isinstance(zh, str) and zh.strip()}
+                mapped = {slot: zh for slot, zh in zip(slots, out[:len(slots)])
+                          if isinstance(zh, str) and zh.strip() and (not web or chinese_text(zh))}
                 trans_body = mapped.get('body') or hit.get('body')
                 if trans_body:
                     hit['body'] = trans_body
-                    if derive_summary:
+                    if derive_summary and not web:
                         hit['summary'] = _summary_from_body(trans_body)
+                        hit.pop('summary_pending', None)
                 if bkeys and all(isinstance(x, str) and x.strip() for x in out[len(slots):]):
                     hit['blocks'] = _apply_block_texts(item['blocks'], bkeys, out[len(slots):])
                 hit['engine'] = engine or hit.get('engine') or default_engine
                 store[key(item)] = hit
                 changed = True
-        if not hit:
+        if not hit or not hit.get('title') or hit.get('summary') is None:
+            continue
+        if keep_title and (keep_summary or not hit['summary']) and not (hit.get('body') or hit.get('blocks')):
             continue
         item['translated'] = True
-        trans = {'title': hit['title'], 'summary': hit['summary'], 'engine': hit['engine'], 'label': MT}
+        trans = {'title': hit['title'], 'summary': hit['summary'], 'engine': hit.get('engine') or default_engine, 'label': MT}
+        if web and 'summary_source' in hit and hit.get('summary'):
+            trans['summary_source'] = hit['summary_source']
         if hit.get('body'):
             trans['body'] = hit['body']
         if hit.get('blocks'):
             trans['blocks'] = hit['blocks']
-        if (body or item.get('blocks')) and not hit.get('body') and not hit.get('blocks'):
+        if not keep_body and (body or item.get('blocks')) and not hit.get('body') and not hit.get('blocks'):
             trans['body_pending'] = True
         item['translation'] = trans
         done += 1
@@ -750,7 +804,8 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
     ordered = sorted(unique.values(), key=lambda i: i['published_at'], reverse=True)
     return {'schema': ITEMS_SCHEMA, 'producer': PRODUCER, 'generated_at': _iso(now), 'items': ordered,
             'sources': statuses, 'translation': {'available': bool(translator), 'translated': translated,
-                                              'untranslated': sum(1 for i in ordered if not i['lang'].startswith('zh') and i['lang'] != 'und' and not i.get('translated'))},
+                                              'untranslated': sum(1 for i in ordered if not i['lang'].startswith('zh') and i['lang'] != 'und'
+                                                                 and (not i.get('translated') or (i.get('translation') or {}).get('body_pending')))},
             'extraction': extracted}
 
 

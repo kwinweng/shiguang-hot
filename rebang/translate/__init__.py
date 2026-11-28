@@ -19,6 +19,8 @@ import os
 import subprocess
 from pathlib import Path
 
+from rebang.chinese_news import chinese_text
+
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CACHE = ROOT / 'var' / 'rebang' / 'translate' / 'cache.json'
 LABEL = '机器翻译'
@@ -130,6 +132,14 @@ class Translator:
         if src_lang.startswith('zh'):
             return None
         hits = [self.cache.get(t, src_lang) for t in texts]
+        languages = [src_lang] * len(texts)
+        if self.engine == 'cache' and kinds:
+            for i, (text, hit, kind) in enumerate(zip(texts, hits, kinds)):
+                if isinstance(kind, str) and kind.startswith('web:') and hit and not chinese_text(hit['zh']):
+                    # A bounded repair slot leaves the shared entry intact for other producers.
+                    # If the replacement is also invalid, don't repeatedly enqueue it.
+                    languages[i] = src_lang + '-x-web-repair'
+                    hits[i] = self.cache.get(text, languages[i])
         if all(hits):
             engines = {h['engine'] for h in hits}
             return [h['zh'] for h in hits], '+'.join(sorted(engines))
@@ -137,7 +147,7 @@ class Translator:
             for i, (text, hit) in enumerate(zip(texts, hits)):
                 if not hit:
                     kind = kinds[i] if kinds and i < len(kinds) else None
-                    self.cache.want(text, src_lang, kind=kind)
+                    self.cache.want(text, languages[i], kind=kind.removeprefix('web:') if isinstance(kind, str) else kind)
             return None
         if self.engine == 'openai-compatible':
             try:

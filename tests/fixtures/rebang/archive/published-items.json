@@ -41,6 +41,7 @@
    "translation": {
     "title": "合成译文标题",
     "summary": "合成译文摘要。",
+    "summary_source": "Synthetic summary.",
     "engine": "box-translate",
     "label": "机器翻译"
    }

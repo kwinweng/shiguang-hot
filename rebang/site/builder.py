@@ -21,6 +21,7 @@ from datetime import datetime, timedelta, timezone
 from itertools import chain
 from pathlib import Path
 
+from rebang.chinese_news import is_web_news, public_item
 from rebang.contract import schema
 from rebang.site.dedup import fold
 from rebang.site.health import build_health
@@ -434,6 +435,9 @@ def _archive_item(item):
 def _public_news(item, marked, day):
     public = {key: value for key, value in _archive_item(item).items()
               if key not in ('highlight', 'highlight_date')}
+    if public.get('merged'):
+        # Only this build has verified the full records; a legacy ref carries title, not summary.
+        public['merged'] = [{**ref, 'chinese_release': True} for ref in public['merged']]
     if item['id'] in marked:
         public.update(highlight=True, highlight_date=day)
     return public
@@ -457,10 +461,11 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
     else:
         tmp.mkdir(parents=True)
     data = tmp / 'data'
-    report['media_copied'] = localize_images(items, tmp)
-    bad_sources = source_status(envelopes)
-    news = [i for i in items if i['kind'] == 'news']
     posts = [i for i in items if i['kind'] == 'post']
+    news = [public for i in items if i['kind'] == 'news' and (public := public_item(i)) is not None]
+    report['news_waiting_for_translation'] = sum(i['kind'] == 'news' for i in items) - len(news)
+    report['media_copied'] = localize_images(news + posts, tmp)
+    bad_sources = source_status(envelopes)
     legacy_source = schema.load_channels()['highlights']['source_id']
     ineligible = disputed_news | unverified_news
     candidates = (i for i in news if i['source_id'] != legacy_source and i['id'] not in ineligible)
@@ -496,6 +501,8 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
             'slug': channel['slug'], 'name': channel['name'], 'order': channel['order'],
             'desc': CHANNEL_DESC.get(channel['slug'], ''),
             'sources': [s['name'] for s in channel['sources']],
+            # 列表来源前的平台图标按配置的来源类型标，不从 id 猜
+            'source_platforms': {s['id']: s['type'] for s in channel['sources']},
             'unavailable': bad_sources.get(channel['slug'], []),
             'total': len(mine), 'feed_total': len(feed), 'merged_total': len(folded), 'pages': len(pages),
             'banner': banner,
@@ -548,7 +555,11 @@ def build(out, in_dir=DEFAULT_IN, *, now=None, use_fixture=False, note=None, web
         'channels': channels_meta,
     }
     _write(data / 'meta.json', meta)
-    _run_archive([_archive_item(item) for item in items], tmp, report)
+    # Preserve private snapshots for retries/history, while keeping localized images for searchable items.
+    localized = {item['id']: item for item in news + posts}
+    archives = [dict(item, image=localized[item['id']].get('image'))
+                if item['id'] in localized and item is not localized[item['id']] else item for item in items]
+    _run_archive([_archive_item(item) for item in archives], tmp, report)
     if out.exists():
         shutil.rmtree(out)
     tmp.rename(out)

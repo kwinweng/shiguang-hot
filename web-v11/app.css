@@ -256,6 +256,10 @@ h2.ch{margin:0 16px 4px;font-size:var(--text-display);letter-spacing:-.04em;line
 
 /* ---------- v11：真站外壳（替代设计稿的手机外框）---------- */
 html,body{margin:0;height:100%;height:100dvh;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,"PingFang SC","Noto Sans SC",sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+/* 手机上快速点两下会被 iOS 当成「双击放大」，整页放大后卡住、内容被裁。
+   manipulation 只关双击放大，保留滑动和双指缩放；touch-action 不继承，所以逐个元素设，
+   低优先级选择器，让 .feed-root.lr、.zoom-view 等已有的更严设置照旧生效。 */
+html,body,body *{touch-action:manipulation}
 .app{position:fixed;inset:0;width:100%;max-width:480px;margin:0 auto;height:auto;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
 @media (min-width:540px){.app{border-left:1px solid var(--line);border-right:1px solid var(--line)}}
 .app[aria-busy="true"] .views{opacity:.4}
@@ -855,3 +859,35 @@ html.app-fullscreen .health-view{bottom:auto;height:var(--app-h)}
 .dup .dup-btn:focus-visible,.dup .dup-row:focus-visible{outline:2px solid currentColor;outline-offset:2px;border-radius:4px}
 .hero .dup .dup-btn,.hero .dup .dup-row,.hero .dup .dup-row .src{color:rgba(255,255,255,.88)}
 .hero .dup .dup-list{border-left-color:rgba(255,255,255,.4);max-height:96px;overflow-y:auto;overscroll-behavior:contain}
+/* 频道首页 A2（2026-11-28 阿欢确认）：大图在标题上方、摘要不再固定两行、来源前带平台图标 */
+.feed-row.cover{display:flex;flex-direction:column;align-items:stretch;gap:0}
+.feed-row.cover .f-main{width:100%}
+.feed-row.cover .thumb{width:100%;height:auto;max-height:248px;margin:0 0 11px;border-radius:11px;background:var(--inset);position:relative;display:flex;align-items:center;justify-content:center}
+.feed-row.cover .thumb img{width:100%;height:100%;max-height:248px;object-fit:contain}
+.feed-row.cover .thumb.video{background:#111}
+.feed-row .vid-badge{position:absolute;left:8px;top:8px;padding:2px 7px;border-radius:5px;background:rgba(13,18,24,.74);color:#fff;font-size:10.5px;font-weight:600;line-height:1.5;pointer-events:none}
+.feed-row .sum{display:block;-webkit-line-clamp:unset;overflow:visible;overflow-wrap:anywhere;word-break:normal;font-size:14.5px;line-height:1.64;color:var(--ink-soft)}
+.feed-row:not(.noimg) .sum{display:block}
+.feed-row .sum.none{display:-webkit-box;-webkit-line-clamp:1;overflow:hidden;font-size:13px;color:var(--mute-2)}
+.feed-row .sum .more{font-size:12.5px;font-weight:600;color:var(--primary);white-space:nowrap}
+.feed-row .f-meta .plat{width:16px;height:16px;flex:none;margin-right:6px;border-radius:50%}
+.feed-row .f-meta .when{margin-left:auto;padding-left:8px;font-variant-numeric:tabular-nums}
+.feed-row .f-meta .when::before{content:none}
+/* 已读：标题变浅但仍读得清，并在时间后标一个「已读」 */
+.feed-row.read h3{color:var(--mute)!important}
+.feed-row.read .sum{color:var(--mute)}
+.feed-row.read .f-meta::after{content:"已读";flex:none;margin-left:6px;font-size:11px;color:var(--mute)}
+.feed-row .f-meta .plat + .src::before{content:none}
+/* A2 复核修正：元信息放不下时换行（时间、已读不被裁掉）；已知偏小的图不放大；小图视频也标角标 */
+.feed-row .f-meta{flex-wrap:wrap;row-gap:2px}
+.feed-row:not(.cover) .thumb{position:relative}
+.feed-row:not(.cover) .thumb img{object-fit:scale-down}
+.feed-row:not(.cover) .vid-badge{left:4px;top:4px;padding:1px 5px;font-size:10px}
+/* 底栏改为独立停靠条，不浮在内容上遮挡最后几行 */
+.tabbar{position:static;left:auto;bottom:auto;transform:none;width:100%;height:calc(var(--tab) + var(--safe-bot));padding:0 max(4px,var(--safe-right)) var(--safe-bot) max(4px,var(--safe-left));display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-radius:0;border:0;border-top:.5px solid var(--line);box-shadow:none;background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none;flex-shrink:0}
+.tabbar button{width:auto;height:100%;border-radius:0;background:none;color:var(--mute);gap:3px}
+.tabbar button.on{background:none;color:var(--primary)}
+.tabbar button:active{background:var(--press)}
+.tabbar svg{width:21px;height:21px}
+.feed-root,.sub,.view > .rebang-favorites{padding-bottom:20px}
+.toast{bottom:calc(var(--safe-bot) + var(--tab) + 12px)}
