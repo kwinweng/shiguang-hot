@@ -5014,8 +5014,24 @@
     },
     {
       "id": "xhqcankao",
-      "last_update": "2026-11-28T08:20:07+08:00",
+      "last_update": "2026-11-28T12:15:15+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 12:00",
+          "id": "5bab82794deb6e4ee109",
+          "image": "",
+          "link": "https://t.me/xhqcankao/33394",
+          "source": "xhqcankao",
+          "source_name": "风向旗参考快讯",
+          "summary": "据彭博社报道，一家与Alice Huang（中文名黄乐，疑似为中国情报机构工作）有关联的中国数据中心，被发现安装了英伟达的高端Blackwell AI芯片。根据11月提交给中国监管机构的文件中列出的序列号，彭博新闻社查看银行备案文件，相关硬件被用作价值1400万美元贷款的抵押品。目前，英伟达的此类高性能处理器严禁在未获得美国许可的情况下出口至中国。此外，另一家有类似贷款记录的中国公司也被发现拥有该型号服务器。涉及此事的上海硕耀公司系新加坡Megaspeed的服务提供商，而Megaspeed正因涉嫌向中国走私英伟达芯片而受到美国调查。英伟达尚未对此做出回应。\n\n—— Slashdot",
+          "text": "据彭博社报道，一家与Alice Huang（中文名黄乐，疑似为中国情报机构工作）有关联的中国数据中心，被发现安装了英伟达的高端Blackwell AI芯片。根据11月提交给中国监管机构的文件中列出的序列号，彭博新闻社查看银行备案文件，相关硬件被用作价值1400万美元贷款的抵押品。目前，英伟达的此类高性能处理器严禁在未获得美国许可的情况下出口至中国。此外，另一家有类似贷款记录的中国公司也被发现拥有该型号服务器。涉及此事的上海硕耀公司系新加坡Megaspeed的服务提供商，而Megaspeed正因涉嫌向中国走私英伟达芯片而受到美国调查。英伟达尚未对此做出回应。\n\n—— Slashdot",
+          "time": "2026-11-28T12:15:15+08:00",
+          "title": "黄乐关联的中国数据中心被发现使用英伟达Blackwell AI芯片",
+          "type": "telegram"
+        },
         {
           "category": "财经",
           "day": "2026-11-28",
@@ -14907,7 +14923,7 @@
         {
           "category": "科技",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 12:00",
           "id": "1db9d46411f2210d1a43",
           "image": "",
@@ -14923,7 +14939,7 @@
         {
           "category": "数码",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 12:00",
           "id": "1749b891148c2bdd0619",
           "image": "",
@@ -22778,10 +22794,10 @@
         }
       ],
       "name": "风向旗参考快讯",
-      "seven_day_count": 124,
+      "seven_day_count": 125,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 1,
+      "today_count": 2,
       "type": "telegram",
       "url": "https://t.me/xhqcankao"
     },
@@ -103574,7 +103590,7 @@
         {
           "category": "国际",
           "day": "2026-10-29",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-29 17:00",
           "id": "380107f7840b671b481c",
           "image": "",
@@ -110120,8 +110136,24 @@
     },
     {
       "id": "zaihuapd",
-      "last_update": "2026-11-28T11:43:55+08:00",
+      "last_update": "2026-11-28T12:38:26+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 12:00",
+          "id": "94db0c051dc8d4f1e14c",
+          "image": "",
+          "link": "https://t.me/zaihuapd/45418",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "美国国际贸易委员会（ITC）裁定三星侵犯日本 Maxell 持有的一项相机取景专利（美国专利号 11,490,004），已签发禁止令和进口禁令，涉及 Galaxy S25 系列和部分 Galaxy 平板。Maxell 2024 年 12 月就 5 项相机专利提出申诉，ITC 认定三星违反其中 1 项。\n\n禁令处于 60 天总统审查期，自 11 月 25 日起算，期间三星仍可在美销售。已售出产品、保修更换设备和改用重新设计相机系统的机型豁免，三星已改版相机系统以规避该专利。Maxell 今年 5 月又就 6 项专利提出申诉，点名 Galaxy S26+、Z Fold 7、Z Flip 7，裁决可能还需一两年。\n\nAndroid Police\n\n🌸 科技圈· 茶馆 · 投稿",
+          "text": "美国国际贸易委员会（ITC）裁定三星侵犯日本 Maxell 持有的一项相机取景专利（美国专利号 11,490,004），已签发禁止令和进口禁令，涉及 Galaxy S25 系列和部分 Galaxy 平板。Maxell 2024 年 12 月就 5 项相机专利提出申诉，ITC 认定三星违反其中 1 项。\n\n禁令处于 60 天总统审查期，自 11 月 25 日起算，期间三星仍可在美销售。已售出产品、保修更换设备和改用重新设计相机系统的机型豁免，三星已改版相机系统以规避该专利。Maxell 今年 5 月又就 6 项专利提出申诉，点名 Galaxy S26+、Z Fold 7、Z Flip 7，裁决可能还需一两年。\n\nAndroid Police\n\n🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-28T12:38:26+08:00",
+          "title": "美国 ITC 裁定三星侵犯相机专利，Galaxy S25 或遭进口禁令",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-28",
@@ -114624,7 +114656,7 @@
           "hot": true,
           "hour": "2026-11-14 13:00",
           "id": "0c09cff2a884fe0afd85",
-          "image": "media/zaihuapd/45119_1.webp",
+          "image": "",
           "link": "https://t.me/zaihuapd/45119",
           "source": "zaihuapd",
           "source_name": "在花科技圈",
@@ -119805,7 +119837,7 @@
         {
           "category": "科技",
           "day": "2026-10-29",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-29 13:00",
           "id": "b5914515c54a1a3e2729",
           "image": "",
@@ -126604,10 +126636,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 124,
+      "seven_day_count": 125,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 6,
+      "today_count": 7,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -127434,7 +127466,7 @@
           "hot": false,
           "hour": "2026-11-14 12:00",
           "id": "7b1e4b712c832b64c0f8",
-          "image": "media/NewlearnerChannel/16139_1.webp",
+          "image": "",
           "link": "https://t.me/NewlearnerChannel/16139",
           "source": "NewlearnerChannel",
           "source_name": "Newlearnerの自留地",
@@ -130924,8 +130956,40 @@
     },
     {
       "id": "OneMillion_AI",
-      "last_update": "2026-11-28T11:40:25+08:00",
+      "last_update": "2026-11-28T12:30:01+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 12:00",
+          "id": "37cd85c239d40e03ccc5",
+          "image": "media/OneMillion_AI/6205_1.webp",
+          "link": "https://t.me/OneMillion_AI/6205",
+          "source": "OneMillion_AI",
+          "source_name": "动察Beating AI News",
+          "summary": "OpenAI 和 Anthropic 正严防死守模型蒸馏，谷歌云却公开把蒸馏做成了一门托管生意。Hugging Face CEO Clem Delangue 晒出谷歌云文档点赞，称蒸馏是少数能遏制 AI 权力和财富过度集中的手段，毕竟 AI 巨头自己也是靠「蒸馏」整个互联网起家的。\n\n但翻开谷歌云最新文档，目前公开支持的老师模型只有一款：中国智谱的开源模型 GLM-5.2，学生模型是阿里的 Qwen3 和谷歌自家的 Gemma 3。开发者只需提供问题，谷歌云自动调老师生成答案、微调小模型，按答案生成量和训练算力收两道钱，训完的权重还能直接下载带走。\n\n谷歌并非没动过自家闭源模型。今年 5 月，它曾定向测试 Gemini 蒸馏服务，允许获准客户用 Gemini 3.1 Pro 训练自家的 Gemini 2.5 Flash。但这仅限于生态内的「大号教小号」，训完的模型带不走权重，只能留在谷歌云上调用，从未全面放开，如今相关文档也已打不开。就在 11 月 17 日，谷歌威胁情报团队还披露，已部署实时反蒸馏防御，专门用来降低未经授权学生模型的性能，抓到就直接封禁账号。\n\n路透社 11 月 26",
+          "text": "OpenAI 和 Anthropic 正严防死守模型蒸馏，谷歌云却公开把蒸馏做成了一门托管生意。Hugging Face CEO Clem Delangue 晒出谷歌云文档点赞，称蒸馏是少数能遏制 AI 权力和财富过度集中的手段，毕竟 AI 巨头自己也是靠「蒸馏」整个互联网起家的。\n\n但翻开谷歌云最新文档，目前公开支持的老师模型只有一款：中国智谱的开源模型 GLM-5.2，学生模型是阿里的 Qwen3 和谷歌自家的 Gemma 3。开发者只需提供问题，谷歌云自动调老师生成答案、微调小模型，按答案生成量和训练算力收两道钱，训完的权重还能直接下载带走。\n\n谷歌并非没动过自家闭源模型。今年 5 月，它曾定向测试 Gemini 蒸馏服务，允许获准客户用 Gemini 3.1 Pro 训练自家的 Gemini 2.5 Flash。但这仅限于生态内的「大号教小号」，训完的模型带不走权重，只能留在谷歌云上调用，从未全面放开，如今相关文档也已打不开。就在 11 月 17 日，谷歌威胁情报团队还披露，已部署实时反蒸馏防御，专门用来降低未经授权学生模型的性能，抓到就直接封禁账号。\n\n路透社 11 月 26 日也曝出，随着 OpenAI 和 Anthropic 把门越锁越死，月之暗面已经转向蒸馏谷歌和 Meta 的模型。a16z 合伙人 Martin Casado 算了一笔账：只要自己能一直保持技术领先，放开蒸馏未必吃亏，反而能让追赶者不断给领先者付钱。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "time": "2026-11-28T12:30:01+08:00",
+          "title": "一边公开卖模型蒸馏，一边暗中给蒸馏者降智封号：谷歌在蒸馏这件事上有多微妙？",
+          "type": "telegram"
+        },
+        {
+          "category": "科技",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 12:00",
+          "id": "fafc3593ceabf940026d",
+          "image": "media/OneMillion_AI/6204_1.webp",
+          "link": "https://t.me/OneMillion_AI/6204",
+          "source": "OneMillion_AI",
+          "source_name": "动察Beating AI News",
+          "summary": "最近 Claude 因为会暗中破坏机器学习研究成为众矢之的。\n\n有研究者晒出实测，称训练大模型时 Claude 嘴上写着标准方案，代码里却违背指令、反复重复计算，硬生生拖慢训练并拉高成本。还有人翻出 Mythos 5 与 Fable 5 的系统卡截图，里面写明遇到前沿大模型开发请求会暗中限制效果，且用户无法察觉。\n\nAnthropic 开发者团队对此否认「搞破坏」，称网传系统卡已经过时。今年 6 月 Fable 5 上线头两天，公司确实对部分大模型研究用过不可见限制，但很快认定是失误并撤回；现在触发限制会明确拦截或回退，用户都能看到提示。\n\n官方同时承认，Fable 5.2 在训练时确实刻意把大模型研究能力压在了 Opus 5.5 水平，只是已在公告里公开说明，属于明面上的能力上限，不是暗中搞破坏。\n\n至于近期的训练代码翻车，官方归咎于模型在长任务里「过度谨慎」，死守自己中途立的规矩，并非专门针对 AI 科研，目前正找当事用户要会话 ID 排查。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "text": "最近 Claude 因为会暗中破坏机器学习研究成为众矢之的。\n\n有研究者晒出实测，称训练大模型时 Claude 嘴上写着标准方案，代码里却违背指令、反复重复计算，硬生生拖慢训练并拉高成本。还有人翻出 Mythos 5 与 Fable 5 的系统卡截图，里面写明遇到前沿大模型开发请求会暗中限制效果，且用户无法察觉。\n\nAnthropic 开发者团队对此否认「搞破坏」，称网传系统卡已经过时。今年 6 月 Fable 5 上线头两天，公司确实对部分大模型研究用过不可见限制，但很快认定是失误并撤回；现在触发限制会明确拦截或回退，用户都能看到提示。\n\n官方同时承认，Fable 5.2 在训练时确实刻意把大模型研究能力压在了 Opus 5.5 水平，只是已在公告里公开说明，属于明面上的能力上限，不是暗中搞破坏。\n\n至于近期的训练代码翻车，官方归咎于模型在长任务里「过度谨慎」，死守自己中途立的规矩，并非专门针对 AI 科研，目前正找当事用户要会话 ID 排查。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "time": "2026-11-28T12:17:48+08:00",
+          "title": "Claude做科研悄悄搞破坏？Anthropic出面澄清：暗中限制早已撤回，只是压低了能力上限",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-28",
@@ -134948,7 +135012,7 @@
           "hot": false,
           "hour": "2026-11-14 12:00",
           "id": "7f7e081393ef3ab80982",
-          "image": "media/OneMillion_AI/5935_1.webp",
+          "image": "",
           "link": "https://t.me/OneMillion_AI/5935",
           "source": "OneMillion_AI",
           "source_name": "动察Beating AI News",
@@ -141984,10 +142048,10 @@
         }
       ],
       "name": "动察Beating AI News",
-      "seven_day_count": 106,
+      "seven_day_count": 108,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 5,
+      "today_count": 7,
       "type": "telegram",
       "url": "https://t.me/OneMillion_AI"
     },
