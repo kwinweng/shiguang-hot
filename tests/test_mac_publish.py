@@ -28,6 +28,7 @@ with sqlite3.connect('tg.db') as db:
         db.execute("insert or ignore into messages values (?)", (Path('.git/extra-row').read_text(),))
 site = Path('site')
 shutil.copytree('packed-fixture', site, dirs_exist_ok=True)
+(site / 'data').mkdir(exist_ok=True)  # Git does not keep the fixture's empty data/ in a fresh clone.
 now = datetime.now(timezone.utc)
 day = now.astimezone(timezone(timedelta(hours=8))).date().isoformat()
 (site / 'data/live.json').write_text(json.dumps(dict(updated=now.isoformat(),
@@ -162,9 +163,28 @@ class MacPublishTests(unittest.TestCase):
     def heads(self):
         return tuple(self.git('--git-dir', str(self.remote), 'rev-parse', branch) for branch in ('main', 'gh-pages'))
 
-    def cycle(self, env=None):
-        return subprocess.run(self.plist['ProgramArguments'], cwd=self.plist['WorkingDirectory'],
-                              env=self.env if env is None else env, timeout=30, capture_output=True, text=True)
+    def cycle(self, env=None, extra=()):
+        return subprocess.run([*self.plist['ProgramArguments'], *extra], cwd=self.plist['WorkingDirectory'],
+                              env=self.env if env is None else env, timeout=90, capture_output=True, text=True)
+
+    def merge_on_main(self, files):
+        """A reviewed change merged on GitHub: a normal descendant of remote main; files map path -> text."""
+        return self.remote_commit(self.heads()[0], {name: ('100644', text.encode()) for name, text in files.items()},
+                                  message='Merge PR')
+
+    def published_code(self):
+        return json.loads(self.git('show', f'{self.heads()[1]}:build-info.json'))['source_commit']
+
+    def messages(self):
+        with sqlite3.connect(self.checkout / 'tg.db') as connection:
+            return connection.execute('select id from messages order by id').fetchall()
+
+    def contains(self, ancestor, commit):
+        return subprocess.run([GIT, 'merge-base', '--is-ancestor', ancestor, commit], cwd=self.checkout).returncode == 0
+
+    def state_json(self, name):
+        path = self.state / name
+        return json.loads(path.read_text()) if path.exists() else None
 
     def install_hook(self, name, script):
         hook = self.remote / 'hooks' / name
@@ -523,7 +543,7 @@ exec '{GIT}' "$@"
         database = (self.checkout / 'tg.db').read_bytes()
         result = self.cycle()
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('remote main must contain --code-sha', result.stderr)
+        self.assertIn('remote main must contain the checked-out code', result.stderr)
         self.assertFalse((self.state / 'refs.json').exists())
         self.assertFalse((self.state / 'HALT').exists())
         self.assertEqual(self.heads(), heads)
@@ -714,3 +734,216 @@ exec '{GIT}' "$@"
         self.assertEqual((self.state / 'refs.json').read_text(), '{"refs/heads/main": ')
         self.assertEqual((self.checkout / 'tg.db').read_bytes(), database)
         self.assertEqual(self.heads(), heads)
+
+
+    # Following main by trial-then-switch. Boundary cases and the expected conservative behaviour:
+    # 1. normal merge (docs only)      -> publish with running code, then trial; next round switches; tg.db kept
+    # 2. trial build fails             -> keep publishing running code, reason in trial.json, max 3 tries per code
+    # 3. trial exceeds its time limit  -> trial process group killed, recorded as failed, no stuck lock
+    # 4. publisher stopped mid-trial   -> trial group killed, attempt counted, next round runs normally
+    # 5. trial never sees source credentials, even when the real collection had them
+    # 6. switch interrupted at any step -> next start puts the local tg.db back and continues
+    # 7. unexpected tg.db beside an interrupted switch -> stop, keep both files
+    # 8. switch checkout fails          -> tg.db restored, candidate dropped, running code keeps publishing
+    # 9. candidate no longer on main (main rewritten) -> HALT from the checkpoint check, never a switch
+    # 10. checkout not at/after --code-sha -> refuse
+    # Rewrites, foreign tg.db writes, merges during the round and first start are covered above.
+    NEW_DOCS = {'docs/NOTE.md': 'merged docs-only change\n'}
+
+    def test_normal_merge_is_trialled_then_switched_next_round(self):
+        self.assert_success(self.cycle())
+        merged = self.merge_on_main(self.NEW_DOCS)
+        (self.checkout / '.git/extra-row').write_text('collected-before-switch')
+        first = self.cycle()
+        self.assert_success(first)
+        self.assertIn(f'follow: trial passed for {merged}', first.stdout)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
+        self.assertEqual(self.published_code(), self.code, 'this round still publishes the running version')
+        self.assertEqual(self.git('rev-parse', self.heads()[0] + '^'), merged, 'data commit sits on the merge')
+        self.assertEqual(self.state_json('candidate.json')['sha'], merged)
+        self.assertFalse((self.state / 'trial').exists())
+        (self.checkout / '.git/extra-row').unlink()
+
+        second = self.cycle()
+        self.assert_success(second)
+        self.assertIn(f'follow: switched code {self.code} -> {merged}', second.stdout)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), merged)
+        self.assertEqual(self.published_code(), merged)
+        self.assertTrue((self.checkout / 'docs/NOTE.md').is_file())
+        self.assertIn(('collected-before-switch',), self.messages(),
+                      'the switch keeps the local database, not the copy in the merge commit')
+        self.assertEqual(self.git('show', f'{self.heads()[0]}:tg.db', binary=True),
+                         (self.checkout / 'tg.db').read_bytes())
+        for name in ('candidate.json', 'switch.json', 'tg.db.switching'):
+            self.assertFalse((self.state / name).exists(), name)
+
+        third = self.cycle()
+        self.assert_success(third)
+        self.assertNotIn('follow:', third.stdout, 'only our own data commits since the switch')
+
+    def test_failed_trial_keeps_running_code_and_stops_after_three_attempts(self):
+        self.merge_on_main({'pipeline.py': 'raise SystemExit("broken new code")\n'})
+        for attempt in (1, 2, 3):
+            result = self.cycle()
+            self.assert_success(result)
+            self.assertIn('follow: trial FAILED', result.stdout)
+            trial = self.state_json('trial.json')
+            self.assertEqual((trial['ok'], trial['attempts']), (False, attempt))
+            self.assertIn('pipeline.py exited', trial['reason'])
+            self.assertIn('broken new code', (self.state / 'trial.log').read_text())
+        result = self.cycle()
+        self.assert_success(result)
+        self.assertIn('failed 3 times', result.stdout)
+        self.assertNotIn('trial 4', result.stdout)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
+        self.assertEqual(self.published_code(), self.code)
+        self.assertFalse((self.state / 'candidate.json').exists())
+        fixed = self.merge_on_main({'pipeline.py': PIPELINE + '# fixed\n'})
+        result = self.cycle()
+        self.assertIn('follow: trial 1/3', result.stdout, 'different code is tried again')
+        self.assertIn('follow: trial passed', result.stdout)
+        self.assertTrue(self.contains(fixed, self.state_json('candidate.json')['sha']))
+
+    def slow_pipeline(self):
+        pid = self.root / 'trial.pid'
+        return pid, PIPELINE + f'import os, time\nopen({str(pid)!r}, "w").write(str(os.getpid()))\ntime.sleep(60)\n'
+
+    def assert_gone(self, pid):
+        until = time.monotonic() + 5
+        while time.monotonic() < until:
+            try:
+                os.kill(int(pid.read_text()), 0)
+            except ProcessLookupError:
+                return
+            time.sleep(0.05)
+        self.fail('trial process still running')
+
+    def test_trial_timeout_kills_the_trial_and_keeps_publishing(self):
+        pid, slow = self.slow_pipeline()
+        merged = self.merge_on_main({'pipeline.py': slow})
+        result = self.cycle(extra=('--trial-timeout', '3'))
+        self.assert_success(result)
+        self.assertIn('timed out after 3s', self.state_json('trial.json')['reason'])
+        self.assert_gone(pid)
+        self.assertFalse((self.state / 'trial').exists())
+        self.assertEqual(self.published_code(), self.code)
+        self.assertTrue(self.contains(merged, self.state_json('trial.json')['sha']))
+
+    def test_stopping_the_publisher_mid_trial_kills_it_and_counts_the_attempt(self):
+        pid, slow = self.slow_pipeline()
+        self.merge_on_main({'pipeline.py': slow})
+        publisher = subprocess.Popen(self.plist['ProgramArguments'], cwd=self.checkout, env=self.env,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        until = time.monotonic() + 60
+        while not pid.exists() and time.monotonic() < until and publisher.poll() is None:
+            time.sleep(0.05)
+        self.assertTrue(pid.exists(), 'trial did not start')
+        self.assertNotEqual(self.heads(), self.before, 'the real publish finishes before the trial')
+        publisher.terminate()  # launchd stops jobs with SIGTERM
+        publisher.communicate(timeout=15)
+        self.assertNotEqual(publisher.returncode, 0)
+        self.assert_gone(pid)
+        self.assertEqual(self.state_json('trial.json')['reason'], 'interrupted before finishing')
+        self.assertFalse((self.state / 'HALT').exists())
+        self.assertFalse((self.state / 'trial').exists())
+        pid.unlink()
+        result = self.cycle(extra=('--trial-timeout', '2'))
+        self.assert_success(result)
+        self.assertIn('trial 2/3', result.stdout)
+
+    def test_trial_never_gets_source_credentials(self):
+        self.plant(self.account)
+        probe = BLOGGERS.replace("Path('.git/bloggers-env.json')", f"Path({str(self.root / 'trial-env.json')!r})")
+        self.assertNotEqual(probe, BLOGGERS)
+        merged = self.merge_on_main({'rebang/bloggers/__main__.py': probe})
+        result = self.cycle()
+        self.assert_success(result)
+        self.assertIn('source_credentials=weibo', result.stdout)
+        self.assertIn('follow: trial passed', result.stdout)
+        self.assertEqual(json.loads((self.checkout / '.git/bloggers-env.json').read_text())['REBANG_WEIBO_COOKIE'],
+                         str(self.account / '.config/rebang/weibo-cookie.txt'))
+        self.assertTrue(self.contains(merged, self.state_json('trial.json')['sha']))
+        trial_env = json.loads((self.root / 'trial-env.json').read_text()) if (self.root / 'trial-env.json').exists() else None
+        self.assertIsNotNone(trial_env, (self.state / 'trial.log').read_text())
+        self.assertEqual(trial_env, {'REBANG_WEIBO_COOKIE': '', 'REBANG_WEREAD_SESSION': ''})
+
+    def prepare_candidate(self):
+        self.assert_success(self.cycle())
+        merged = self.merge_on_main(self.NEW_DOCS)
+        (self.checkout / '.git/extra-row').write_text('collected-before-switch')
+        self.assert_success(self.cycle())
+        (self.checkout / '.git/extra-row').unlink()
+        self.assertEqual(self.state_json('candidate.json')['sha'], merged)
+        return merged
+
+    def test_interrupted_switch_after_checkout_restores_the_local_database(self):
+        merged = self.prepare_candidate()
+        (self.state / 'switch.json').write_text(json.dumps({'from': self.code, 'to': merged}))
+        (self.checkout / 'tg.db').replace(self.state / 'tg.db.switching')
+        subprocess.run([GIT, 'checkout', '--quiet', '--detach', merged], cwd=self.checkout, check=True)
+        result = self.cycle()
+        self.assert_success(result)
+        self.assertIn('closed at HEAD=' + merged, result.stdout)
+        self.assertIn(('collected-before-switch',), self.messages())
+        self.assertEqual(self.published_code(), merged)
+        self.assertFalse((self.state / 'candidate.json').exists())
+        self.assertFalse((self.state / 'tg.db.switching').exists())
+
+    def test_switch_interrupted_before_checkout_retries_the_switch(self):
+        merged = self.prepare_candidate()
+        (self.state / 'switch.json').write_text(json.dumps({'from': self.code, 'to': merged}))
+        (self.checkout / 'tg.db').replace(self.state / 'tg.db.switching')
+        result = self.cycle()
+        self.assert_success(result)
+        self.assertIn('closed at HEAD=' + self.code, result.stdout)
+        self.assertIn(f'follow: switched code {self.code} -> {merged}', result.stdout)
+        self.assertIn(('collected-before-switch',), self.messages())
+        self.assertEqual(self.published_code(), merged)
+
+    def test_unexpected_database_beside_switch_is_kept_for_inspection(self):
+        merged = self.prepare_candidate()
+        (self.state / 'switch.json').write_text(json.dumps({'from': self.code, 'to': merged}))
+        (self.checkout / 'tg.db').replace(self.state / 'tg.db.switching')
+        (self.checkout / 'tg.db').write_bytes(b'something else')
+        result = self.cycle()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('unexpected tg.db', result.stderr)
+        self.assertTrue((self.state / 'tg.db.switching').exists())
+        self.assertEqual((self.checkout / 'tg.db').read_bytes(), b'something else')
+
+    def test_failed_switch_checkout_keeps_running_code(self):
+        merged = self.prepare_candidate()
+        database = (self.checkout / 'tg.db').read_bytes()
+        self.on_first('-c', 'exit 1')   # the switch is the only `git -c ... checkout` in the main process
+        result = self.cycle()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(f'code switch to {merged} failed', result.stderr)
+        self.assertEqual((self.checkout / 'tg.db').read_bytes(), database)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
+        self.assertFalse((self.state / 'candidate.json').exists())
+        self.assertFalse((self.state / 'switch.json').exists())
+        self.assertFalse((self.state / 'HALT').exists())
+        (self.bin / 'git').unlink()
+        result = self.cycle()
+        self.assert_success(result)
+        self.assertIn('failed 3 times', result.stdout)
+        self.assertEqual(self.published_code(), self.code)
+
+    def test_candidate_dropped_from_main_halts_instead_of_switching(self):
+        merged = self.prepare_candidate()
+        published = self.heads()[0]
+        # Someone rewinds main past the merge: not a normal advance, so HALT before any switch.
+        self.remote_git('update-ref', 'refs/heads/main', f'{merged}^')
+        result = self.cycle()
+        self.assert_halted(result)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
+        self.assertNotEqual(self.heads()[0], published)
+
+    def test_checkout_before_code_sha_is_refused(self):
+        # A later commit than the checkout: the checkout must be --code-sha or come after it.
+        self.plist['ProgramArguments'][3] = self.git('commit-tree', f'{self.code}^{{tree}}', '-p', self.code,
+                                                     '-m', 'Later approved code')
+        result = self.cycle()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('--code-sha or a descendant', result.stderr)
+        self.assertEqual(self.heads(), self.before)
