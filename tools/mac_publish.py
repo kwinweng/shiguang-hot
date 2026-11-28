@@ -11,9 +11,11 @@ import json
 import os
 from pathlib import Path
 import re
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 from urllib.parse import urlsplit
 
 
@@ -27,6 +29,8 @@ SKIPPED = 75  # EX_TEMPFAIL: nothing published, nothing stopped, the next round 
 SHA = re.compile(r'[0-9a-f]{40}')
 # `git push --porcelain` summaries that mean the push was refused before any ref moved.
 LEASE_REJECTED, ATOMIC_REJECTED = '[rejected] (stale info)', '[rejected] (atomic push failed)'
+X_INBOX_ENV = 'REBANG_X_INBOX_REPO'  # optional read-only X inbox; unset or empty = no inbox step at all
+X_INBOX_TIMEOUT = 120              # seconds including worker startup and both cleanups
 
 
 class Skipped(Exception):
@@ -51,6 +55,67 @@ def write_atomic(path, text):
         os.fsync(directory)
     finally:
         os.close(directory)
+
+
+def import_x_inbox(repo, root, env, *, lock=None):
+    """Supervise the isolated X receiver, including all of its filesystem operations."""
+    end = time.monotonic() + X_INBOX_TIMEOUT
+    process, output, failure = None, b'', None
+    try:
+        process = subprocess.Popen(
+            [sys.executable, '-I', str(ROOT / 'tools/x_inbox.py'), str(root / 'var/rebang'), str(end), str(os.getpid())],
+            cwd=root, env=dict(env, **{X_INBOX_ENV: repo}), pass_fds=() if lock is None else (lock,),
+            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
+        output, _ = process.communicate(timeout=max(0, end - time.monotonic()))
+        if process.returncode == -signal.SIGKILL and time.monotonic() >= end:
+            failure = 'x_inbox_timeout'
+        elif process.returncode:
+            failure = 'x_inbox_internal'
+    except subprocess.TimeoutExpired as error:
+        output = error.output or b''
+        failure = 'x_inbox_timeout'
+    except Exception:
+        failure = 'x_inbox_internal'
+    finally:
+        if process is not None and failure:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            except PermissionError:
+                # macOS can report EPERM after the worker already killed its group.
+                try:
+                    process.kill()
+                except OSError:
+                    pass
+            process.stdout.close()
+            process.poll()
+
+    result = dict(installed=[], pruned=0, error='x_inbox_internal', prune_error=None)
+    cleanup = None
+    for raw in output.splitlines():
+        try:
+            event = json.loads(raw)
+        except ValueError:  # timeout may interrupt the last receipt
+            continue
+        if not isinstance(event, dict):
+            continue
+        if 'installed' in event:
+            result['installed'].append(event['installed'])
+        if 'result' in event:
+            result = event['result']
+        if 'cleanup' in event:
+            cleanup = event['cleanup']
+    error = failure or result['error']
+    line = 'x_inbox=' + ('ok' if error is None else f'error code={error}')
+    line += ' installed=' + (','.join(result['installed']) or 'none')
+    if result['pruned']:
+        line += f' pruned={result["pruned"]}'
+    if result['prune_error']:
+        line += f' prune_error={result["prune_error"]}'
+    print(line, flush=True)
+    if cleanup:
+        print(f'x_inbox_cleanup=failed error={cleanup["error"]} count={cleanup["count"]}', flush=True)
 
 
 def main_only_rejection(output, candidates):
@@ -115,7 +180,7 @@ def source_credentials(state, home=None):
     return env, enabled
 
 
-def run_cycle(code_sha, state, lock):
+def run_cycle(code_sha, state, lock, x_inbox_repo=''):
     # Do not inherit build overrides, Git ref/index overrides or source credential overrides.
     env = {key: os.environ[key] for key in ('PATH', 'HOME', 'TMPDIR', 'SSH_AUTH_SOCK') if key in os.environ}
     env.update(BOX_PYTHON=sys.executable, TZ='Asia/Shanghai', SITE_MODE='public', MAIL_DIGEST='0',
@@ -297,6 +362,8 @@ def run_cycle(code_sha, state, lock):
                 raise RuntimeError('public data/meta.json differs from the Pages parent; cannot use it as the receiver baseline')
             print(f'public_baseline_meta_sha256={hashlib.sha256(actual).hexdigest()}', flush=True)
 
+        if x_inbox_repo:
+            import_x_inbox(x_inbox_repo, ROOT, env, lock=lock)
         credentials, enabled = source_credentials(state)
         env.update(credentials)
         # Local preflight only: the collectors re-check when they open, and the site shows what was read.
@@ -418,7 +485,7 @@ def main():
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
                 raise RuntimeError('Mac publisher is already running') from None
-            run_cycle(args.code_sha, state, lock.fileno())
+            run_cycle(args.code_sha, state, lock.fileno(), os.environ.get(X_INBOX_ENV, ''))
     except Skipped as skipped:
         print(f'Mac publish skipped: {skipped}', file=sys.stderr)
         return SKIPPED

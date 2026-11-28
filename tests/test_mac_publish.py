@@ -714,3 +714,116 @@ exec '{GIT}' "$@"
         self.assertEqual((self.state / 'refs.json').read_text(), '{"refs/heads/main": ')
         self.assertEqual((self.checkout / 'tg.db').read_bytes(), database)
         self.assertEqual(self.heads(), heads)
+
+    # --- optional X inbox (REBANG_X_INBOX_REPO) ------------------------------------------------
+
+    def pin_inbox_code(self, slow_inbox=None):
+        """Pin a code commit that also carries the receiver and the real X reader it validates with."""
+        for path in ('tools/x_inbox.py', 'rebang/bloggers/__init__.py', 'rebang/bloggers/x.py',
+                     'rebang/bloggers/common.py'):
+            shutil.copyfile(ROOT / path, self.checkout / path)
+        if slow_inbox:
+            # Inject a blocking filesystem operation only into the synthetic checkout.
+            slow_operation = f'''
+import time
+if not getattr(shutil.rmtree, '_inbox_fixture', False):
+    real_rmtree, real_read_bytes = shutil.rmtree, Path.read_bytes
+    def delay_inbox(path, stage):
+        if stage == {slow_inbox!r}:
+            Path('.git/inbox-stage').write_text(stage)
+            time.sleep(3)
+            Path('.git/inbox-stage-finished').touch()
+    def slow_rmtree(path, *args, **kwargs):
+        if Path(path).name.startswith('.x-inbox-work-'):
+            delay_inbox(path, 'old-cleanup' if Path(path).name.endswith('-old') else 'final-cleanup')
+        return real_rmtree(path, *args, **kwargs)
+    def slow_read_bytes(path):
+        if path.name == '_dump.json' and path.parent.parent.name == 'x-dump':
+            delay_inbox(path, 'scan')
+        return real_read_bytes(path)
+    slow_rmtree._inbox_fixture = True
+    shutil.rmtree, Path.read_bytes = slow_rmtree, slow_read_bytes
+'''
+            for path in ('tools/mac_publish.py', 'tools/x_inbox.py'):
+                script = self.checkout / path
+                text = script.read_text().replace('X_INBOX_TIMEOUT = 120', 'X_INBOX_TIMEOUT = 1.5')
+                script.write_text(text.replace('import shutil\n', 'import shutil\n' + slow_operation, 1))
+        # The stub collector records which X batches it could see when it ran.
+        (self.checkout / 'rebang/bloggers/__main__.py').write_text(
+            "import os, pathlib\nroot = pathlib.Path('var/rebang/x-dump')\n"
+            "pathlib.Path('.git/bloggers-saw').write_text(' '.join(sorted(os.listdir(root))) if root.is_dir() else '')\n")
+        self.git('add', '.')
+        self.git('commit', '-m', 'Pin X inbox receiver')
+        self.code = self.git('rev-parse', 'HEAD')
+        self.git('push', 'origin', 'HEAD:refs/heads/main')
+        self.plist['ProgramArguments'][3] = self.code
+        self.before = self.heads()
+
+    def inbox_leftovers(self):
+        var = self.checkout / 'var/rebang'
+        return [p.name for p in var.iterdir() if p.name.startswith('.x-inbox')] if var.is_dir() else []
+
+    def test_x_inbox_unset_changes_nothing(self):
+        result = self.cycle()
+        self.assert_success(result)
+        self.assertNotIn('x_inbox', result.stdout + result.stderr)
+        self.assertFalse((self.checkout / 'var/rebang/x-dump').exists())
+        self.assertEqual(self.inbox_leftovers(), [])
+
+    def test_x_inbox_batch_is_installed_before_collection(self):
+        from tests.test_x_inbox import InboxRepo, batch
+        self.pin_inbox_code()
+        repo = InboxRepo(self.root)
+        dump_id, *_ = new = batch()
+        repo.publish(new)
+        result = self.cycle(dict(self.env, REBANG_X_INBOX_REPO=repo.url))
+        self.assert_success(result)
+        self.assertIn(f'x_inbox=ok installed={dump_id}', result.stdout)
+        self.assertNotIn(repo.url, result.stdout + result.stderr)
+        self.assertEqual((self.checkout / '.git/bloggers-saw').read_text(), dump_id)
+        self.assertEqual(self.inbox_leftovers(), [])
+        self.assertEqual(self.git('rev-parse', 'HEAD'), self.code)
+
+    def assert_x_inbox_timeout_still_publishes(self, stage):
+        from tests.test_x_inbox import InboxRepo, batch, x_response
+
+        self.pin_inbox_code(slow_inbox=stage)
+        repo = InboxRepo(self.root)
+        new = batch()
+        repo.publish(new)
+        var = self.checkout / 'var/rebang'
+        if stage == 'old-cleanup':
+            (var / '.x-inbox-work-old').mkdir(parents=True)
+        if stage == 'scan':
+            old = batch(minutes_ago=180)
+            backup = var / 'x-dump' / old[0]
+            backup.mkdir(parents=True)
+            (backup / '_dump.json').write_bytes(old[1])
+            (backup / 'posts.json').write_bytes(x_response())
+        result = self.cycle(dict(self.env, REBANG_X_INBOX_REPO=repo.url))
+        self.assert_success(result)
+        self.assertEqual((self.checkout / '.git/inbox-stage').read_text(), stage)
+        installed = new[0] if stage == 'final-cleanup' else 'none'
+        self.assertIn(f'x_inbox=error code=x_inbox_timeout installed={installed}', result.stdout)
+        self.assertFalse((self.checkout / '.git/inbox-stage-finished').exists())
+        self.assertTrue((self.checkout / '.git/bloggers-saw').exists())
+        if stage == 'final-cleanup':
+            self.assertEqual((self.checkout / '.git/bloggers-saw').read_text(), new[0])
+
+    def test_x_inbox_slow_old_cleanup_times_out_and_publication_continues(self):
+        self.assert_x_inbox_timeout_still_publishes('old-cleanup')
+
+    def test_x_inbox_slow_local_scan_times_out_and_publication_continues(self):
+        self.assert_x_inbox_timeout_still_publishes('scan')
+
+    def test_x_inbox_slow_final_cleanup_times_out_and_publication_continues(self):
+        self.assert_x_inbox_timeout_still_publishes('final-cleanup')
+
+    def test_x_inbox_failure_still_publishes_without_halt(self):
+        self.pin_inbox_code()
+        missing = (self.root / 'missing-inbox.git').as_uri()
+        result = self.cycle(dict(self.env, REBANG_X_INBOX_REPO=missing))
+        self.assert_success(result)
+        self.assertIn('x_inbox=error code=x_inbox_fetch_failed installed=none', result.stdout)
+        self.assertNotIn('missing-inbox', result.stdout + result.stderr)
+        self.assertEqual(self.inbox_leftovers(), [])
