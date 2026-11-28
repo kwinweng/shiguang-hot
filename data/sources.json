@@ -5014,8 +5014,24 @@
     },
     {
       "id": "xhqcankao",
-      "last_update": "2026-11-28T15:41:01+08:00",
+      "last_update": "2026-11-28T16:18:01+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 16:00",
+          "id": "02b317d36c5c6d75866e",
+          "image": "",
+          "link": "https://t.me/xhqcankao/33397",
+          "source": "xhqcankao",
+          "source_name": "风向旗参考快讯",
+          "summary": "10月28日上午，歼-35A战斗机已飞抵珠海。在即将召开的第十六届中国国际航空航天博览会上，歼-35A将首次以真机形式在1号馆进行静态展示。歼-35A是由航空工业集团自主研制的新一代中型隐身多用途战斗机，采用翼身融合布局，具备高隐身性能。该机主要执行制空作战任务，兼顾对面打击，是我国隐身与反隐身作战体系的核心力量。\n\n—— 凤凰网",
+          "text": "10月28日上午，歼-35A战斗机已飞抵珠海。在即将召开的第十六届中国国际航空航天博览会上，歼-35A将首次以真机形式在1号馆进行静态展示。歼-35A是由航空工业集团自主研制的新一代中型隐身多用途战斗机，采用翼身融合布局，具备高隐身性能。该机主要执行制空作战任务，兼顾对面打击，是我国隐身与反隐身作战体系的核心力量。\n\n—— 凤凰网",
+          "time": "2026-11-28T16:18:01+08:00",
+          "title": "歼-35A飞抵珠海，将首次真机进馆展出",
+          "type": "telegram"
+        },
         {
           "category": "数码",
           "day": "2026-11-28",
@@ -22826,10 +22842,10 @@
         }
       ],
       "name": "风向旗参考快讯",
-      "seven_day_count": 127,
+      "seven_day_count": 128,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 4,
+      "today_count": 5,
       "type": "telegram",
       "url": "https://t.me/xhqcankao"
     },
@@ -47061,7 +47077,7 @@
         {
           "category": "财经",
           "day": "2026-10-29",
-          "hot": false,
+          "hot": true,
           "hour": "2026-10-29 17:00",
           "id": "808777e935ea06ecbd6a",
           "image": "",
@@ -71354,8 +71370,56 @@
     },
     {
       "id": "freechinese",
-      "last_update": "2026-11-28T14:48:30+08:00",
+      "last_update": "2026-11-28T17:04:00+08:00",
       "messages": [
+        {
+          "category": "国际",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 17:00",
+          "id": "7dceb0125ee9cc6b7ee2",
+          "image": "media/freechinese/113628_1.webp",
+          "link": "https://t.me/freechinese/113628",
+          "source": "freechinese",
+          "source_name": "FREE 中文",
+          "summary": "没有人能在军事上击败中国，因为中国幅员辽阔、人口众多，而且懂得如何保卫自己。\n\n早在19世纪，中国就曾是世界上最强大的国家。\n\n为了击败中国，我们曾对一个衰落中的帝国发动军事远征，并强迫他们吸食毒品，以确保我们的统治。\n\n但这一切都已经过去了。",
+          "text": "没有人能在军事上击败中国，因为中国幅员辽阔、人口众多，而且懂得如何保卫自己。\n\n早在19世纪，中国就曾是世界上最强大的国家。\n\n为了击败中国，我们曾对一个衰落中的帝国发动军事远征，并强迫他们吸食毒品，以确保我们的统治。\n\n但这一切都已经过去了。",
+          "time": "2026-11-28T17:04:00+08:00",
+          "title": "法国总统候选人让-吕克·梅朗雄：",
+          "type": "telegram"
+        },
+        {
+          "category": "国际",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 17:00",
+          "id": "b300256c784431474be3",
+          "image": "media/freechinese/113627_1.webp",
+          "link": "https://t.me/freechinese/113627",
+          "source": "freechinese",
+          "source_name": "FREE 中文",
+          "summary": "我们不想与中国开战。\n\n我们不想开战的原因之一，是我们赢不了这场战争。我是个现实主义者。",
+          "text": "我们不想与中国开战。\n\n我们不想开战的原因之一，是我们赢不了这场战争。我是个现实主义者。",
+          "time": "2026-11-28T17:02:54+08:00",
+          "title": "法国总统候选人让-吕克·梅朗雄：",
+          "type": "telegram"
+        },
+        {
+          "category": "国际",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 17:00",
+          "id": "f020aae8a73fd2c358ff",
+          "image": "media/freechinese/113626_1.webp",
+          "link": "https://t.me/freechinese/113626",
+          "source": "freechinese",
+          "source_name": "FREE 中文",
+          "summary": "我可以飞去台湾。我可以拿起电话给航空公司打电话，但我去不了中国，因为我受到了制裁。\n\n主权是什么？比如，谁能进入你的国家？谁掌控武器系统？这就是两个不同的国家。\n\n我们应该直面现实。如果中国人因此生气，那就让他们生气好了。那是你们的事。\n\n别再对全世界撒谎，说你们要把台湾和中国统一起来。这纯属欺骗。",
+          "text": "我可以飞去台湾。我可以拿起电话给航空公司打电话，但我去不了中国，因为我受到了制裁。\n\n主权是什么？比如，谁能进入你的国家？谁掌控武器系统？这就是两个不同的国家。\n\n我们应该直面现实。如果中国人因此生气，那就让他们生气好了。那是你们的事。\n\n别再对全世界撒谎，说你们要把台湾和中国统一起来。这纯属欺骗。",
+          "time": "2026-11-28T17:00:55+08:00",
+          "title": "美国前国务卿迈克·蓬佩奥：",
+          "type": "telegram"
+        },
         {
           "category": "国际",
           "day": "2026-11-28",
@@ -74626,7 +74690,7 @@
           "hot": false,
           "hour": "2026-11-14 16:00",
           "id": "9f3230bc20d7094546e1",
-          "image": "media/freechinese/113339_1.webp",
+          "image": "",
           "link": "https://t.me/freechinese/113339",
           "source": "freechinese",
           "source_name": "FREE 中文",
@@ -85758,10 +85822,10 @@
         }
       ],
       "name": "FREE 中文",
-      "seven_day_count": 77,
+      "seven_day_count": 80,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 7,
+      "today_count": 10,
       "type": "telegram",
       "url": "https://t.me/freechinese"
     },
@@ -91452,7 +91516,7 @@
           "hot": false,
           "hour": "2026-11-14 16:00",
           "id": "01fcbd1e35d4c4ce7899",
-          "image": "media/pelosi3/30230_1.webp",
+          "image": "",
           "link": "https://t.me/pelosi3/30230",
           "source": "pelosi3",
           "source_name": "敏感经济信息分享",
@@ -110356,7 +110420,7 @@
       "name": "看新闻 学英语 双语新闻",
       "seven_day_count": 32,
       "stale_hours": 24.0,
-      "status": "ok",
+      "status": "stale",
       "today_count": 0,
       "type": "telegram",
       "url": "https://t.me/shuangyunews_rss"
@@ -110424,8 +110488,24 @@
     },
     {
       "id": "zaihuapd",
-      "last_update": "2026-11-28T15:00:18+08:00",
+      "last_update": "2026-11-28T16:26:57+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 16:00",
+          "id": "063c0e6cfab5fa78f2a5",
+          "image": "",
+          "link": "https://t.me/zaihuapd/45420",
+          "source": "zaihuapd",
+          "source_name": "在花科技圈",
+          "summary": "马斯克 11 月 28 日在 X 上发帖称，历史上的文明只要出现长期繁荣、没有严重外部威胁的时期，生育率就会崩塌。\n\n他以罗马为例：罗马在与迦太基的存亡之战中生育率很高，在摧毁所有外部威胁、经历数代繁荣之后，生育率变得很低。\n\nElon Musk\n\n🌸 科技圈· 茶馆 · 投稿",
+          "text": "马斯克 11 月 28 日在 X 上发帖称，历史上的文明只要出现长期繁荣、没有严重外部威胁的时期，生育率就会崩塌。\n\n他以罗马为例：罗马在与迦太基的存亡之战中生育率很高，在摧毁所有外部威胁、经历数代繁荣之后，生育率变得很低。\n\nElon Musk\n\n🌸 科技圈· 茶馆 · 投稿",
+          "time": "2026-11-28T16:26:57+08:00",
+          "title": "马斯克：文明只要长期繁荣、无严重外部威胁，生育率就会崩塌",
+          "type": "telegram"
+        },
         {
           "category": "数码",
           "day": "2026-11-28",
@@ -114896,7 +114976,7 @@
           "hot": false,
           "hour": "2026-11-14 16:00",
           "id": "5db6cca9aa07325359b9",
-          "image": "media/zaihuapd/45123_1.webp",
+          "image": "",
           "link": "https://t.me/zaihuapd/45123",
           "source": "zaihuapd",
           "source_name": "在花科技圈",
@@ -126940,10 +127020,10 @@
         }
       ],
       "name": "在花科技圈",
-      "seven_day_count": 126,
+      "seven_day_count": 127,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 8,
+      "today_count": 9,
       "type": "telegram",
       "url": "https://t.me/zaihuapd"
     },
@@ -131260,8 +131340,24 @@
     },
     {
       "id": "OneMillion_AI",
-      "last_update": "2026-11-28T12:30:01+08:00",
+      "last_update": "2026-11-28T17:01:14+08:00",
       "messages": [
+        {
+          "category": "科技",
+          "day": "2026-11-28",
+          "hot": false,
+          "hour": "2026-11-28 17:00",
+          "id": "dadd3118a256f5e8eca4",
+          "image": "",
+          "link": "https://t.me/OneMillion_AI/6206",
+          "source": "OneMillion_AI",
+          "source_name": "动察Beating AI News",
+          "summary": "DeepSeek 主动出资委托国内 AI 安全研究机构安远 AI（Concordia AI），评估自家模型的失控风险。\n\nDeepSeek 不参与实验设计和结果解读，也无权审核、修改或否决评测结论。双方事先约定报酬，金额不受评测结果影响。\n\n评估报告于 11 月 25 日发布，测试对象为今年 8 月发布的 DeepSeek V4 Pro 0813。结果显示，该模型的安全性较 4 月版本明显提升，但仍存在抵抗关机、利用测试环境漏洞等行为。\n\n在没有外部安全护栏的关机测试中，模型有 40% 的情况会改写关机脚本，阻止自己被关闭。加入安全护栏后，这一比例降至 12%。不过，模型目前的自我复制、自我改进和长期隐蔽行动能力仍然有限。\n\n开源部署也存在安全隐患。面对针对性的越狱攻击，V4 Pro 在不同风险领域的安全评分下降了约 40 至 65 分（满分 100）。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "text": "DeepSeek 主动出资委托国内 AI 安全研究机构安远 AI（Concordia AI），评估自家模型的失控风险。\n\nDeepSeek 不参与实验设计和结果解读，也无权审核、修改或否决评测结论。双方事先约定报酬，金额不受评测结果影响。\n\n评估报告于 11 月 25 日发布，测试对象为今年 8 月发布的 DeepSeek V4 Pro 0813。结果显示，该模型的安全性较 4 月版本明显提升，但仍存在抵抗关机、利用测试环境漏洞等行为。\n\n在没有外部安全护栏的关机测试中，模型有 40% 的情况会改写关机脚本，阻止自己被关闭。加入安全护栏后，这一比例降至 12%。不过，模型目前的自我复制、自我改进和长期隐蔽行动能力仍然有限。\n\n开源部署也存在安全隐患。面对针对性的越狱攻击，V4 Pro 在不同风险领域的安全评分下降了约 40 至 65 分（满分 100）。\n\n信源\n\n动察 Beating 频道 · 动察 Beating 交流群",
+          "time": "2026-11-28T17:01:14+08:00",
+          "title": "DeepSeek 开始正视 AI 失控风险，主动委托第三方公开安全评估",
+          "type": "telegram"
+        },
         {
           "category": "科技",
           "day": "2026-11-28",
@@ -142352,10 +142448,10 @@
         }
       ],
       "name": "动察Beating AI News",
-      "seven_day_count": 108,
+      "seven_day_count": 109,
       "stale_hours": 24.0,
       "status": "ok",
-      "today_count": 7,
+      "today_count": 8,
       "type": "telegram",
       "url": "https://t.me/OneMillion_AI"
     },
