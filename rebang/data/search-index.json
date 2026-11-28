@@ -1,7 +1,7 @@
 {
  "schema": "rebang.search-index/1",
  "timezone": "Asia/Shanghai",
- "generated_at": "2026-11-28T15:17:14+08:00",
+ "generated_at": "2026-11-28T16:11:09+08:00",
  "entries": [
   {
    "id": "github-trending:HKUDS/CLI-Anything",
@@ -11,7 +11,7 @@
    "source_name": "GitHub Trending",
    "title": "HKUDS/CLI-Anything",
    "summary": "\"CLI-Anything: Making ALL Software Agent-Native\" -- CLI-Hub: https://clianything.cc/",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "en",
    "translated": true,
    "image": null,
@@ -31,7 +31,7 @@
    "source_name": "GitHub Trending",
    "title": "Tracer-Cloud/opensre",
    "summary": "The open-source agent for CI/CD reliability.",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "en",
    "translated": true,
    "image": null,
@@ -51,7 +51,7 @@
    "source_name": "GitHub Trending",
    "title": "XiaoYouChR/Ghost-Downloader-3",
    "summary": "The only downloader you need. 下载器的集大成者。",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "mul",
    "translated": true,
    "image": null,
@@ -71,7 +71,7 @@
    "source_name": "GitHub Trending",
    "title": "cathrynlavery/diagram-design",
    "summary": "Editorial diagram design for Claude Code, Codex, GitHub Copilot, Cursor, Factory Droid, Qoder, and Pi. 52 diagram types. Self-contained HTML + SVG. No shadows. No Mermaid slop.",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "en",
    "translated": true,
    "image": null,
@@ -91,7 +91,7 @@
    "source_name": "GitHub Trending",
    "title": "cursor/plugins",
    "summary": "Cursor plugin specification and official plugins",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "en",
    "translated": true,
    "image": null,
@@ -111,7 +111,7 @@
    "source_name": "GitHub Trending",
    "title": "elementalsouls/Claude-BugHunter",
    "summary": "A Claude Code skill bundle for bug hunting and external red-team work - 85 skills, 16 slash commands, 681 disclosed-report patterns curated across 24 core vulnerability classes, plus enterprise identity + infrastructure attack matrices.",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "en",
    "translated": true,
    "image": null,
@@ -131,7 +131,7 @@
    "source_name": "GitHub Trending",
    "title": "firecrawl/firecrawl",
    "summary": "Knowledge infrastructure to make your agents smarter. Search, scrape and access 550+ data providers through one API.",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "en",
    "translated": true,
    "image": null,
@@ -151,7 +151,7 @@
    "source_name": "GitHub Trending",
    "title": "google-labs-code/stitch-skills",
    "summary": "A library of Agent Skills designed to work with the Stitch MCP server. Each skill follows the Agent Skills open standard, for compatibility with coding agents such as Antigravity, Gemini CLI, Claude Code, Cursor.",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "en",
    "translated": true,
    "image": null,
@@ -171,7 +171,7 @@
    "source_name": "GitHub Trending",
    "title": "jingyaogong/minimind",
    "summary": "🧠 两小时从 0 训出你的 64M 大模型。Train your own 64M LLM from scratch in 2 hours.",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "mul",
    "translated": true,
    "image": null,
@@ -191,7 +191,7 @@
    "source_name": "GitHub Trending",
    "title": "mjmirza/app-store-compliance",
    "summary": "Avoid common App Store and Google Play rejections. Open playbook and pre-submission guard with 125 documented rejection patterns and fixes, privacy manifest and Data safety checks, 117 tracked deadlines (EU AI Act, DSA, COPPA, age laws), and a skill for AI coding agents.",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "en",
    "translated": true,
    "image": null,
@@ -211,7 +211,7 @@
    "source_name": "GitHub Trending",
    "title": "mvanhorn/last30days-skill",
    "summary": "AI agent skill that researches any topic across Reddit, X, YouTube, HN, Polymarket, and the web - then synthesizes a grounded summary",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "en",
    "translated": true,
    "image": null,
@@ -231,7 +231,7 @@
    "source_name": "GitHub Trending",
    "title": "nginx/nginx",
    "summary": "The official NGINX Open Source repository.",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "en",
    "translated": true,
    "image": null,
@@ -251,7 +251,7 @@
    "source_name": "GitHub Trending",
    "title": "obra/superpowers",
    "summary": "An agentic skills framework & software development methodology that works.",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "en",
    "translated": true,
    "image": null,
@@ -271,7 +271,7 @@
    "source_name": "GitHub Trending",
    "title": "openvinotoolkit/openvino",
    "summary": "OpenVINO™ is an open source toolkit for optimizing and deploying AI inference",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "en",
    "translated": true,
    "image": null,
@@ -291,7 +291,7 @@
    "source_name": "GitHub Trending",
    "title": "toeverything/AFFiNE",
    "summary": "There can be more than Notion and Miro. AFFiNE(pronounced [ə‘fain]) is a next-gen knowledge base that brings planning, sorting and creating all together. Privacy first, open-source, customizable and ready to use.",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "en",
    "translated": true,
    "image": null,
@@ -311,7 +311,7 @@
    "source_name": "GitHub Trending",
    "title": "zhouxiaoka/autoclip",
    "summary": "AutoClip｜The open-source OpusClip alternative — local-first AI clipping & MCP server, zero subscriptions. 一个链接，一键出片。开源 AI 视频剪辑桌面工具，将播客、访谈、课程等长视频自动剪成短视频，生成字幕、封面和发布文案，适配抖音、小红书、TikTok、Reels 与 YouTube Shorts。",
-   "published_at": "2026-11-28T15:16:12+08:00",
+   "published_at": "2026-11-28T16:10:21+08:00",
    "lang": "mul",
    "translated": true,
    "image": null,
@@ -322,6 +322,67 @@
    "summary_source": "AutoClip｜The open-source OpusClip alternative — local-first AI clipping & MCP server, zero subscriptions. 一个链接，一键出片。开源 AI 视频剪辑桌面工具，将播客、访谈、课程等长视频自动剪成短视频，生成字幕、封面和发布文案，适配抖音、小红书、TikTok、Reels 与 YouTube Shorts。",
    "original_title": "zhouxiaoka/autoclip",
    "original_summary": "AutoClip｜The open-source OpusClip alternative — local-first AI clipping & MCP server, zero subscriptions. 一个链接，一键出片。开源 AI 视频剪辑桌面工具，将播客、访谈、课程等长视频自动剪成短视频，生成字幕、封面和发布文案，适配抖音、小红书、TikTok、Reels 与 YouTube Shorts。"
+  },
+  {
+   "id": "xhqcankao:33396",
+   "kind": "news",
+   "channel": "tech-ai",
+   "source_id": "xhqcankao",
+   "source_name": "风向旗参考快讯",
+   "title": "小米 18 标准版开启预约，预计下周官宣",
+   "summary": "小米官方已在各大电商平台开启小米 18 标准版（型号 M261DB）的预约活动。用户支付 9.9 元订金可享 365 天只换不修服务，并有 24 期免息及最高 1400 元以旧换新补贴。该机预计于 12 月发布，并有望在下周开启官方预热。据悉，新机将配备 6.4 英寸 1.5K 直屏，搭载 2 亿像素主摄及 3 倍潜望长焦镜头，内置 7200mAh 大容量电池，支持 100W 有线与 50W 无线快充，存储规格为 12GB+256GB 起步。 —— IT之家",
+   "published_at": "2026-11-28T15:41:01+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "小米 18 标准版开启预约，预计下周官宣",
+   "display_summary": "小米官方已在各大电商平台开启小米 18 标准版（型号 M261DB）的预约活动。用户支付 9.9 元订金可享 365 天只换不修服务，并有 24 期免息及最高 1400 元以旧换新补贴。该机预计于 12 月发布，并有望在下周开启官方预热。据悉，新机将配备 6.4 英寸 1.5K 直屏，搭载 2 亿像素主摄及 3 倍潜望长焦镜头，内置 7200mAh 大容量电池，支持 100W 有线与 50W 无线快充，存储规格为 12GB+256GB 起步。 —— IT之家",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "jike-7B1385A9-FCC9-4446-B8CE-472EAF6817B2:https://m.okjike.com/originalPosts/6b0a81ac136b2761c65224ef",
+   "kind": "post",
+   "channel": null,
+   "source_id": "jike-7B1385A9-FCC9-4446-B8CE-472EAF6817B2",
+   "source_name": "少楠Plidezus",
+   "title": "",
+   "summary": "女儿，西湖，漫步，音乐 能把这些美好的事情结合在一起 真的太美妙了 感谢 AI 让这一切成为可能",
+   "published_at": "2026-11-28T15:24:28+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": {
+    "url": "https://cdnv2.ruguoapp.com/Fl6GjXOQGMVK2_38mscFs7jZa55pv3.png?imageMogr2/meta-keep-list/ZXhpZixVc2VyQ29tbWVudA==/auto-orient/thumbnail/1080x%3E"
+   },
+   "display_title": "女儿，西湖，漫步，音乐 能把这些美好的事情结合在一起 真的太美妙了 感谢 AI 让这一切成为可能",
+   "display_summary": "女儿，西湖，漫步，音乐 能把这些美好的事情结合在一起 真的太美妙了 感谢 AI 让这一切成为可能",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "jike-bb668784-6bbc-456d-989c-1f8e90f6fd95:https://m.okjike.com/originalPosts/6b0a8099320fd7e1b5c0c590",
+   "kind": "post",
+   "channel": null,
+   "source_id": "jike-bb668784-6bbc-456d-989c-1f8e90f6fd95",
+   "source_name": "王帅真",
+   "title": "",
+   "summary": "前两个月的中国 AI 用户：Claude防封/养号技巧、KYC、海外信用卡、海外手机号/长效接码、家宽IP、VPS、中转站、Mac Mini 海外租赁、GPT代充、AppStore/GooglePlay礼品卡......（我打字都打累了） 这周的中国 AI 用户：Gemini 4 Neon",
+   "published_at": "2026-11-28T15:19:53+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": {
+    "url": "https://cdnv2.ruguoapp.com/FtF6hfdhjwPZK_JHzuJqqePy_jh7v3.png?imageMogr2/meta-keep-list/ZXhpZixVc2VyQ29tbWVudA==/auto-orient/thumbnail/1080x%3E"
+   },
+   "display_title": "前两个月的中国 AI 用户：Claude防封/养号技巧、KYC、海外信用卡、海外手机号/长效接码、家宽IP、VPS、中转站、Mac Mini 海外租赁、GPT代充、AppStore/GooglePlay礼品卡......（我打字都打累了） 这周的中国 AI 用户：Gemini 4 Neon",
+   "display_summary": "前两个月的中国 AI 用户：Claude防封/养号技巧、KYC、海外信用卡、海外手机号/长效接码、家宽IP、VPS、中转站、Mac Mini 海外租赁、GPT代充、AppStore/GooglePlay礼品卡......（我打字都打累了） 这周的中国 AI 用户：Gemini 4 Neon",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
   },
   {
    "id": "xhqcankao:33395",
@@ -348,7 +409,7 @@
    "channel": null,
    "source_id": "youtube-UCg0m_Ah8P_MQbnn77-vYnYw",
    "source_name": "美食作家王刚",
-   "title": "Chef Wang teaches you: \"Cold Served Spicy Beef Jerky\" 厨师长分享：“简化版”冷吃牛肉，风味十足，正宗自贡盐帮味",
+   "title": "厨师长分享：“简化版”冷吃牛肉，风味十足，正宗自贡盐帮味",
    "summary": "虽说是简化版，但依然差不多需要一个小时左右的烹饪时间，但相信我这道菜绝对值得尝试，味道非常醇厚 如果想支持我或想看更多多幕后周边和我的生活私照的朋友们可以考虑加入”宽油帮“油管会员，点击订阅按钮旁的加入按钮会弹出详情，会员福利如下： 1. 拥有“宽油帮”成长徽章 2. “宽油”社区动态，独家生活私照和生活分享 3. 拥有更多留言被回复的机会 名词解释： 宽油：大量的油，很多的油 滑锅：冷油下锅，滑…",
    "published_at": "2026-11-28T15:00:28+08:00",
    "lang": "zh",
@@ -358,7 +419,7 @@
     "width": 480,
     "height": 360
    },
-   "display_title": "Chef Wang teaches you: \"Cold Served Spicy Beef Jerky\" 厨师长分享：“简化版”冷吃牛肉，风味十足，正宗自贡盐帮味",
+   "display_title": "厨师长分享：“简化版”冷吃牛肉，风味十足，正宗自贡盐帮味",
    "display_summary": "虽说是简化版，但依然差不多需要一个小时左右的烹饪时间，但相信我这道菜绝对值得尝试，味道非常醇厚 如果想支持我或想看更多多幕后周边和我的生活私照的朋友们可以考虑加入”宽油帮“油管会员，点击订阅按钮旁的加入按钮会弹出详情，会员福利如下： 1. 拥有“宽油帮”成长徽章 2. “宽油”社区动态，独家生活私照和生活分享 3. 拥有更多留言被回复的机会 名词解释： 宽油：大量的油，很多的油 滑锅：冷油下锅，滑…",
    "translation_title": "",
    "translation_summary": "",
@@ -371,7 +432,7 @@
    "channel": "tech-ai",
    "source_id": "zaihuapd",
    "source_name": "在花科技圈",
-   "title": "🅰️🇨🇱 智利监管机构起诉苹果，寻求 8000 万美元罚款并要求允许侧载、第三方应用商店和外部支付",
+   "title": "🅰️ 智利监管机构起诉苹果，寻求 8000 万美元罚款并要求允许侧载、第三方应用商店和外部支付",
    "summary": "智利国家经济检察院（FNE）已对苹果提起反垄断诉讼，指控其在 iOS 应用分发和应用内购买市场滥用主导地位，寻求 8000 万美元罚款；并要求苹果允许侧载、第三方应用商店和替代应用内支付系统，允许开发者引导用户至外部支付渠道。 苹果回应称已知悉 FNE 的请求，将继续配合调查，并表示 App Store 旨在保障用户安全与信息安全，为开发者提供可信渠道。苹果还称其并未在任何市场形成垄断，并反对 FNE 对相关市场的界定。 9to5Mac 🌸 科技圈· 茶馆 · 投稿",
    "published_at": "2026-11-28T15:00:18+08:00",
    "lang": "zh",
@@ -381,7 +442,7 @@
     "width": 800,
     "height": 419
    },
-   "display_title": "🅰️🇨🇱 智利监管机构起诉苹果，寻求 8000 万美元罚款并要求允许侧载、第三方应用商店和外部支付",
+   "display_title": "🅰️ 智利监管机构起诉苹果，寻求 8000 万美元罚款并要求允许侧载、第三方应用商店和外部支付",
    "display_summary": "智利国家经济检察院（FNE）已对苹果提起反垄断诉讼，指控其在 iOS 应用分发和应用内购买市场滥用主导地位，寻求 8000 万美元罚款；并要求苹果允许侧载、第三方应用商店和替代应用内支付系统，允许开发者引导用户至外部支付渠道。 苹果回应称已知悉 FNE 的请求，将继续配合调查，并表示 App Store 旨在保障用户安全与信息安全，为开发者提供可信渠道。苹果还称其并未在任何市场形成垄断，并反对 FNE 对相关市场的界定。 9to5Mac 🌸 科技圈· 茶馆 · 投稿",
    "translation_title": "",
    "translation_summary": "",
@@ -452,6 +513,28 @@
    "translation_summary": "",
    "original_title": "",
    "original_summary": ""
+  },
+  {
+   "id": "france24-en:fa2a3a6a-eaf3-11f1-83e9-69f6f567d52c",
+   "kind": "news",
+   "channel": "world",
+   "source_id": "france24-en",
+   "source_name": "France 24 English",
+   "title": "Taiwan holds local elections under Beijing's watchful gaze",
+   "summary": "Taiwan is electing local leaders across 22 cities and counties on Saturday amid accusations by Taiwanese authorities of attempts by China to interfere and sow distrust in the island-nation’s electoral system. Chinese authorities reject the allegations.",
+   "published_at": "2026-11-28T14:25:33+08:00",
+   "lang": "en",
+   "translated": true,
+   "image": {
+    "url": "https://s.france24.com/media/display/459f0d90-eaf4-11f1-946c-f9cf020caef6/w:1024/p:16x9/AP26332173544113.jpg"
+   },
+   "display_title": "台湾在北京的注视下举行地方选举",
+   "display_summary": "台湾周六在22个县市选举地方领导人，台湾当局指责中国试图干预选举并在该岛国的选举制度中播下不信任。中国当局否认这些指控。",
+   "translation_title": "台湾在北京的注视下举行地方选举",
+   "translation_summary": "台湾周六在22个县市选举地方领导人，台湾当局指责中国试图干预选举并在该岛国的选举制度中播下不信任。中国当局否认这些指控。",
+   "summary_source": "Taiwan is electing local leaders across 22 cities and counties on Saturday amid accusations by Taiwanese authorities of attempts by China to interfere and sow distrust in the island-nation’s electoral system. Chinese authorities reject the allegations.",
+   "original_title": "Taiwan holds local elections under Beijing's watchful gaze",
+   "original_summary": "Taiwan is electing local leaders across 22 cities and counties on Saturday amid accusations by Taiwanese authorities of attempts by China to interfere and sow distrust in the island-nation’s electoral system. Chinese authorities reject the allegations."
   },
   {
    "id": "dw-world:80072882",
@@ -856,6 +939,25 @@
    "original_summary": ""
   },
   {
+   "id": "CE_Observe:44814",
+   "kind": "news",
+   "channel": "digital",
+   "source_id": "CE_Observe",
+   "source_name": "每日消费电子观察",
+   "title": "亚马逊再现“临时工”：三星 Galaxy S26 Ultra 以 0.84 折成交，部分用户已收到货",
+   "summary": "‎https://www.ithome.com/~ 黑五促销价",
+   "published_at": "2026-11-28T11:16:18+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "亚马逊再现“临时工”：三星 Galaxy S26 Ultra 以 0.84 折成交，部分用户已收到货",
+   "display_summary": "‎https://www.ithome.com/~ 黑五促销价",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
    "id": "zaihuapd:45416",
    "kind": "news",
    "channel": "tech-ai",
@@ -1130,6 +1232,25 @@
    },
    "display_title": "✈️ Durov 提醒 iOS 用户更新到最新系统",
    "display_summary": "Pavel Durov 在 Telegram 频道警告，iPhone 用户正遭到大规模攻击，iOS 版本稍旧就有数据风险，仅打开网站就可能中招，并称要向所有使用旧版 iOS 的 Telegram 用户发送这条提醒。 Durov 🌸 科技圈· 茶馆 · 投稿",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "CE_Observe:44813",
+   "kind": "news",
+   "channel": "digital",
+   "source_id": "CE_Observe",
+   "source_name": "每日消费电子观察",
+   "title": "约 37.5GB：全球最大域名注册商 GoDaddy 被爆数据泄露，含薪酬等员工信息",
+   "summary": "",
+   "published_at": "2026-11-28T08:57:20+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "约 37.5GB：全球最大域名注册商 GoDaddy 被爆数据泄露，含薪酬等员工信息",
+   "display_summary": "",
    "translation_title": "",
    "translation_summary": "",
    "original_title": "",
@@ -3884,6 +4005,25 @@
    "original_summary": ""
   },
   {
+   "id": "CE_Observe:44812",
+   "kind": "news",
+   "channel": "digital",
+   "source_id": "CE_Observe",
+   "source_name": "每日消费电子观察",
+   "title": "国家网信办等十一部门联合公布《分布式数字身份互通互认应用规定》",
+   "summary": "《规定》明确了分布式数字身份链运营方、权威身份认证机构、分布式数字身份应用服务机构、可验证凭证签发机构、可验证凭证应用机构等各参与方的定位与协作方式，规范了分布式数字身份的申请注册、凭证签发、使用管理等各环节，确定了可验证凭证签发与验证的流程，对标识符使用、密钥管理、凭证使用、自主管理等提出了要求。 《规定》鼓励推动分布式数字身份在金融、税务、交通、海关、公共资源招投标、智能体身份标识等领域应用，明确提出统一编码规范和建立标识符目录体系，支持不同数字身份间互通互认，降低跨平台、跨行业身份互认成本。 ‎https://mp.weixin.qq.com/~",
+   "published_at": "2026-11-27T20:56:49+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "国家网信办等十一部门联合公布《分布式数字身份互通互认应用规定》",
+   "display_summary": "《规定》明确了分布式数字身份链运营方、权威身份认证机构、分布式数字身份应用服务机构、可验证凭证签发机构、可验证凭证应用机构等各参与方的定位与协作方式，规范了分布式数字身份的申请注册、凭证签发、使用管理等各环节，确定了可验证凭证签发与验证的流程，对标识符使用、密钥管理、凭证使用、自主管理等提出了要求。 《规定》鼓励推动分布式数字身份在金融、税务、交通、海关、公共资源招投标、智能体身份标识等领域应用，明确提出统一编码规范和建立标识符目录体系，支持不同数字身份间互通互认，降低跨平台、跨行业身份互认成本。 ‎https://mp.weixin.qq.com/~",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
    "id": "macrumors:https://www.macrumors.com/2026/11/27/best-black-friday-ipad-deals-2026/",
    "kind": "news",
    "channel": "digital",
@@ -3988,6 +4128,29 @@
    "original_summary": ""
   },
   {
+   "id": "CE_Observe:44811",
+   "kind": "news",
+   "channel": "digital",
+   "source_id": "CE_Observe",
+   "source_name": "每日消费电子观察",
+   "title": "八达通系统遭网络攻击，涉7500客户、2.2万商户姓名等资料受影响",
+   "summary": "",
+   "published_at": "2026-11-27T20:45:44+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": {
+    "url": "media/CE_Observe/44811_1.webp",
+    "width": 800,
+    "height": 450
+   },
+   "display_title": "八达通系统遭网络攻击，涉7500客户、2.2万商户姓名等资料受影响",
+   "display_summary": "",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
    "id": "freechinese:113615",
    "kind": "news",
    "channel": "current",
@@ -4001,6 +4164,25 @@
    "image": null,
    "display_title": "日本文科省系统遭非法访问 或致逾16万条信息外泄",
    "display_summary": "日本文部科学省日前宣布，已检测到该省用于公布招标及合同信息的系统遭到非法访问。最多可能有163953条具备投标资格的企业名称等信息，以及1778个该省职员等人员电子邮箱地址外泄。据称尚未发现信息被滥用的情况。 文科省表示，10月1日检测到此次非法访问。现已切断该系统的通信，文科省表示“对此十分重视，将在着力查明原因的同时，努力加强信息安全措施”。",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "CE_Observe:44810",
+   "kind": "news",
+   "channel": "digital",
+   "source_id": "CE_Observe",
+   "source_name": "每日消费电子观察",
+   "title": "荷兰官员：反对美国立法加强半导体制造设备出口管制",
+   "summary": "",
+   "published_at": "2026-11-27T20:44:53+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "荷兰官员：反对美国立法加强半导体制造设备出口管制",
+   "display_summary": "",
    "translation_title": "",
    "translation_summary": "",
    "original_title": "",
@@ -6027,6 +6209,25 @@
    "original_summary": ""
   },
   {
+   "id": "CE_Observe:44809",
+   "kind": "news",
+   "channel": "digital",
+   "source_id": "CE_Observe",
+   "source_name": "每日消费电子观察",
+   "title": "育碧否认强制导入生成式AI，而是鼓励员工探索相关技术",
+   "summary": "否认了个寂寞",
+   "published_at": "2026-11-27T16:19:01+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "育碧否认强制导入生成式AI，而是鼓励员工探索相关技术",
+   "display_summary": "否认了个寂寞",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
    "id": "france24-en:0bfb95b2-ea37-11f1-a8be-cd02365843b6",
    "kind": "news",
    "channel": "world",
@@ -6301,6 +6502,25 @@
    "original_summary": ""
   },
   {
+   "id": "CE_Observe:44808",
+   "kind": "news",
+   "channel": "digital",
+   "source_id": "CE_Observe",
+   "source_name": "每日消费电子观察",
+   "title": "中国移动启动广东省 2G 网络有序退网，下月开始将分阶段停止服务",
+   "summary": "‎https://www.ithome.com/~",
+   "published_at": "2026-11-27T15:58:26+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "中国移动启动广东省 2G 网络有序退网，下月开始将分阶段停止服务",
+   "display_summary": "‎https://www.ithome.com/~",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
    "id": "OneMillion_AI:6189",
    "kind": "news",
    "channel": "tech-ai",
@@ -6378,6 +6598,25 @@
    "image": null,
    "display_title": "📊 经济数据汇总",
    "display_summary": "• #法国 11月 #CPI #同比 初值 2.9%，预期 3.4%，前值 3.4%。",
+   "translation_title": "",
+   "translation_summary": "",
+   "original_title": "",
+   "original_summary": ""
+  },
+  {
+   "id": "CE_Observe:44807",
+   "kind": "news",
+   "channel": "digital",
+   "source_id": "CE_Observe",
+   "source_name": "每日消费电子观察",
+   "title": "电子制造商设立DRAM“战情室”，力求以最快速度锁定供应",
+   "summary": "这轮DRAM短缺已经严重到让不少电子制造商专门设立“战情室”，安排员工到各个电商平台翻货，挨个联系数百家经纪商，即便几颗芯片的小批量也一样拿下。 宇瞻为了随时有钱拿货，专门贷了一笔款放在账上，有芯片出现就拿。 还有一些公司转向灰色市场，风险是卖家会把用过的旧颗粒掺进新货里充数。 https://www.expreview.com/109764.html",
+   "published_at": "2026-11-27T15:43:59+08:00",
+   "lang": "zh",
+   "translated": false,
+   "image": null,
+   "display_title": "电子制造商设立DRAM“战情室”，力求以最快速度锁定供应",
+   "display_summary": "这轮DRAM短缺已经严重到让不少电子制造商专门设立“战情室”，安排员工到各个电商平台翻货，挨个联系数百家经纪商，即便几颗芯片的小批量也一样拿下。 宇瞻为了随时有钱拿货，专门贷了一笔款放在账上，有芯片出现就拿。 还有一些公司转向灰色市场，风险是卖家会把用过的旧颗粒掺进新货里充数。 https://www.expreview.com/109764.html",
    "translation_title": "",
    "translation_summary": "",
    "original_title": "",
@@ -20678,7 +20917,7 @@
    "channel": null,
    "source_id": "youtube-UCMiJRAwDNSNzuYeN2uWa0pA",
    "source_name": "Mrwhosetheboss",
-   "title": "The iPhone Duo’s Weird Comeback",
+   "title": "The iPhone Duo’s Bizarre Comeback",
    "summary": "It's GIVEAWAY Time 🎅🏽: https://gleam.io/t569e/the-boss-smartphone-giveaway Go to https://surfshark.com/boss or use code BOSS at checkout to get 4 extra months of Surfshark VPN! For my tech hot takes:…",
    "published_at": "2026-11-25T20:42:25+08:00",
    "lang": "en",
@@ -20688,11 +20927,11 @@
     "width": 480,
     "height": 360
    },
-   "display_title": "iPhone Duo 的奇怪回归",
+   "display_title": "iPhone 双雄的离奇回归",
    "display_summary": "抽奖时间到 🎅🏽：https://gleam.io/t569e/the-boss-smartphone-giveaway 访问 https://surfshark.com/boss 或在结账时使用优惠码 BOSS，即可获得 Surfshark VPN 额外4个月！我的科技热评：……",
-   "translation_title": "iPhone Duo 的奇怪回归",
+   "translation_title": "iPhone 双雄的离奇回归",
    "translation_summary": "抽奖时间到 🎅🏽：https://gleam.io/t569e/the-boss-smartphone-giveaway 访问 https://surfshark.com/boss 或在结账时使用优惠码 BOSS，即可获得 Surfshark VPN 额外4个月！我的科技热评：……",
-   "original_title": "The iPhone Duo’s Weird Comeback",
+   "original_title": "The iPhone Duo’s Bizarre Comeback",
    "original_summary": "It's GIVEAWAY Time 🎅🏽: https://gleam.io/t569e/the-boss-smartphone-giveaway Go to https://surfshark.com/boss or use code BOSS at checkout to get 4 extra months of Surfshark VPN! For my tech hot takes:…"
   },
   {
@@ -22468,7 +22707,7 @@
    "channel": null,
    "source_id": "youtube-UCg0m_Ah8P_MQbnn77-vYnYw",
    "source_name": "美食作家王刚",
-   "title": "Chef Wang teaches you: \"Braised Eggplant in Garlic Sauce\" 厨师长教你：“红烧茄子”“肉末烧茄子”不吸油的技巧，软嫩多汁，浓香下饭",
+   "title": "厨师长教你：“红烧茄子”“肉末烧茄子”不吸油的技巧，软嫩多汁，浓香下饭",
    "summary": "如果想支持我或想看更多多幕后周边和我的生活私照的朋友们可以考虑加入”宽油帮“油管会员，点击订阅按钮旁的加入按钮会弹出详情，会员福利如下： 1. 拥有“宽油帮”成长徽章 2. “宽油”社区动态，独家生活私照和生活分享 3. 拥有更多留言被回复的机会 名词解释： 宽油：大量的油，很多的油 滑锅：冷油下锅，滑过锅底，使锅的温度迅速提高，并产生油膜，防止粘锅 明油：成菜之后淋入一点点葱油，来提高菜品的色泽…",
    "published_at": "2026-11-25T16:00:24+08:00",
    "lang": "zh",
@@ -22478,7 +22717,7 @@
     "width": 480,
     "height": 360
    },
-   "display_title": "Chef Wang teaches you: \"Braised Eggplant in Garlic Sauce\" 厨师长教你：“红烧茄子”“肉末烧茄子”不吸油的技巧，软嫩多汁，浓香下饭",
+   "display_title": "厨师长教你：“红烧茄子”“肉末烧茄子”不吸油的技巧，软嫩多汁，浓香下饭",
    "display_summary": "如果想支持我或想看更多多幕后周边和我的生活私照的朋友们可以考虑加入”宽油帮“油管会员，点击订阅按钮旁的加入按钮会弹出详情，会员福利如下： 1. 拥有“宽油帮”成长徽章 2. “宽油”社区动态，独家生活私照和生活分享 3. 拥有更多留言被回复的机会 名词解释： 宽油：大量的油，很多的油 滑锅：冷油下锅，滑过锅底，使锅的温度迅速提高，并产生油膜，防止粘锅 明油：成菜之后淋入一点点葱油，来提高菜品的色泽…",
    "translation_title": "",
    "translation_summary": "",
@@ -33625,7 +33864,7 @@
    "channel": null,
    "source_id": "youtube-UCg0m_Ah8P_MQbnn77-vYnYw",
    "source_name": "美食作家王刚",
-   "title": "Chef Wang teaches you: \"Stir-Fried Duck Offal with Pickled Chilies\" 厨师长教你：正宗川味小炒“泡椒鸭杂”，酸辣脆爽，下饭一绝",
+   "title": "厨师长教你：正宗川味小炒“泡椒鸭杂”，酸辣脆爽，下饭一绝",
    "summary": "本期菜品【泡椒鸭杂】 【主料】 鸭郡肝（3个） 鸭肝（2个） 鸭肠（1副） 【辅料】 食用碱粉（2克） 酸豆角（几根） 水淀粉（10克） 生姜（20克） 植物油（适量） 大蒜（20克） 干淀粉（适量） 香菜（几根） 泡萝卜（1小块） 菜籽油（100克） 泡姜（15克） 猪油（50克） 大红泡椒（2个） 小米辣泡椒（适量） 【调味料】 食用盐（3.5克） 胡椒粉（3克） 豆瓣酱（5克） 【碗汁】 食…",
    "published_at": "2026-11-23T15:00:04+08:00",
    "lang": "zh",
@@ -33635,7 +33874,7 @@
     "width": 480,
     "height": 360
    },
-   "display_title": "Chef Wang teaches you: \"Stir-Fried Duck Offal with Pickled Chilies\" 厨师长教你：正宗川味小炒“泡椒鸭杂”，酸辣脆爽，下饭一绝",
+   "display_title": "厨师长教你：正宗川味小炒“泡椒鸭杂”，酸辣脆爽，下饭一绝",
    "display_summary": "本期菜品【泡椒鸭杂】 【主料】 鸭郡肝（3个） 鸭肝（2个） 鸭肠（1副） 【辅料】 食用碱粉（2克） 酸豆角（几根） 水淀粉（10克） 生姜（20克） 植物油（适量） 大蒜（20克） 干淀粉（适量） 香菜（几根） 泡萝卜（1小块） 菜籽油（100克） 泡姜（15克） 猪油（50克） 大红泡椒（2个） 小米辣泡椒（适量） 【调味料】 食用盐（3.5克） 胡椒粉（3克） 豆瓣酱（5克） 【碗汁】 食…",
    "translation_title": "",
    "translation_summary": "",
@@ -41191,7 +41430,7 @@
    "channel": null,
    "source_id": "youtube-UCg0m_Ah8P_MQbnn77-vYnYw",
    "source_name": "美食作家王刚",
-   "title": "Zigong Fresh-Pot Spicy Rabbit 厨师长分享：“自贡鲜锅兔”的家常做法，挑战十分钟出菜！",
+   "title": "厨师长分享：“自贡鲜锅兔”的家常做法，挑战十分钟出菜！",
    "summary": "如果想支持我或想看更多多幕后周边和我的生活私照的朋友们可以考虑加入”宽油帮“油管会员，点击订阅按钮旁的加入按钮会弹出详情，会员福利如下： 1. 拥有“宽油帮”成长徽章 2. “宽油”社区动态，独家生活私照和生活分享 3. 拥有更多留言被回复的机会 名词解释： 宽油：大量的油，很多的油 滑锅：冷油下锅，滑过锅底，使锅的温度迅速提高，并产生油膜，防止粘锅 明油：成菜之后淋入一点点葱油，来提高菜品的色泽…",
    "published_at": "2026-11-20T16:00:26+08:00",
    "lang": "zh",
@@ -41201,7 +41440,7 @@
     "width": 480,
     "height": 360
    },
-   "display_title": "Zigong Fresh-Pot Spicy Rabbit 厨师长分享：“自贡鲜锅兔”的家常做法，挑战十分钟出菜！",
+   "display_title": "厨师长分享：“自贡鲜锅兔”的家常做法，挑战十分钟出菜！",
    "display_summary": "如果想支持我或想看更多多幕后周边和我的生活私照的朋友们可以考虑加入”宽油帮“油管会员，点击订阅按钮旁的加入按钮会弹出详情，会员福利如下： 1. 拥有“宽油帮”成长徽章 2. “宽油”社区动态，独家生活私照和生活分享 3. 拥有更多留言被回复的机会 名词解释： 宽油：大量的油，很多的油 滑锅：冷油下锅，滑过锅底，使锅的温度迅速提高，并产生油膜，防止粘锅 明油：成菜之后淋入一点点葱油，来提高菜品的色泽…",
    "translation_title": "",
    "translation_summary": "",
@@ -42034,7 +42273,9 @@
    "published_at": "2026-11-20T12:58:18+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://images.tmtpost.com/uploads/images/2026/11/b28b8489476314945f888e4a96e2892e_1795145147.webp?imageMogr2/auto-orient/strip/interlace/1/quality/85/format/jpg/thumbnail/1440x2062/gravity/center/crop/!1440x2062&ext=.webp"
+   },
    "display_title": "Kimi的当务之急是赶紧推广自家AI姬",
    "display_summary": "from www.tmtpost.com",
    "translation_title": "",
@@ -47762,7 +48003,9 @@
    "published_at": "2026-11-19T12:19:19+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/18/multimedia/18int-trump-top-1-hqjl/18int-trump-top-1-hqjl-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "特朗普抵达深圳：展示友好关系，无视间谍丑闻 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -47800,7 +48043,9 @@
    "published_at": "2026-11-19T12:19:17+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/18/multimedia/18dc-prexy-xiputin-01-jvfc/18dc-prexy-xiputin-01-jvfc-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "中美俄元首会晤不会成为另一个雅尔塔会议 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -48455,7 +48700,7 @@
    "channel": null,
    "source_id": "youtube-UCMiJRAwDNSNzuYeN2uWa0pA",
    "source_name": "Mrwhosetheboss",
-   "title": "Why GTA 6 is a Bigger Deal Than You Think",
+   "title": "Why GTA is a Bigger Deal Than You Think",
    "summary": "my respect for Grand Theft Auto 📈 Start making your own GTA 6-inspired creations with the xTool M2! This Black Friday is the lowest price of the year, starting at $499. Plus, use code MRWHO50 to get $…",
    "published_at": "2026-11-19T09:47:12+08:00",
    "lang": "en",
@@ -48465,11 +48710,11 @@
     "width": 480,
     "height": 360
    },
-   "display_title": "Why GTA 6 is a Bigger Deal Than You Think",
+   "display_title": "为什么 GTA 比你想象的更重要",
    "display_summary": "我对《侠盗猎车手》的敬意 📈 用 xTool M2 开始制作你自己的 GTA 6 风格作品吧！这个黑色星期五是全年最低价，起价 499 美元。此外，使用优惠码 MRWHO50 可获得……",
-   "translation_title": "Why GTA 6 is a Bigger Deal Than You Think",
+   "translation_title": "为什么 GTA 比你想象的更重要",
    "translation_summary": "我对《侠盗猎车手》的敬意 📈 用 xTool M2 开始制作你自己的 GTA 6 风格作品吧！这个黑色星期五是全年最低价，起价 499 美元。此外，使用优惠码 MRWHO50 可获得……",
-   "original_title": "Why GTA 6 is a Bigger Deal Than You Think",
+   "original_title": "Why GTA is a Bigger Deal Than You Think",
    "original_summary": "my respect for Grand Theft Auto 📈 Start making your own GTA 6-inspired creations with the xTool M2! This Black Friday is the lowest price of the year, starting at $499. Plus, use code MRWHO50 to get $…"
   },
   {
@@ -48548,7 +48793,9 @@
    "published_at": "2026-11-19T09:18:28+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/18/multimedia/18trump-summits-carousel-zzz-qglk/18trump-summits-carousel-zzz-qglk-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "习近平罕见前往机场迎接特朗普 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -48567,7 +48814,9 @@
    "published_at": "2026-11-19T09:18:27+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/18/multimedia/18trump-summits-apec-scene-jmvl/18trump-summits-apec-scene-jmvl-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "APE峰会期间，深圳变“空城” Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -51601,7 +51850,7 @@
    "channel": null,
    "source_id": "youtube-UCg0m_Ah8P_MQbnn77-vYnYw",
    "source_name": "美食作家王刚",
-   "title": "Chef Wang teaches you: \"Crispy Fried Oyster Mushroom\" 厨师长深度分享：“软炸平菇”的秘诀，饱满酥脆，但蘑菇汁水十足",
+   "title": "厨师长深度分享：“软炸平菇”的秘诀，饱满酥脆，但蘑菇汁水十足",
    "summary": "如果想支持我或想看更多多幕后周边和我的生活私照的朋友们可以考虑加入”宽油帮“油管会员，点击订阅按钮旁的加入按钮会弹出详情，会员福利如下： 1. 拥有“宽油帮”成长徽章 2. “宽油”社区动态，独家生活私照和生活分享 3. 拥有更多留言被回复的机会 名词解释： 宽油：大量的油，很多的油 滑锅：冷油下锅，滑过锅底，使锅的温度迅速提高，并产生油膜，防止粘锅 明油：成菜之后淋入一点点葱油，来提高菜品的色泽…",
    "published_at": "2026-11-18T16:00:39+08:00",
    "lang": "zh",
@@ -51611,7 +51860,7 @@
     "width": 480,
     "height": 360
    },
-   "display_title": "Chef Wang teaches you: \"Crispy Fried Oyster Mushroom\" 厨师长深度分享：“软炸平菇”的秘诀，饱满酥脆，但蘑菇汁水十足",
+   "display_title": "厨师长深度分享：“软炸平菇”的秘诀，饱满酥脆，但蘑菇汁水十足",
    "display_summary": "如果想支持我或想看更多多幕后周边和我的生活私照的朋友们可以考虑加入”宽油帮“油管会员，点击订阅按钮旁的加入按钮会弹出详情，会员福利如下： 1. 拥有“宽油帮”成长徽章 2. “宽油”社区动态，独家生活私照和生活分享 3. 拥有更多留言被回复的机会 名词解释： 宽油：大量的油，很多的油 滑锅：冷油下锅，滑过锅底，使锅的温度迅速提高，并产生油膜，防止粘锅 明油：成菜之后淋入一点点葱油，来提高菜品的色泽…",
    "translation_title": "",
    "translation_summary": "",
@@ -51932,7 +52181,9 @@
    "published_at": "2026-11-18T15:11:18+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/18/multimedia/cn-18jp-TRUMP-SUMMIT-LEDEALL-print-bpfq-copy/18jp-TRUMP-SUMMIT-LEDEALL-print-bpfq-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "特朗普短暂出席东盟峰会，淡化国内外担忧 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -51951,7 +52202,9 @@
    "published_at": "2026-11-18T15:11:17+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/18/opinion/17campbell-image/17campbell-image-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "特朗普向习近平和普京献媚不会有好结果 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -51970,7 +52223,9 @@
    "published_at": "2026-11-18T15:11:17+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/18/multimedia/18int-china-xi-apec-01-hbcz/18int-china-xi-apec-01-hbcz-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "间谍丑闻、贸易失衡：习近平的APEC“高光”会否蒙尘？ Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -51989,7 +52244,9 @@
    "published_at": "2026-11-18T15:11:16+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/17/multimedia/17dc-china-ai-qblv/17dc-china-ai-qblv-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "间谍指控、安全担忧：中美围绕人工智能的紧张局势加剧 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -52496,7 +52753,9 @@
    "published_at": "2026-11-18T12:09:13+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/17/multimedia/17int-canada-china-trade-qwgf/17int-canada-china-trade-qwgf-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "中加达成贸易协议进一步削减关税，两国关系升温 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -52515,7 +52774,9 @@
    "published_at": "2026-11-18T12:09:12+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/17/multimedia/17biz-APEC-hostilities-01-mvtl/17biz-APEC-hostilities-01-mvtl-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "习近平与特朗普“友谊”表象下，中美经济裂痕扩大 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -53264,7 +53525,9 @@
    "published_at": "2026-11-18T09:08:30+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/16/multimedia/16dc-trump-nvidia-fqtv/16dc-trump-nvidia-fqtv-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "英伟达丑闻加深特朗普政府内部裂痕 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -55430,7 +55693,9 @@
    "published_at": "2026-11-17T18:02:03+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/16/multimedia/BIZ-MADISON-HUANG-1-01-cmjw/BIZ-MADISON-HUANG-1-01-cmjw-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "黄仁勋女儿留任引发担忧：脾气暴躁，曾导致多名高管离职 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -56337,7 +56602,9 @@
    "published_at": "2026-11-17T15:00:54+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/16/multimedia/16int-canada-carney-china-hpfq/16int-canada-carney-china-hpfq-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "卡尼再次访华，中国会是加拿大摆脱美国依赖的答案吗？ Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -56356,7 +56623,9 @@
    "published_at": "2026-11-17T15:00:53+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/16/multimedia/16int-Asia-Index-kqmp/16int-Asia-Index-kqmp-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "10个数字，让你更了解亚洲 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -56375,7 +56644,9 @@
    "published_at": "2026-11-17T15:00:53+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/16/multimedia/16dc-bessent-02-tfpz/16dc-bessent-02-tfpz-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "白宫内部对华政策分歧公开化，贝森特日趋鹰派 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -56394,7 +56665,9 @@
    "published_at": "2026-11-17T15:00:52+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/17/multimedia/13rapp-ratnerNew-tlpj/13rapp-ratnerNew-tlpj-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "特朗普的对华豪赌正适得其反 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -57088,7 +57361,9 @@
    "published_at": "2026-11-17T11:59:12+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/13/multimedia/13Biz-Nvidia-China-mfjl/13Biz-Nvidia-China-mfjl-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "黄仁勋骤然离场，亚洲失去驻美“AI大使” Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -57107,7 +57382,9 @@
    "published_at": "2026-11-17T11:59:11+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/16/multimedia/16dc-remote-access-01-bfgz/16dc-remote-access-01-bfgz-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "特朗普访华前，美国推进新规封堵芯片出口漏洞 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -57126,7 +57403,9 @@
    "published_at": "2026-11-17T11:59:10+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/16/multimedia/16int-trump-summit-wtk-qjkm/16int-trump-summit-wtk-qjkm-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "关于特朗普访华及中美俄首脑会晤，你应该了解的 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -59224,7 +59503,9 @@
    "published_at": "2026-11-16T17:52:18+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/13/multimedia/BIZ-JENSEN-CRASH-1-01-ljmc/BIZ-JENSEN-CRASH-1-01-ljmc-master1050-v2.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "黄仁勋的婚外情秘密是如何泄露到公众视野的 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -60221,7 +60502,9 @@
    "published_at": "2026-11-16T14:50:39+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/15/multimedia/15biz-newworld-taiwan-01-wgpc/15biz-newworld-taiwan-01-wgpc-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "台湾民众如何看待“国民爸爸”黄仁勋丑闻 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -61007,7 +61290,9 @@
    "published_at": "2026-11-16T11:49:10+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/12/multimedia/00int-china-general-01-lbjw/00int-china-general-01-lbjw-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "习近平持续清洗军方、张升民崛起：利好台湾 ？ Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -61026,7 +61311,9 @@
    "published_at": "2026-11-16T11:49:10+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/15/multimedia/15xp-megaspeed1-zcvq/15xp-megaspeed1-zcvq-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "Megaspeed称黄乐已于去年8月离职 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -61045,7 +61332,9 @@
    "published_at": "2026-11-16T11:49:09+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/13/multimedia/13dc-intel-vzbm/13dc-intel-vzbm-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "英伟达丑闻引发讨论：究竟怎样才算间谍？ Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -61064,7 +61353,9 @@
    "published_at": "2026-11-16T11:49:08+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/15/multimedia/15dc-trump-xi-02-wqtz/15dc-trump-xi-02-wqtz-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "黄仁勋事件为本周“习特会”蒙上阴影 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -62031,7 +62322,9 @@
    "published_at": "2026-11-16T08:47:41+08:00",
    "lang": "zh",
    "translated": false,
-   "image": null,
+   "image": {
+    "url": "https://static01.nyt.com/images/2026/11/13/multimedia/13dc-trilateral-meeting-kvtj/13dc-trilateral-meeting-kvtj-master1050.jpg"
+   },
    "display_title": "纽约时报双语版",
    "display_summary": "特朗普、习近平和普京将在中国举行三方会晤 Telegraph | 原文链接 | 频道大全",
    "translation_title": "",
@@ -64623,11 +64916,7 @@
    "published_at": "2026-11-14T15:45:53+08:00",
    "lang": "zh",
    "translated": false,
-   "image": {
-    "url": "media/freechinese/113337_1.webp",
-    "width": 800,
-    "height": 450
-   },
+   "image": null,
    "display_title": "明年生肖“羊”摆件制作在北海道接近尾声",
    "display_summary": "在日本北海道新得町，人们以明年的生肖“羊”为原型制作摆件的工作已接近尾声。 在町政府运营的陶艺中心，人们每年都会制作来年生肖的摆件。今年这里计划制作大约300到400个以羊为主题的摆件，羊是明年的生肖。 其中一种摆件是一只身着红色礼服、呈正坐姿势的羊，形象小巧可爱，宽约8厘米，可放在手掌中把玩，是在摄氏800度的窑炉中烧制而成的。 新得町陶艺中心的指导老师田中良教表示：“我们制作这些摆件，是希望明年能成为如同羊那样温暖祥和的一年。每一件作品的表情都不一样，希望大家都能找到自己最中意的一件。” 这些摆件已经开始销售，可在JR新得站前的地区交流中心等处购买。",
    "translation_title": "",
@@ -64705,11 +64994,7 @@
    "published_at": "2026-11-14T15:27:04+08:00",
    "lang": "zh",
    "translated": false,
-   "image": {
-    "url": "media/TimeHorizonX/1969_1.webp",
-    "width": 671,
-    "height": 800
-   },
+   "image": null,
    "display_title": "历史首次三方会晤",
    "display_summary": "",
    "translation_title": "",
@@ -77422,7 +77707,7 @@
    "channel": null,
    "source_id": "youtube-UCMiJRAwDNSNzuYeN2uWa0pA",
    "source_name": "Mrwhosetheboss",
-   "title": "I Tested 42 Years of Phones!",
+   "title": "I Tested 42 Years of Phones. Everyone Was Wrong.",
    "summary": "The entire history of the mobile cell phone...in one room... Go to https://surfshark.com/boss or use code BOSS at checkout to get 4 extra months of Surfshark VPN! A special thank you to the Mobile Pho…",
    "published_at": "2026-11-09T20:37:47+08:00",
    "lang": "en",
@@ -77432,11 +77717,11 @@
     "width": 480,
     "height": 360
    },
-   "display_title": "I Tested 42 Years of Phones!",
+   "display_title": "我测试了 42 年来的手机。所有人都错了。",
    "display_summary": "整个手机的历史……就在一个房间里…… 前往 https://surfshark.com/boss 或在结账时使用代码 BOSS，即可额外获得 4 个月的 Surfshark VPN！特别感谢 Mobile Pho…",
-   "translation_title": "I Tested 42 Years of Phones!",
+   "translation_title": "我测试了 42 年来的手机。所有人都错了。",
    "translation_summary": "整个手机的历史……就在一个房间里…… 前往 https://surfshark.com/boss 或在结账时使用代码 BOSS，即可额外获得 4 个月的 Surfshark VPN！特别感谢 Mobile Pho…",
-   "original_title": "I Tested 42 Years of Phones!",
+   "original_title": "I Tested 42 Years of Phones. Everyone Was Wrong.",
    "original_summary": "The entire history of the mobile cell phone...in one room... Go to https://surfshark.com/boss or use code BOSS at checkout to get 4 extra months of Surfshark VPN! A special thank you to the Mobile Pho…"
   },
   {
