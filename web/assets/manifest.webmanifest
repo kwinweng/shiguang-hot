@@ -3,8 +3,8 @@
   "short_name": "拾光资讯",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#FFFFFF",
-  "theme_color": "#D7282F",
+  "background_color": "#DEE7ED",
+  "theme_color": "#FFFFFF",
   "icons": [
     {
       "src": "icon-192.png",

@@ -47,6 +47,15 @@ MAX_FETCH_PER_RUN = 40
 FAIL_TTL_HOURS = 24
 
 
+# Telegram 的「即时预览」文章页：频道消息本身只有标题和链接，正文在这里。
+TELEGRAPH_HOSTS = frozenset({'telegra.ph', 'graph.org'})
+
+
+def is_telegraph_url(url):
+    parts = urlsplit(url or '')
+    return parts.scheme == 'https' and parts.netloc.lower() in TELEGRAPH_HOSTS and len(parts.path or '') > 1
+
+
 def url_key(url):
     return hashlib.sha256(url.encode('utf-8')).hexdigest()[:32]
 
@@ -63,9 +72,9 @@ def is_public_article_url(url):
     return True
 
 
-def should_extract(item):
-    """只处理公开文章页。已有长正文或公众号/博客 blocks 的不再抓。"""
-    if not is_public_article_url(item.get('url')):
+def should_extract(item, url=None):
+    """只处理公开文章页。已有长正文或公众号/博客 blocks 的不再抓。url：实际要抓的页（TG 条目给 Telegraph 链接）。"""
+    if not is_public_article_url(url or item.get('url')):
         return False
     if item.get('kind') == 'post' and item.get('blocks'):
         return False
@@ -148,11 +157,15 @@ def extract_html(html, url=''):
     soup = BeautifulSoup(html, 'lxml')
     for tag in soup.find_all(['script', 'style', 'noscript']):
         tag.decompose()
-    root = _best_root(soup)
+    telegraph = is_telegraph_url(url)
+    root = (soup.select_one('article.tl_article_content, article#_tl_editor') if telegraph else None) or _best_root(soup)
     if root is None:
         return None
     work = BeautifulSoup(str(root), 'lxml')
     _drop_noise(work)
+    if telegraph:   # 标题、署名（频道名）详情页已单独显示，不在正文里重复
+        for tag in work.find_all(['h1', 'address']):
+            tag.decompose()
     target = work.body or work
     blocks = html_blocks(str(target), base_url=url)
     # 去掉极小的追踪图后若几乎没字，失败
@@ -214,7 +227,7 @@ def _apply_hit(item, hit):
     item['body'] = body
     if hit.get('blocks'):
         item['blocks'] = hit['blocks']
-        if not item.get('image'):
+        if not item.get('image') and not item.get('image_local'):   # TG 已缓存的本地预览图优先
             img = next((b for b in hit['blocks'] if b.get('type') == 'img' and b.get('src')), None)
             if img:
                 image = {'url': img['src']}
@@ -234,10 +247,11 @@ def apply_extraction(items, cache_dir, *, fetch=False, http_get=None, now=None, 
     report = {'considered': 0, 'from_cache': 0, 'fetched': 0, 'applied': 0, 'failed': 0, 'skipped': 0}
     iso = now.isoformat()
     for item in items:
-        if not should_extract(item):
+        # extract_url 只给抽取用（TG 消息里的 Telegraph 链接），不写进成品；条目链接仍是原消息
+        url = item.pop('extract_url', None) or item.get('url')
+        if not should_extract(item, url):
             continue
         report['considered'] += 1
-        url = item['url']
         hit = cache.get(url)
         if hit and (hit.get('ok') or _fresh_fail(hit, now)):
             if _apply_hit(item, hit):

@@ -1,5 +1,5 @@
 """frontend-v11：手机尺寸（390×844）浏览器实测，离线、合成数据。
-覆盖：频道/博主一条长流（一直往下刷、「下一个：…」接下一段、到底「内容已结束」、吸顶标题跟着当前段）、
+覆盖：频道一条长流（一直往下刷、「下一个：…」接下一段、到底「内容已结束」、吸顶标题跟着当前段）、
 左右换频道（真触摸滑动，跳到下一频道开头）、banner 内横滑不换频道、两种翻法切换并记住、热搜分家与失败态、
 卡片没有横滑动作只有长按菜单（频道/博主/收藏/热搜）、整页正文 + 返回原位置（页面返回与系统返回）、
 #/item/<id> 深链、旧 #/more/ 链接跳到长流里那一段、底栏、功能模块注册与收藏槽。"""
@@ -182,7 +182,7 @@ class SiteBrowserTests(unittest.TestCase):
         self.assertTrue(dialog.get_by_text('检查原始转储', exact=False).is_visible())
         self.assertEqual(dialog.locator('.health-section-head:visible').count(), 0)
         filters.get_by_role('button', name='未配置 1').tap()
-        self.assertEqual(dialog.locator('.health-name:visible').all_text_contents(), ['知乎'])
+        self.assertEqual(dialog.locator('.health-name:visible').all_text_contents(), ['selfh.st'])
         self.assertTrue(dialog.get_by_text('需要时再接入', exact=False).is_visible())
         filters.get_by_role('button', name=f'正常 {total - 5}').tap()
         self.assertEqual(dialog.locator('.health-name:visible').count(), total - 5)
@@ -475,6 +475,106 @@ class SiteBrowserTests(unittest.TestCase):
         hot.locator('[data-hot=zhihu]').click()
         self.assertIn('暂时取不到', self.page.locator('#view-hot .hot-empty').inner_text())
 
+    def test_a2_cover_click_opens_article_and_summary_visible(self):
+        self.open()
+        row = self.page.locator('.ch-sec[data-ch=current] .feed-row.cover').first
+        row.wait_for()
+        box = row.locator('.thumb').bounding_box()
+        self.assertLess(box['y'], row.locator('h3').bounding_box()['y'], 'A2：大图在标题上方')
+        rid = row.get_attribute('data-id')
+        sum_el = row.locator('.sum')
+        self.assertEqual(sum_el.count(), 1, '有图的行照样渲染摘要')
+        self.assertTrue(sum_el.is_visible(), '有图也显示摘要')
+        row.locator('.thumb img').click()
+        self.page.locator('#articleBody').wait_for()
+        self.assertFalse(self.page.evaluate('!!document.querySelector("#zoomStage") && getComputedStyle(document.querySelector("#zoomStage")).display !== "none" && document.querySelector("#zoomStage").offsetHeight > 0'), '点列表大图进详情，不直接放大')
+
+    def inject_rows(self, items, width=390):
+        self.page.set_viewport_size({'width': width, 'height': 844})
+        self.page.evaluate("""items => { const list = document.querySelector('.ch-sec[data-ch=current] .feed-list');
+          list.insertAdjacentHTML('afterbegin', '<div class="chunk" id="a2probe">' + items.map(RebangLib.feedRowHTML).join('') + '</div>'); }""", items)
+        self.page.wait_for_timeout(100)
+
+    def test_a2_layout_meta_right_no_clip_no_upscale_no_overflow(self):
+        self.open()
+        base = {'kind': 'news', 'channel': 'current', 'source_id': 'tnews365', 'source_name': '竹新社', 'url': 'https://t.me/x/1',
+                'published_at': '2026-11-15T11:00:00Z', 'lang': 'zh', 'translated': False}
+        self.inject_rows([
+            dict(base, id='a2:cover', title='通报', summary='短。', image={'url': 'https://img.test/c.png', 'width': 800, 'height': 450}),
+            dict(base, id='a2:small', title='很长的一个标题用来占位很长的一个标题', summary='短。', image={'url': 'https://img.test/s.png', 'width': 32, 'height': 32}),
+            dict(base, id='a2:long', title='长串', summary='校验码 ' + 'a' * 64, image=None),
+        ], width=320)
+        cover = self.page.locator('#a2probe .feed-row[data-id="a2:cover"]')
+        row_box = cover.bounding_box()
+        when = cover.locator('.f-meta .when').bounding_box()
+        self.assertGreater(when['x'] + when['width'], row_box['x'] + row_box['width'] - 24, '大图短文行的时间也靠右')
+        small = self.page.locator('#a2probe .feed-row[data-id="a2:small"]')
+        small.evaluate("e => e.classList.add('read')")
+        meta = small.locator('.f-meta')
+        clipped = meta.evaluate("""m => { const r = m.getBoundingClientRect(); const w = m.querySelector('.when').getBoundingClientRect();
+          return m.scrollWidth > m.clientWidth + 1 || w.right > r.right + 1; }""")
+        self.assertFalse(clipped, '320px 屏上小图行的时间和「已读」不被裁掉')
+        self.assertEqual(small.locator('.thumb img').evaluate('i => getComputedStyle(i).objectFit'), 'scale-down', '已知偏小的图不放大')
+        self.inject_rows([dict(base, id='a2:smallvid', title='小视频', summary='短。', image={'url': 'https://img.test/v.png', 'width': 64, 'height': 64}, tg={'media': [{'type': 'video'}]})], width=320)
+        self.assertEqual(self.page.locator('#a2probe .feed-row[data-id="a2:smallvid"] .thumb img').first.evaluate('i => getComputedStyle(i).objectFit'), 'scale-down', '偏小的视频封面也不放大')
+        long_row = self.page.locator('#a2probe .feed-row[data-id="a2:long"]')
+        sum_box = long_row.locator('.sum').bounding_box()
+        self.assertLessEqual(sum_box['x'] + sum_box['width'], long_row.bounding_box()['x'] + long_row.bounding_box()['width'] + 1)
+        self.assertLessEqual(long_row.locator('.sum').evaluate('e => e.scrollWidth - e.clientWidth'), 1, '连续长串换行，不溢出')
+        plat = cover.locator('.f-meta .plat').first
+        self.assertEqual(plat.evaluate('i => getComputedStyle(i).borderRadius'), '50%', '渠道平台图标为圆形')
+        bar = self.page.locator('.tabbar').bounding_box()
+        views = self.page.locator('.views').bounding_box()
+        self.assertGreaterEqual(bar['y'], views['y'] + views['height'] - 1, '底栏独立停靠在内容区下方，不遮挡列表')
+        self.assertGreaterEqual(bar['width'], 319, '底栏通栏铺满视口宽度')
+
+    def test_a2_rss_cover_with_text_blocks_still_zoomable_in_article(self):
+        """列表点大图进详情；正文 blocks 里没有图时，详情要补上封面，否则就再也放大不了。"""
+        def patch(route):
+            url = urlsplit(route.request.url)
+            if url.netloc == 'rebang.test' and url.path.endswith('/channel/current/page-1.json'):
+                data = json.loads((self.out / unquote(url.path).lstrip('/')).read_text(encoding='utf-8'))
+                first = data['items'][0]
+                first.pop('tg', None); first.pop('quote', None)
+                first['image'] = {'url': 'https://img.test/rss.png', 'width': 400, 'height': 200}
+                first['blocks'] = [{'type': 'p', 'text': '只有文字的正文。'}]
+                return route.fulfill(status=200, body=json.dumps(data), content_type='application/json')
+            return self.page_route(route)
+        self.page.unroute('**/*')
+        self.page.route('**/*', patch)
+        self.open()
+        row = self.page.locator('.ch-sec[data-ch=current] .feed-row.cover').first
+        row.locator('.thumb img').click()
+        self.page.locator('#articleBody .art-blocks').wait_for()
+        self.assertEqual(self.page.locator('#articleBody img.cover[data-zoom="https://img.test/rss.png"]').count(), 1, '详情里有封面可放大')
+
+    def test_a2_article_cover_kept_unless_same_image_in_blocks(self):
+        """正文图没存下来、或正文里是别的图：详情照样放列表大图；正文里已有同一张图才不重复。"""
+        cases = [([{'type': 'img', 'missing': True}, {'type': 'p', 'text': '文字'}], 1),
+                 ([{'type': 'img', 'src': 'https://img.test/other.png'}, {'type': 'p', 'text': '文字'}], 1),
+                 ([{'type': 'img', 'src': 'https://img.test/rss.png'}, {'type': 'p', 'text': '文字'}], 0)]
+        for blocks, want in cases:
+            with self.subTest(blocks=blocks[0]):
+                def make(blocks):
+                  def patch(route):
+                    url = urlsplit(route.request.url)
+                    if url.netloc == 'rebang.test' and url.path.endswith('/channel/current/page-1.json'):
+                        data = json.loads((self.out / unquote(url.path).lstrip('/')).read_text(encoding='utf-8'))
+                        first = data['items'][0]
+                        first.pop('tg', None); first.pop('quote', None)
+                        first['image'] = {'url': 'https://img.test/rss.png', 'width': 400, 'height': 200}
+                        first['blocks'] = blocks
+                        return route.fulfill(status=200, body=json.dumps(data), content_type='application/json')
+                    return self.page_route(route)
+                  return patch
+                self.page.unroute('**/*')
+                self.page.route('**/*', make(blocks))
+                self.open()
+                self.page.locator('.ch-sec[data-ch=current] .feed-row.cover').first.locator('.thumb img').click()
+                self.page.locator('#articleBody .art-blocks').wait_for()
+                self.assertEqual(self.page.locator('#articleBody img.cover').count(), want)
+                self.page.goto('about:blank')
+
     def test_feed_cards_and_infinite_load_to_end(self):
         self.open()
         page = self.page.locator('.ch-sec[data-ch=current]')
@@ -601,7 +701,7 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.locator('.tabbar [data-view=blogger]').click()
         tweet = self.page.locator('#bloggerList .tweet').first
         tweet.wait_for()
-        self.long_press(tweet)
+        self.long_press(tweet.locator('.b-text'))
         self.assertTrue(self.page.locator('#cardMenu.on').is_visible())
         self.page.locator('#cardMenu [data-menu=cancel]').click()
         # 热搜：长按一行也是同一个菜单，收藏进本机
@@ -649,39 +749,555 @@ class SiteBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate('window.__attached'), 'tnews365:5')
         self.page.locator('#btnBack').click()
 
+    def test_web_news_body_does_not_default_to_original_when_translation_is_pending(self):
+        self.open('#/item/bbc-world%3A1')
+        body = self.page.locator('#articleBody')
+        body.locator('.art-pending').wait_for()
+        self.assertIn('合成译文摘要', body.inner_text())
+        original = 'This is the original English news article.'
+        self.assertNotIn(original, body.inner_text())
+        body.get_by_role('button', name='看原文').click()
+        self.assertIn(original, body.inner_text())
+
+    def test_stale_favorite_does_not_mask_ready_search_snapshot(self):
+        archived_id = 'bbc-world:archived-1'
+        stale_only_id = 'bbc-world:stale-only-1'
+        search_payload = {
+            'schema': 'rebang.search-index/1',
+            'timezone': 'Asia/Shanghai',
+            'generated_at': NOW.isoformat(),
+            'entries': [{
+                'id': archived_id,
+                'kind': 'news',
+                'channel': 'world',
+                'source_id': 'bbc-world',
+                'source_name': 'BBC World',
+                'title': 'Archived English title',
+                'summary': 'Archived English summary',
+                'published_at': NOW.isoformat(),
+                'lang': 'en',
+                'translated': True,
+                'display_title': '归档补回的中文标题',
+                'display_summary': '归档补回的中文摘要',
+                'translation_title': '归档补回的中文标题',
+                'translation_summary': '归档补回的中文摘要',
+                'summary_source': 'Archived English summary',
+                'original_title': 'Archived English title',
+                'original_summary': 'Archived English summary',
+                'image': None,
+            }],
+        }
+        self.page.route('**/data/search-index.json*', lambda route: route.fulfill(json=search_payload))
+        self.open('')
+        self.page.evaluate('''([archivedId, staleOnlyId]) => {
+            localStorage.setItem('rebang.favorites.v1', JSON.stringify([
+                {
+                    id: archivedId, kind: 'news', channel: 'world', source_id: 'bbc-world',
+                    source_name: 'BBC World', title: 'Archived English title',
+                    summary: 'Archived English summary', lang: 'en', translated: false,
+                    saved_at: '2026-11-15T00:00:00Z'
+                },
+                {
+                    id: staleOnlyId, kind: 'news', channel: 'world', source_id: 'bbc-world',
+                    source_name: 'BBC World', title: 'Untranslated only title',
+                    summary: 'Untranslated only summary', lang: 'en', translated: false,
+                    saved_at: '2026-11-15T00:00:00Z'
+                }
+            ]));
+        }''', [archived_id, stale_only_id])
+        # Trigger search-index load so mounted.search.getItem(id) has the archived entry.
+        self.page.locator('#btnSearch').click()
+        self.page.locator('#search-panel input').fill('归档补回')
+        self.page.locator('#search-panel [data-search-hit]').first.wait_for()
+        self.page.locator('#search-panel [data-search-close]').click()
+        # Open via favorite click (passes stale English bookmark ref) -> must resolve to ready search snapshot.
+        self.page.locator('.tabbar [data-view=favorites]').click()
+        self.page.locator(f'[data-favorites-list] [data-item-id="{archived_id}"]').click()
+        self.page.locator('#articleView.on').wait_for()
+        self.assertEqual(self.page.locator('#articleTitle').inner_text(), '归档补回的中文标题')
+        self.assertIn('归档补回的中文摘要', self.page.locator('#articleBody').inner_text())
+        self.page.locator('#btnBack').click()
+        self.page.locator('#articleView.on').wait_for(state='hidden')
+        # Stale-only bookmark with no ready snapshot still refuses to display English.
+        self.page.locator(f'[data-favorites-list] [data-item-id="{stale_only_id}"]').click()
+        self.page.wait_for_function("document.querySelector('#toast').textContent.includes('中文译文尚未就绪')")
+        self.assertFalse(self.page.locator('#articleView').evaluate('e => e.classList.contains("on")'))
+
+    def built_at(self):
+        return json.loads((self.out / 'data' / 'meta.json').read_text())['built_at']
+
+    @staticmethod
+    def server_order(rows):
+        """与 rebang.site.builder.merge_items 相同：先按 id 升序，再稳定地按发布时间倒序。"""
+        return sorted(sorted(rows, key=lambda r: str(r['id'])), key=site._sort_key, reverse=True)
+
+    def blogger_fixture(self, x_count=34, weibo_count=34, same_time=False, built_at=None):
+        """发布格式的合成分页（发布端排序、site.paginate 切页），两个平台同名同 handle，含跨页重复。"""
+        built_at = built_at or self.built_at()
+        paths = {}
+        platforms, preview, ids = [], [], {}
+        for platform, name, count, offset in [('x', 'X', x_count, 0), ('weibo', '微博', weibo_count, 1)]:
+            rows = []
+            for n in range(count):
+                handle = 'other' if n == 4 else 'shared'
+                post_id = f'{platform}:{n:02}'
+                rows.append(dict(id=post_id, kind='post', title='', summary=f'{name} 合成帖子 {n}',
+                                 published_at=(NOW if same_time else NOW - timedelta(minutes=2*n + offset if n != 2 else 4)).isoformat(),
+                                 blogger=dict(platform=platform, handle=handle, display_name=handle,
+                                              avatar='https://img.test/avatar.png' if n == 0 else None)))
+            if rows:
+                rows[0].update(lang='en', translated=True, body='Original text',
+                               translation=dict(summary='合成译文', body='合成译文', label='机器翻译'))
+                rows[0]['blogger']['quote'] = dict(display_name='引用作者', text='合成引用')
+            accounts = [dict(key=f'h-{handle}', handle=handle, name=handle,
+                             total=sum(r['blogger']['handle'] == handle for r in rows)) for handle in ['shared', 'other']]
+            platforms.append(dict(id=platform, name=name, icon=f'icons/{platform}.svg', count=count,
+                                  connected=bool(count), accounts=accounts))
+            preview.extend(rows[:1])
+            for key, selected in [('all', rows), *[(a['key'], [r for r in rows if r['blogger']['handle'] == a['handle']]) for a in accounts]]:
+                pages = site.paginate(self.server_order(selected))
+                if len(pages) > 1:
+                    pages[1]['items'].insert(0, pages[0]['items'][-1])
+                for page in pages:
+                    path = f'blogger/{platform}/{key}/page-{page["page"]}.json'
+                    paths[path] = dict(page, schema='rebang.page/1', platform=platform, key=key, built_at=built_at)
+                    if key == 'all':
+                        ids.update((it['id'], path) for it in page['items'])
+        # 同一合成发布内，索引、每个分页与 meta 使用同一版本；合流次序来自建站端。
+        meta = json.loads((self.out / 'data/meta.json').read_text())
+        revision = f'fixture-{x_count}-{weibo_count}-{same_time}-{built_at}'
+        all_rows = {row['id']: row for path, page in paths.items() if '/all/' in path for row in page['items']}
+        for rank, row in enumerate(self.server_order(all_rows.values())):
+            row['feed_order'] = rank
+        for page in paths.values():
+            page['blogger_revision'] = revision
+        paths['meta.json'] = dict(meta, built_at=built_at, blogger_revision=revision)
+        paths['bloggers.json'] = dict(platforms=platforms, items=preview, built_at=built_at, blogger_revision=revision)
+        paths['id-index.json'] = ids
+        return paths
+
+    def use_blogger_fixture(self, data, intercept=None):
+        def serve(route):
+            key = urlsplit(route.request.url).path.removeprefix('/data/')
+            if intercept and intercept(route, key):
+                return
+            if key in data:
+                route.fulfill(json=data[key])
+            else:
+                route.fallback()
+        self.page.route('https://rebang.test/data/**', serve)
+
+    def open_blogger(self):
+        self.open()
+        self.page.locator('.tabbar [data-view=blogger]').click()
+
+    def blogger_ids(self):
+        return self.page.locator('#bloggerList .tweet').evaluate_all('es => es.map(e => e.dataset.id)')
+
+    def test_blogger_all_merges_pages_in_stable_order_without_repeats(self):
+        data = self.blogger_fixture()
+        self.use_blogger_fixture(data)
+        self.open_blogger()
+        self.page.locator('#bloggerList .tweet').first.wait_for()
+        self.assertEqual(self.page.locator('#platChips .on').get_attribute('data-plat'), 'all')
+        # x:02 与 weibo:02 同一时刻：按发布端规则 ID 升序
+        self.assertEqual(self.blogger_ids()[:8], ['x:00', 'weibo:00', 'x:01', 'weibo:01', 'weibo:02', 'x:02', 'x:03', 'weibo:03'])
+        self.assertTrue(self.scroll_to_end('#view-blogger .sub'))
+        ordered = [r['id'] for r in self.server_order(
+            [r for k, v in data.items() if k.endswith('/all/page-1.json') or k.endswith('/all/page-2.json') for r in v['items']])]
+        ordered = list(dict.fromkeys(ordered))
+        self.assertEqual(self.blogger_ids(), ordered)
+        self.page.locator('#platChips [data-plat=weibo]').click()
+        self.page.locator('#bloggerList .tweet').first.wait_for()
+        self.assertTrue(self.scroll_to_end('#view-blogger .sub'))
+        self.assertEqual(self.blogger_ids(), [x for x in ordered if x.startswith('weibo:')])
+
+    def test_blogger_profile_article_navigation_and_390px_themes(self):
+        self.use_blogger_fixture(self.blogger_fixture())
+        self.open_blogger()
+        first = self.page.locator('#bloggerList .tweet').first
+        first.wait_for()
+        for theme, bg in [('light', 'rgb(255, 255, 255)'), ('dark', 'rgb(0, 0, 0)')]:
+            self.page.emulate_media(color_scheme=theme)
+            self.assertEqual(self.page.locator('#platChips').evaluate('e => getComputedStyle(e).backgroundColor'), bg)
+            self.assertEqual(self.page.locator('#view-blogger .sub').evaluate('e => [e.clientWidth, e.scrollWidth]'), [390, 390])
+            self.assertLess(first.locator('.bl-avatar').bounding_box()['x'], first.locator('.b-main').bounding_box()['x'])
+            self.assertTrue(self.page.locator('.tabbar').is_visible())
+        translated = first.locator('[data-orig]')
+        self.assertEqual(translated.inner_text(), '看原文')
+        translated.tap()
+        self.assertEqual(translated.get_attribute('aria-expanded'), 'true')
+        self.assertTrue(first.get_by_text('Original text', exact=True).is_visible())
+        self.assertIn('合成引用', first.inner_text())
+        first.locator('[data-bl-menu]').tap()
+        self.assertTrue(self.page.locator('#cardMenu.on').is_visible())
+        self.assertEqual(urlsplit(self.page.url).fragment, '')
+        self.page.locator('#cardMenu [data-menu=cancel]').tap()
+        first.locator('.bl-face').tap()
+        self.page.locator('#blProfile').get_by_text('X', exact=True).wait_for()
+        self.page.locator('#bloggerList .tweet').first.wait_for()
+        self.assertTrue(all(x.startswith('x:') for x in self.blogger_ids()))
+        self.assertNotIn('x:04', self.blogger_ids())
+        self.page.locator('[data-bl-back]').click()
+        self.page.locator('#platChips [data-plat=weibo]').click()
+        self.page.locator('#bloggerList .tweet[data-id="weibo:00"] .bl-name').tap()
+        self.page.locator('#blProfile').get_by_text('微博', exact=True).wait_for()
+        self.assertTrue(self.scroll_to_end('#view-blogger .sub'))
+        self.assertEqual(self.blogger_ids(), [f'weibo:{n:02}' for n in range(34) if n != 4])
+        scroller = self.page.locator('#view-blogger .sub')
+        target = self.page.locator('#bloggerList .tweet[data-id="weibo:31"] [data-bl-item]')
+        target.scroll_into_view_if_needed()
+        before = scroller.evaluate('e => e.scrollTop')
+        self.assertGreater(before, 0)
+        target.tap()
+        self.page.locator('#articleView.on').wait_for()
+        self.assertEqual(unquote(urlsplit(self.page.url).fragment), '/item/weibo:31')
+        self.page.go_back()
+        self.page.locator('#articleView.on').wait_for(state='hidden')
+        self.page.wait_for_function('(y) => document.querySelector("#view-blogger .sub").scrollTop === y', arg=before)
+        self.assertTrue(self.page.locator('#blProfile').get_by_text('微博', exact=True).is_visible())
+        self.assertEqual(self.page.locator('#platChips .on').get_attribute('data-plat'), 'weibo')
+        self.page.locator('[data-bl-back]').click()
+        self.assertEqual(self.page.locator('#platChips .on').get_attribute('data-plat'), 'weibo')
+        self.open('#/item/weibo%3A31')
+        self.page.locator('#articleView.on').wait_for()
+        self.assertIn('微博 合成帖子 31', self.page.locator('#articleBody').inner_text())
+
+    def test_blogger_pending_request_cannot_replace_another_filter(self):
+        data = self.blogger_fixture()
+        pending = []
+
+        def delay(route, key):
+            if key == 'blogger/x/all/page-1.json' and not pending:
+                pending.append(route)
+                return True
+            return False
+
+        self.use_blogger_fixture(data, delay)
+        with self.page.expect_request('**/blogger/x/all/page-1.json'):
+            self.open_blogger()
+        self.page.locator('#platChips [data-plat=weibo]').click()
+        self.page.locator('#bloggerList .tweet').first.wait_for()
+        with self.page.expect_response('**/blogger/x/all/page-1.json'):
+            pending[0].fulfill(json=data['blogger/x/all/page-1.json'])
+        self.assertTrue(self.scroll_to_end('#view-blogger .sub'))
+        self.assertEqual(self.blogger_ids(), [f'weibo:{n:02}' for n in range(34)])
+        self.page.locator('#platChips [data-plat=all]').click()
+        self.page.locator('#bloggerList .tweet[data-id="x:00"]').wait_for()
+
+    def test_blogger_old_page_cannot_reappear_after_refresh_and_missing_x(self):
+        data = self.blogger_fixture()
+        pending = []
+
+        def delay(route, key):
+            if key == 'blogger/x/all/page-1.json' and not pending:
+                pending.append(route)
+                return True
+            return False
+
+        self.use_blogger_fixture(data, delay)
+        with self.page.expect_request('**/blogger/x/all/page-1.json'):
+            self.open_blogger()
+        old = data['blogger/x/all/page-1.json']
+        newer = (NOW + timedelta(days=1)).isoformat()
+        data.update(self.blogger_fixture(x_count=0, weibo_count=3, built_at=newer))
+        self.page.locator('#btnRefresh').click()
+        self.page.locator('#bloggerList [data-end=all]').wait_for()
+        with self.page.expect_response('**/blogger/x/all/page-1.json'):
+            pending[0].fulfill(json=old)
+        self.page.wait_for_function("document.querySelector('#toast').textContent.includes('已更新')")
+        self.assertEqual(self.blogger_ids(), ['weibo:00', 'weibo:01', 'weibo:02'])
+        self.page.locator('#platChips [data-plat=x]').click()
+        self.assertTrue(self.page.locator('#bloggerList .empty-plat').is_visible())
+        self.assertEqual(self.blogger_ids(), [])
+        self.page.locator('#platChips [data-plat=all]').click()
+        self.assertEqual(self.blogger_ids(), ['weibo:00', 'weibo:01', 'weibo:02'])
+
+    def test_blogger_failed_page_retries_without_skipping_or_repeating_rows(self):
+        data = self.blogger_fixture()
+        failures = []
+
+        def fail_once(route, key):
+            if key == 'blogger/x/all/page-2.json' and not failures:
+                failures.append(key)
+                route.fulfill(status=503, body='unavailable')
+                return True
+            return False
+
+        self.use_blogger_fixture(data, fail_once)
+        self.open_blogger()
+        scroller = self.page.locator('#view-blogger .sub')
+        self.page.locator('#bloggerList .tweet').first.wait_for()
+        scroller.evaluate('e => e.scrollTop = e.scrollHeight')
+        retry = self.page.locator('#blFoot [data-bl-retry]')
+        retry.wait_for()
+        before = self.blogger_ids()
+        self.assertTrue(before)
+        retry.click()
+        self.assertTrue(self.scroll_to_end('#view-blogger .sub'))
+        after = self.blogger_ids()
+        self.assertEqual(after[:len(before)], before)
+        self.assertEqual(after[4:6], ['weibo:02', 'x:02'])
+        self.assertEqual(sorted(after), sorted(f'{platform}:{n:02}' for n in range(34) for platform in ('x', 'weibo')))
+        self.assertEqual(len(after), len(set(after)))
+
+    def test_blogger_same_time_posts_follow_build_order_across_pages(self):
+        data = self.blogger_fixture(x_count=31, weibo_count=0, same_time=True)
+        for page in (1, 2):   # 只看发布端真实切页，不加人为的跨页重复
+            data[f'blogger/x/all/page-{page}.json']['items'] = [
+                r for r in data[f'blogger/x/all/page-{page}.json']['items'] if page == 1 or r['id'] == 'x:30']
+        self.use_blogger_fixture(data)
+        self.open_blogger()
+        self.page.locator('#bloggerList .tweet').first.wait_for()
+        self.assertTrue(self.scroll_to_end('#view-blogger .sub'))
+        expected = [r['id'] for p in (1, 2) for r in data[f'blogger/x/all/page-{p}.json']['items']]
+        self.assertEqual(expected[:2], ['x:00', 'x:01'])
+        self.assertEqual(self.blogger_ids(), expected)
+
+    def test_blogger_page_from_newer_build_stops_instead_of_mixing(self):
+        data = self.blogger_fixture()
+        self.use_blogger_fixture(data)
+        self.open_blogger()
+        self.page.locator('#bloggerList .tweet').first.wait_for()
+        first = self.blogger_ids()
+        newer = (NOW + timedelta(hours=1)).isoformat()
+        # 读完第一页后网站换版：新版在队首插了一条，后面的页整体后移
+        new_data = self.blogger_fixture(built_at=newer)
+        for key, page in new_data.items():
+            if key.startswith('blogger/') and key.endswith('page-2.json'):
+                page['items'].insert(0, dict(page['items'][0], id=page['items'][0]['id'] + '-new'))
+        data.update({k: v for k, v in new_data.items() if k.startswith('blogger/')})
+        self.page.locator('#view-blogger .sub').evaluate('e => e.scrollTop = e.scrollHeight')
+        prompt = self.page.locator('#blFoot [data-bl-refresh]')
+        prompt.wait_for()
+        old_first_pages = {r['id'] for k, v in self.blogger_fixture().items()
+                           if k.startswith('blogger/') and '/all/page-1.json' in k for r in v['items']}
+        shown = self.blogger_ids()
+        self.assertEqual(shown[:len(first)], first)
+        self.assertTrue(set(shown) <= old_first_pages, '新版分页不混进旧版列表')
+        data.update(new_data)
+        prompt.click()
+        self.page.wait_for_function("document.querySelector('#toast').textContent.includes('已更新')")
+        self.page.locator('#bloggerList .tweet').first.wait_for()
+        self.assertTrue(self.scroll_to_end('#view-blogger .sub'))
+        ids = self.blogger_ids()
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertEqual(len(ids), 68 + 2)
+
+    def test_blogger_open_before_first_meta_waits_for_snapshot(self):
+        data, held = self.blogger_fixture(0, 2), []
+
+        def hold(route, key):
+            if key == 'meta.json' and not held:
+                held.append(route)
+                return True
+            return False
+
+        self.use_blogger_fixture(data, hold)
+        with self.page.expect_request('**/data/meta.json'):
+            self.page.goto('https://rebang.test/index.html', wait_until='domcontentloaded')
+        self.page.locator('.tabbar [data-view=blogger]').click()
+        held[0].fulfill(json=data['meta.json'])
+        self.page.wait_for_selector('#app:not([aria-busy])')
+        self.page.locator('#blFoot [data-end=all], #blFoot .load-err').wait_for(timeout=3000)
+        self.assertEqual(self.blogger_ids(), ['weibo:00', 'weibo:01'])
+
+    def test_blogger_pull_during_boot_does_not_leave_refreshing(self):
+        meta = json.loads((self.out / 'data/meta.json').read_text())
+        held = []
+        self.page.route('**/data/meta.json*', lambda route: held.append(route))
+        ptr = self.page.locator('#ptr')
+        for first_status in (200, 503):
+            with self.subTest(first_status=first_status):
+                held.clear()
+                with self.page.expect_request('**/data/meta.json'):
+                    self.page.goto('https://rebang.test/index.html', wait_until='domcontentloaded')
+                self.page.locator('.tabbar [data-view=blogger]').tap()
+                self.swipe(160, 200, 160, 420)
+                self.assertEqual(len(held), 1, '首屏未就绪，不发第二个请求')
+                shown_while_busy = ptr.is_visible()
+                held[0].fulfill(status=first_status, json=meta)
+                self.page.wait_for_selector('#app:not([aria-busy])')
+                self.assertTrue(ptr.is_hidden(), f'首屏结束后仍显示：{ptr.text_content()}')
+                self.assertFalse(shown_while_busy, '没开始刷新，不应显示正在刷新')
+
+                # 无论首读成功还是失败，下一次真正的下拉都应只刷新一次，结束后收起提示。
+                with self.page.expect_request('**/data/meta.json?*', timeout=3000):
+                    self.swipe(160, 200, 160, 420)
+                self.assertEqual(len(held), 2)
+                self.assertTrue(self.page.locator('#ptr.spin').is_visible())
+                held[1].fulfill(json=meta)
+                ptr.wait_for(state='hidden', timeout=3000)
+                self.page.locator('#bloggerList .tweet').first.wait_for(timeout=3000)
+
+    def test_blogger_old_empty_index_cannot_hide_new_platform(self):
+        # 同一秒重新建站也不能把旧索引的「0 条」当成新版本已结束。
+        data = self.blogger_fixture(0, 2)
+        current = data['bloggers.json']
+        data['bloggers.json'] = self.blogger_fixture(0, 0)['bloggers.json']
+        self.use_blogger_fixture(data)
+        self.open_blogger()
+        foot = self.page.locator('#blFoot')
+        foot.locator('.empty-plat, .load-err').wait_for()
+        self.assertEqual(foot.locator('.empty-plat').count(), 0, '错版索引不是空平台')
+        self.assertEqual(self.page.locator('#platChips [data-plat]').count(), 0)
+        data['bloggers.json'] = current
+        foot.locator('[data-bl-refresh]').click()
+        foot.locator('[data-end=all]').wait_for()
+        self.assertEqual(self.blogger_ids(), ['weibo:00', 'weibo:01'])
+        self.page.locator('#bloggerList .bl-name').first.click()
+        foot.locator('[data-end=all]').wait_for()
+        self.assertEqual(self.blogger_ids(), ['weibo:00', 'weibo:01'])
+
+    def test_blogger_deep_link_does_not_remember_stale_index_or_page(self):
+        for path in ('bloggers.json', 'blogger/x/all/page-1.json'):
+            with self.subTest(path=path):
+                data = self.blogger_fixture(1, 0)
+                data['id-index.json'] = {'x:00': path}
+                data[path] = dict(data[path], blogger_revision='stale')
+                self.use_blogger_fixture(data)
+                # 直接打开新文档，不沿用上一子用例已经载入的 id-index。
+                self.page.goto('about:blank')
+                with self.page.expect_request(f'**/data/{path}*'):
+                    self.open('#/item/x%3A00')
+                self.page.wait_for_function("document.querySelector('#articleView').classList.contains('on') || document.querySelector('#toast').textContent.includes('不在')")
+                self.assertEqual(self.page.locator('#articleView.on').count(), 0, path)
+                self.assertEqual(urlsplit(self.page.url).fragment, '')
+
+    def test_blogger_older_refresh_response_cannot_reauthorize_old_page(self):
+        old = self.blogger_fixture(39, 0)
+        current = self.blogger_fixture(40, 0, built_at=(NOW + timedelta(hours=1)).isoformat())
+        held, requests = [], []
+        data = dict(old)
+
+        def hold_first_refresh(route, key):
+            if key == 'meta.json' and requests and not held:
+                held.append(route)
+                return True
+            return False
+
+        self.use_blogger_fixture(data, hold_first_refresh)
+        self.open_blogger()
+        self.page.locator('#bloggerList .tweet').first.wait_for()
+        requests.append(True)
+        with self.page.expect_request('**/data/meta.json*'):
+            self.page.locator('#btnRefresh').click()
+        data.update(current)
+        self.page.locator('#btnRefresh').click()
+        self.page.wait_for_function("document.querySelector('#toast').textContent.includes('有新内容')")
+        self.page.locator('#bloggerList .tweet').first.wait_for()
+        with self.page.expect_response('**/data/meta.json*'):
+            held[0].fulfill(json=old['meta.json'])
+        self.page.wait_for_load_state('networkidle')
+        # B 首页后端返回了 A 末页。若旧刷新覆盖 meta，这一页就会错误地被接受。
+        path = 'blogger/x/all/page-2.json'
+        data[path] = old[path]
+        self.page.locator('#view-blogger .sub').evaluate('e => e.scrollTop = e.scrollHeight')
+        self.page.locator('#blFoot .load-err, #blFoot [data-end=all]').wait_for()
+        self.assertNotIn('x:38', self.blogger_ids(), 'B 首页后不得出现 A 的末页')
+        self.assertTrue(self.page.locator('#blFoot [data-bl-refresh]').is_visible())
+        data[path] = current[path]
+        self.page.locator('#blFoot [data-bl-refresh]').click()
+        self.assertTrue(self.scroll_to_end('#view-blogger .sub'))
+        self.assertEqual(self.blogger_ids(), [f'x:{n:02}' for n in range(40)])
+
+    def test_blogger_vanished_page_recovers_from_footer(self):
+        data = self.blogger_fixture(39, 0)
+        current = self.blogger_fixture(0, 3, built_at=(NOW + timedelta(hours=1)).isoformat())
+        missing = []
+
+        def switch_at_last_page(route, key):
+            if key == 'blogger/x/all/page-2.json':
+                missing.append(key)
+                data.clear()
+                data.update(current)
+                route.fulfill(status=404, body='gone')
+                return True
+            return False
+
+        self.use_blogger_fixture(data, switch_at_last_page)
+        self.open_blogger()
+        self.page.locator('#bloggerList .tweet').first.wait_for()
+        self.page.locator('#view-blogger .sub').evaluate('e => e.scrollTop = e.scrollHeight')
+        foot = self.page.locator('#blFoot')
+        foot.locator('.load-err').wait_for()
+        self.assertEqual(foot.locator('[data-bl-refresh]').count(), 1, '消失的页不能只有再试一次')
+        foot.locator('[data-bl-refresh]').click()
+        foot.locator('[data-end=all]').wait_for()
+        self.assertEqual(missing, ['blogger/x/all/page-2.json'])
+        self.assertEqual(self.blogger_ids(), ['weibo:00', 'weibo:01', 'weibo:02'])
+
+    def test_blogger_submillisecond_order_across_platforms(self):
+        data = self.blogger_fixture(1, 1)
+        for row in data['bloggers.json']['items']:
+            row['published_at'] = ('2026-11-15T10:00:00.000002+08:00' if row['id'] == 'x:00'
+                                   else '2026-11-15T02:00:00.000001Z')
+        self.use_blogger_fixture(data)
+        self.open_blogger()
+        self.page.locator('#blFoot [data-end=all]').wait_for()
+        self.assertEqual(self.blogger_ids(), ['x:00', 'weibo:00'])
+
+    def test_blogger_filter_change_cancels_slow_article_lookup(self):
+        held = []
+
+        def hold(route, key):
+            if key == 'id-index.json' and not held:
+                held.append(route)
+                return True
+            return False
+
+        self.use_blogger_fixture({}, hold)
+        self.open_blogger()
+        self.page.locator('#bloggerList .tweet').first.wait_for()
+        with self.page.expect_request('**/data/id-index.json*'):
+            self.page.evaluate("location.hash = '#/item/tnews365%3A69'")
+        self.page.locator('#platChips [data-plat=weibo]').click()
+        self.assertEqual(self.page.locator('#platChips .on').get_attribute('data-plat'), 'weibo')
+        held[0].fallback()
+        self.page.wait_for_timeout(400)
+        self.assertEqual(self.page.locator('#articleView.on').count(), 0, '换了筛选后，慢回来的正文不再打开')
+        self.assertEqual(urlsplit(self.page.url).fragment, '')
+        self.assertEqual(self.page.locator('#platChips .on').get_attribute('data-plat'), 'weibo')
+
+    def test_blogger_empty_all_has_no_post_page_requests(self):
+        data = self.blogger_fixture(x_count=0, weibo_count=0)
+        self.use_blogger_fixture(data)
+        pages = []
+        self.page.on('request', lambda r: pages.append(r.url) if '/data/blogger/' in r.url else None)
+        self.open_blogger()
+        self.page.locator('#bloggerList .empty-plat').wait_for()
+        self.assertEqual(self.blogger_ids(), [])
+        self.assertEqual(pages, [])
+
+    def test_blogger_empty_platform_filter_excludes_other_platform_cards(self):
+        self.open()
+        self.page.locator('.tabbar [data-view=blogger]').click()
+        cards = self.page.locator('#bloggerList .tweet')
+        cards.first.wait_for()
+        self.page.locator('#platChips [data-plat=weibo]').click()
+        self.page.locator('#bloggerList .empty-plat').get_by_text('微博', exact=False).wait_for()
+        self.assertEqual(cards.count(), 0)
+
+    def test_blogger_name_opens_person_feed_instead_of_article(self):
+        self.open()
+        self.page.locator('.tabbar [data-view=blogger]').click()
+        cards = self.page.locator('#bloggerList .tweet')
+        cards.first.wait_for()
+        self.page.locator('#bloggerList .tweet[data-id="x-dotey:0"] .bl-name').click()
+        self.page.locator('#blProfile:not([hidden])').wait_for()
+        self.page.locator('#bloggerList [data-end=all]').wait_for()
+        self.assertEqual(urlsplit(self.page.url).fragment, '')
+        self.assertEqual(cards.evaluate_all('es => es.map(e => e.dataset.id)'), ['x-dotey:0'])
+
     def test_blogger_tab_real_empty_states(self):
         self.open()
         self.page.locator('.tabbar [data-view=blogger]').click()
-        self.page.wait_for_selector('#bloggerList .tweet')
-        self.assertEqual(self.page.locator('#bloggerList .bl-seg[data-plat=x] .tweet').count(), 2)
+        self.page.wait_for_selector('#bloggerList [data-end=all]')
+        self.assertEqual(self.page.locator('#bloggerList .tweet').count(), 2)
         self.page.locator('#platChips [data-plat=weibo]').click()
-        self.page.wait_for_timeout(300)
-        self.assertIn('还没有成功抓取过', self.page.locator('#bloggerList .bl-seg[data-plat=weibo]').inner_text())
+        self.assertIn('还没有成功抓取过', self.page.locator('#bloggerList .empty-plat').inner_text())
         self.assertEqual(self.page.locator('#platChips .on').get_attribute('data-plat'), 'weibo')
-        self.page.locator('#platChips [data-plat=zhihu]').click()
-        self.assertIn('知乎', self.page.locator('#bloggerList .bl-seg[data-plat=zhihu]').inner_text())
-
-    def test_blogger_one_feed_chains_platforms_to_end(self):
-        self.open()
-        self.page.locator('.tabbar [data-view=blogger]').click()
-        self.page.wait_for_selector('#bloggerList .tweet')
-        order = self.page.locator('#platChips [data-plat]').evaluate_all('es => es.map(e => e.dataset.plat)')
-        self.assertTrue(self.scroll_to_end('#view-blogger .sub'))
-        segs = self.page.locator('#bloggerList .bl-seg').evaluate_all('es => es.map(e => [e.dataset.plat, e.hidden, e.querySelector(".bl-foot").innerText.trim()])')
-        self.assertEqual([x[0] for x in segs], order, '顺序同顶部图标从左到右')
-        self.assertTrue(all(not x[1] for x in segs), segs)
-        self.assertTrue(segs[0][2].endswith('下一个：' + self.page.locator(f'#platChips [data-plat="{order[1]}"]').get_attribute('aria-label')), segs[0])
-        self.assertTrue(segs[-1][2].endswith('内容已结束'), segs[-1])
-        self.assertEqual(self.page.locator('#bloggerList [data-end=all]').count(), 1)
-        self.assertEqual(self.page.locator('.see-more-bl, [data-see]').count(), 0)
-        # 点某个人：这个平台按人分段，从这个人开始，刷完接同平台下一个人
-        self.page.locator('#view-blogger .sub').evaluate('e => e.scrollTop = 0')
-        person = self.page.locator('#bloggerList .people[data-people=x] [data-person]:not([data-person=all])').first
-        handle = person.get_attribute('data-person')
-        person.click()
-        self.page.wait_for_timeout(400)
-        cur = self.page.locator('#bloggerList').get_attribute('data-cur')
-        self.assertEqual(self.page.locator(f'#bloggerList .bl-seg[data-seg="{cur}"]').get_attribute('data-handle'), handle)
+        self.assertEqual(self.page.locator('#platChips [data-plat=zhihu]').count(), 0)
 
     def test_v16_read_grey_font_sheets_and_no_red_ring(self):
         """2026-11-16 23:43 阿欢批 v16：读过变灰、详情字号可调、评论/分享底部半屏、博主 X 头像不加红圈"""
@@ -714,16 +1330,16 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.wait_for_selector('#app:not([aria-busy])')
         self.assertTrue(self.page.locator(f'.feed-row[data-id="{rid}"]').evaluate('e => e.classList.contains("read")'), '刷新后仍是已读')
         self.assertEqual(self.page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--rfs').trim()"), '22px', '字号记住')
-        # 博主：选中的 X 头像不加红圈
+        # 博主：选中的 X 平台图标不加红圈
         self.page.locator('.tabbar [data-view=blogger]').click()
-        on = self.page.locator('#platChips .avb.on .avc')
-        on.wait_for()
+        x = self.page.locator('#platChips [data-plat=x]')
+        x.click()
+        on = x.locator('.plat-ico')
         ring = on.evaluate("e => { const s = getComputedStyle(e); return [s.borderTopWidth, s.borderTopStyle, s.outlineStyle, s.boxShadow]; }")
         self.assertTrue(ring[0] == '0px' or ring[1] == 'none', ring)
         self.assertEqual(ring[2], 'none', ring)
         self.assertNotIn('rgb(2', ring[3].replace('rgba(0, 0, 0', ''), ring)
-        self.assertEqual(self.page.locator('#view-blogger .avall').inner_text().strip(), '全部')
-        self.assertRegex(self.page.locator('#bloggerList .dayh').first.inner_text().replace('\n', ' '), r'^\d+\.\d+ (今天|昨天|周.) 更新 \d+ 篇$')
+        self.assertEqual(self.page.locator('#platChips [data-plat=all]').inner_text().strip(), '全部')
 
     def video_state(self):
         return self.page.evaluate('''() => { const v = document.querySelector('#zoomStage video'); if (!v) return null;
@@ -734,16 +1350,16 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.locator('.tabbar [data-view=blogger]').click()
         card = self.page.locator('#bloggerList .tweet[data-id="x-dotey:0"]')
         card.wait_for()
-        # v16：列表行只放一张缩略图（在右边）+「3 项」，全部图片和视频在全屏查看器里
-        thumb = card.locator('.thumb')
-        self.assertEqual(thumb.locator('.cell').count(), 1)
-        self.assertIn('3 项', thumb.inner_text())
-        self.assertLess(card.locator('.b-main').bounding_box()['x'], thumb.bounding_box()['x'], '缩略图在右边')
-        thumb.tap()
-        self.page.wait_for_selector('#zoomView.on #zoomStage > img')
-        self.assertEqual(self.page.inner_text('#zoomCount'), '1 / 3')
-        self.page.locator('#zoomNext').tap()
+        # 样页 A：帖内正文下面多格显示全部媒体（最多 4 格），点哪格从哪格开始看，不进正文
+        grid = card.locator('.media-grid')
+        self.assertEqual(card.locator('.thumb').count(), 0)
+        self.assertEqual(grid.locator('.cell').count(), 3)
+        self.assertLess(card.locator('.b-text').bounding_box()['y'], grid.bounding_box()['y'], '媒体在正文下面')
+        self.assertLessEqual(grid.bounding_box()['width'], 300, '多格紧凑')
+        grid.locator('.cell').nth(1).tap()
         self.page.wait_for_selector('#zoomView.on #zoomStage video')
+        self.assertEqual(urlsplit(self.page.url).fragment, '', '点媒体不进正文')
+        self.assertEqual(self.page.locator('#articleView.on').count(), 0)
         self.assertEqual(self.page.get_attribute('#zoomView', 'aria-label'), '查看图片和视频')
         self.assertEqual(self.page.inner_text('#zoomCount'), '2 / 3')
         s = self.video_state()
@@ -770,7 +1386,7 @@ class SiteBrowserTests(unittest.TestCase):
         self.page.locator('#zoomClose').tap()
         self.assertFalse(self.page.is_visible('#zoomView'))
         # 坏地址：保留封面，给原帖链接
-        bad = self.page.locator('#bloggerList .tweet[data-id="x-simonw:1"] .thumb .cell.is-vid')
+        bad = self.page.locator('#bloggerList .tweet[data-id="x-simonw:1"] .media-grid .cell.is-vid')
         bad.scroll_into_view_if_needed()
         bad.tap()
         self.page.wait_for_selector('#zoomStage .zoom-fail a')

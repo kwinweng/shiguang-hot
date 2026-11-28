@@ -1,10 +1,15 @@
-"""Collect in a detached checkout, publish a validated fast-forward pair once, and
-follow main by trial-then-switch: a new main is first built in an isolated trial
-after this round's real publish; only a later round switches the checkout to it."""
+"""Collect in a detached checkout and publish a validated, fast-forward pair once.
+
+Remote main may move on by normal merges (fast-forward, gh-pages and tg.db untouched); the
+data commit is then built on the new main with the running code. After a successful publish,
+newer code on main is built once in an isolated trial (copies of this round's data, credentials
+disabled, never pushed). Only a passing trial is recorded as the candidate, and only the next
+round switches the checkout to it. Anything else stops with HALT, as before."""
 import argparse
 from datetime import datetime, timezone
 import fcntl
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -23,28 +28,113 @@ REFS = ('refs/heads/main', 'refs/heads/gh-pages')
 SNAPSHOTS = ('refs/mac-publish/main', 'refs/mac-publish/gh-pages')
 PUBLIC_META = 'https://news.kwinweng.com/data/meta.json'
 META_PATH = 'rebang/data/meta.json'
+PUSH_TIMEOUT = 900
+SKIPPED = 75  # EX_TEMPFAIL: nothing published, nothing stopped, the next round retries
+SHA = re.compile(r'[0-9a-f]{40}')
+# `git push --porcelain` summaries that mean the push was refused before any ref moved.
+LEASE_REJECTED, ATOMIC_REJECTED = '[rejected] (stale info)', '[rejected] (atomic push failed)'
 TRIAL_TIMEOUT = 1200   # seconds for one whole trial build
 TRIAL_ATTEMPTS = 3     # trials per code version before waiting for different code
+
+
+class Skipped(Exception):
+    """Someone merged main normally during this round; publish again from the new main next round."""
 
 
 class TrialFailed(Exception):
     pass
 
 
-def write_json(path, value):
-    temp = path.with_name(path.name + '.next')
-    temp.write_text(json.dumps(value, indent=1) + '\n')
-    temp.replace(path)
+def write_atomic(path, text):
+    """Replace path in one step: a temporary file in the same directory, flushed, then renamed."""
+    fd, temp = tempfile.mkstemp(prefix=f'.{path.name}.', dir=path.parent)
+    try:
+        with os.fdopen(fd, 'w') as stream:
+            stream.write(text)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temp, path)
+    except BaseException:
+        if os.path.lexists(temp):
+            os.unlink(temp)
+        raise
+    directory = os.open(path.parent, os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
+def main_only_rejection(output, candidates):
+    """True only for the one retryable receipt, line for line: Git's `To <url>` header, exactly two
+    status lines (main refused client-side by its lease, gh-pages refused only as a consequence of
+    --atomic, each naming our exact candidate), then `Done`. Anything else (gh-pages stale, a
+    server-side refusal, a missing, extra, blank or truncated line) is False."""
+    lines = output.splitlines()
+    if len(lines) != 4 or not lines[0].startswith('To ') or lines[-1] != 'Done':
+        return False
+    status = {}
+    for line in lines[1:3]:
+        fields = line.split('\t')
+        if len(fields) != 3 or ':' not in fields[1]:
+            return False
+        source, destination = fields[1].rsplit(':', 1)
+        if destination in status:
+            return False
+        status[destination] = (fields[0], source, fields[2])
+    expected = {REFS[0]: ('!', candidates[0], LEASE_REJECTED), REFS[1]: ('!', candidates[1], ATOMIC_REJECTED)}
+    return status == expected
+
+
+CREDENTIALS = (('REBANG_WEIBO_COOKIE', 'weibo-cookie.txt', 'weibo'),
+               ('REBANG_WEREAD_SESSION', 'weread-session.json', 'weread'))
+
+
+def _load_private_file():
+    # Stdlib-only helper shared with the collectors, loaded by path so the rebang package is not imported.
+    spec = importlib.util.spec_from_file_location('rebang_private_file', ROOT / 'rebang/private_file.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+private_file = _load_private_file()
+
+
+def source_credentials(state, home=None):
+    """Pass the fixed owner-only files in <account home>/.config/rebang to the collectors by path, never by content.
+
+    The home comes from the user database (not HOME); environment overrides are ignored on purpose.
+    This is only a preflight: the collectors open the files again with the same checks on the same
+    descriptor they read from. Anything missing, shared, linked or symlinked anywhere on the way sets
+    the collector's environment variable to '' (explicitly disabled, never a fallback path), so that
+    collector reports "not configured" instead of reading any other file.
+    """
+    if home is None:
+        try:
+            home = private_file.account_home()
+        except (KeyError, OSError):
+            home = None
+    folder = Path(home) / '.config/rebang' if home else None
+    env, enabled = {}, []
+    for key, name, slot in CREDENTIALS:
+        path = folder / name if folder else None
+        if path is not None and private_file.check_private(path):
+            env[key] = str(path)
+            enabled.append(slot)
+        else:
+            env[key] = ''
+    return env, enabled
 
 
 def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
     """Return 'switched' when the checkout moved to a trialled candidate; the caller re-executes."""
-    # Do not inherit build overrides, Git ref/index overrides or source credentials.
+    # Do not inherit build overrides, Git ref/index overrides or source credential overrides.
     env = {key: os.environ[key] for key in ('PATH', 'HOME', 'TMPDIR', 'SSH_AUTH_SOCK') if key in os.environ}
     env.update(BOX_PYTHON=sys.executable, TZ='Asia/Shanghai', SITE_MODE='public', MAIL_DIGEST='0',
-               GIT_TERMINAL_PROMPT='0', GIT_SSH_COMMAND='ssh -o BatchMode=yes', GIT_OPTIONAL_LOCKS='0',
-               REBANG_WEIBO_COOKIE=str(state / 'no-source-credentials/weibo'),
-               REBANG_WEREAD_SESSION=str(state / 'no-source-credentials/weread'))
+               GIT_TERMINAL_PROMPT='0', GIT_SSH_COMMAND='ssh -o BatchMode=yes', GIT_OPTIONAL_LOCKS='0')
+    # Until collection starts, the collectors' credential variables are explicitly disabled ('').
+    env.update({key: '' for key, _, _ in CREDENTIALS})
 
     def run(*args, capture=False, stdout=None, input=None, extra_env=None):
         result = subprocess.run(args, cwd=ROOT, env=dict(env, **(extra_env or {})), check=True,
@@ -55,16 +145,24 @@ def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
     def git(*args, **kwargs):
         return run('git', *args, capture=True, **kwargs).decode().strip()
 
-    def ok(*args):
-        return subprocess.run(['git', *args], cwd=ROOT, env=env, stdout=subprocess.DEVNULL,
-                              stderr=subprocess.DEVNULL).returncode == 0
-
     def is_ancestor(old, new):
-        return ok('merge-base', '--is-ancestor', old, new)
+        found = subprocess.run(['git', 'merge-base', '--is-ancestor', old, new], cwd=ROOT, env=env,
+                               pass_fds=(lock,), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if found.returncode not in (0, 1):
+            raise RuntimeError(f'cannot compare {old} and {new}')
+        return found.returncode == 0
+
+    def database_entry(commit):
+        # Mode, type and blob of tg.db in the tree; empty if missing.
+        return git('ls-tree', '--full-tree', commit, '--', 'tg.db')
+
+    def quiet_ok(*args):
+        return subprocess.run(['git', *args], cwd=ROOT, env=env, pass_fds=(lock,), stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL).returncode == 0
 
     def same_code(one, other):
         # Data commits only replace tg.db, so everything else is the code version.
-        return ok('diff', '--quiet', one, other, '--', '.', ':(exclude)tg.db')
+        return quiet_ok('diff', '--quiet', one, other, '--', '.', ':(exclude)tg.db')
 
     halt = state / 'HALT'
     if halt.exists():
@@ -73,6 +171,8 @@ def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
     def halt_now(reason):
         with halt.open('x') as stream:
             stream.write(reason + '\n')
+            stream.flush()
+            os.fsync(stream.fileno())
         raise RuntimeError(f'{reason}; stopped: {halt}')
 
     database = ROOT / 'tg.db'
@@ -98,7 +198,7 @@ def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
     if switch.exists():
         finish_switch()
 
-    if not re.fullmatch(r'[0-9a-f]{40}', code_sha):
+    if not SHA.fullmatch(code_sha):
         raise RuntimeError('--code-sha must be a full lowercase commit hash')
     head = git('rev-parse', 'HEAD')
     if (git('branch', '--show-current') or not is_ancestor(code_sha, head)
@@ -107,46 +207,114 @@ def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
             or git('ls-files', '--others', '--exclude-standard')):
         raise RuntimeError('use a dedicated clean detached checkout at --code-sha or a descendant it followed '
                            '(only unstaged tg.db may differ)')
-    if (state / 'no-source-credentials').exists():
-        raise RuntimeError('the reserved no-source-credentials path must not exist')
     origin = git('remote', 'get-url', 'origin')
     if git('remote', 'get-url', '--push', '--all', 'origin').splitlines() != [origin]:
         raise RuntimeError('origin must have exactly one push URL, identical to the fetch URL')
 
     def fetch():
-        # Snapshots are private scratch refs: force them so a rewritten main reaches the HALT check below.
-        git('fetch', '--no-tags', '--refmap=', 'origin',
-            *(f'+{source}:{dest}' for source, dest in zip(REFS, SNAPSHOTS)))
+        # Snapshots are private scratch refs; force them so a rewritten main reaches the checks below.
+        # stderr is kept (in the C locale) so a missing remote branch can be told from a network error.
+        fetched = subprocess.run(['git', 'fetch', '--no-tags', '--refmap=', 'origin',
+                                  *(f'+{source}:{dest}' for source, dest in zip(REFS, SNAPSHOTS))],
+                                 cwd=ROOT, env=dict(env, LC_ALL='C'), pass_fds=(lock,),
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        sys.stderr.write(fetched.stderr.decode(errors='replace'))
+        sys.stderr.flush()
+        if fetched.returncode:
+            raise subprocess.CalledProcessError(fetched.returncode, fetched.args, fetched.stdout, fetched.stderr)
         return tuple(git('rev-parse', f'{ref}^{{commit}}') for ref in SNAPSHOTS)
 
+    def ls_remote():
+        """The two remote refs as advertised right now (missing refs are simply absent)."""
+        listed = git('ls-remote', '--refs', 'origin', *REFS, extra_env={'LC_ALL': 'C'})
+        return dict(line.split('\t')[::-1] for line in listed.splitlines())
+
     def normal_advance(old_main, new_main):
-        """Someone else fast-forwarded main (a merge, docs included) without touching tg.db or our code's history."""
-        def database_blob(commit):
-            found = subprocess.run(['git', 'rev-parse', '--verify', '--quiet', f'{commit}:tg.db'], cwd=ROOT, env=env,
-                                   stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-            return found.stdout.strip() if found.returncode == 0 else None
+        """Someone else fast-forwarded main (e.g. a merge) without touching tg.db's mode, type or blob."""
+        old_entry = database_entry(old_main)
+        return (new_main != old_main and is_ancestor(old_main, new_main)
+                and old_entry != '' and database_entry(new_main) == old_entry)
 
-        return (new_main != old_main and is_ancestor(old_main, new_main) and is_ancestor(head, new_main)
-                and database_blob(old_main) is not None and database_blob(old_main) == database_blob(new_main))
+    def only_main_advanced(main_parent, pages_parent, main_seen=None):
+        """Re-read the remote: gh-pages exactly as we built on, main only normally ahead of it.
+        main_seen is a main value an earlier check already observed; it must sit on the same
+        normal path (main_parent -> main_seen -> now). A re-read never overrides an earlier anomaly:
+        callers only get here after gh-pages was seen at its baseline in every observation."""
+        try:
+            main_now, pages_now = fetch()
+            if pages_now != pages_parent:
+                return False
+            if main_seen is None:
+                return normal_advance(main_parent, main_now)
+            return normal_advance(main_parent, main_seen) and (
+                main_now == main_seen or normal_advance(main_seen, main_now))
+        except (OSError, RuntimeError, subprocess.SubprocessError):
+            return False
 
-    observed = fetch()
-    main_parent, pages_parent = observed
     record = state / 'refs.json'
 
     def remember(refs):
-        temp = state / 'refs.next'
-        temp.write_text(json.dumps(dict(zip(REFS, refs))) + '\n')
-        temp.replace(record)
+        write_atomic(record, json.dumps(dict(zip(REFS, refs))) + '\n')
 
-    if record.exists():
-        recorded = json.loads(record.read_text())
+    def is_commit(sha):
+        found = subprocess.run(['git', 'rev-parse', '--verify', '--quiet', f'{sha}^{{commit}}'], cwd=ROOT,
+                               env=env, pass_fds=(lock,), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        return found.returncode == 0 and found.stdout.decode().strip() == sha
+
+    # Validate the checkpoint before talking to the remote: a failed fetch is judged against it.
+    recorded = None
+    if os.path.lexists(record):
+        try:
+            recorded = json.loads(record.read_text())
+            if (not isinstance(recorded, dict) or set(recorded) != set(REFS)
+                    or not all(isinstance(value, str) and SHA.fullmatch(value) for value in recorded.values())):
+                raise ValueError('unexpected structure')
+            invalid = [value for value in recorded.values() if not is_commit(value)]
+            if invalid:
+                raise ValueError(f'not a usable local commit: {invalid}')
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            halt_now(f'local checkpoint {record} is unreadable ({error}); preserved for inspection')
+
+    try:
+        observed = fetch()
+    except subprocess.CalledProcessError as error:
+        # Conservative: only "the remote cannot be reached at all, and nothing odd was seen" retries
+        # without HALT. A missing branch reported by fetch stops at once; a later re-read never
+        # overrides it. A reachable remote after a failed fetch also stops, whatever it shows.
+        if "couldn't find remote ref" in (error.stderr or b'').decode(errors='replace'):
+            halt_now("remote lacks a branch (fetch: couldn't find remote ref); "
+                     'reconcile the remote branches before resuming')
+        listed = subprocess.run(['git', 'ls-remote', '--refs', 'origin', *REFS], cwd=ROOT,
+                                env=dict(env, LC_ALL='C'), pass_fds=(lock,), stdout=subprocess.PIPE)
+        if listed.returncode:
+            raise RuntimeError(f'remote unreachable (fetch exit {error.returncode}, ls-remote exit '
+                               f'{listed.returncode}); no HALT, the next round retries') from None
+        advertised = {}
+        for line in listed.stdout.decode(errors='replace').splitlines():
+            fields = line.split('\t')
+            if len(fields) != 2 or not SHA.fullmatch(fields[0]) or fields[1] not in REFS or fields[1] in advertised:
+                halt_now(f'unexpected ls-remote line {line!r} after a failed fetch')
+            advertised[fields[1]] = fields[0]
+        missing = [ref for ref in REFS if ref not in advertised]
+        if missing:
+            halt_now(f'remote is reachable but lacks {missing}; reconcile the remote branches before resuming')
+        if recorded is not None and advertised[REFS[1]] != recorded[REFS[1]]:
+            halt_now(f'gh-pages on the remote ({advertised[REFS[1]]}) differs from the checkpoint '
+                     f'({recorded[REFS[1]]}) after a failed fetch')
+        halt_now(f'fetch failed (exit {error.returncode}) although the remote is reachable '
+                 f'(advertised={advertised}); cause unknown, reconcile before resuming')
+    main_parent, pages_parent = observed
+
+    if recorded is not None:
         if recorded != dict(zip(REFS, observed)):
-            if recorded.get(REFS[1]) == pages_parent and normal_advance(recorded.get(REFS[0], ''), main_parent):
-                print(f'follow: main advanced normally {recorded[REFS[0]]}..{main_parent}', flush=True)
+            if recorded[REFS[1]] == pages_parent and normal_advance(recorded[REFS[0]], main_parent):
+                print(f'main advanced normally {recorded[REFS[0]]}..{main_parent}; '
+                      f'publishing on it with running code {head}', flush=True)
             else:
-                halt_now(f'remote refs changed since the last local checkpoint: {observed}')
-    elif not is_ancestor(head, main_parent):
-        raise RuntimeError('remote main must contain the checked-out code before the first checkpoint')
+                halt_now(f'remote refs changed since the last local checkpoint: recorded={recorded}, '
+                         f'observed={observed}')
+    if not is_ancestor(head, main_parent):
+        raise RuntimeError(f'remote main must contain the checked-out code {head}; refusing without writing checkpoints')
 
     def check_database():
         if database.is_symlink() or not database.is_file() or any(
@@ -154,13 +322,13 @@ def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
             raise RuntimeError('tg.db must be a regular file with no SQLite journal/WAL/SHM; preserve it for inspection')
 
     def record_trial(**fields):
-        write_json(trial_file, dict(fields, at=datetime.now(timezone.utc).isoformat()))
+        write_atomic(trial_file, json.dumps(dict(fields, at=datetime.now(timezone.utc).isoformat()), indent=1) + '\n')
 
     def switch_code(target):
         # Git refuses to switch over a modified tg.db, so the local database waits beside the
         # checkout; switch.json lets the next start put it back after any interruption.
         check_database()
-        write_json(switch, {'from': head, 'to': target})
+        write_atomic(switch, json.dumps({'from': head, 'to': target}) + '\n')
         os.replace(database, aside)
         try:
             git('-c', 'core.hooksPath=/dev/null', 'checkout', '--quiet', '--detach', target)
@@ -182,6 +350,8 @@ def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
         repo = area / 'repo'
         shutil.rmtree(area, ignore_errors=True)
         area.mkdir()
+        # The trial never logs in anywhere: source credentials stay explicitly disabled.
+        trial_env = dict(env, **{key: '' for key, _, _ in CREDENTIALS})
         # launchd stops a job with SIGTERM; turn it into an exception so the trial group is killed.
         previous = signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
         try:
@@ -193,7 +363,7 @@ def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
                     log.write(f'== {" ".join(map(str, args))}\n'.encode())
                     log.flush()
                     # Own session and no lock fd: a stuck trial can be killed whole and never holds the lock.
-                    process = subprocess.Popen(args, cwd=cwd, env=env, stdin=subprocess.DEVNULL,
+                    process = subprocess.Popen(args, cwd=cwd, env=trial_env, stdin=subprocess.DEVNULL,
                                                stdout=subprocess.PIPE if capture else log, stderr=log,
                                                start_new_session=True)
                     try:
@@ -243,10 +413,13 @@ def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
 
     def follow(target, baseline, timeout):
         """Trial main's newer code; success only records a candidate that the next round switches to."""
-        last = json.loads(trial_file.read_text()) if trial_file.exists() else {}
+        try:
+            last = json.loads(trial_file.read_text()) if trial_file.exists() else {}
+        except ValueError:
+            last = {}
         attempts = 1
-        if (not last.get('ok') and last.get('sha') and ok('cat-file', '-e', f'{last["sha"]}^{{commit}}')
-                and same_code(last['sha'], target)):
+        if (not last.get('ok') and isinstance(last.get('sha'), str) and SHA.fullmatch(last['sha'])
+                and quiet_ok('cat-file', '-e', f'{last["sha"]}^{{commit}}') and same_code(last['sha'], target)):
             attempts = last.get('attempts', TRIAL_ATTEMPTS) + 1
             if attempts > TRIAL_ATTEMPTS:
                 print(f'follow: keeping {head}; trials of {target} code failed {TRIAL_ATTEMPTS} times, '
@@ -262,17 +435,22 @@ def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
         except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
             reason = f'{type(error).__name__}: {error}'
         else:
-            write_json(candidate_file, {'sha': target, 'base': head})
+            write_atomic(candidate_file, json.dumps({'sha': target, 'base': head}) + '\n')
             record_trial(sha=target, base=head, ok=True, attempts=attempts, reason='')
             print(f'follow: trial passed for {target}; the next round switches to it', flush=True)
             return
         record_trial(sha=target, base=head, ok=False, attempts=attempts, reason=reason)
         print(f'follow: trial FAILED for {target}; keeping {head} and publishing as usual: {reason}', flush=True)
 
-    # One switch per start: a restarted run publishes with what it has.
+    # One switch per start: a restarted run publishes with what it has. Switching only happens
+    # after the checkpoint checks above passed, so HALT conditions are never skipped by a switch.
     if candidate_file.exists() and not os.environ.get('MAC_PUBLISH_RESTARTED'):
-        target = json.loads(candidate_file.read_text())['sha']
-        if target != head and is_ancestor(head, target) and is_ancestor(target, main_parent):
+        try:
+            target = json.loads(candidate_file.read_text())['sha']
+        except (ValueError, KeyError, TypeError):
+            target = ''
+        if (isinstance(target, str) and SHA.fullmatch(target) and target != head and is_commit(target)
+                and is_ancestor(head, target) and is_ancestor(target, main_parent)):
             return switch_code(target)
         print(f'follow: dropped candidate {target}; it is the running code or no longer between it and main',
               flush=True)
@@ -281,7 +459,7 @@ def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
     check_database()
     with tempfile.TemporaryDirectory(prefix='cycle-', dir=state) as name:
         work = Path(name)
-        if not record.exists():
+        if not os.path.lexists(record):
             current_blob = git('hash-object', '--no-filters', str(database))
             main_blob = git('rev-parse', f'{main_parent}:tg.db')
             if current_blob != main_blob:
@@ -300,6 +478,10 @@ def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
                 raise RuntimeError('public data/meta.json differs from the Pages parent; cannot use it as the receiver baseline')
             print(f'public_baseline_meta_sha256={hashlib.sha256(actual).hexdigest()}', flush=True)
 
+        credentials, enabled = source_credentials(state)
+        env.update(credentials)
+        # Local preflight only: the collectors re-check when they open, and the site shows what was read.
+        print(f'source_credentials={",".join(enabled) or "none"}', flush=True)
         run(sys.executable, 'pipeline.py')
         meta = ROOT / 'site-v11/data/meta.json'
         previous = meta.stat() if meta.is_file() else None
@@ -329,7 +511,11 @@ def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
         changes = git('diff-tree', '--no-commit-id', '--name-only', '-r', main_parent, data_tree)
         if changes not in ('', 'tg.db'):
             raise RuntimeError('data tree changes files other than tg.db')
-        main_next = git('commit-tree', data_tree, '-p', main_parent, '-m', 'Refresh public collection data') if changes else main_parent
+        # Always a new data commit, empty when tg.db is unchanged: then main is a real update too,
+        # so the server checks both old values inside one atomic transaction (an unchanged ref
+        # would not be sent at all and could move unnoticed). The checkpoint records this commit,
+        # which is how the next round recognises it as ours, empty or not.
+        main_next = git('commit-tree', data_tree, '-p', main_parent, '-m', 'Refresh public collection data')
 
         output = run('sh', 'tools/publish_pages.sh', '--dry-run', '--already-built', capture=True).decode()
         print(output, end='', flush=True)
@@ -355,34 +541,44 @@ def run_cycle(code_sha, state, lock, trial_timeout=TRIAL_TIMEOUT):
             raise RuntimeError('archive build metadata differs from this cycle')
 
         upcoming = (main_next, pages_next)
-        skip = 'main advanced normally during this round; nothing was published, the next round builds on it'
-
-        def only_main_advanced():
-            # Our atomic pair never landed if gh-pages is still the parent; main may only have
-            # moved by a normal merge on top of the parent we built on.
-            main_now, pages_now = fetch()
-            return pages_now == pages_parent and normal_advance(main_parent, main_now)
-
-        # Normal Git push detects changes after its own advertisement; this also
-        # catches rewinds or unrelated writes already visible before that push.
-        advertised = dict(line.split('\t')[::-1] for line in git('ls-remote', '--refs', 'origin', *REFS).splitlines())
+        if not all(new != old and is_ancestor(old, new) for old, new in zip(observed, upcoming)):
+            raise RuntimeError('candidates are not new fast-forwards of the observed refs')
+        skip = (f'main advanced normally during this round; nothing published, no HALT, checkpoint unchanged; '
+                f'the next round builds on the new main. Built on {observed}')
+        # Catch rewinds or unrelated writes already visible before the push. Skipping needs gh-pages
+        # at its baseline here and again on re-read, and main on one normal path through both reads.
+        advertised = ls_remote()
         if advertised != dict(zip(REFS, observed)):
-            if only_main_advanced():
-                raise RuntimeError(skip)
-            halt_now(f'remote refs moved during collection; observed={observed}, candidate={upcoming}; no push attempted')
-        refspecs = [f'{new}:{ref}' for ref, old, new in zip(REFS, observed, upcoming) if new != old]
+            if (set(advertised) == set(REFS) and advertised[REFS[1]] == pages_parent
+                    and only_main_advanced(main_parent, pages_parent, advertised[REFS[0]])):
+                raise Skipped(skip)
+            halt_now(f'remote refs moved during collection; observed={observed}, advertised={advertised}, '
+                     f'candidate={upcoming}; no push attempted')
+        # One atomic push with two real updates, each leased to the exact old value it was built on:
+        # the client refuses a ref that already moved, and the server checks both old values in
+        # one transaction, so a later move of either ref (including a rewind) refuses the whole push.
+        leases = [f'--force-with-lease={ref}:{old}' for ref, old in zip(REFS, observed)]
+        refspecs = [f'{new}:{ref}' for ref, new in zip(REFS, upcoming)]
         # Leave this marker on rejection, ambiguous network result or interruption.
         with halt.open('x') as stream:
             stream.write(f'Push started; reconcile before resuming. Parents: {observed}; candidates: {upcoming}\n')
-        try:
-            run('git', 'push', '--atomic', '--no-follow-tags', 'origin', *refspecs)
-        except subprocess.CalledProcessError:
-            # A merge between ls-remote and push is a clean non-fast-forward rejection. Anything
-            # else, including a failed re-fetch, keeps HALT.
-            if only_main_advanced():
+            stream.flush()
+            os.fsync(stream.fileno())
+        pushed = subprocess.run(['git', 'push', '--atomic', '--porcelain', '--no-follow-tags', *leases,
+                                 'origin', *refspecs], cwd=ROOT, env=dict(env, LC_ALL='C'), pass_fds=(lock,),
+                                stdout=subprocess.PIPE, timeout=PUSH_TIMEOUT)
+        output = pushed.stdout.decode(errors='replace')
+        print(output, end='', flush=True)
+        if pushed.returncode:
+            # Only main refused by its lease (gh-pages merely carried along by --atomic), then a
+            # re-read showing gh-pages still at baseline and a normal merge on main, is safe to
+            # retry. HALT stays for anything else: gh-pages stale, server-side refusal (including
+            # `atomic transaction failed`), disconnect, timeout, hook, truncated or unclear receipt.
+            if (pushed.returncode == 1 and main_only_rejection(output, upcoming)
+                    and only_main_advanced(main_parent, pages_parent)):
                 halt.unlink()
-                raise RuntimeError(skip) from None
-            raise
+                raise Skipped(skip)
+            raise RuntimeError(f'push failed (exit {pushed.returncode}); HALT kept: {halt}')
         remember(upcoming)
         halt.unlink()
         print(f'published main={main_next} gh-pages={pages_next} database_sha256={db_sha}', flush=True)
@@ -416,7 +612,10 @@ def main():
             sys.stdout.flush()
             os.execve('/bin/sh', ['/bin/sh', str(ROOT / 'tools/mac_publish.sh'), *sys.argv[1:]],
                       dict(os.environ, MAC_PUBLISH_RESTARTED='1'))
-    except (OSError, RuntimeError, ValueError, KeyError, subprocess.CalledProcessError) as error:
+    except Skipped as skipped:
+        print(f'Mac publish skipped: {skipped}', file=sys.stderr)
+        return SKIPPED
+    except (OSError, RuntimeError, ValueError, KeyError, subprocess.SubprocessError) as error:
         print(f'Mac publish failed: {error}', file=sys.stderr)
         return 1
     return 0

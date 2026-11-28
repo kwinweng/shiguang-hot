@@ -6,17 +6,17 @@ const L = require('../web-v11/lib.js');
 const base = {id: 'tnews365:1', kind: 'news', channel: 'current', source_id: 'tnews365', source_name: '竹新社',
   title: '标题', summary: '摘要', url: 'https://t.me/tnews365/1', published_at: '2026-11-15T11:00:00Z', lang: 'zh', translated: false};
 
-test('无图卡片：标题 + 3 行摘要 + 来源时间；没有摘要如实说明', () => {
+test('无图卡片：标题 + 摘要 + 来源时间；没有摘要如实说明', () => {
   const html = L.feedRowHTML({...base, image: null});
   assert.match(html, /class="feed-row noimg"/);
   assert.match(html, /<h3>标题<\/h3><p class="sum">摘要<\/p>/);
-  assert.match(html, /竹新社<\/span><span>11月15日 19:00<\/span>/);
+  assert.match(html, /竹新社<\/span><span class="when">11月15日 19:00<\/span>/);
   assert.match(L.feedRowHTML({...base, summary: ''}), /<p class="sum none">这条没有正文摘要。<\/p>/);
   assert.doesNotMatch(L.feedRowHTML({...base, summary: '', image: {url: 'https://i/a.jpg', width: 200, height: 100}}), /这条没有正文摘要/);
 });
 
-test('有图卡片左图右文；有地址就显示，不再用短边限制挡住列表图', () => {
-  assert.match(L.feedRowHTML({...base, image: {url: 'https://i/a.jpg', width: 1200, height: 675}}), /class="feed-row" .*<div class="thumb"><img src="https:\/\/i\/a.jpg"/);
+test('有图卡片：大图在上、小图在右；有地址就显示，不再用短边限制挡住列表图', () => {
+  assert.match(L.feedRowHTML({...base, image: {url: 'https://i/a.jpg', width: 1200, height: 675}}), /class="feed-row cover" .*<div class="thumb" style="aspect-ratio:1200\/675"><img src="https:\/\/i\/a.jpg"/);
   assert.match(L.feedRowHTML({...base, image: {url: 'https://i/a.jpg', width: 200, height: 100}}), /class="feed-row" .*<div class="thumb"><img src="https:\/\/i\/a.jpg"/);
   assert.doesNotMatch(L.feedRowHTML({...base, image: {url: 'https://i/a.jpg', width: 200, height: 100}}), /feed-row noimg/);
   assert.match(L.feedRowHTML({...base, image: {url: 'media/a.webp'}}), /<img src="media\/a.webp"/);
@@ -33,7 +33,7 @@ test('译文优先并标「机器翻译」，原文保留可展开', () => {
   assert.deepEqual([d.title, d.summary, d.translated, d.orig.title], ['你好', '世界', true, 'Hello']);
   assert.match(L.feedRowHTML(it), /<h3>你好<\/h3>.*<span class="tag mt-badge" title="机器翻译">译<\/span>/);
   const post = {...it, kind: 'post', blogger: {platform: 'x', handle: 'a', display_name: 'A', media: [], quote: null}};
-  assert.match(L.tweetCardHTML(post, true), /<h3 class="b-title">你好<\/h3>.*<span class="tag mt-badge" title="机器翻译">译<\/span>/);
+  assert.match(L.tweetCardHTML(post, true), /<h3 class="b-title">.*你好<\/a><\/h3>.*<span class="tag mt-badge" title="机器翻译">译<\/span>/s);
   const card = L.tweetCardHTML(post, false);
   assert.match(card, /<span class="t-badge">机器翻译<\/span><button type="button" class="orig-btn"/);
   assert.match(card, /<div class="orig" [^>]*>World<\/div>/);
@@ -239,9 +239,13 @@ test('v16：缩略图一律在右边（正文在前、图在后）', () => {
   const post = {...base, kind: 'post', title: '', blogger: {platform: 'x', handle: 'a', display_name: 'A', avatar: 'https://i/av.jpg',
     media: [{type: 'image', url: 'https://i/1.jpg'}, {type: 'image', url: 'https://i/2.jpg'}], quote: null}};
   const b = L.postRowHTML(post);
-  assert.ok(b.indexOf('class="b-main"') < b.indexOf('class="thumb"'));
+  // 样页 A：帖子媒体在正文下面多格显示，每格可直接点开对应那一张
+  assert.doesNotMatch(b, /class="thumb"/);
   assert.match(b, /<p class="b-text">/);
-  assert.match(b, /<i class="cnt">2 图<\/i>/);
+  assert.ok(b.indexOf('class="b-text"') < b.indexOf('class="media-grid n2"'));
+  assert.match(b, /data-media-i="0"[\s\S]*data-media-i="1"/);
+  const article = L.postRowHTML({...post, blogger: {...post.blogger, media: []}, image: {url: 'https://i/cover.jpg'}});
+  assert.ok(article.indexOf('class="b-main"') < article.indexOf('class="thumb"'), '文章封面仍在右边');
   assert.match(L.postRowHTML({...post, blogger: {...post.blogger, media: []}}), /class="tweet brow noimg"/);
 });
 
@@ -255,4 +259,156 @@ test('v16：相对时间只用在 24 小时内；日期头「今天/昨天/周X�
   assert.equal(L.dayLabel('2026-11-15', '2026-11-16'), '11.15 昨天');
   assert.match(L.dayLabel('2026-11-12', '2026-11-16'), /^11\.12 周四$/);
   assert.deepEqual(['百度热搜', '知乎热榜', 'B 站热搜'].map(L.hotShort), ['百度', '知乎', 'B站']);
+});
+
+test('同类事件合并：主条下折叠「另有 N 个来源」，没有 merged 就不出；旧数据不受影响', () => {
+  assert.doesNotMatch(L.feedRowHTML({...base}), /data-dup/);
+  assert.doesNotMatch(L.feedRowHTML({...base, merged: []}), /data-dup/);
+  const it = {...base, merged: [
+    {id: 'zaihuapd:2', source_id: 'zaihuapd', source_name: '在花科技圈', title: 'Hello <b>', url: 'https://t.me/zaihuapd/2', published_at: base.published_at},
+    {id: 'xhqcankao:3', source_id: 'xhqcankao', source_name: '风向旗参考快讯', title: 'Orig', title_zh: '译文标题', url: '', published_at: base.published_at},
+  ]};
+  const html = L.feedRowHTML(it);
+  assert.match(html, /<button type="button" class="dup-btn" data-dup-toggle aria-expanded="false">另有 2 个来源<\/button><div class="dup-list" hidden>/);
+  assert.match(html, /data-dup-id="zaihuapd:2"><span class="src">在花科技圈<\/span><span class="t">Hello &lt;b&gt;<\/span>/);
+  assert.match(html, /data-dup-id="xhqcankao:3"><span class="src">风向旗参考快讯<\/span><span class="t">译文标题<\/span>/);
+  // 同来源同链接（只是参数不同）的折叠：不说「来源」
+  assert.match(L.feedRowHTML({...base, merged: [{id: 'tnews365:9', source_id: 'tnews365', source_name: '竹新社', title: 'x'}]}), /另有 1 条相同链接/);
+});
+
+test('同类事件合并：「另有 N 个来源」按 source_id 数，大图卡也有折叠入口', () => {
+  // 两个来源显示名相同、source_id 不同：算 2 个来源
+  const it = {...base, merged: [
+    {id: 'a:1', source_id: 'a', source_name: '同名来源', title: 'x'},
+    {id: 'b:1', source_id: 'b', source_name: '同名来源', title: 'y'},
+  ]};
+  assert.match(L.dupHTML(it), /另有 2 个来源/);
+  // 和主条同 source_id、不同显示名：仍是同来源同链接
+  assert.match(L.dupHTML({...base, merged: [{id: `${base.source_id}:9`, source_id: base.source_id, source_name: '别名', title: 'z'}]}), /另有 1 条相同链接/);
+  const hero = L.heroHTML({...it, image: {url: 'https://img.test/h.png', width: 1200, height: 675}});
+  assert.match(hero, /<article class="hero"[^>]*>.*<div class="dup" data-dup><button type="button" class="dup-btn" data-dup-toggle aria-expanded="false">另有 2 个来源<\/button>/);
+  assert.doesNotMatch(L.heroHTML({...base, image: {url: 'https://img.test/h.png'}}), /data-dup/);
+});
+
+test('博主合流沿用建站顺序，不把同一毫秒内不同微秒当成同刻按 ID 排', () => {
+  const posts = [
+    {id: 'a', published_at: '2026-11-16T12:00:00.000001+08:00', feed_order: 1},
+    {id: 'z', published_at: '2026-11-16T04:00:00.000002Z', feed_order: 0},
+    {id: 'b', published_at: '2026-11-16T04:00:00.000001Z', feed_order: 2},
+  ];
+  assert.deepEqual(posts.sort(L.comparePosts).map(x => x.id), ['z', 'a', 'b']);
+});
+
+// 频道首页 A2（2026-11-28 确认）：大图在上、摘要按句收尾、平台图标按配置标
+test('A2：够大的新闻配图放标题上方，视频只标「视频」不自动播；偏小的图（头像、图标一类）不放大', () => {
+  const big = L.feedRowHTML({...base, image: {url: 'media/a.webp', width: 1280, height: 720}, tg: {media: [{type: 'video'}]}});
+  assert.match(big, /<article class="feed-row cover"/);
+  assert.ok(big.indexOf('class="thumb video"') < big.indexOf('<h3>'), '图在标题上方');
+  assert.match(big, /<span class="vid-badge">视频<\/span>/);
+  assert.doesNotMatch(big, /<video|autoplay/);
+  assert.match(big, /<p class="sum">摘要<\/p>/, '有图时摘要照样显示');
+  const unknown = L.feedRowHTML({...base, image: {url: 'media/b.webp'}});
+  assert.match(unknown, /feed-row cover/);
+  assert.doesNotMatch(unknown, /aspect-ratio|vid-badge/);
+  const icon = L.feedRowHTML({...base, image: {url: 'https://i/logo.png', width: 64, height: 64}});
+  assert.doesNotMatch(icon, /feed-row cover/);
+  assert.ok(icon.indexOf('class="f-main"') < icon.indexOf('class="thumb"'), '小图仍在右边');
+  assert.equal(L.coverOk({url: 'a', width: 180, height: 320}), true, '竖版视频封面');
+  assert.equal(L.coverOk({url: 'a', width: 299, height: 299}), false);
+  assert.equal(L.coverOk({url: 'a', width: 640, height: 149}), false, '细长横条');
+  assert.equal(L.coverOk({url: 'a', width: 300, height: 150}), true);
+  assert.equal(L.coverOk(null), false);
+});
+
+test('A2：短摘要整段显示，不限两行；长摘要按句子收住接「继续读」；和标题重复就不显示', () => {
+  assert.deepEqual(L.excerpt('一句话就说完。', '标题'), {text: '一句话就说完。', more: false});
+  assert.deepEqual(L.excerpt('  ', '标题'), {text: '', more: false});
+  assert.deepEqual(L.excerpt('【韩国电视台直播事故】', '韩国电视台直播事故'), {text: '', more: false});
+  const long = '美国宣布对多国加征关税。' + '这一措施将影响欧盟、日本和韩国的出口商，预计价格会上涨。'.repeat(6);
+  const e = L.excerpt(long, '关税');
+  assert.equal(e.more, true);
+  assert.ok(/。$/.test(e.text), '在句末收住，不截半句');
+  assert.ok([...e.text].length <= 140);
+  const en = L.excerpt('Apple released iOS 3.5 today. It fixes many bugs and adds features. '.repeat(4), 'x');
+  assert.ok(en.text.endsWith('features.'), '英文小数点不算句末');
+  const run = L.excerpt('这是一个很长的第一句，'.repeat(20), 'x');
+  assert.ok(run.more && run.text.endsWith('…') && [...run.text].length <= 141, '第一句太长就在停顿处收住');
+  const row = L.feedRowHTML({...base, summary: long, image: null});
+  assert.match(row, /<p class="sum">美国宣布对多国加征关税。.*<span class="more">继续读 ›<\/span><\/p>/);
+  const dup = L.feedRowHTML({...base, title: '只有一句', summary: '只有一句', image: null});
+  assert.doesNotMatch(dup, /class="sum/, '摘要和标题一样：不重复，也不说「没有摘要」');
+});
+
+test('A2：来源前的平台图标只按配置的来源类型标，不从 id 猜；浏览、评论数不进列表', () => {
+  L.setSourcePlatforms([{source_platforms: {tnews365: 'telegram', shuangyunews_rss: 'telegram', 'github-blog': 'feed', 'github-trending': 'page'}}]);
+  try {
+    assert.match(L.feedRowHTML(base), /<img class="plat" src="icons\/telegram.svg" alt="Telegram"[^>]*><span class="src">竹新社<\/span>/);
+    assert.match(L.feedRowHTML({...base, source_id: 'shuangyunews_rss'}), /icons\/telegram.svg/, 'id 带 rss 字样也按配置算 Telegram');
+    assert.match(L.feedRowHTML({...base, source_id: 'github-blog'}), /icons\/blog.svg" alt="RSS"/);
+    assert.doesNotMatch(L.feedRowHTML({...base, source_id: 'github-trending'}), /class="plat"/);
+    assert.doesNotMatch(L.feedRowHTML({...base, source_id: 'unknown'}), /class="plat"/);
+    const row = L.feedRowHTML({...base, tg: {views: 20200, views_label: '20.2K', comments_total: 5}});
+    assert.doesNotMatch(row, /20\.2K|评论 5/);
+    assert.match(row, /<span class="when">11月15日 19:00<\/span><\/div>/, '时间放在最后（靠右）');
+  } finally { L.setSourcePlatforms([]); }
+});
+
+// A2 第一轮复核的复现场景，同类边界一并写上
+test('A2 复核：lib.js 不用正则后行断言（iOS 16.4 前的 Safari 会整文件解析失败）', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../web-v11/lib.js'), 'utf8');
+  assert.doesNotMatch(src, /\(\?<[=!]/);
+});
+
+test('A2 复核：只有和标题完全一样才省掉摘要；方向相反的数字、单个表情都留着', () => {
+  assert.equal(L.excerpt('−5%', '市场预计 +5%').text, '−5%');
+  assert.equal(L.excerpt('-5%', '市场预计 +5%').text, '-5%');
+  assert.equal(L.excerpt('👍', '标题').text, '👍');
+  assert.equal(L.excerpt('预计', '市场预计上涨').text, '预计', '只是标题的一部分也照样显示');
+  assert.equal(L.excerpt('【韩国电视台直播事故】', '韩国电视台直播事故').text, '');
+  assert.equal(L.excerpt('韩国电视台直播事故。', '韩国电视台直播事故').text, '');
+  assert.equal(L.excerpt('……', '标题').text, '……', '全是标点也不当成和标题重复');
+});
+
+test('A2 复核：141–180 字的单句也收住并接「继续读」；停顿在前面也用，不截在词中间', () => {
+  const one = '这次会议讨论了很多议题，' + '包括经济发展、社会保障、教育改革、医疗卫生、环境保护，'.repeat(5) + '最后达成共识。';
+  assert.ok([...one].length > 140 && [...one].length <= 180, '前提：141–180 字');
+  const e = L.excerpt(one, 'x');
+  assert.equal(e.more, true);
+  assert.ok(e.text.endsWith('…') && [...e.text].length <= 141);
+  assert.ok(/，…$|、…$/.test(e.text) === false && /[^，、；：]…$/.test(e.text), '在停顿处收住，不把逗号留在末尾');
+  const early = '会议结束后，' + '各方代表陆续离场并接受媒体采访表示对结果满意希望继续推进合作'.repeat(8) + '。';
+  const r = L.excerpt(early, 'x');
+  assert.equal(r.text, '会议结束后…', '唯一的停顿在很前面也在那里收，不硬截在词中间');
+  const en = L.excerpt('word '.repeat(60).trim(), 'x');
+  assert.ok(en.text.endsWith('word…'), '英文没有标点就在空格处收');
+});
+
+test('A2 复核：英文缩写、首字母、小写续句不算句末', () => {
+  const pre = '前面的内容大约有一百多字，'.repeat(8) + '这是前文的最后一句。';
+  const e = L.excerpt(pre + 'Dr. 王医生说情况已经稳定，后续还会继续观察。' + '补充说明。'.repeat(10), 'x');
+  assert.ok(!e.text.endsWith('Dr.'), '不在 Dr. 后断开');
+  assert.ok(e.text.endsWith('这是前文的最后一句。') || e.text.endsWith('后续还会继续观察。'));
+  const s = 'The U.S. economy grew. J. K. Rowling said e.g. this works. Mr. Smith agreed. '.repeat(3) + 'End.';
+  const r = L.excerpt(s, 'x');
+  assert.ok(r.text.endsWith('agreed.') || r.text.endsWith('works.') || r.text.endsWith('grew.'), r.text);
+  assert.ok(!/(U\.S\.|J\.|K\.|e\.g\.|Mr\.)$/.test(r.text));
+});
+
+test('A2 复核：只有封面的 TG 视频、小图视频都标「视频」；照片不标', () => {
+  const posterOnly = L.feedRowHTML({...base, image: {url: 'media/v.webp', width: 800, height: 450}, tg: {video_unavailable: true, media: [{type: 'image', url: 'https://cdn/p.jpg'}]}});
+  assert.match(posterOnly, /<span class="vid-badge">视频<\/span>/);
+  const smallVideo = L.feedRowHTML({...base, image: {url: 'media/v.webp', width: 200, height: 100}, tg: {media: [{type: 'video', url: 'https://cdn/v.mp4'}]}});
+  assert.doesNotMatch(smallVideo, /feed-row cover/);
+  assert.match(smallVideo, /<div class="thumb video"><img[^>]*><span class="vid-badge">视频<\/span><\/div>/);
+  const photo = L.feedRowHTML({...base, image: {url: 'media/p.webp', width: 800, height: 450}, tg: {media: [{type: 'image', url: 'https://cdn/p.jpg'}]}});
+  assert.doesNotMatch(photo, /vid-badge/);
+});
+
+// A2 第二轮复核的复现场景
+test('A2 复核 2：换行不算句末；首句过长时换行处也可作停顿', () => {
+  const s = '据外媒报道：\n' + '当地时间周五上午，一列载有数百名乘客的列车在山区路段发生脱轨事故，救援人员已经赶到现场展开搜救，'.repeat(3) + '目前伤亡情况仍在统计中。';
+  const e = L.excerpt(s, 'x');
+  assert.equal(e.more, true);
+  assert.ok([...e.text].length > 60 && e.text.endsWith('…'), e.text);
+  assert.equal(L.excerpt('第一行。\n第二行内容。' + '补充说明。'.repeat(30), 'x').text.startsWith('第一行。\n第二行内容。'), true, '句号后的换行不影响按句收');
 });

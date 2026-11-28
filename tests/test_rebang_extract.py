@@ -90,3 +90,61 @@ def test_extract_nested_nav_does_not_crash():
     </div></article></body></html>"""
     got = extract_html(html, 'https://www.bbc.co.uk/news/articles/example')
     assert got and len(got['body']) >= 400
+
+
+TELEGRAPH = """<!doctype html><html><head><title>宏福苑大火一周年 - 纽约时报双语版 – Telegraph</title></head><body>
+<div class="tl_page"><main class="tl_article"><header class="tl_article_header" dir="auto">
+<h1>宏福苑大火一周年 - 纽约时报双语版</h1><address><a rel="author">纽约时报双语版</a><time>November 27, 2026</time></address>
+</header><article id="_tl_editor" class="tl_article_content"><h1>宏福苑大火一周年 - 纽约时报双语版<br></h1>
+<address>纽约时报双语版<br></address>
+<figure><img src="https://static01.nyt.com/images/fire.jpg"><figcaption>周四，人们在香港献花。</figcaption></figure>
+<p>A year ago Thursday, a blaze tore through a sprawling high-rise apartment complex in Hong Kong, spreading from one tower to the next, killing 168 people.</p>
+<p>一年前的周四，一场大火席卷香港一座占地广阔的高层公寓楼群，火势从一栋楼蔓延到另一栋楼，造成168人遇难。对于留下的家属来说，如何哀悼逝者已成为一个政治敏感问题。</p>
+<p>In the days leading up to the anniversary, Beijing warned against efforts to exploit the disaster, and the city government said it would not hold a memorial.</p>
+<p>在周年纪念日前夕，北京警告不要利用这场灾难“以灾乱港”，港府表示不会举办悼念活动。</p>
+</article></main></div></body></html>"""
+TELEGRAPH_URL = 'https://telegra.ph/hongfuyuan-11-27'
+
+
+class TelegraphTests(unittest.TestCase):
+    def test_telegraph_article_only_without_repeated_title_or_byline(self):
+        got = extract_html(TELEGRAPH, TELEGRAPH_URL)
+        self.assertIsNotNone(got)
+        self.assertTrue(got['body'].startswith('周四，人们在香港献花') or 'A year ago Thursday' in got['body'])
+        self.assertNotIn('宏福苑大火一周年 - 纽约时报双语版', got['body'])
+        self.assertNotIn('纽约时报双语版', got['body'])
+        self.assertIn('以灾乱港', got['body'])
+        self.assertEqual([b['src'] for b in got['blocks'] if b['type'] == 'img'], ['https://static01.nyt.com/images/fire.jpg'])
+
+    def test_telegraph_url_recognised_only_for_article_pages(self):
+        from rebang.extract import is_telegraph_url
+        self.assertTrue(is_telegraph_url(TELEGRAPH_URL))
+        self.assertTrue(is_telegraph_url('https://graph.org/abc-11-27'))
+        self.assertFalse(is_telegraph_url('https://telegra.ph/'))
+        self.assertFalse(is_telegraph_url('http://telegra.ph/abc'))
+        self.assertFalse(is_telegraph_url('https://telegra.ph.evil.com/abc'))
+        self.assertFalse(is_telegraph_url('https://t.me/shuangyunews_rss/1'))
+
+    def test_tg_item_fetches_its_telegraph_page_and_keeps_tme_link(self):
+        seen = []
+
+        def http_get(url, now):
+            seen.append(url)
+            return TELEGRAPH.encode('utf-8')
+
+        item = {'id': 'shuangyunews_rss:9', 'kind': 'news', 'source_id': 'shuangyunews_rss',
+                'title': '纽约时报双语版', 'summary': '宏福苑大火一周年', 'url': 'https://t.me/shuangyunews_rss/9',
+                'body': '纽约时报双语版\n宏福苑大火一周年\nTelegraph | 原文链接 | 频道大全', 'lang': 'zh',
+                'extract_url': TELEGRAPH_URL, 'image_local': {'path': '/x.webp'}}
+        plain = {'id': 'other:1', 'kind': 'news', 'source_id': 'other', 'title': 't', 'summary': 's',
+                 'url': 'https://t.me/other/1', 'body': 's', 'lang': 'zh'}
+        with tempfile.TemporaryDirectory() as d:
+            report = apply_extraction([item, plain], d, fetch=True, http_get=http_get,
+                                      now=datetime(2026, 11, 28, tzinfo=timezone.utc))
+        self.assertEqual(seen, [TELEGRAPH_URL])          # 没有 Telegraph 链接的 TG 条目照旧不抓
+        self.assertEqual(report['applied'], 1)
+        self.assertIn('以灾乱港', item['body'])
+        self.assertEqual(item['url'], 'https://t.me/shuangyunews_rss/9')
+        self.assertNotIn('extract_url', item)            # 不写进成品
+        self.assertNotIn('image', item)                   # 已有本地预览图，不换成外站图
+        self.assertNotIn('blocks', plain)

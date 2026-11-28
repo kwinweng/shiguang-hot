@@ -9,10 +9,14 @@ import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from pathlib import Path
+from urllib.parse import urljoin, urlsplit
 from zoneinfo import ZoneInfo
 
 from rebang.cache import save_cache
+from rebang.chinese_news import (chinese_text, has_text, is_web_news, native_body, native_summary,
+                                native_title, needs_translation, web_language)
 from rebang.contract import ITEMS_SCHEMA, load_channels
+from rebang.contract.schema import is_aware_iso
 from rebang.health_time import observation_time
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -21,7 +25,7 @@ DEFAULT_CACHE = ROOT / 'var' / 'rebang' / 'cache' / 'ingest'
 MEDIA_DAYS = 14          # 与 shiguang/ingest/telegram.py MEDIA_DAYS 一致：图片按条目时间保留 14 天
 SUMMARY_CHARS = 300
 PRODUCER = 'ingest'
-FEED_LANG = 'en'         # 6 个官方订阅都是英文
+FEED_LANG = 'en'         # 官方订阅都是英文
 MT = '机器翻译'
 
 
@@ -51,15 +55,19 @@ def _sha(value):
     return hashlib.sha1(value.encode('utf-8')).hexdigest()[:16]
 
 
-def _norm_url(url):
-    url = str(url or '').strip()
-    url = re.sub(r'^http://', 'https://', url)
-    url = re.sub(r'^https://t\.me/s/', 'https://t.me/', url)
-    return url.split('#')[0].rstrip('/')
-
-
 def _http_url(url):
     return url if re.match(r'https?://[^\s/]+', str(url or '')) else ''
+
+
+def _valid_http(url, schemes=('http', 'https')):
+    """与契约 schema._is_url 同一口径（scheme + 主机名），另外挡住 urlsplit 自己会抛错的地址（如坏 IPv6）。"""
+    if not isinstance(url, str) or not url.strip():
+        return False
+    try:
+        parts = urlsplit(url.strip())
+        return parts.scheme in schemes and bool(parts.netloc) and bool(parts.hostname)
+    except ValueError:
+        return False
 
 
 def _image_size(path):
@@ -104,6 +112,17 @@ def strip_leading_urls(text):
 
 def guess_lang(*texts):
     return 'zh' if _CJK.search(' '.join(t or '' for t in texts)) else 'en'
+
+
+_BARE_URL = re.compile(r'https?://[^\s《》「」“”‘’，。、；：！？（）【】<>]+')
+_QUOTED = re.compile(r'《[^》]*》|「[^」]*」|“[^”]*”')
+
+
+def mostly_chinese(title):
+    """英文订阅按条判断，只看标题：先去掉《》「」“”里的内容（引用的中文作品名/原话），
+    再去掉裸链接（遇中文标点或括号停止），剩下的只要有汉字就是 zh，否则 en。摘要不参与。"""
+    rest = _BARE_URL.sub('', _QUOTED.sub('', str(title or '')))
+    return bool(_CJK.search(rest))
 
 
 def _news(source, channel, native_id, title, summary, url, published, now, lang='zh', body=None, image=None,
@@ -191,6 +210,16 @@ def _tg_parts(handle, text, meta):
     return title, rest, str(text).strip(), None, extra.get('tg')
 
 
+def _telegraph_link(raw):
+    """tg.db links（消息正文里的链接，JSON 数组）里第一个 Telegraph 文章链接。"""
+    from rebang.extract import is_telegraph_url
+    try:
+        links = json.loads(raw) if raw else []
+    except ValueError:
+        return None
+    return next((u for u in links if isinstance(u, str) and is_telegraph_url(u)), None)
+
+
 def telegram_items(db_path, media_root, sources, now, floor, tgmeta=None):
     """sources: [(channel, cfg)]。只读打开，不迁移、不写。tgmeta：rebang.tgmeta 缓存里的 messages（<频道>/<消息号> → meta）。"""
     items, statuses = [], []
@@ -201,13 +230,14 @@ def telegram_items(db_path, media_root, sources, now, floor, tgmeta=None):
     con = sqlite3.connect(f'file:{db_path.resolve()}?mode=ro', uri=True)
     try:
         con.execute('pragma query_only=on')
-        has_images = 'images' in [r[1] for r in con.execute('pragma table_info(msg)')]
+        msg_cols = [r[1] for r in con.execute('pragma table_info(msg)')]
+        has_images = 'images' in msg_cols
         last_status = {}
         if con.execute("select 1 from sqlite_master where type='table' and name='status'").fetchone():
             last_status = {r[0]: (r[1], r[2], r[3]) for r in con.execute('select ch,ok,err,at from status')}
         for channel, cfg in sources:
             handle = cfg.get('handle') or cfg['id']
-            cols = 'id,ts,text' + (',images' if has_images else '')
+            cols = 'id,ts,text' + (',images' if has_images else '') + (',links' if 'links' in msg_cols else '')
             count = 0
             for row in con.execute(f'select {cols} from msg where ch=? order by id desc', (handle,)):
                 msg_id, ts, text = row[0], row[1], row[2]
@@ -235,6 +265,9 @@ def telegram_items(db_path, media_root, sources, now, floor, tgmeta=None):
                     item['quote'] = quote
                 if tg:
                     item['tg'] = tg
+                article = _telegraph_link(row[-1] if 'links' in msg_cols else None)
+                if article and not quote:
+                    item['extract_url'] = article   # 即时预览文章：交给 rebang.extract 抓正文
                 items.append(item)
                 count += 1
             ok, err, at = last_status.get(handle, (None, None, None))
@@ -258,13 +291,65 @@ def default_http_get(url, now):
     return response.body
 
 
-def parse_feed(xml):
+_XML_BASE = '{http://www.w3.org/XML/1998/namespace}base'
+_ATOM = '{http://www.w3.org/2005/Atom}'
+
+
+def _join(base, ref):
+    try:
+        return urljoin(base, ref) if base else ref
+    except ValueError:
+        return ref
+
+
+def _atom_link_bases(xml, feed_url):
+    """Atom 条目的链接基准地址（xml:base 逐层叠加：feed 地址 → <feed> → <entry> → <link>），
+    按文档顺序返回 {(id 或 链接原文, 链接原文): 基准地址}。不是 Atom 或解析不了就返回空。"""
+    try:
+        root = ET.fromstring(xml)
+    except (ET.ParseError, ValueError):
+        return {}
+    if root.tag != _ATOM + 'feed':
+        return {}
+    feed_base = _join(feed_url, root.get(_XML_BASE)) if root.get(_XML_BASE) else feed_url
+    out = {}
+    for entry in root.findall(_ATOM + 'entry'):
+        entry_base = _join(feed_base, entry.get(_XML_BASE)) if entry.get(_XML_BASE) else feed_base
+        link = next((l for l in entry.findall(_ATOM + 'link') if l.get('rel', 'alternate') == 'alternate'), None)
+        if link is None:
+            continue
+        href = link.get('href') or ''
+        base = _join(entry_base, link.get(_XML_BASE)) if link.get(_XML_BASE) else entry_base
+        out.setdefault((entry.findtext(_ATOM + 'id') or href, href), base)
+    return out
+
+
+def _resolve_link(url, base):
+    """条目链接：绝对 http(s) 原样用；不带协议的相对地址用基准地址补全；带协议却不合格（https:///x、
+    javascript: 等）、补全后仍不合格或没有基准就置空。链接坏了只让这条没有原文链接，条目本身保留。"""
+    url = str(url or '').strip()
+    if not url or _valid_http(url):
+        return url
+    try:
+        relative = not urlsplit(url).scheme
+    except ValueError:
+        relative = False
+    joined = _join(base, url) if base and relative else ''
+    return joined if _valid_http(joined) else ''
+
+
+def parse_feed(xml, feed_url=None):
     from shiguang.ingest import web
+    bases = _atom_link_bases(xml, feed_url)
     out = []
-    for e in web.parse(xml):
-        out.append({'id': e['id'] or _sha(e['url'] or e['title']), 'ts': _iso(e['ts']), 'title': e['title'] or '',
-                    'summary': e['body'] or '', 'url': e['url'] or '',
-                    'image': next((u for u in e.get('images') or [] if str(u).startswith('https://')), None)})
+    for e in web.parse(xml, with_publication=True):
+        raw = e['url'] or ''
+        base = bases.get((e['id'] or raw, raw), feed_url)
+        out.append({'id': e['id'] or _sha(raw or e['title']), 'ts': _iso(e['ts']), 'title': e['title'] or '',
+                    'summary': e['body'] or '', 'url': _resolve_link(raw, base),
+                    'image': next((u for u in e.get('images') or [] if _valid_http(u, ('https',))), None),
+                    'published_at_verified': e.get('published_at_verified', False),
+                    'feed_attribution': e.get('feed_attribution', True)})
     return out
 
 
@@ -291,6 +376,17 @@ def parse_trending(html, now):
     if not out:
         raise ValueError('trending 页面结构变化：没有找到 article.Box-row')
     return out
+
+
+def _trending_meta_zh(meta):
+    language, sep, stars = meta.rpartition(' · ')
+    count = re.fullmatch(r'([0-9,]+) stars? today', stars)
+    if not count and sep:
+        return meta
+    if not count:
+        language = stars
+    return ' · '.join(part for part in (f'编程语言：{language}' if language else '',
+                                        f'今日新增 {count[1]} 星' if count else '') if part)
 
 
 def _cache_path(cache, sid):
@@ -337,7 +433,7 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
         if fetch:
             try:
                 raw = http_get(cfg['url'], now)
-                parsed = parse_trending(raw.decode('utf-8', 'replace'), now) if cfg['type'] == 'page' else parse_feed(raw)
+                parsed = parse_trending(raw.decode('utf-8', 'replace'), now) if cfg['type'] == 'page' else parse_feed(raw, cfg['url'])
             except Exception as ex:  # 一家失败不影响其它家；错误只记代码，不带响应体
                 code = getattr(ex, 'code', None) or ('invalid_content' if isinstance(ex, (ET.ParseError, ValueError)) else type(ex).__name__)
                 state, error = 'error', str(code)
@@ -357,19 +453,36 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
                 state = state or 'not_fetched'
         count = 0
         for e in entries:
-            published = _parse_when(e.get('ts')) or now
+            timestamp = e.get('ts')
+            published = _parse_when(timestamp)
+            verified = (cfg['type'] == 'feed' and e.get('published_at_verified') is True
+                        and is_aware_iso(timestamp) and published is not None)
+            published = published or now
             if cfg['type'] != 'page' and published < floor:
                 continue
             title = _plain(e.get('title'))
             if not title:
                 continue
+            # 缓存里的链接不再补全（旧缓存没存基准地址）：不合格就置空，条目保留
+            link = _resolve_link(e.get('url'), None)
             full = _plain(e.get('summary'))
-            body = full + ('\n' + e['meta'] if e.get('meta') else '') if (full or e.get('meta')) else None
-            lang = 'zh' if re.search(r'[\u4e00-\u9fff]', title + full) and cfg['type'] == 'page' else FEED_LANG
-            image = {'url': e['image']} if e.get('image') and published >= now - timedelta(days=MEDIA_DAYS) else None
+            meta = e.get('meta') or ''
+            if cfg['type'] == 'page':
+                lang = guess_lang(full)  # Trending 的 title 是仓库名
+                if not has_text(full) or chinese_text(full):
+                    meta = _trending_meta_zh(meta)
+            else:   # 先按标题判断，抽取正文后再检查是否混有待译文本
+                lang = 'zh' if mostly_chinese(title) else FEED_LANG
+            body = '\n'.join(filter(None, (full, meta)))
+            # 图片地址坏了（缺主机名等）只丢图、条目保留；旧缓存里的坏图同样在这里挡掉
+            fresh = published >= now - timedelta(days=MEDIA_DAYS)
+            image = {'url': e['image']} if fresh and _valid_http(e.get('image')) else None
             native = e['id'] if cfg['type'] == 'page' else str(e.get('id') or _sha(e.get('url') or title))
-            item = _news(cfg, channel, native, title, _plain(full, SUMMARY_CHARS), e.get('url'), published, now,
+            item = _news(cfg, channel, native, title, _plain(full, SUMMARY_CHARS), link, published, now,
                          lang=lang, body=body, image=image)
+            item['published_at_verified'] = verified
+            if cfg['type'] == 'feed':
+                item['feed_attribution'] = e.get('feed_attribution') is not False  # 旧缓存未保留署名信息，不投票
             if fetched_at:
                 item['fetched_at'] = fetched_at
             items.append(item)
@@ -384,55 +497,45 @@ def remote_items(sources, now, floor, *, fetch, cache, http_get):
     return items, statuses
 
 
-# ---------- 现有每日成品（x / world / github / hot-daily） ----------
-
-def _legacy_sources():
-    return {s['id']: s for s in json.loads((ROOT / 'sources.json').read_text(encoding='utf-8'))['sources']}
-
+# ---------- 旧 #88 主条优先级（本地整理稿只参与折叠） ----------
 
 def default_inbox_loader(source_id):
-    """盒子上原始投递目录优先，其次仓库 public-feeds。返回 [(feed, base_dir)]，新→旧。"""
     from shiguang.ingest.feeds import load_issues
+
+    sources = json.loads((ROOT / 'sources.json').read_text(encoding='utf-8'))['sources']
+    source = next(s for s in sources if s['id'] == source_id)
     with contextlib.redirect_stdout(sys.stderr):
-        return load_issues(_legacy_sources()[source_id], local=True)
+        return load_issues(source, local=True)
 
 
-def apply_highlights(items, floor, loader):
-    """今日重点不单独成条，只给频道里同链接的条目打标。"""
-    rule = load_channels()['highlights']
-    hid = rule['source_id']
-    cfg = {'id': hid, 'name': rule['name'], 'type': 'inbox'}
+def _legacy_link(url):
+    url = re.sub(r'^http://', 'https://', url.strip())
+    url = re.sub(r'^https://t\.me/s/', 'https://t.me/', url)
+    return url.split('#', 1)[0].rstrip('/')
+
+
+def _remember_fold_preference(items, floor, loader):
+    if not items:
+        return
     try:
-        issues = loader(hid)
-    except Exception as ex:
-        return _status(cfg, None, 'error', error=type(ex).__name__)
+        issues = loader(load_channels()['highlights']['source_id'])
+    except Exception:  # 与旧入口一样，整理稿不可用时仍能采集新闻
+        return
     by_url = {}
     for item in items:
         if item['kind'] == 'news' and item['url']:
-            by_url.setdefault(_norm_url(item['url']), item)
-    marked = unmatched = 0
+            by_url.setdefault(_legacy_link(item['url']), item)
     cut = floor.replace(hour=0, minute=0, second=0, microsecond=0)
     for feed, _ in issues:
-        day = feed.get('date')
-        start = _parse_when(day)
-        if start is None or start < cut:
+        day = _parse_when(feed.get('date'))
+        if day is None or day < cut:
             continue
         for section in feed.get('sections') or []:
             for entry in section.get('items') or []:
-                if not isinstance(entry, dict):
-                    continue
-                url = _http_url(entry.get('link'))
-                target = by_url.get(_norm_url(url)) if url else None
-                if target is None:
-                    unmatched += 1
-                    continue
-                if not target.get('highlight'):
-                    marked += 1
-                target['highlight'] = True
-                target['highlight_date'] = max(day, target.get('highlight_date') or day)
-    latest = issues[0][0].get('date') if issues else None
-    return dict(_status(cfg, None, 'ok' if marked else 'empty', 0), marked=marked, unmatched=unmatched,
-                latest_issue=latest, role='highlight-marks')
+                url = _http_url(entry.get('link')) if isinstance(entry, dict) else ''
+                target = by_url.get(_legacy_link(url)) if url else None
+                if target is not None:
+                    target['fold_preferred'] = True
 
 
 # ---------- 翻译（rebang/translate 由 bloggers 分支提供；没有就留 translated=false） ----------
@@ -446,7 +549,7 @@ def default_translator():
     translator = Translator()
     if translator.engine == 'none':
         return None
-    return (lambda texts, src: translator.translate_detailed(texts, src)), translator.engine, translator.save
+    return translator.translate_detailed, translator.engine, translator.save
 
 
 def _call_translator(fn, texts, kinds=None):
@@ -525,13 +628,20 @@ def _summary_from_body(body, limit=300):
 
 
 def apply_translation(items, translator, cache=None):
-    """只翻非中文条目的标题、摘要和正文（GitHub Trending 仓库名不翻）。按条增量：
+    """翻译非中文条目的待译字段（保留已有中文和 GitHub Trending 仓库名）。按条增量：
     已译过的条目（cache/translations.json，按 id+标题+摘要+正文）直接复用；新条目或新抽出的
     正文才调。默认翻译器只查 rebang.translate 缓存，缺的原文进 pending.json，等 Grok 补译后
     （python3 -m rebang.translate fill）下次生成即带上。
 
     标题和摘要一旦有译文就写入，不等待正文。正文稍后补上；在此之前详情页用中文摘要，并标明全文还在翻译。
     """
+    # Reconcile the original language after extraction, even when there is no translator.
+    for item in items:
+        item['lang'] = web_language(item)
+        if item['lang'].startswith('zh'):
+            if item.get('translated'):
+                item['translated'] = False
+            item.pop('translation', None)
     if not translator:
         return 0
     fn, default_engine = translator[0], translator[1]
@@ -543,27 +653,50 @@ def apply_translation(items, translator, cache=None):
     key = lambda i: _sha(i['id'] + '\n' + i['title'] + '\n' + i['summary'] + '\n' + (i.get('body') or ''))  # noqa: E731
     done, changed = 0, False
     for item in items:
-        if item['lang'].startswith('zh') or item['lang'] == 'und':
+        web = is_web_news(item)
+        if item['lang'].startswith('zh') or (web and not needs_translation(item)) or (not web and item['lang'] == 'und'):
             continue
         hit = store.get(key(item))
         body = (item.get('body') or '').strip()
-        derive_summary = bool(body and item.get('summary') and (item['summary'] == body or body.startswith(item['summary'])))
-        missing_body = bool(body) and not (hit and hit.get('body'))
-        missing_blocks = bool(item.get('blocks')) and not (hit and hit.get('blocks'))
-        keep_title = item['source_id'] == 'github-trending'
+        src_sum = item.get('summary') or ''
+        keep_title = web and native_title(item)
+        keep_summary = web and native_summary(item)
+        keep_body = web and native_body(item)
+        if keep_title or keep_summary:
+            hit = dict(hit or {})
+            hit.setdefault('engine', default_engine)
+            if keep_title:
+                hit['title'] = item['title']
+            if keep_summary:
+                hit['summary'] = src_sum
+                hit.pop('summary_source', None)
+        if web and isinstance(hit, dict):
+            # 旧版可能把空摘要/英文回显写成命中。重新查字段缓存，不能永久跳过。
+            hit = dict(hit)
+            for field in ('title', 'summary', 'body'):
+                if (field == 'title' and not keep_title or field == 'summary' and not keep_summary
+                        or field == 'body' and body) and not chinese_text(hit.get(field)):
+                    hit.pop(field, None)
+            if not keep_summary and hit.get('summary_source') != src_sum:
+                hit.pop('summary', None)
+            if hit.get('blocks') and not all(chinese_text(t) for t in _blocks_texts(hit['blocks'])[1]):
+                hit.pop('blocks', None)
+        derive_summary = bool(body and src_sum and (src_sum == body or body.startswith(src_sum)))
+        missing_body = not keep_body and bool(body) and not (hit and hit.get('body'))
+        missing_blocks = not keep_body and bool(item.get('blocks')) and not (hit and hit.get('blocks'))
         # 1) 标题和摘要单独翻，不被长正文拖住
         if not hit or not hit.get('title') or hit.get('summary') is None:
             texts, slots, kinds = [], [], []
             if not keep_title and not (hit and hit.get('title')):
                 texts.append(item['title']); slots.append('title'); kinds.append('title')
             need_summary = not (hit and hit.get('summary') is not None)
-            src_sum = item.get('summary') or ''
-            if need_summary and src_sum.strip() and (not derive_summary or not (hit and hit.get('body'))):
+            if need_summary and src_sum.strip() and (web or not derive_summary or not (hit and hit.get('body'))):
                 texts.append(src_sum); slots.append('summary'); kinds.append('summary')
-            result = _translate_one(fn, texts, kinds) if texts else None
+            result = _translate_one(fn, texts, [f'web:{kind}' for kind in kinds] if web else kinds) if texts else None
             if result:
-                out, engine = (result or ([], None))
-                mapped = {slot: zh for slot, zh in zip(slots, out) if isinstance(zh, str) and zh.strip()}
+                out, engine = result
+                mapped = {slot: zh for slot, zh in zip(slots, out)
+                          if isinstance(zh, str) and zh.strip() and (not web or chinese_text(zh))}
                 title = item['title'] if keep_title else mapped.get('title') or (hit or {}).get('title')
                 summary = mapped.get('summary')
                 if summary is None:
@@ -580,6 +713,8 @@ def apply_translation(items, translator, cache=None):
                         'title': title, 'summary': summary,
                         'engine': engine or prev.get('engine') or default_engine,
                     })
+                    if web and 'summary' in mapped:
+                        prev['summary_source'] = src_sum
                     if summary_pending:
                         prev['summary_pending'] = True
                     else:
@@ -587,7 +722,7 @@ def apply_translation(items, translator, cache=None):
                     hit = store[key(item)] = prev
                     changed = True
         # 2) 正文和 blocks 另一次，缺了也不撤掉已有的标题/摘要
-        if hit and (missing_body or missing_blocks):
+        if hit and hit.get('title') and (missing_body or missing_blocks):
             texts, slots, kinds = [], [], []
             bkeys, btexts = ([], [])
             if missing_body:
@@ -596,29 +731,35 @@ def apply_translation(items, translator, cache=None):
                 bkeys, btexts = _blocks_texts(item.get('blocks'))
                 texts.extend(btexts)
                 kinds.extend(['block'] * len(btexts))
-            result = _translate_one(fn, texts, kinds) if texts else None
+            result = _translate_one(fn, texts, [f'web:{kind}' for kind in kinds] if web else kinds) if texts else None
             if result:
                 out, engine = result
-                mapped = {slot: zh for slot, zh in zip(slots, out[:len(slots)]) if isinstance(zh, str) and zh.strip()}
+                mapped = {slot: zh for slot, zh in zip(slots, out[:len(slots)])
+                          if isinstance(zh, str) and zh.strip() and (not web or chinese_text(zh))}
                 trans_body = mapped.get('body') or hit.get('body')
                 if trans_body:
                     hit['body'] = trans_body
-                    if derive_summary:
+                    if derive_summary and not web:
                         hit['summary'] = _summary_from_body(trans_body)
+                        hit.pop('summary_pending', None)
                 if bkeys and all(isinstance(x, str) and x.strip() for x in out[len(slots):]):
                     hit['blocks'] = _apply_block_texts(item['blocks'], bkeys, out[len(slots):])
                 hit['engine'] = engine or hit.get('engine') or default_engine
                 store[key(item)] = hit
                 changed = True
-        if not hit:
+        if not hit or not hit.get('title') or hit.get('summary') is None:
+            continue
+        if keep_title and (keep_summary or not hit['summary']) and not (hit.get('body') or hit.get('blocks')):
             continue
         item['translated'] = True
-        trans = {'title': hit['title'], 'summary': hit['summary'], 'engine': hit['engine'], 'label': MT}
+        trans = {'title': hit['title'], 'summary': hit['summary'], 'engine': hit.get('engine') or default_engine, 'label': MT}
+        if web and 'summary_source' in hit and hit.get('summary'):
+            trans['summary_source'] = hit['summary_source']
         if hit.get('body'):
             trans['body'] = hit['body']
         if hit.get('blocks'):
             trans['blocks'] = hit['blocks']
-        if (body or item.get('blocks')) and not hit.get('body') and not hit.get('blocks'):
+        if not keep_body and (body or item.get('blocks')) and not hit.get('body') and not hit.get('blocks'):
             trans['body_pending'] = True
         item['translation'] = trans
         done += 1
@@ -640,7 +781,6 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
     by_type = {}
     for sid, (slug, cfg) in table.items():
         by_type.setdefault(cfg['type'], []).append((slug, cfg))
-    loader = inbox_loader or default_inbox_loader
     items, statuses = [], []
     if isinstance(tgmeta, (str, Path)):
         from rebang.tgmeta import load_store
@@ -651,7 +791,7 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
     got, st = remote_items(by_type.get('feed', []) + by_type.get('page', []), now, floor, fetch=fetch, cache=cache,
                            http_get=http_get or default_http_get)
     items += got; statuses += st
-    statuses.append(apply_highlights(items, floor, loader))
+    _remember_fold_preference(items, floor, inbox_loader or default_inbox_loader)
     if translator == 'default':
         translator = default_translator()
     from rebang.extract import apply_extraction
@@ -664,7 +804,8 @@ def collect(now, *, fetch=False, db=None, media_root=None, cache=DEFAULT_CACHE, 
     ordered = sorted(unique.values(), key=lambda i: i['published_at'], reverse=True)
     return {'schema': ITEMS_SCHEMA, 'producer': PRODUCER, 'generated_at': _iso(now), 'items': ordered,
             'sources': statuses, 'translation': {'available': bool(translator), 'translated': translated,
-                                              'untranslated': sum(1 for i in ordered if not i['lang'].startswith('zh') and i['lang'] != 'und' and not i.get('translated'))},
+                                              'untranslated': sum(1 for i in ordered if not i['lang'].startswith('zh') and i['lang'] != 'und'
+                                                                 and (not i.get('translated') or (i.get('translation') or {}).get('body_pending')))},
             'extraction': extracted}
 
 

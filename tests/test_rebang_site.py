@@ -68,6 +68,12 @@ class SiteBuildTests(unittest.TestCase):
         self.assertTrue(meta['fixture'])
         self.assertEqual([c['slug'] for c in meta['channels']], schema.channel_slugs())
         self.assertTrue((out / 'index.html').exists() and (out / 'app.js').exists() and (out / 'lib.js').exists())
+        # 频道首页 A2：平台图标按配置的来源类型标；id 带 rss 字样的 Telegram 来源也算 Telegram
+        platforms = {k: v for c in meta['channels'] for k, v in c['source_platforms'].items()}
+        config = {s['id']: s['type'] for c in schema.load_channels()['channels'] for s in c['sources']}
+        self.assertEqual(platforms, config)
+        self.assertEqual(platforms.get('shuangyunews_rss'), 'telegram')
+        self.assertTrue((out / 'icons' / 'telegram.svg').exists() and (out / 'icons' / 'blog.svg').exists())
 
     def test_brand_icons_copied_and_head_tags_present(self):
         out, _ = self.build()
@@ -81,13 +87,26 @@ class SiteBuildTests(unittest.TestCase):
         self.assertIn('https://news.kwinweng.com/og-image.png', html)
         self.assertNotIn('class="brand-logo"', html)
         self.assertNotIn('src="logo.png"', html)
-        for name in ('favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png',
+        for name in ('favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png',
+                     'favicon-dark-16x16.png', 'favicon-dark-32x32.png', 'apple-touch-icon.png',
                      'icon-192.png', 'icon-512.png', 'icon-192-maskable.png', 'icon-512-maskable.png',
                      'logo.png', 'og-image.png', 'manifest.webmanifest',
-                     'apple-splash-1170x2532.png', 'apple-splash-1179x2556.png', 'apple-splash-1290x2796.png'):
+                     'apple-splash-1170x2532.png', 'apple-splash-1179x2556.png', 'apple-splash-1290x2796.png',
+                     'apple-splash-dark-1170x2532.png', 'apple-splash-dark-1179x2556.png',
+                     'apple-splash-dark-1290x2796.png'):
             self.assertTrue((out / name).is_file(), name)
+        # 头部每个图标/启动图/清单链接（去掉 ?v= 缓存版本号）都指向构建产物里真实存在的文件
+        import re
+        hrefs = re.findall(r'<link rel="(?:icon|apple-touch-icon|manifest|apple-touch-startup-image)"[^>]*href="([^"]+)"', html)
+        self.assertGreaterEqual(len(hrefs), 13)
+        for href in hrefs:
+            self.assertTrue((out / href.split('?', 1)[0]).is_file(), href)
+        self.assertIn('apple-touch-icon.png?v=', html)
+        self.assertEqual(html.count('apple-touch-startup-image'), 6)
         from PIL import Image
         self.assertEqual(Image.open(out / 'favicon-32x32.png').size, (32, 32))
+        self.assertEqual(Image.open(out / 'favicon-dark-32x32.png').size, (32, 32))
+        self.assertEqual(Image.open(out / 'apple-splash-dark-1290x2796.png').size, (1290, 2796))
         self.assertEqual(Image.open(out / 'apple-touch-icon.png').size, (180, 180))
         self.assertEqual(Image.open(out / 'icon-192.png').size, (192, 192))
         self.assertEqual(Image.open(out / 'icon-512.png').size, (512, 512))
@@ -134,8 +153,10 @@ class SiteBuildTests(unittest.TestCase):
         entry = next(f for f in report['files'] if f['file'] == 'ingest.json')
         self.assertEqual(entry['dropped'], 1)
         items = self.read(out, 'channel/current/page-1.json')['items']
-        self.assertEqual(len(items), 1)
-        self.assertTrue(items[0]['highlight'], '今日重点按 url 并进已有条目，只打标')
+        # 同来源同链接、标题不同：频道内合并只认「同链接且原标题相同、不同来源」，两条都留
+        self.assertEqual(sorted(i['id'] for i in items), ['tnews365:1', 'tnews365:2'])
+        self.assertFalse(any('highlight' in i for i in items), '旧重点整理稿不能给原条目打标')
+        self.assertNotIn('hot-daily:4', self.read(out, 'id-index.json'))
 
     def test_invalid_hotsearch_becomes_error_not_fake_ranks(self):
         self.write('ingest.json', envelope([news('tnews365', 'current', 1)]))
@@ -276,12 +297,42 @@ class RevisionBuildTests(unittest.TestCase):
         p2 = json.loads((data / 'blogger/x' / dotey['key'] / 'page-2.json').read_text(encoding='utf-8'))
         self.assertEqual((len(p1['items']), p1['has_more'], len(p2['items']), p2['has_more']), (30, True, 15, False))
         allp = json.loads((data / 'blogger/x/all/page-2.json').read_text(encoding='utf-8'))
+        built = json.loads((data / 'meta.json').read_text(encoding='utf-8'))['built_at']
+        self.assertEqual({p1['built_at'], p2['built_at'], allp['built_at']}, {built}, '博主分页带本次发布的 built_at')
         self.assertEqual(allp['total'], 46)
         idx = json.loads((data / 'id-index.json').read_text(encoding='utf-8'))
         self.assertNotIn('world:1', idx)
         self.assertEqual(idx['dotey:0'], 'blogger/x/all/page-2.json', '不在预览里的帖子深链也能找到')
         meta = json.loads((data / 'meta.json').read_text(encoding='utf-8'))
         self.assertFalse(any('hotsearch' in c for c in meta['channels']))
+
+    def test_blogger_snapshot_identity_and_exact_feed_order(self):
+        # 同一时钟重建：条数、ID、顺序均不变，只修改一条正文，索引和分页也必须能区分两版。
+        rows = [self.post('x', 'dotey', '测试', 1, published_at='2026-11-15T10:00:00.000001+08:00'),
+                self.post('weibo', 'sample', '测试', 2, published_at='2026-11-15T02:00:00.000002Z'),
+                self.post('x', 'dotey', '测试', 3, published_at='2026-11-15T02:00:00.000001Z')]
+        out = self.dir / 'site'
+
+        def snapshot():
+            (self.inp / 'ingest.json').write_text(json.dumps(envelope(rows)), encoding='utf-8')
+            site.build(out, self.inp, now=NOW, hot_archive_dir=self.dir / 'hot', web_dir=None)
+            data = out / 'data'
+            read = lambda p: json.loads(p.read_text(encoding='utf-8'))
+            meta, index = (read(data / name) for name in ('meta.json', 'bloggers.json'))
+            expected = {'sample:2': 0, 'dotey:1': 1, 'dotey:3': 2}
+            self.assertEqual({r['id']: r.get('feed_order') for r in index['items']}, expected)
+            rev = meta.get('blogger_revision')
+            self.assertTrue(rev)
+            for doc in [index, *(read(p) for p in (data / 'blogger').rglob('page-*.json'))]:
+                self.assertEqual((doc.get('built_at'), doc.get('blogger_revision')), (meta['built_at'], rev))
+                self.assertTrue(all(r['feed_order'] == expected[r['id']] for r in doc['items']))
+            return rev
+
+        before = snapshot()
+        rows.reverse()
+        self.assertEqual(snapshot(), before, '相同内容和时间不因输入次序而换版')
+        rows[0]['body'] = '这一条在同一秒重新构建时有修订。'
+        self.assertNotEqual(snapshot(), before)
 
     def test_hotsearch_archive_written_per_day(self):
         (self.inp / 'ingest.json').write_text(json.dumps(envelope([news('tnews365', 'current', 1)])), encoding='utf-8')

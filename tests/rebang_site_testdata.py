@@ -38,8 +38,10 @@ def site_items():
                 {'type': 'image', 'url': 'https://img.test/p0.png'},
             ], 'video_unavailable': True})
         items.append(item)
-    items.append(news('bbc-world', 'world', 1, title='Synthetic headline', lang='en', translated=True,
-                      translation={'title': '合成译文标题', 'summary': '合成译文摘要。', 'engine': 'test', 'label': '机器翻译'}))
+    items.append(news('bbc-world', 'world', 1, title='Synthetic headline', summary='Synthetic summary.',
+                      body='This is the original English news article.', lang='en', translated=True,
+                      translation={'title': '合成译文标题', 'summary': '合成译文摘要。', 'summary_source': 'Synthetic summary.',
+                                   'engine': 'test', 'label': '机器翻译'}))
     for slug in ('finance', 'tech-ai', 'digital', 'tools'):
         for n in range(3):
             items.append(news(TG[slug], slug, n, minutes=n))
@@ -82,6 +84,8 @@ def health_inputs():
             row.update(collection_ok=False, last_ok_at=(NOW - timedelta(hours=29)).isoformat())
         if row['id'] == 'guardian-world':
             row['fetched_at'] = earlier
+        if row['id'] == 'selfhst':  # 新加的源还没抓过一轮
+            row.update(status='not_fetched', count=0, fetched_at=None)
     platforms = []
     for platform in load_bloggers()['platforms']:
         platform_id = platform['id']
