@@ -37916,7 +37916,7 @@
           "hot": false,
           "hour": "2026-11-14 08:00",
           "id": "f3b2334fa4795a690595",
-          "image": "media/tnews365/35783_1.webp",
+          "image": "",
           "link": "https://t.me/tnews365/35783",
           "source": "tnews365",
           "source_name": "竹新社",
@@ -87428,7 +87428,7 @@
         {
           "category": "其他",
           "day": "2026-10-29",
-          "hot": true,
+          "hot": false,
           "hour": "2026-10-29 08:00",
           "id": "976661471626e31c7f06",
           "image": "",
@@ -181104,7 +181104,7 @@
       "hot": false,
       "hour": "2026-11-14 08:00",
       "id": "f3b2334fa4795a690595",
-      "image": "media/tnews365/35783_1.webp",
+      "image": "",
       "link": "https://t.me/tnews365/35783",
       "source": "tnews365",
       "source_name": "竹新社",
@@ -228861,7 +228861,7 @@
     {
       "category": "其他",
       "day": "2026-10-29",
-      "hot": true,
+      "hot": false,
       "hour": "2026-10-29 08:00",
       "id": "976661471626e31c7f06",
       "image": "",
@@ -283372,5 +283372,5 @@
     }
   ],
   "sample": false,
-  "updated": "2026-11-28T07:05:10.988857+08:00"
+  "updated": "2026-11-28T08:05:10.084598+08:00"
 }
