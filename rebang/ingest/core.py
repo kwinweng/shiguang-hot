@@ -208,6 +208,16 @@ def _tg_parts(handle, text, meta):
     return title, rest, str(text).strip(), None, extra.get('tg')
 
 
+def _telegraph_link(raw):
+    """tg.db links（消息正文里的链接，JSON 数组）里第一个 Telegraph 文章链接。"""
+    from rebang.extract import is_telegraph_url
+    try:
+        links = json.loads(raw) if raw else []
+    except ValueError:
+        return None
+    return next((u for u in links if isinstance(u, str) and is_telegraph_url(u)), None)
+
+
 def telegram_items(db_path, media_root, sources, now, floor, tgmeta=None):
     """sources: [(channel, cfg)]。只读打开，不迁移、不写。tgmeta：rebang.tgmeta 缓存里的 messages（<频道>/<消息号> → meta）。"""
     items, statuses = [], []
@@ -218,13 +228,14 @@ def telegram_items(db_path, media_root, sources, now, floor, tgmeta=None):
     con = sqlite3.connect(f'file:{db_path.resolve()}?mode=ro', uri=True)
     try:
         con.execute('pragma query_only=on')
-        has_images = 'images' in [r[1] for r in con.execute('pragma table_info(msg)')]
+        msg_cols = [r[1] for r in con.execute('pragma table_info(msg)')]
+        has_images = 'images' in msg_cols
         last_status = {}
         if con.execute("select 1 from sqlite_master where type='table' and name='status'").fetchone():
             last_status = {r[0]: (r[1], r[2], r[3]) for r in con.execute('select ch,ok,err,at from status')}
         for channel, cfg in sources:
             handle = cfg.get('handle') or cfg['id']
-            cols = 'id,ts,text' + (',images' if has_images else '')
+            cols = 'id,ts,text' + (',images' if has_images else '') + (',links' if 'links' in msg_cols else '')
             count = 0
             for row in con.execute(f'select {cols} from msg where ch=? order by id desc', (handle,)):
                 msg_id, ts, text = row[0], row[1], row[2]
@@ -252,6 +263,9 @@ def telegram_items(db_path, media_root, sources, now, floor, tgmeta=None):
                     item['quote'] = quote
                 if tg:
                     item['tg'] = tg
+                article = _telegraph_link(row[-1] if 'links' in msg_cols else None)
+                if article and not quote:
+                    item['extract_url'] = article   # 即时预览文章：交给 rebang.extract 抓正文
                 items.append(item)
                 count += 1
             ok, err, at = last_status.get(handle, (None, None, None))

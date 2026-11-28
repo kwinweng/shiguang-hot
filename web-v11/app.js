@@ -831,7 +831,9 @@
     if (blocks && blocks.length) {
       // 公众号 / 博客 / 抽出的新闻正文：按原文顺序；有译文 blocks 时直接显示中文，原文可展开
       const origBlocks = d.translated && it.blocks && d.blocks ? `<div class="art-blocks">${L.blocksHTML(it.blocks)}</div>` : '';
-      return `${title}${artMeta(it)}${mtRow(d, origBlocks)}${it.tg ? media : ''}<div class="art-blocks" data-blocks>${L.blocksHTML(blocks)}</div>${artActions(it)}`;
+      // TG 即时预览文章：预览卡的图就是文章首图，正文里已有，不再单独放封面
+      const tgOwn = it.tg && tgMedia && tgMedia.length;
+      return `${title}${artMeta(it)}${mtRow(d, origBlocks)}${tgOwn ? media : ''}<div class="art-blocks" data-blocks>${L.blocksHTML(blocks)}</div>${artActions(it)}`;
     }
     if (it.kind === 'post') return `${L.tweetCardHTML(it, false)}${artActions(it)}`;
     let text = (d.body || d.summary || '').trim();

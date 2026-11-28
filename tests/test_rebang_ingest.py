@@ -85,6 +85,25 @@ class IngestTests(unittest.TestCase):
             out.setdefault(item['source_id'], []).append(item)
         return out
 
+    def test_telegraph_link_in_tg_message_becomes_full_body(self):
+        con = sqlite3.connect(self.db)
+        handles = [s.get('handle') or s['id'] for s in TG]
+        ch, i, ts = con.execute(f"select ch,id,ts from msg where ch in ({','.join('?' * len(handles))}) order by ts desc limit 1",
+                                handles).fetchone()
+        url = 'https://telegra.ph/story-11-15'
+        con.execute('update msg set text=?, links=? where ch=? and id=?',
+                    ('纽约时报双语版\n宏福苑大火一周年\nTelegraph | 原文链接', json.dumps(['https://cn.nytimes.com/x', url]), ch, i))
+        con.commit(); con.close()
+        page = (f"<html><body><article class='tl_article_content'><h1>标题</h1><address>频道</address>"
+                f"<p>{'Telegraph 文章正文，足够长的一段话。' * 40}</p></article></body></html>").encode('utf-8')
+        feeds = fake_http()
+        env = self.run_collect(fetch=True, http_get=lambda u, now: page if u == url else feeds(u, now))
+        self.assertEqual(validate_items_envelope(env), [])
+        item = next(it for it in env['items'] if it['id'].endswith(f':{i}') and it['url'] == f'https://t.me/{ch}/{i}')
+        self.assertIn('Telegraph 文章正文', item['body'])
+        self.assertTrue(item['blocks'])
+        self.assertFalse(any('extract_url' in it for it in env['items']))
+
     def test_envelope_valid_and_every_item_in_its_configured_channel(self):
         env = self.run_collect(fetch=True, http_get=fake_http())
         self.assertEqual(validate_items_envelope(env), [])
